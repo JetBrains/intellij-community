@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gitlab.ui.clone
 
 import com.intellij.collaboration.async.nestedDisposable
-import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafe
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForPersistentCredentials
 import com.intellij.collaboration.auth.ui.login.LoginModel
 import com.intellij.collaboration.auth.ui.login.TokenLoginInputPanelFactory
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -15,6 +15,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -57,11 +58,11 @@ internal object GitLabCloneLoginComponentFactory {
           cell(loginButton)
           cell(backLink)
 
-          addWarningForMemoryOnlyPasswordSafe(
+          addWarningForPersistentCredentials(
             cs,
             service<GitLabAccountManager>().canPersistCredentials,
             ::panel
-          )
+          ).align(AlignX.RIGHT)
         }
       }
     ).apply {

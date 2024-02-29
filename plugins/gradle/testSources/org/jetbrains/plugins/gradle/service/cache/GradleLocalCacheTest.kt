@@ -5,7 +5,7 @@ import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
 import kotlin.io.path.deleteIfExists
@@ -26,11 +26,16 @@ class GradleLocalCacheTest : GradleImportingTestCase() {
     super.setUp()
     removeGradleCacheEntry(DEPENDENCY_SOURCES_JAR_CACHE_PATH)
     removeGradleCacheEntry(DEPENDENCY_JAR_CACHE_PATH)
+    GradleSystemSettings.getInstance().isDownloadSources = true
+  }
+
+  override fun tearDown() {
+    super.tearDown()
+    GradleSystemSettings.getInstance().isDownloadSources = false
   }
 
   @Test
   fun `test find artifact in gradle cache by dependency notation`() {
-    GradleSettings.getInstance(myProject).isDownloadSources = true
     importProject {
       withJavaPlugin()
       withIdeaPlugin()
@@ -48,7 +53,6 @@ class GradleLocalCacheTest : GradleImportingTestCase() {
 
   @Test
   fun `test find artifact in gradle cache by adjacent artifact path`() {
-    GradleSettings.getInstance(myProject).isDownloadSources = true
     importProject {
       withJavaPlugin()
       withIdeaPlugin()

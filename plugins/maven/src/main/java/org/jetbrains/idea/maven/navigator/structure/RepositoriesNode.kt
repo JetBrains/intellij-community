@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure
 
+import com.intellij.openapi.project.Project
 import com.intellij.util.containers.mapSmart
 import icons.MavenIcons
-import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.indices.MavenIndexUtils
 import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenIndexUpdateState
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -23,9 +25,9 @@ internal class RepositoriesNode(structure: MavenProjectsStructure, parent: Proje
     return myRepositoryNodes
   }
 
-  fun updateRepositories(mavenProject: MavenProject) {
-    val local = mavenProject.localRepository
-    val remotes = mavenProject.remoteRepositories
+  fun updateRepositories(project: Project) {
+    val local = MavenProjectsManager.getInstance(project).localRepository
+    val remotes = MavenIndexUtils.getRemoteRepositoriesNoResolve(project)
     myRepositoryNodes.clear()
     myRepositoryNodes.add(RepositoryNode(myMavenProjectsStructure, this, "local", local.absolutePath, true))
     myRepositoryNodes.addAll(remotes.mapSmart { RepositoryNode(myMavenProjectsStructure, this, it.id, it.url, false) })
@@ -40,4 +42,5 @@ internal class RepositoriesNode(structure: MavenProjectsStructure, parent: Proje
       it.update()
     }
   }
+
 }

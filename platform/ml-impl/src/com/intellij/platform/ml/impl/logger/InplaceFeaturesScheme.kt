@@ -17,48 +17,38 @@ import org.jetbrains.annotations.ApiStatus
  * [testResources/ml_logs.js](community/platform/ml-impl/testResources/ml_logs.js)
  */
 @ApiStatus.Internal
-class InplaceFeaturesScheme<P : Any> internal constructor(
-  private val predictionValidationRule: List<String>,
-  private val predictionTransform: (P?) -> String,
+class InplaceFeaturesScheme<P : Any, F> internal constructor(
+  private val predictionField: EventField<F>,
+  private val predictionTransformer: (P?) -> F?,
   private val approachDeclaration: MLTaskApproach.Declaration
 ) : FusSessionEventBuilder<P> {
-  class FusScheme<P : Any>(
-    private val predictionValidationRule: List<String>,
-    private val predictionTransform: (P?) -> String
+  class FusScheme<P : Any, F>(
+    private val predictionField: EventField<F>,
+    private val predictionTransformer: (P?) -> F?,
   ) : FusSessionEventBuilder.FusScheme<P> {
     override fun createEventBuilder(approachDeclaration: MLTaskApproach.Declaration): FusSessionEventBuilder<P> = InplaceFeaturesScheme(
-      predictionValidationRule,
-      predictionTransform,
+      predictionField,
+      predictionTransformer,
       approachDeclaration
     )
 
     companion object {
-      val DOUBLE: FusScheme<Double> = FusScheme(listOf("{regexp#float}")) { it.toString() }
+      val DOUBLE: FusScheme<Double, Double> = FusScheme(DoubleEventField("prediction")) { it }
     }
   }
 
   override fun buildFusDeclaration(): SessionFields<P> {
     require(approachDeclaration.levelsScheme.isNotEmpty())
     return if (approachDeclaration.levelsScheme.size == 1)
-      PredictionSessionFields(approachDeclaration.levelsScheme.first(), predictionValidationRule, predictionTransform,
+      PredictionSessionFields(approachDeclaration.levelsScheme.first(), predictionField, predictionTransformer,
                               approachDeclaration.sessionFeatures)
     else
-      NestableSessionFields(approachDeclaration.levelsScheme.first(), approachDeclaration.levelsScheme.drop(1), predictionValidationRule,
-                            predictionTransform, approachDeclaration.sessionFeatures)
+      NestableSessionFields(approachDeclaration.levelsScheme.first(), approachDeclaration.levelsScheme.drop(1),
+                            predictionField, predictionTransformer, approachDeclaration.sessionFeatures)
   }
 
   override fun buildRecord(sessionStructure: AnalysedRootContainer<P>, sessionFields: SessionFields<P>): Array<EventPair<*>> {
     return sessionFields.buildEventPairs(sessionStructure).toTypedArray()
-  }
-}
-
-private class PredictionField<T : Any>(
-  override val name: String,
-  override val validationRule: List<String>,
-  val transform: (T?) -> String
-) : PrimitiveEventField<T?>() {
-  override fun addData(fuData: FeatureUsageData, value: T?) {
-    fuData.addData(name, transform(value))
   }
 }
 
@@ -234,8 +224,8 @@ private data class SessionAnalysisFields<P : Any>(
   }
 
   override fun buildEventPairs(sessionStructure: AnalysedSessionTree<P>): List<EventPair<*>> {
-    require(sessionStructure is SessionTree.RootContainer<SessionAnalysis, AnalysedLevel, P>)
-    return sessionStructure.root.entries.map { (key, keyFeatures) ->
+    require(sessionStructure is SessionTree.RootContainer<SessionAnalysis, AnalysedTierData, P>)
+    return sessionStructure.rootData.entries.map { (key, keyFeatures) ->
       val keyFeaturesDeclaration = requireNotNull(featuresPerKey[key]) {
         "Key $key was not declared as session features key, declared keys: ${featuresPerKey.keys}"
       }
@@ -259,7 +249,7 @@ private class MainTierSet<P : Any>(mainTierScheme: PerTier<MainTierScheme>) : Se
   }
 
   override fun buildEventPairs(sessionStructure: AnalysedSessionTree<P>): List<EventPair<*>> {
-    val level = sessionStructure.level.main
+    val level = sessionStructure.levelData.mainInstances
     return level.entries.map { (tierInstance, data) ->
       val tierField = requireNotNull(fieldPerTier[tierInstance.tier]) {
         "Tier ${tierInstance.tier} is now allowed here: only ${fieldPerTier.keys} are registered"
@@ -283,7 +273,7 @@ private class AdditionalTierSet<P : Any>(additionalTierScheme: PerTier<Additiona
   }
 
   override fun buildEventPairs(sessionStructure: AnalysedSessionTree<P>): List<EventPair<*>> {
-    val level = sessionStructure.level.additional
+    val level = sessionStructure.levelData.additionalInstances
     return level.entries.map { (tierInstance, data) ->
       val tierField = requireNotNull(fieldPerTier[tierInstance.tier]) {
         "Tier ${tierInstance.tier} is now allowed here: only ${fieldPerTier.keys} are registered"
@@ -294,26 +284,25 @@ private class AdditionalTierSet<P : Any>(additionalTierScheme: PerTier<Additiona
   }
 }
 
-private data class PredictionSessionFields<P : Any>(
+private data class PredictionSessionFields<P : Any, F>(
   val declarationMainTierSet: MainTierSet<P>,
   val declarationAdditionalTierSet: AdditionalTierSet<P>,
-  val predictionValidationRule: List<String>,
-  val predictionTransform: (P?) -> String,
+  val fieldPrediction: EventField<F>,
+  val serializePrediction: (P?) -> F?,
   val sessionAnalysisFields: SessionAnalysisFields<P>?
 ) : SessionFields<P>() {
   private val fieldMainInstances = ObjectEventField("main", declarationMainTierSet)
   private val fieldAdditionalInstances = ObjectEventField("additional", declarationAdditionalTierSet)
-  private val fieldPrediction = PredictionField("prediction", predictionValidationRule, predictionTransform)
   private val fieldSessionAnalysis = sessionAnalysisFields?.let { ObjectEventField("session", sessionAnalysisFields) }
 
   constructor(levelScheme: LevelScheme,
-              predictionValidationRule: List<String>,
-              predictionTransform: (P?) -> String,
+              fieldPrediction: EventField<F>,
+              serializePrediction: (P?) -> F?,
               sessionAnalysisFields: Map<String, Set<FeatureDeclaration<*>>>?)
     : this(MainTierSet(levelScheme.main),
            AdditionalTierSet(levelScheme.additional),
-           predictionValidationRule,
-           predictionTransform,
+           fieldPrediction,
+           serializePrediction,
            sessionAnalysisFields?.let { SessionAnalysisFields(it) })
 
   init {
@@ -324,20 +313,25 @@ private data class PredictionSessionFields<P : Any>(
   }
 
   override fun buildEventPairs(sessionStructure: AnalysedSessionTree<P>): List<EventPair<*>> {
-    require(sessionStructure is SessionTree.Leaf<*, *, P>)
+    require(sessionStructure is SessionTree.PredictionContainer<*, *, P>)
     val eventPairs = mutableListOf<EventPair<*>>(
       fieldMainInstances with declarationMainTierSet.buildObjectEventData(sessionStructure),
       fieldAdditionalInstances with declarationAdditionalTierSet.buildObjectEventData(sessionStructure),
-      fieldPrediction with sessionStructure.prediction,
     )
     fieldSessionAnalysis?.let {
-      eventPairs += fieldSessionAnalysis with sessionAnalysisFields!!.buildObjectEventData(sessionStructure)
+      eventPairs += it with sessionAnalysisFields!!.buildObjectEventData(sessionStructure)
     }
+
+    val serializedPrediction = serializePrediction(sessionStructure.prediction)
+    serializedPrediction?.let {
+      eventPairs += fieldPrediction with it
+    }
+
     return eventPairs
   }
 }
 
-private data class NestableSessionFields<P : Any>(
+private data class NestableSessionFields<P : Any, F>(
   val declarationMainTierSet: MainTierSet<P>,
   val declarationAdditionalTierSet: AdditionalTierSet<P>,
   val declarationNestedSession: SessionFields<P>,
@@ -350,17 +344,17 @@ private data class NestableSessionFields<P : Any>(
 
   constructor(levelScheme: LevelScheme,
               deeperLevelsSchemes: List<LevelScheme>,
-              predictionValidationRule: List<String>,
-              predictionTransform: (P?) -> String,
+              predictionField: EventField<F>,
+              serializePrediction: (P?) -> F?,
               sessionAnalysisFields: Map<String, Set<FeatureDeclaration<*>>>?)
     : this(MainTierSet(levelScheme.main),
            AdditionalTierSet(levelScheme.additional),
            if (deeperLevelsSchemes.size == 1)
-             PredictionSessionFields(deeperLevelsSchemes.first(), predictionValidationRule, predictionTransform, null)
+             PredictionSessionFields(deeperLevelsSchemes.first(), predictionField, serializePrediction, null)
            else {
              require(deeperLevelsSchemes.size > 1)
-             NestableSessionFields(deeperLevelsSchemes.first(), deeperLevelsSchemes.drop(1), predictionValidationRule,
-                                   predictionTransform, null)
+             NestableSessionFields(deeperLevelsSchemes.first(), deeperLevelsSchemes.drop(1),
+                                   predictionField, serializePrediction, null)
            },
            sessionAnalysisFields?.let { SessionAnalysisFields(it) }
   )

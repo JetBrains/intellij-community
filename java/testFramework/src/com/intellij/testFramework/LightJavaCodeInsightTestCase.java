@@ -6,7 +6,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
@@ -83,14 +82,7 @@ public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsi
   }
 
   protected void setLanguageLevel(@NotNull LanguageLevel level) {
-    LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(getProject());
-    LanguageLevel prev = extension.getLanguageLevel();
-    extension.setLanguageLevel(level);
-    Disposer.register(myBeforeParentDisposeDisposable, () -> {
-      extension.setLanguageLevel(prev);
-      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
-    });
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), level, myBeforeParentDisposeDisposable);
   }
 
   @Override

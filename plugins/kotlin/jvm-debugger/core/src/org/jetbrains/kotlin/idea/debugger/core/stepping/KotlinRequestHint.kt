@@ -145,12 +145,12 @@ class KotlinStepOverRequestHint(
 
         return endArgs[endArgs.size - 1].descriptor == "Ljava/lang/Object;"
     }
+}
 
-    private fun installCoroutineResumedBreakpoint(context: SuspendContextImpl): Boolean {
-        val method = context.frameProxy?.safeLocation()?.safeMethod() ?: return false
-        context.debugProcess.cancelRunToCursorBreakpoint()
-        return CoroutineBreakpointFacility.installCoroutineResumedBreakpoint(context, method)
-    }
+private fun installCoroutineResumedBreakpoint(context: SuspendContextImpl): Boolean {
+    val method = context.frameProxy?.safeLocation()?.safeMethod() ?: return false
+    context.debugProcess.cancelRunToCursorBreakpoint()
+    return CoroutineBreakpointFacility.installCoroutineResumedBreakpoint(context, method)
 }
 
 interface StopOnReachedMethodFilter
@@ -170,6 +170,13 @@ class KotlinStepIntoRequestHint(
     override fun getNextStepDepth(context: SuspendContextImpl): Int {
         try {
             val frameProxy = context.frameProxy ?: return STOP
+            if (isTheSameFrame(context)) {
+                if (frameProxy.isOnSuspensionPoint()) {
+                    // Coroutine will sleep now so we can't continue stepping.
+                    // Let's put a run-to-cursor breakpoint and resume the debugger.
+                    return if (!installCoroutineResumedBreakpoint(context)) STOP else RESUME
+                }
+            }
             val location = frameProxy.safeLocation()
             // Continue stepping into if we are at a compiler generated fake line number.
             if (location != null && isKotlinFakeLineNumber(location)) {

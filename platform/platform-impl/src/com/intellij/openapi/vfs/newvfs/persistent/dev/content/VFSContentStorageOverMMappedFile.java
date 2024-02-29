@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -113,8 +114,14 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
   /** Total {@link #readStream(int)} invocations */
   private final AtomicLong recordsRead = new AtomicLong();
+  /** Total size (after decompression, if any) of records read */
+  private final AtomicLong recordsReadUncompressedSize = new AtomicLong();
+
   /** Total {@link #readStream(int)} invocations with decompression involved */
   private final AtomicLong recordsReadDecompressed = new AtomicLong();
+  /** Total time (us) of record decompression during read */
+  private final AtomicLong recordsReadDecompressionTimeNs = new AtomicLong();
+
 
   //MAYBE RC: count also _size_ of read/read-and-decompressed ?
 
@@ -306,8 +313,12 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
       else {// [uncompressedSize<0] => compressed data
         int actualUncompressedSize = -uncompressedSize;
         byte[] bufferForDecompression = new byte[actualUncompressedSize];
-        compressingAlgo.decompress(buffer, bufferForDecompression);
 
+        long startedAtNs = System.nanoTime();
+        compressingAlgo.decompress(buffer, bufferForDecompression);
+        long decompressionTimeNs = System.nanoTime() - startedAtNs;
+
+        recordsReadDecompressionTimeNs.addAndGet(decompressionTimeNs);
         recordsReadDecompressed.incrementAndGet();
 
         return bufferForDecompression;
@@ -315,6 +326,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
     });
 
     recordsRead.incrementAndGet();
+    recordsReadUncompressedSize.addAndGet(bytes.length);
 
 
     //MAYBE RC: introduce 'VIGILANT' option there we always check crypto-hash of read/decompressed data
@@ -466,7 +478,10 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
     var recordsStoredSizeCounter = meter.counterBuilder("VFS.contentStorage.recordsStoredSize").buildObserver();
 
     var recordsReadCounter = meter.counterBuilder("VFS.contentStorage.recordsRead").buildObserver();
+    var recordsReadSizeCounter = meter.counterBuilder("VFS.contentStorage.recordsReadSize").buildObserver();
+
     var recordsReadDecompressedCounter = meter.counterBuilder("VFS.contentStorage.recordsReadDecompressed").buildObserver();
+    var recordsDecompressionTimeUsCounter = meter.counterBuilder("VFS.contentStorage.recordsDecompressionTimeUs").buildObserver();
 
     return meter.batchCallback(
       () -> {
@@ -475,14 +490,18 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         recordsDeduplicatedCounter.record(storage.recordsDeduplicated.get());
 
         recordsUncompressedSizeCounter.record(storage.recordsUncompressedSize.get());
-        recordsStoredCounter.record(storage.recordsStoredSize.get());
+        recordsStoredSizeCounter.record(storage.recordsStoredSize.get());
 
         recordsReadCounter.record(storage.recordsRead.get());
+        recordsReadSizeCounter.record(storage.recordsReadUncompressedSize.get());
+
         recordsReadDecompressedCounter.record(storage.recordsReadDecompressed.get());
+        recordsDecompressionTimeUsCounter.record(TimeUnit.NANOSECONDS.toMicros(storage.recordsReadDecompressionTimeNs.get()));
       },
       recordsStoredCounter, recordsStoredCompressedCounter, recordsDeduplicatedCounter,
       recordsUncompressedSizeCounter, recordsStoredSizeCounter,
-      recordsReadCounter, recordsReadDecompressedCounter
+      recordsReadCounter, recordsReadSizeCounter,
+      recordsReadDecompressedCounter, recordsDecompressionTimeUsCounter
     );
   }
 }

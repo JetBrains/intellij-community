@@ -9,10 +9,7 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.NlsSafe
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import java.io.File
+import kotlinx.coroutines.*
 
 @Service(Service.Level.APP)
 internal class GitLabEmojiService(cs: CoroutineScope) {
@@ -20,17 +17,14 @@ internal class GitLabEmojiService(cs: CoroutineScope) {
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
 
-  val emojis: Deferred<List<ParsedGitLabEmoji>> = cs.async {
+  val emojis: Deferred<List<ParsedGitLabEmoji>> = cs.async(Dispatchers.IO, CoroutineStart.LAZY) {
     parseEmojisFile()
   }
 
-  private fun parseEmojisFile(): List<ParsedGitLabEmoji> {
-    val path = GitLabEmojiService::class.java.classLoader.getResource("emoji/index.json") ?: error("File was not found")
-    val json = File(path.toURI())
-    val parsedData = mapper.readValue(json, object : TypeReference<Map<String, ParsedGitLabEmoji>>() {})
-
-    return parsedData.values.toList()
-  }
+  private fun parseEmojisFile(): List<ParsedGitLabEmoji> =
+    GitLabEmojiService::class.java.classLoader.getResourceAsStream("emoji/index.json")?.use {
+      mapper.readValue(it, object : TypeReference<Map<String, ParsedGitLabEmoji>>() {})
+    }?.values?.toList() ?: error("File was not found")
 }
 
 data class ParsedGitLabEmoji(

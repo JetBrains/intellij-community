@@ -2,6 +2,7 @@
 package com.jetbrains.python.run;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -84,7 +85,7 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
           () -> promise.setResult(DefaultProgramRunnerKt.showRunContent(executionResult, env)),
           ModalityState.any());
       }
-      catch (Exception e) {
+      catch (ExecutionException e) {
         promise.setError(e);
       }
     });

@@ -317,6 +317,12 @@
         <option name="FOREGROUND" value="a66e32" />
       </value>
     </option>
+    <option name="DOC_TIPS_SHORTCUT">
+      <value>
+        <option name="FOREGROUND" value="ffffff"/>
+        <option name="BACKGROUND" value="3c3f41"/>
+      </value>
+    </option>
     <option name="DEFAULT_DOC_MARKUP">
       <value>
         <option name="FOREGROUND" value="499936" />

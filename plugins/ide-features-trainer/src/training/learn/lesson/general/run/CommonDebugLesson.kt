@@ -69,15 +69,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     highlightButtonById("Run", highlightInside = false, usePulsation = false)
 
-    task {
-      text(LessonsBundle.message("debug.workflow.run.current"), LearningBalloonConfig(Balloon.Position.below, 0, duplicateMessage = true))
-      checkToolWindowState("Run", true)
-      test {
-        ideFrame {
-          highlightedArea.click()
-        }
-      }
-    }
+    runSample("Run", LessonsBundle.message("debug.workflow.run.current"))
 
     toggleBreakpointTask(sample, { logicalPosition }, breakpointXRange = breakpointXRange) {
       text(LessonsBundle.message("debug.workflow.exception.description"))
@@ -113,7 +105,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     waitBeforeContinue(500)
 
-    runToCursorTask()
+    runToCursorTask(sample, afterFixText, debuggingMethodName)
 
     waitBeforeContinue(500)
 
@@ -330,56 +322,12 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     }
   }
 
-  private fun LessonContext.runToCursorTask() {
-    val position = sample.getPosition(3)
-    caret(position)
-
-    task {
-      if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled) triggerAndBorderHighlight {
-        limitByVisibleRect = false
-      }.componentPart l@{ ui: EditorComponentImpl ->
-        if (ui.editor != editor) return@l null
-        val line = editor.offsetToVisualLine(position.startOffset, true)
-        val actionButtonSize = InlayRunToCursorEditorListener.ACTION_BUTTON_SIZE
-        val y = editor.visualLineToY(line)
-        return@l Rectangle(JBUI.scale(InlayRunToCursorEditorListener.NEGATIVE_INLAY_PANEL_SHIFT - 1), y - JBUI.scale(1),
-                           JBUI.scale(actionButtonSize + 2), JBUI.scale(actionButtonSize + 2))
-      }
-    }
-
-    actionTask("RunToCursor") {
-      proposeRestore {
-        checkPositionOfEditor(LessonSample(afterFixText, position))
-      }
-      val intro = LessonsBundle.message("debug.workflow.run.to.cursor.intro", code(debuggingMethodName), code("return"))
-      val actionPart = LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
-      val alternative = if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled)
-        " " + LessonsBundle.message("debug.workflow.run.to.cursor.alternative", LessonUtil.actionName(it))
-      else ""
-      val notePart = LessonsBundle.message("debug.workflow.run.to.cursor.note", LessonUtil.actionName(it))
-      "$intro $actionPart$alternative $notePart"
-    }
-  }
-
   private fun LessonContext.evaluateResultTask() {
     quickEvaluateTask(positionId = 4) { position ->
       text(LessonsBundle.message("debug.workflow.check.result", action("QuickEvaluateExpression")))
       proposeRestore {
         checkPositionOfEditor(LessonSample(afterFixText, position))
       }
-    }
-  }
-
-  private fun LessonContext.stopTask() {
-    highlightButtonById("Stop")
-
-    task("Stop") {
-      text(LessonsBundle.message("debug.workflow.stop.debug",
-                                 action(it), icon(AllIcons.Actions.Suspend)))
-      stateCheck {
-        XDebuggerManager.getInstance(project).currentSession == null
-      }
-      test { actions(it) }
     }
   }
 
@@ -448,6 +396,52 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     Pair(LessonsBundle.message("debug.workflow.help.link"),
          LessonUtil.getHelpLink("debugging-code.html")),
   )
+
+  companion object {
+    fun LessonContext.runToCursorTask(sample: LessonSample, afterFixText: String, debuggingMethodName: String) {
+      val position = sample.getPosition(3)
+      caret(position)
+
+      task {
+        if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled) triggerAndBorderHighlight {
+          limitByVisibleRect = false
+        }.componentPart l@{ ui: EditorComponentImpl ->
+          if (ui.editor != editor) return@l null
+          val line = editor.offsetToVisualLine(position.startOffset, true)
+          val actionButtonSize = InlayRunToCursorEditorListener.ACTION_BUTTON_SIZE
+          val y = editor.visualLineToY(line)
+          return@l Rectangle(JBUI.scale(InlayRunToCursorEditorListener.NEGATIVE_INLAY_PANEL_SHIFT - 1), y - JBUI.scale(1),
+                             JBUI.scale(actionButtonSize + 2), JBUI.scale(actionButtonSize + 2))
+        }
+      }
+
+      actionTask("RunToCursor") {
+        proposeRestore {
+          checkPositionOfEditor(LessonSample(afterFixText, position))
+        }
+        val intro = LessonsBundle.message("debug.workflow.run.to.cursor.intro", code(debuggingMethodName), code("return"))
+        val actionPart = LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
+        val alternative = if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled)
+          " " + LessonsBundle.message("debug.workflow.run.to.cursor.alternative", LessonUtil.actionName(it))
+        else ""
+        val notePart = LessonsBundle.message("debug.workflow.run.to.cursor.note", LessonUtil.actionName(it))
+        "$intro $actionPart$alternative $notePart"
+      }
+    }
+
+    fun LessonContext.stopTask() {
+      highlightButtonById("Stop")
+
+      task("Stop") {
+        text(LessonsBundle.message("debug.workflow.stop.debug",
+                                   action(it), icon(AllIcons.Actions.Suspend)))
+        stateCheck {
+          XDebuggerManager.getInstance(project).currentSession == null
+        }
+        test { actions(it) }
+      }
+    }
+  }
 }
 
 
@@ -457,6 +451,18 @@ private val incorrectBreakPointsMessage = LessonsBundle.message("debug.workflow.
 fun LessonContext.clearBreakpoints() {
   prepareRuntimeTask {
     XDebuggerUtilImpl.removeAllBreakpoints(project)
+  }
+}
+
+fun LessonContext.runSample(actionId: String, @Nls message: String) {
+  task {
+    text(message, LearningBalloonConfig(Balloon.Position.below, 0, duplicateMessage = true))
+    checkToolWindowState(actionId, true)
+    test {
+      ideFrame {
+        highlightedArea.click()
+      }
+    }
   }
 }
 

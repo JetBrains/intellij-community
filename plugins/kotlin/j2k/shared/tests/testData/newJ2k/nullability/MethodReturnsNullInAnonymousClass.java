@@ -1,4 +1,3 @@
-//file
 interface Getter {
     String get();
 }

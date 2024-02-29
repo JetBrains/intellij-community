@@ -41,6 +41,11 @@ interface TestFeature<V : Any> {
     fun KotlinMppTestsContext.beforeTestExecution() {}
 
     /**
+     * Executed after the test-related actions in IDEA VM or on disk are executed.
+     */
+    fun KotlinMppTestsContext.afterTestExecution() {}
+
+    /**
      * Will be invoked on copying the project from testdata to the temporary directory.
      * For each file, it's [origin] in the testdata directory and the current state of
      * preprocessed [text] is passed. Returned string will be used instead of [origin]'s
@@ -112,5 +117,6 @@ abstract class AbstractTestChecker<V : Any> : TestFeature<V> {
     }
 
     final override fun KotlinMppTestsContext.beforeTestExecution() {}
+    final override fun KotlinMppTestsContext.afterTestExecution() {}
     final override fun KotlinMppTestsContext.beforeImport() {}
 }

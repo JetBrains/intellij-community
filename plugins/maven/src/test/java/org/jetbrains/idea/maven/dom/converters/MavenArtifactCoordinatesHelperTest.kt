@@ -2,17 +2,17 @@
 package org.jetbrains.idea.maven.dom.converters
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.util.xml.impl.ConvertContextFactory
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesHelper.getMavenId
 import org.junit.Test
 
 class MavenArtifactCoordinatesHelperTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = true
-
   @Test
-  fun testGetPluginVersionFromParentPluginManagement() = runBlocking {
+  fun testGetPluginVersionFromParentPluginManagement() = runBlocking(Dispatchers.EDT) {
     val parentFile = createProjectPom("""
                 <groupId>group</groupId>
                 <artifactId>parent</artifactId>

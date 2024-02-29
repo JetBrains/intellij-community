@@ -122,7 +122,8 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
           val alreadyHasWarning = mutableSetOf<Int>()
           for (firstIndex in 0..currentGroup.lastIndex) {
             for (secondIndex in firstIndex + 1..currentGroup.lastIndex) {
-              if (similar(currentGroup[firstIndex].parts, currentGroup[secondIndex].parts, myMinTextLength)) {
+              if (similar(currentGroup[firstIndex].parts, currentGroup[secondIndex].parts, myMinTextLength) &&
+                !sequenceOfCalls(currentGroup[firstIndex].call, currentGroup[secondIndex].call)) {
                 if (alreadyHasWarning.add(firstIndex)) {
                   registerProblem(holder, currentGroup[firstIndex].call, currentGroup[secondIndex].call)
                 }
@@ -136,6 +137,24 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
       }
 
       return super.visitFile(node)
+    }
+
+    private fun sequenceOfCalls(call1: UCallExpression, call2: UCallExpression): Boolean {
+      val commonParent = PsiTreeUtil.findCommonParent(call1.sourcePsiElement, call2.sourcePsiElement)?.toUElement()
+      if (commonParent is UBlockExpression || commonParent is UMethod) {
+        val uastParent1 = call1.uastParent?.uastParent
+        val uastParent2 = call2.uastParent?.uastParent
+        if (uastParent1 == commonParent ||
+            (uastParent1?.uastParent is UIfExpression && uastParent1.uastParent?.uastParent == commonParent) ||
+            (uastParent1 is UIfExpression && uastParent1.uastParent == commonParent) ||
+            uastParent2 == commonParent ||
+            (uastParent2?.uastParent is UIfExpression && uastParent2.uastParent?.uastParent == commonParent) ||
+            (uastParent2 is UIfExpression && uastParent2.uastParent == commonParent)
+        ) {
+          return true
+        }
+      }
+      return false
     }
 
     private fun collectCalls(file: UFile): Set<UCallExpression> {

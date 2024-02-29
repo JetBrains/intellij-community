@@ -7,7 +7,6 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.SuspendManagerUtil
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
@@ -16,7 +15,6 @@ import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
@@ -33,10 +31,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFram
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.BaseContinuationImplLight
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.continuationVariableValue
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.getSuspendExitMode
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.thisVariableValue
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
@@ -69,11 +64,9 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
 
     override fun extractContinuationFilter(suspendContext: SuspendContextImpl): ContinuationFilter? {
         val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
-        val evaluationContext = EvaluationContextImpl(suspendContext, frameProxy)
-        val defaultExecutionContext = DefaultExecutionContext(evaluationContext)
-
+        val defaultExecutionContext = DefaultExecutionContext(suspendContext, frameProxy)
         val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
-        if (debugProbesImpl != null) {
+        if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
             // first try the helper, it is the fastest way
             var currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext, debugProbesImpl)
 
@@ -101,7 +94,9 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             if (helperClass != null) {
                 val method = DebuggerUtils.findMethod(helperClass, "getCoroutinesRunningOnCurrentThread", null)
                 if (method != null) {
-                    val array = context.invokeMethod(helperClass, method, listOf(debugProbesImpl.getObject())) as ArrayReference
+                    val array = context.evaluationContext.computeAndKeep {
+                        context.invokeMethod(helperClass, method, listOf(debugProbesImpl.getObject())) as ArrayReference
+                    }
                     return array.values.asSequence().map { (it as LongValue).value() }.toHashSet()
                 }
             }
@@ -134,16 +129,11 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     override fun callerLocation(suspendContext: SuspendContextImpl): Location? {
         val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
         val continuationObject = extractContinuation(frameProxy) ?: return null
-        val executionContext = DefaultExecutionContext(EvaluationContextImpl(suspendContext, frameProxy))
+        val executionContext = DefaultExecutionContext(suspendContext, frameProxy)
         val debugMetadata = DebugMetadata.instance(executionContext) ?: return null
         val completionObject = debugMetadata.baseContinuationImpl.getNextContinuation(continuationObject, executionContext) ?: return null
         val stackTraceElement = debugMetadata.getStackTraceElement(completionObject, executionContext)?.stackTraceElement() ?: return null
-        return DebuggerUtilsEx.findOrCreateLocation(
-            suspendContext.debugProcess,
-            stackTraceElement.className,
-            stackTraceElement.methodName,
-            stackTraceElement.lineNumber
-        )
+        return DebuggerUtilsEx.findOrCreateLocation(suspendContext.debugProcess, stackTraceElement)
     }
 
     private fun extractBaseContinuation(

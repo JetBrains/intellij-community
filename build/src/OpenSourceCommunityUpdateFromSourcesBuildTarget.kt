@@ -18,11 +18,15 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
     val options = BuildOptions()
     options.useCompiledClassesFromProjectOutput = true
     //  options.buildStepsToSkip << BuildOptions.SVGICONS_PREBUILD_STEP
-    options.buildStepsToSkip.add(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)
-    options.buildStepsToSkip.add(BuildOptions.SOURCES_ARCHIVE_STEP)
+    options.buildStepsToSkip += listOf(
+      BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP,
+      BuildOptions.SOURCES_ARCHIVE_STEP,
+    )
     if (!SystemProperties.getBooleanProperty("intellij.build.local.plugins.repository", false)) {
-      options.buildStepsToSkip.add(BuildOptions.PROVIDED_MODULES_LIST_STEP)
-      options.buildStepsToSkip.add(BuildOptions.NON_BUNDLED_PLUGINS_STEP)
+      options.buildStepsToSkip += listOf(
+        BuildOptions.PROVIDED_MODULES_LIST_STEP,
+        BuildOptions.NON_BUNDLED_PLUGINS_STEP,
+      )
     }
 
     val distOutputRelativePath = System.getProperty("distOutputRelativePath")!!

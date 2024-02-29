@@ -78,11 +78,6 @@ private fun KotlinFacet.configureFacet(
             platform,
             compilerVersion
         )
-        val apiLevel = apiLevel
-        val languageLevel = languageLevel
-        if (languageLevel != null && apiLevel != null && apiLevel > languageLevel) {
-            this.apiLevel = languageLevel
-        }
     }
 
     ExternalCompilerVersionProvider.set(module, compilerVersion)

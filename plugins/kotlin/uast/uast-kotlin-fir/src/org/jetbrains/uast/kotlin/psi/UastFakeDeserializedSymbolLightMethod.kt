@@ -61,6 +61,17 @@ internal class UastFakeDeserializedSymbolLightMethod(
     override fun computeNullability(): KtTypeNullability? {
         return analyzeForUast(context) {
             val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast null
+            functionSymbol.psi?.let { psi ->
+                val hasInheritedGenericType = baseResolveProviderService.hasInheritedGenericType(psi)
+                if (hasInheritedGenericType) {
+                    // Inherited generic type: nullity will be determined at use-site
+                    return@analyzeForUast null
+                }
+            }
+            if (functionSymbol.isSuspend) {
+                // suspend fun returns Any?, which is mapped to @Nullable java.lang.Object
+                return@analyzeForUast KtTypeNullability.NULLABLE
+            }
             functionSymbol.returnType.nullability
         }
     }

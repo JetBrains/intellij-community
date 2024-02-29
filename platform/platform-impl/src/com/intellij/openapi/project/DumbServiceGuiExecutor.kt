@@ -13,14 +13,18 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.io.storage.HeavyProcessLatch
 import kotlinx.coroutines.flow.first
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
+import kotlin.coroutines.CoroutineContext
 
-@VisibleForTesting
+@Internal
 class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueue, listener: ExecutorStateListener)
   : MergingQueueGuiExecutor<DumbModeTask>(project, queue, listener,
                                           IndexingBundle.message("progress.indexing"),
                                           IndexingBundle.message("progress.indexing.paused")) {
+
+  override val taskId = IndexingType.INDEXING
 
   internal fun guiSuspender(): MergingQueueGuiSuspender = super.guiSuspender
 
@@ -60,5 +64,14 @@ class DumbServiceGuiExecutor(project: Project, queue: DumbServiceMergingTaskQueu
   @TestOnly
   internal suspend fun waitUntilFinished() {
     isRunning.first { !it }
+  }
+
+  @ApiStatus.Internal
+  enum class IndexingType : CoroutineContext.Element {
+    SCANNING, INDEXING;
+
+    override val key: CoroutineContext.Key<IndexingType> get() = IndexingType
+
+    companion object Key : CoroutineContext.Key<IndexingType>
   }
 }

@@ -32,6 +32,6 @@ class ModelVersionAnalyser<M, P : Any> : MLModelAnalyser<M, P>
   override val analysisDeclaration = setOf(VERSION)
 
   override fun analyse(sessionTreeRoot: DescribedRootContainer<M, P>): CompletableFuture<Set<Feature>> = CompletableFuture.completedFuture(
-    setOf(VERSION with sessionTreeRoot.root.version)
+    setOf(VERSION with sessionTreeRoot.rootData.version)
   )
 }

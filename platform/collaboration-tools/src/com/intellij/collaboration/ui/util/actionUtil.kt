@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -20,22 +21,23 @@ var Action.name: @Nls String?
 fun Action.toAnAction(): AnAction {
   val action = this
   return object : DumbAwareAction(action.name.orEmpty()) {
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
-    }
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = action.isEnabled
     }
 
-    override fun actionPerformed(event: AnActionEvent) {
-      val actionEvent = ActionEvent(event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
-                                    ActionEvent.ACTION_PERFORMED,
-                                    "execute",
-                                    event.modifiers)
-      action.actionPerformed(actionEvent)
-    }
+    override fun actionPerformed(event: AnActionEvent) = performAction(event)
   }
+}
+
+@ApiStatus.Internal
+fun Action.performAction(event: AnActionEvent) {
+  val actionEvent = ActionEvent(event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT),
+                                ActionEvent.ACTION_PERFORMED,
+                                "execute",
+                                event.modifiers)
+  actionPerformed(actionEvent)
 }
 
 fun swingAction(name: @Nls String, action: (ActionEvent) -> Unit) = object : AbstractAction(name) {

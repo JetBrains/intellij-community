@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -54,9 +55,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     try {
       if (isFirstIndexing) onFirstIndexingStart()
 
-      val actionManager = (serviceAsync<ActionManager>() as ActionManagerImpl)
-      val indexableActions = getIndexableActions(actionManager)
-
+      val indexableActions = getIndexableActions()
       project?.let {
         withBackgroundProgress(it, EmbeddingsBundle.getMessage("ml.embeddings.indices.actions.generation.label")) {
           reportProgress(indexableActions.size) { reporter ->
@@ -90,22 +89,19 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     }
   }
 
-  private suspend fun iterateActions(actions: Set<AnAction>, reporter: ProgressReporter? = null) {
-    val actionManager = (serviceAsync<ActionManager>() as ActionManagerImpl)
+  private suspend fun iterateActions(actions: List<IndexQueueEntry>, reporter: ProgressReporter? = null) {
     val index = ActionEmbeddingsStorage.getInstance().index
     val embeddingService = serviceAsync<LocalEmbeddingServiceProvider>().getService() ?: return
 
-    suspend fun processAction(action: AnAction) {
-      val id = actionManager.getId(action)
-      if (id == null || index.contains(id)) return
-      val text = action.templateText!!
-      val embedding = embeddingService.embed(text).normalized()
+    suspend fun processAction(entry: IndexQueueEntry) {
+      if (index.contains(entry.actionId)) return
+      val embedding = embeddingService.embed(entry.templateText).normalized()
       shouldSaveToDisk = true
-      index.addEntries(listOf(id to embedding))
+      index.addEntries(listOf(entry.actionId to embedding))
     }
 
-    for (action in actions) {
-      reporter?.itemStep { processAction(action) } ?: processAction(action)
+    for (entry in actions) {
+      reporter?.itemStep { processAction(entry) } ?: processAction(entry)
     }
   }
 
@@ -129,8 +125,21 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
       return !(action is ActionGroup && !action.isSearchable) && action.templatePresentation.hasText()
     }
 
-    internal fun getIndexableActions(actionManager: ActionManagerImpl): Set<AnAction> {
-      return actionManager.actions(canReturnStub = true).filterTo(LinkedHashSet()) { shouldIndexAction(it) }
+    private suspend fun getIndexableActions(): List<IndexQueueEntry> {
+      val actionManager = serviceAsync<ActionManager>() as ActionManagerImpl
+      return readAction {
+        actionManager
+          .actions(canReturnStub = true)
+          .filter { shouldIndexAction(it) }
+          .mapNotNull { action ->
+            val id = actionManager.getId(action)
+            val templateText = action.templateText
+            if (id == null || templateText == null) null else IndexQueueEntry(id, templateText)
+          }
+          .toList()
+      }
     }
+
+    private data class IndexQueueEntry(val actionId: String, val templateText: String)
   }
 }

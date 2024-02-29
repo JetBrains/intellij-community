@@ -350,7 +350,7 @@ class CombinedDiffViewer(
 
       totalVisible.forEach {
         if (diffViewers[it] != null) return
-        val height = blocksPanel.getBoundsForBlock(it).height
+        val height = blocksPanel.getHeightForBlock(it)
         val content = CombinedDiffBlockContent(CombinedDiffLoadingBlock(Dimension(0, height)), it)
         updateBlockContent(content)
       }

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@SuppressWarnings("LightServiceMigrationCode")
 @State(name = "masterDetails", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
   private final Map<String, ComponentState> myStates = new HashMap<>();

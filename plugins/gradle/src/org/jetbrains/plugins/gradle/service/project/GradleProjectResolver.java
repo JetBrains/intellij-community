@@ -8,7 +8,6 @@ import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAct
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchActionWithCustomSerializer;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.diagnostic.ExternalSystemSyncDiagnostic;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -70,10 +69,9 @@ import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.telemetry.GradleDaemonOpenTelemetryUtil;
-import org.jetbrains.plugins.gradle.util.telemetry.GradleOpenTelemetryTraceExporter;
+import org.jetbrains.plugins.gradle.util.telemetry.GradleOpenTelemetryTraceService;
 
 import java.io.File;
-import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -321,7 +319,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       gradleCallSpan.end();
     }
 
-    exportRecordedTraces(allModels);
+    GradleOpenTelemetryTraceService.exportOpenTelemetryTraces(allModels.getOpenTelemetryTraces());
 
     resolverCtx.checkCancelled();
     if (useCustomSerialization) {
@@ -977,29 +975,5 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .getTextMapPropagator()
       .inject(Context.current().with(span), context, GradleTracingContext.SETTER);
     return context;
-  }
-
-  private static void exportRecordedTraces(@NotNull AllModels allModels) {
-    byte[] traces = allModels.getOpenTelemetryTrace();
-    if (traces.length == 0) {
-      return;
-    }
-    URI telemetryHost = getOpenTelemetryAddress();
-    if (telemetryHost == null) {
-      return;
-    }
-    ApplicationManager.getApplication()
-      .executeOnPooledThread(() -> GradleOpenTelemetryTraceExporter.export(telemetryHost, traces));
-  }
-
-  private static @Nullable URI getOpenTelemetryAddress() {
-    String property = System.getProperty("idea.diagnostic.opentelemetry.otlp");
-    if (property == null) {
-      return null;
-    }
-    if (property.endsWith("/")) {
-      return URI.create(property + "v1/traces");
-    }
-    return URI.create(property + "/v1/traces");
   }
 }

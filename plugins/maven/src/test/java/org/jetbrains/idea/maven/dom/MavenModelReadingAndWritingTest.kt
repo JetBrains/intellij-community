@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
@@ -10,14 +11,13 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.IncorrectOperationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.junit.Test
 
 class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = true
-
-  override fun setUp() = runBlocking {
+  override fun setUp() = runBlocking(Dispatchers.EDT) {
     super.setUp()
 
     importProjectAsync("""
@@ -28,7 +28,7 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testReading() = runBlocking {
+  fun testReading() = runBlocking(Dispatchers.EDT) {
     val model = domModel
 
     assertEquals("test", model!!.getGroupId().getStringValue())
@@ -37,7 +37,7 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testWriting() = runBlocking {
+  fun testWriting() = runBlocking(Dispatchers.EDT) {
     CommandProcessor.getInstance().executeCommand(project, {
       ApplicationManager.getApplication().runWriteAction {
         val model = domModel
@@ -63,7 +63,7 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testAddingADependency() = runBlocking {
+  fun testAddingADependency() = runBlocking(Dispatchers.EDT) {
     CommandProcessor.getInstance().executeCommand(project, {
       ApplicationManager.getApplication().runWriteAction {
         val model = domModel

@@ -4,7 +4,6 @@ package com.intellij.java.ift.lesson.essential
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.UISettings
@@ -14,9 +13,6 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.java.ift.JavaLessonsBundle
 import com.intellij.java.ift.JavaProjectUtil
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
@@ -32,8 +28,6 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.roots.ui.configuration.SdkDetector
-import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsSafe
@@ -54,7 +48,6 @@ import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.put
-import training.FeaturesTrainerIcons
 import training.dsl.*
 import training.dsl.LessonUtil.adjustSearchEverywherePosition
 import training.dsl.LessonUtil.checkEditorModification
@@ -65,7 +58,6 @@ import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonProperties
-import training.learn.lesson.LessonManager
 import training.learn.lesson.general.run.clearBreakpoints
 import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
@@ -174,39 +166,7 @@ abstract class OnboardingTourLessonBase(id: String) : KLesson(id, JavaLessonsBun
     uiSettings.showNewMainToolbar = showMainToolbarPreference
     uiSettings.fireUISettingsChanged()
 
-    if (!lessonEndInfo.lessonPassed) {
-      LessonUtil.showFeedbackNotification(this, project)
-      return
-    }
-    val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
-    invokeLater {
-      val result = MessageDialogBuilder.yesNoCancel(JavaLessonsBundle.message("java.onboarding.finish.title"),
-                                                    JavaLessonsBundle.message("java.onboarding.finish.text",
-                                                                              LessonUtil.returnToWelcomeScreenRemark()))
-        .yesText(JavaLessonsBundle.message("java.onboarding.finish.exit"))
-        .noText(JavaLessonsBundle.message("java.onboarding.finish.modules"))
-        .icon(FeaturesTrainerIcons.PluginIcon)
-        .show(project)
-
-      when (result) {
-        Messages.YES -> invokeLater {
-          LessonManager.instance.stopLesson()
-          val closeAction = getActionById("CloseProject")
-          dataContextPromise.onSuccess { context ->
-            invokeLater {
-              val event = AnActionEvent.createFromAnAction(closeAction, null, ActionPlaces.LEARN_TOOLWINDOW, context)
-              ActionUtil.performActionDumbAwareWithCallbacks(closeAction, event)
-            }
-          }
-        }
-        Messages.NO -> invokeLater {
-          LearningUiManager.resetModulesView()
-        }
-      }
-      if (result != Messages.YES) {
-        LessonUtil.showFeedbackNotification(this, project)
-      }
-    }
+    showEndOfLessonDialogAndFeedbackForm(this, lessonEndInfo, project)
   }
 
   private fun getCurrentJdkVersionString(project: Project): String {

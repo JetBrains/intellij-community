@@ -194,7 +194,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
 
 class KnownPluginValidationRule : LocalFileCustomValidationRule(
   "known_plugin_id",
-  object : AllowedItemsResourceWeakRefStorage(KnownPluginValidationRule::class.java, "pluginData/known-plugins.txt") {
+  object : AllowedItemsResourceWeakRefStorage(KnownPluginValidationRule::class.java, "/pluginData/known-plugins.txt") {
 
     override fun createValue(value: String): String? = value.nullize(true)?.trim()?.lowercase()
     override fun readItems(): Set<String?> {

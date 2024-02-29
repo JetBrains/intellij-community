@@ -3,12 +3,12 @@ package com.intellij.platform.ml.impl.approach
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ml.*
-import com.intellij.platform.ml.ScopeEnvironment.Companion.accessibleSafelyByOrNull
+import com.intellij.platform.ml.ScopeEnvironment.Companion.narrowedTo
 import com.intellij.platform.ml.impl.*
+import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startMLSession
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform.Companion.getDescriptorsOfTiers
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform.Companion.getJoinedListenerForTask
-import com.intellij.platform.ml.impl.environment.ExtendedEnvironment
 import com.intellij.platform.ml.impl.model.MLModel
 import com.intellij.platform.ml.impl.monitoring.MLApproachListener
 import com.intellij.platform.ml.impl.monitoring.MLSessionListener
@@ -49,8 +49,12 @@ abstract class LogDrivenModelInference<M : MLModel<P>, P : Any>(
    * If a feature is not declared as "not used but still computed" or as "used by the model", then it will be computed.
    *
    * It must contain explicitly declared selectors for each tier used in [task], as well as in [additionallyDescribedTiers].
+   *
+   * @param callParameters Contains any additional parameters that you passed in [com.intellij.platform.ml.impl.MLTaskApproach.startMLSession]
+   * The tier set is equal to the one that was declared in [com.intellij.platform.ml.impl.MLTask.callParameters]'s first level.
+   * @param mlModel The model that was acquired by the [mlModelProvider]
    */
-  abstract val notUsedDescription: PerTier<FeatureSelector>
+  abstract fun getNotUsedDescription(callParameters: Environment, mlModel: M): PerTier<FeatureFilter>
 
   /**
    * Performs description's computation.
@@ -66,19 +70,19 @@ abstract class LogDrivenModelInference<M : MLModel<P>, P : Any>(
   abstract val additionallyDescribedTiers: List<Set<Tier<*>>>
 
   private val levels: List<LevelTiers> by lazy {
-    (task.levels zip additionallyDescribedTiers).map { Level(it.first, it.second) }
+    (task.levels zip additionallyDescribedTiers).map { LevelSignature(it.first, it.second) }
   }
 
   private val approachValidation: Unit by lazy { validateApproach() }
 
-  override fun startSession(permanentSessionEnvironment: Environment): Session.StartOutcome<P> {
-    return startSessionMonitoring(permanentSessionEnvironment)
+  override suspend fun startSession(callParameters: Environment, permanentSessionEnvironment: Environment): Session.StartOutcome<P> {
+    return startSessionMonitoring(callParameters, permanentSessionEnvironment)
   }
 
-  private fun startSessionMonitoring(permanentSessionEnvironment: Environment): Session.StartOutcome<P> {
+  private suspend fun startSessionMonitoring(callParameters: Environment, permanentSessionEnvironment: Environment): Session.StartOutcome<P> {
     val approachListener = apiPlatform.getJoinedListenerForTask<M, P>(this, permanentSessionEnvironment)
     try {
-      return acquireModelAndStartSession(permanentSessionEnvironment, approachListener)
+      return acquireModelAndStartSession(callParameters, permanentSessionEnvironment, approachListener)
     }
     catch (e: Throwable) {
       approachListener.onFailedToStartSessionWithException(e)
@@ -86,25 +90,16 @@ abstract class LogDrivenModelInference<M : MLModel<P>, P : Any>(
     }
   }
 
-  private fun acquireModelAndStartSession(permanentSessionEnvironment: Environment,
+  private suspend fun acquireModelAndStartSession(unsafeCallParameters: Environment,
+                                          permanentSessionEnvironment: Environment,
                                           approachListener: MLApproachListener<M, P>): Session.StartOutcome<P> {
     approachValidation
 
-    val extendedPermanentSessionEnvironment = ExtendedEnvironment(
-      apiPlatform.environmentExtenders,
-      permanentSessionEnvironment,
-      mlModelProvider.requiredTiers
-    )
+    val callParameters = unsafeCallParameters.narrowedTo(task.callParameters.first())
+    val extendedPermanentSessionEnvironment = Environment.joined(callParameters, permanentSessionEnvironment)
 
     val mlModel: M = run {
-      val mlModelProviderEnvironment = extendedPermanentSessionEnvironment.accessibleSafelyByOrNull(mlModelProvider)
-      if (mlModelProviderEnvironment == null) {
-        val failure = InsufficientEnvironmentForModelProviderOutcome<P>(mlModelProvider.requiredTiers,
-                                                                        extendedPermanentSessionEnvironment.tiers)
-        approachListener.onFailedToStartSession(failure)
-        return failure
-      }
-      val nullableMlModel = mlModelProvider.provideModel(levels, mlModelProviderEnvironment)
+      val nullableMlModel = mlModelProvider.provideModel(callParameters, extendedPermanentSessionEnvironment, levels)
       if (nullableMlModel == null) {
         val failure = ModelNotAcquiredOutcome<P>()
         approachListener.onFailedToStartSession(failure)
@@ -124,18 +119,21 @@ abstract class LogDrivenModelInference<M : MLModel<P>, P : Any>(
       }
     }
 
+    val notUsedDescription = getNotUsedDescription(callParameters, mlModel)
+    validateNotUsedDescription(notUsedDescription)
+
     val session = if (levels.size == 1) {
-      val collector = SolitaryLeafCollector(
-        apiPlatform, levels.first(), descriptionComputer, notUsedDescription,
-        permanentSessionEnvironment, levels.first().additional, mlModel
+      val collector = SolitaryLeafCollector.build(
+        callParameters, task.callParameters, descriptionComputer, notUsedDescription,
+        permanentSessionEnvironment, levels.first().additional, mlModel, apiPlatform, levels.first(), mlModel.knownFeatures
       )
       collector.handleCollectedTree(analyseThenLogStructure)
       MLModelPrediction(mlModel, collector)
     }
     else {
-      val collector = RootCollector(
-        apiPlatform, levels, descriptionComputer, notUsedDescription,
-        permanentSessionEnvironment, levels.first().additional, mlModel
+      val collector = RootCollector.build(
+        callParameters, task.callParameters, descriptionComputer, notUsedDescription,
+        permanentSessionEnvironment, levels.first().additional, mlModel, apiPlatform, levels, mlModel.knownFeatures
       )
       collector.handleCollectedTree(analyseThenLogStructure)
       MLModelPredictionBranching(mlModel, collector)
@@ -153,7 +151,7 @@ abstract class LogDrivenModelInference<M : MLModel<P>, P : Any>(
       return MLTaskApproach.Declaration(
         sessionFeatures = analysisMethod.sessionAnalysisDeclaration,
         levelsScheme = levels.map { levelTiers ->
-          Level(
+          LevelSignature(
             buildMainTiersScheme(levelTiers.main, apiPlatform),
             buildAdditionalTiersScheme(levelTiers.additional, apiPlatform),
           )
@@ -174,6 +172,11 @@ abstract class LogDrivenModelInference<M : MLModel<P>, P : Any>(
     require(maybeDuplicatedTaskTiers.size == taskTiers.size) {
       "There are duplicated tiers in the declaration: ${maybeDuplicatedTaskTiers - taskTiers}"
     }
+  }
+
+  private fun validateNotUsedDescription(notUsedDescription: PerTier<FeatureFilter>) {
+    val maybeDuplicatedTaskTiers = levels.flatMap { it.main + it.additional }
+    val taskTiers = maybeDuplicatedTaskTiers.toSet()
     require(notUsedDescription.keys == taskTiers) {
       "Selectors for those and only those tiers must be represented in the 'notUsedDescription' that are present in the task. " +
       "Missing: ${taskTiers - notUsedDescription.keys}, " +
@@ -217,15 +220,4 @@ abstract class LogDrivenModelInference<M : MLModel<P>, P : Any>(
 @ApiStatus.Internal
 class ModelNotAcquiredOutcome<P : Any> : Session.StartOutcome.Failure<P>() {
   override val failureDetails: String = "ML Model was not provided"
-}
-
-/**
- * There were not enough tiers to satisfy [MLModel.Provider]'s requirements, so it could not provide the model.
- */
-@ApiStatus.Internal
-class InsufficientEnvironmentForModelProviderOutcome<P : Any>(
-  expectedTiers: Set<Tier<*>>,
-  existingTiers: Set<Tier<*>>
-) : Session.StartOutcome.Failure<P>() {
-  override val failureDetails: String = "ML Model could not be provided: environment is not sufficient. Missing: ${expectedTiers - existingTiers}"
 }

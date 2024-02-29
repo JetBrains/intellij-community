@@ -16,6 +16,10 @@ import com.intellij.collaboration.ui.util.bindIconIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -74,6 +78,22 @@ object CodeReviewCommentUIUtil {
         override fun componentResized(e: ComponentEvent?) =
           it.dispatchEvent(ComponentEvent(component, ComponentEvent.COMPONENT_RESIZED))
       })
+      DataManager.registerDataProvider(it) { dataId ->
+        when {
+          CommonDataKeys.EDITOR.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.HOST_EDITOR.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.CARET.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.VIRTUAL_FILE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.LANGUAGE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.PSI_FILE.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          CommonDataKeys.PSI_ELEMENT.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.`is`(dataId) -> CustomizedDataContext.EXPLICIT_NULL
+          else -> null
+        }
+      }
     }
   }
 

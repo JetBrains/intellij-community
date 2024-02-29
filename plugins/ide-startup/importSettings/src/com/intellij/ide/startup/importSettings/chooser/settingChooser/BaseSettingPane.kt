@@ -143,6 +143,7 @@ class MultipleSettingPane(item: SettingItem, changeHandler: () -> Unit, val disp
     val chooserBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component)
     val popup = chooserBuilder.setRequestFocus(true).createPopup()
     popup.showUnderneathOf(actionLink)
+    component.enterHandler = { popup.cancel() }
 
     Disposer.register(disposable) {
       popup.cancel()

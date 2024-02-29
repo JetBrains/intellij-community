@@ -43,7 +43,13 @@ class ExtendedEnvironment : Environment {
   constructor(environmentExtenders: List<EnvironmentExtender<*>>,
               mainEnvironment: Environment,
               tiersToExtend: Set<Tier<*>>) {
-    require(tiersToExtend.all { it !in mainEnvironment })
+    val alreadyExistingButRequestedTiers = tiersToExtend.filter { it in mainEnvironment }
+    require(alreadyExistingButRequestedTiers.isEmpty()) {
+    """
+      Requested to extend $alreadyExistingButRequestedTiers, but they already exist in the main environment
+      (which contains ${mainEnvironment.tiers})
+    """.trimIndent()
+    }
     val nonOverridingExtenders = environmentExtenders.filter { it.extendingTier !in mainEnvironment }
     storage = buildExtendedEnvironment(
       tiersToExtend + mainEnvironment.tiers,

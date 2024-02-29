@@ -13,6 +13,7 @@ class KotlinUClassLiteralExpression(
 ) : KotlinAbstractUExpression(givenParent), UClassLiteralExpression, KotlinUElementWithType {
 
     private val typePart = UastLazyPart<PsiType?>()
+    private val expressionPart = UastLazyPart<UExpression?>()
 
     override val type: PsiType?
         get() = typePart.getOrBuild {
@@ -20,9 +21,8 @@ class KotlinUClassLiteralExpression(
         }
 
     override val expression: UExpression?
-        get() {
-            if (type != null) return null
-            val receiverExpression = sourcePsi.receiverExpression ?: return null
+        get() = expressionPart.getOrBuild {
+            val receiverExpression = sourcePsi.receiverExpression ?: return@getOrBuild null
             return baseResolveProviderService.baseKotlinConverter.convertExpression(receiverExpression, this, DEFAULT_EXPRESSION_TYPES_LIST)
         }
 }

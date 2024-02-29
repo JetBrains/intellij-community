@@ -4,7 +4,6 @@ package com.intellij.ide.startup.importSettings.jb
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.*
@@ -20,13 +19,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import kotlinx.coroutines.*
 import org.jdom.Element
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.time.LocalDate
@@ -41,8 +40,6 @@ import javax.swing.Icon
 import kotlin.Result
 import kotlin.io.path.*
 import kotlin.time.Duration.Companion.seconds
-
-private var marketplacePluginsAsync: Deferred<Set<PluginId>>? = null
 
 
 internal data class JbProductInfo(
@@ -90,13 +87,27 @@ internal data class JbProductInfo(
     val descriptorDeferreds = loadCustomDescriptorsFromDirForImportSettings(scope = coroutineScope, dir = pluginDir, context = context)
     descriptors2ProcessCnt.set(descriptorDeferreds.size)
     JbImportServiceImpl.LOG.debug { "There are ${descriptorDeferreds.size} plugins in $pluginDir" }
+    val disabledPluginsFile: Path = configDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
+    val disabledPlugins = if (Files.exists(disabledPluginsFile)) tryReadPluginIdsFromFile(disabledPluginsFile, JbImportServiceImpl.LOG) else setOf()
     for (def in descriptorDeferreds) {
       def.invokeOnCompletion {
         val descr = def.getCompleted()
-        if (descr != null && isCompatible(descr)) {
-          descriptorsMap[descr.pluginId] = descr
+        if (descr != null) {
+          if (disabledPlugins.contains(descr.pluginId)) {
+            JbImportServiceImpl.LOG.info("Plugin ${descr.pluginId} is disabled in $name. Won't try to import it")
+          }
+          else {
+            descriptorsMap[descr.pluginId] = descr
+          }
         }
-        descriptors2ProcessCnt.decrementAndGet()
+        if (descriptors2ProcessCnt.decrementAndGet() == 0) {
+          // checking for plugins compatibility:
+          for (entry in descriptorsMap) {
+            if (!isCompatible(entry.value)) {
+              descriptorsMap.remove(entry.key)
+            }
+          }
+        }
       }
     }
   }
@@ -120,7 +131,7 @@ internal data class JbProductInfo(
     for (dependency in descriptor.pluginDependencies) {
       if (dependency.isOptional)
         continue
-      if (!PluginManagerCore.getPluginSet().isPluginEnabled(dependency.pluginId)) {
+      if (!(PluginManagerCore.getPluginSet().isPluginEnabled(dependency.pluginId) || descriptorsMap.containsKey(dependency.pluginId))) {
         JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
                                      "because of the missing required dependency: ${dependency.pluginId}")
         return false

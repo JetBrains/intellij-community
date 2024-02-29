@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.MultiMap
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
+import com.intellij.vcs.log.data.index.ChangeKind
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo

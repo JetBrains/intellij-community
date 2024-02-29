@@ -1,4 +1,3 @@
-//file
 class C {
     public void foo(String s){}
 }

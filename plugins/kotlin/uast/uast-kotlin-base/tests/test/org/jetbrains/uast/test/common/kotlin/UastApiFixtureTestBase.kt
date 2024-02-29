@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiTypes
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -383,6 +384,31 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         })
     }
 
+    fun checkReifiedTypeNullability_generic(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                inline fun <reified T> inlineReified(t: T): T { return t }
+                inline fun <reified T> T.inlineReifiedExtension(t: T): T { return this }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitMethod(node: UMethod): Boolean {
+                val annotations = node.javaPsi.annotations
+                TestCase.assertTrue(annotations.isEmpty())
+                return super.visitMethod(node)
+            }
+
+            override fun visitParameter(node: UParameter): Boolean {
+                val annotations = (node.javaPsi as? PsiParameter)?.annotations
+                TestCase.assertTrue(annotations?.isEmpty() == true)
+                return super.visitParameter(node)
+            }
+        })
+    }
+
     fun checkInheritedGenericTypeNullability(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
@@ -508,6 +534,34 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 if (node.isConstructor) {
                     return super.visitMethod(node)
                 }
+                TestCase.assertTrue(node.uAnnotations.isEmpty())
+                TestCase.assertTrue(
+                    node.returnType == PsiTypes.voidType() || service.hasInheritedGenericType(node.sourcePsi!!)
+                )
+                return super.visitMethod(node)
+            }
+
+            override fun visitParameter(node: UParameter): Boolean {
+                TestCase.assertTrue(node.uAnnotations.isEmpty())
+                TestCase.assertTrue(service.hasInheritedGenericType(node.sourcePsi!!))
+                return super.visitParameter(node)
+            }
+        })
+    }
+
+    fun checkGenericTypeNullability_reified(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                inline fun <reified T> inlineReified(t: T): T { return t }
+                inline fun <reified T> T.inlineReifiedExtension(t: T) { this }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
+
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitMethod(node: UMethod): Boolean {
                 TestCase.assertTrue(node.uAnnotations.isEmpty())
                 TestCase.assertTrue(
                     node.returnType == PsiTypes.voidType() || service.hasInheritedGenericType(node.sourcePsi!!)

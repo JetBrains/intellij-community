@@ -11,8 +11,22 @@ import org.jetbrains.annotations.ApiStatus
 fun interface FeatureFilter {
   fun accept(featureDeclaration: FeatureDeclaration<*>): Boolean
 
+  fun accept(featureDeclarations: Set<FeatureDeclaration<*>>): Set<FeatureDeclaration<*>> {
+    return featureDeclarations.filter { accept(it) }.toSet()
+  }
+
   companion object {
     val REJECT_ALL = FeatureFilter { false }
     val ACCEPT_ALL = FeatureFilter { true }
+
+    fun FeatureFilter.inverted() = object : FeatureFilter {
+      override fun accept(featureDeclaration: FeatureDeclaration<*>): Boolean {
+        return !this@inverted.accept(featureDeclaration)
+      }
+
+      override fun accept(featureDeclarations: Set<FeatureDeclaration<*>>): Set<FeatureDeclaration<*>> {
+        return featureDeclarations - this@inverted.accept(featureDeclarations)
+      }
+    }
   }
 }

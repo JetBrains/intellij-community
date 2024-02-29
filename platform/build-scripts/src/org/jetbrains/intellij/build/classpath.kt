@@ -176,8 +176,7 @@ fun generatePluginClassPath(
   pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
   writeDescriptor: Boolean,
 ): ByteArray {
-  val byteOut = ByteArrayOutputStream()
-  val out = DataOutputStream(byteOut)
+  val allEntries = mutableListOf<Pair<Path, List<Path>>>()
   for ((pluginAsset, entries) in pluginEntries) {
     val files = entries.asSequence()
       .filter {
@@ -185,28 +184,43 @@ fun generatePluginClassPath(
         if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
           return@filter false
         }
-
         // assert that relativeOutputFile is correctly specified
         check(!it.path.startsWith(pluginAsset.dir) || pluginAsset.dir.relativize(it.path).nameCount == 2) {
           "relativeOutputFile is not specified correctly for $it"
         }
-
         true
       }
       .map { it.path }
       .distinct()
       .toMutableList()
+    allEntries += pluginAsset.dir to files
+  }
+  return generatePluginClassPathFromFiles(allEntries, writeDescriptor)
+}
+
+fun generatePluginClassPathFromFiles(pluginEntries: List<Pair<Path, List<Path>>>, writeDescriptor: Boolean): ByteArray {
+  val byteOut = ByteArrayOutputStream()
+  val out = DataOutputStream(byteOut)
+
+  for ((pluginDir, entries) in pluginEntries) {
+    val files = entries.asSequence()
+      .onEach {
+        check(!it.startsWith(pluginDir) || pluginDir.relativize(it).nameCount == 2) {
+          "plugin entry is not specified correctly: ${it}"
+        }
+      }
+      .distinct()
+      .toMutableList()
     if (files.size > 1) {
-      // always sort
-      putMoreLikelyPluginJarsFirst(pluginDirName = pluginAsset.dir.fileName.toString(), filesInLibUnderPluginDir = files)
+      putMoreLikelyPluginJarsFirst(pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)  // always sort
     }
 
     // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)
     val pluginDescriptorContent = reorderPluginClassPath(files, writeDescriptor)
 
-    // plugin dir as the last item in the list
+    // the plugin dir as the last item in the list
     out.writeShort(files.size)
-    out.writeUTF(pluginAsset.dir.fileName.invariantSeparatorsPathString)
+    out.writeUTF(pluginDir.fileName.invariantSeparatorsPathString)
 
     if (pluginDescriptorContent == null) {
       out.writeInt(0)
@@ -217,9 +231,10 @@ fun generatePluginClassPath(
     }
 
     for (file in files) {
-      out.writeUTF(pluginAsset.dir.relativize(file).invariantSeparatorsPathString)
+      out.writeUTF(pluginDir.relativize(file).invariantSeparatorsPathString)
     }
   }
+
   out.close()
   return byteOut.toByteArray()
 }

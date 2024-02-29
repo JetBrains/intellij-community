@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.buildNsUnawareJdom
@@ -26,13 +27,15 @@ import com.intellij.util.LineSeparator
 import org.jdom.Element
 import org.jdom.JDOMException
 import java.io.IOException
+import java.io.StringReader
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import javax.xml.stream.XMLStreamException
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.name
+
+@JvmField
+internal val XML_PROLOG: ByteArray = """<?xml version="1.0" encoding="UTF-8"?>""".toByteArray()
 
 abstract class FileBasedStorage(
   file: Path,
@@ -74,15 +77,17 @@ abstract class FileBasedStorage(
   override fun createSaveSession(states: StateMap) = FileSaveSessionProducer(storageData = states, storage = this)
 
   protected open class FileSaveSessionProducer(storageData: StateMap, storage: FileBasedStorage) :
-    XmlElementStorageSaveSessionProducer<FileBasedStorage>(originalStates = storageData, storage) {
+    XmlElementStorageSaveSessionProducer<FileBasedStorage>(originalStates = storageData, storage = storage) {
 
-    final override fun isSaveAllowed(): Boolean = when {
-      !super.isSaveAllowed() -> false
-      storage.blockSaving != null -> {
-        LOG.warn("Save blocked for $storage")
-        false
+    final override fun isSaveAllowed(): Boolean {
+      return when {
+        !super.isSaveAllowed() -> false
+        storage.blockSaving != null -> {
+          LOG.warn("Save blocked for $storage")
+          false
+        }
+        else -> true
       }
-      else -> true
     }
 
     override fun saveLocally(dataWriter: DataWriter?, useVfs: Boolean, events: MutableList<VFileEvent>?) {
@@ -109,11 +114,11 @@ abstract class FileBasedStorage(
           writeFile(storage.file, requestor = this, dataWriter, lineSeparator, storage.isUseXmlProlog)
           if (events != null) {
             if (virtualFile != null) {
-              events += updatingEvent(storage.file, virtualFile)
+              events.add(updatingEvent(storage.file, virtualFile))
             }
             else {
               LocalFileSystem.getInstance().refreshAndFindFileByNioFile(storage.file.parent)?.let { dir ->
-                events += creationEvent(storage.file, dir)
+                events.add(creationEvent(storage.file, dir))
               }
             }
           }
@@ -123,7 +128,7 @@ abstract class FileBasedStorage(
 
     private fun deleteFile(file: Path, virtualFile: VirtualFile?, requestor: StorageManagerFileWriteRequestor) {
       if (virtualFile == null) {
-        file.deleteIfExists()
+        Files.deleteIfExists(file)
       }
       else if (virtualFile.exists()) {
         if (virtualFile.isWritable) {
@@ -317,7 +322,7 @@ internal fun writeFile(
     }
   }
 
-  doWrite(requestor, file, dataWriter, lineSeparator, prependXmlProlog)
+  doWrite(requestor = requestor, file = file, dataWriterOrByteArray = dataWriter, lineSeparator = lineSeparator, prependXmlProlog = prependXmlProlog)
 
   return file
 }
@@ -343,7 +348,7 @@ internal fun writeFile(
 
 internal fun creationEvent(file: Path, dir: VirtualFile): VFileCreateEvent {
   val attributes = FileAttributes.fromNio(file, NioFiles.readAttributes(file))
-  return VFileCreateEvent(RELOADING_STORAGE_WRITE_REQUESTOR, dir, file.name, attributes.isDirectory, attributes, /*symlinkTarget =*/ null, /*children =*/ null)
+  return VFileCreateEvent(RELOADING_STORAGE_WRITE_REQUESTOR, dir, file.fileName.toString(), attributes.isDirectory, attributes, /*symlinkTarget =*/ null, /*children =*/ null)
 }
 
 internal fun updatingEvent(file: Path, vFile: VirtualFile): VFileContentChangeEvent {
@@ -357,3 +362,21 @@ internal class ReadOnlyModificationException(
   @JvmField val file: VirtualFile,
   @JvmField val session: SaveSession?,
 ) : RuntimeException("File is read-only: $file")
+
+internal fun loadDataAndDetectLineSeparator(file: Path): Pair<Element, LineSeparator?> {
+  val text = ComponentStorageUtil.loadTextContent(file)
+  return buildNsUnawareJdom(StringReader(text)) to detectLineSeparator(text)
+}
+
+private fun detectLineSeparator(chars: CharSequence): LineSeparator? {
+  for (element in chars) {
+    if (element == '\r') {
+      return LineSeparator.CRLF
+    }
+    // if we are here, there was no '\r' before
+    if (element == '\n') {
+      return LineSeparator.LF
+    }
+  }
+  return null
+}

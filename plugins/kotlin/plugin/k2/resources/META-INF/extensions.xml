@@ -17,7 +17,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.unresolvedReferenceQuickFixProvider
-            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinFirUnresolvedReferenceQuickFixProvider"/>
+            implementation="org.jetbrains.kotlin.idea.quickfix.KotlinFirUnresolvedReferenceQuickFixProvider"/>
   </extensions>
 
 </idea-plugin>

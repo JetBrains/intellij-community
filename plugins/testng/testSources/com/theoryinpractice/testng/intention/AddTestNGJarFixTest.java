@@ -4,10 +4,10 @@ package com.theoryinpractice.testng.intention;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.ui.UIUtil;
@@ -44,8 +44,7 @@ public class AddTestNGJarFixTest {
           builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
           myFixture.setUp();
           final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
-          myLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-          LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+          myLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(facade.getProject(), LanguageLevel.JDK_1_5);
         }
         catch (Exception e) {
           throw new RuntimeException(e);
@@ -59,7 +58,7 @@ public class AddTestNGJarFixTest {
   public void tearDown() {
     UIUtil.invokeAndWaitIfNeeded(() -> {
       try {
-        LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
+        IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), myLanguageLevel);
         myFixture.tearDown();
         myFixture = null;
       }

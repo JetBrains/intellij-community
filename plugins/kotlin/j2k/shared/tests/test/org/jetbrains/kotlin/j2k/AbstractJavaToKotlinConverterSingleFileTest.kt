@@ -2,73 +2,120 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.pom.java.LanguageLevel.HIGHEST
+import com.intellij.pom.java.LanguageLevel.JDK_1_8
 import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.PsiManager
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
+import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.regex.Pattern
 
-private val testHeaderPattern: Pattern = Pattern.compile("//(element|expression|statement|method|class|file|comp)\n")
+private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method|class)\n")
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        val languageLevel = if (testDataDirectory.toString().contains("newJavaFeatures")) HIGHEST else JDK_1_8
+        val testDataFile = File(testDataDirectory, fileName())
+        return descriptorByFileDirective(testDataFile, languageLevel)
+    }
+
+    override fun setUp() {
+        super.setUp()
+        JavaCodeStyleSettings.getInstance(project).USE_EXTERNAL_ANNOTATIONS = true
+    }
+
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable { JavaCodeStyleSettings.getInstance(project).USE_EXTERNAL_ANNOTATIONS = false },
+            ThrowableRunnable { super.tearDown() }
+        )
+    }
+
     open fun doTest(javaPath: String) {
         val javaFile = File(javaPath)
-        val fileContents = FileUtil.loadFile(javaFile, true)
-        val matcher = testHeaderPattern.matcher(fileContents)
+        val fileContents = FileUtil.loadFile(javaFile, /* convertLineSeparators = */ true)
 
-        val (prefix, javaCode) = if (matcher.find()) {
+        withCustomCompilerOptions(fileContents, project, module) {
+            addExternalFiles(javaFile)
+
+            val (prefix, javaCode) = getPrefixAndJavaCode(fileContents)
+            val directives = KotlinTestUtils.parseDirectives(javaCode)
+            val settings = configureSettings(directives)
+            val convertedText = convertJavaToKotlin(prefix, javaFile, javaCode, settings)
+
+            val actualText = if (prefix == "file") {
+                createKotlinFile(convertedText).dumpTextWithErrors()
+            } else {
+                convertedText
+            }
+            val expectedFile = provideExpectedFile(javaPath)
+            KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
+        }
+    }
+
+    private fun addExternalFiles(javaFile: File) {
+        val externalFileName = "${javaFile.nameWithoutExtension}.external"
+        val externalFiles = javaFile.parentFile.listFiles { _, name ->
+            name == "$externalFileName.kt" || name == "$externalFileName.java"
+        }!!.filterNotNull()
+
+        for (externalFile in externalFiles) {
+            addFile(externalFile)
+        }
+    }
+
+    private fun getPrefixAndJavaCode(fileContents: String): Pair<String, String> {
+        val matcher = testHeaderPattern.matcher(fileContents)
+        return if (matcher.find()) {
             Pair(matcher.group().trim().substring(2), matcher.replaceFirst(""))
         } else {
             Pair("file", fileContents)
         }
+    }
 
-        val settings = ConverterSettings.defaultSettings.copy()
-        val directives = KotlinTestUtils.parseDirectives(javaCode)
+    private fun configureSettings(directives: Directives): ConverterSettings =
+        ConverterSettings.defaultSettings.copy().apply {
+            directives["FORCE_NOT_NULL_TYPES"]?.let {
+                forceNotNullTypes = it.toBoolean()
+            }
+            directives["SPECIFY_LOCAL_VARIABLE_TYPE_BY_DEFAULT"]?.let {
+                specifyLocalVariableTypeByDefault = it.toBoolean()
+            }
+            directives["SPECIFY_FIELD_TYPE_BY_DEFAULT"]?.let {
+                specifyFieldTypeByDefault = it.toBoolean()
+            }
+            directives["OPEN_BY_DEFAULT"]?.let {
+                openByDefault = it.toBoolean()
+            }
+            directives["PUBLIC_BY_DEFAULT"]?.let {
+                publicByDefault = it.toBoolean()
+            }
+        }
 
-        directives["FORCE_NOT_NULL_TYPES"]?.let {
-            settings.forceNotNullTypes = it.toBoolean()
-        }
-        directives["SPECIFY_LOCAL_VARIABLE_TYPE_BY_DEFAULT"]?.let {
-            settings.specifyLocalVariableTypeByDefault = it.toBoolean()
-        }
-        directives["SPECIFY_FIELD_TYPE_BY_DEFAULT"]?.let {
-            settings.specifyFieldTypeByDefault = it.toBoolean()
-        }
-        directives["OPEN_BY_DEFAULT"]?.let {
-            settings.openByDefault = it.toBoolean()
-        }
-        directives["PUBLIC_BY_DEFAULT"]?.let {
-            settings.publicByDefault = it.toBoolean()
+    private fun convertJavaToKotlin(prefix: String, javaFile: File, javaCode: String, settings: ConverterSettings): String {
+        fun convertOriginalFile(): String {
+            // Don't create a new file from text, just convert the original file, since it is already a proper Java file
+            val psiManager = PsiManager.getInstance(project)
+            val virtualFile = addFile(javaFile)
+            val psiFile = psiManager.findFile(virtualFile) as PsiJavaFile
+            return fileToKotlin(psiFile, settings)
         }
 
-        val rawConverted = when (prefix) {
-            "expression" -> expressionToKotlin(javaCode, settings, project)
-            "statement" -> statementToKotlin(javaCode, settings, project)
-            "method" -> methodToKotlin(javaCode, settings, project)
-            "class" -> fileToKotlin(javaCode, settings, project)
-            "file" -> fileToKotlin(javaCode, settings, project)
+        return when (prefix) {
+            "expression" -> expressionToKotlin(javaCode, settings)
+            "statement" -> statementToKotlin(javaCode, settings)
+            "method" -> methodToKotlin(javaCode, settings)
+            "class" -> convertOriginalFile().replace("//class\n", "")
+            "file" -> convertOriginalFile()
             else -> throw IllegalStateException(
-                "Specify what is it: file, class, method, statement or expression using the first line of test data file"
+                "Specify what is it: class, method, statement or expression using the first line of test data file"
             )
         }
-
-        val reformatInFun = prefix in setOf("element", "expression", "statement")
-
-        var actual = reformat(rawConverted, project, reformatInFun)
-
-        if (prefix == "file") {
-            actual = createKotlinFile(actual).dumpTextWithErrors()
-        }
-
-        val expectedFile = provideExpectedFile(javaPath)
-        compareResults(expectedFile, actual)
     }
 
     open fun provideExpectedFile(javaPath: String): File {
@@ -76,31 +123,12 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         return File(kotlinPath)
     }
 
-    open fun compareResults(expectedFile: File, actual: String) {
-        KotlinTestUtils.assertEqualsToFile(expectedFile, actual)
-    }
+    abstract fun fileToKotlin(file: PsiJavaFile, settings: ConverterSettings): String
 
-    private fun reformat(text: String, project: Project, inFunContext: Boolean): String {
-        val funBody = text.lines().joinToString(separator = "\n", transform = { "  $it" })
-        val textToFormat = if (inFunContext) "fun convertedTemp() {\n$funBody\n}" else text
-
-        val convertedFile = KotlinTestUtils.createFile("converted", textToFormat, project)
-        WriteCommandAction.runWriteCommandAction(project) {
-            CodeStyleManager.getInstance(project)!!.reformat(convertedFile)
-        }
-
-        val reformattedText = convertedFile.text!!
-
-        return if (inFunContext)
-            reformattedText.removeFirstLine().removeLastLine().trimIndent()
-        else
-            reformattedText
-    }
-
-    abstract fun fileToKotlin(text: String, settings: ConverterSettings, project: Project): String
-
-    private fun methodToKotlin(text: String, settings: ConverterSettings, project: Project): String {
-        val result = fileToKotlin("final class C {$text}", settings, project)
+    private fun methodToKotlin(text: String, settings: ConverterSettings): String {
+        val fileText = "final class C {$text}"
+        val file = createJavaFile(fileText)
+        val result = fileToKotlin(file, settings)
         return result
             .substringBeforeLast("}")
             .replace("internal class C {", "\n")
@@ -108,9 +136,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             .trimIndent().trim()
     }
 
-    private fun statementToKotlin(text: String, settings: ConverterSettings, project: Project): String {
+    private fun statementToKotlin(text: String, settings: ConverterSettings): String {
         val funBody = text.lines().joinToString(separator = "\n", transform = { "  $it" })
-        val result = methodToKotlin("public void main() {\n$funBody\n}", settings, project)
+        val result = methodToKotlin("public void main() {\n$funBody\n}", settings)
 
         return result
             .substringBeforeLast("}")
@@ -118,8 +146,8 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             .trimIndent().trim()
     }
 
-    private fun expressionToKotlin(code: String, settings: ConverterSettings, project: Project): String {
-        val result = statementToKotlin("final Object o =$code}", settings, project)
+    private fun expressionToKotlin(code: String, settings: ConverterSettings): String {
+        val result = statementToKotlin("final Object o =$code}", settings)
         return result
             .replaceFirst("val o: Any? = ", "")
             .replaceFirst("val o: Any = ", "")
@@ -127,23 +155,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             .trim()
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        val testName = getTestName(false)
-        return if (testName.contains("WithFullJdk") || testName.contains("withFullJdk"))
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
-        else
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
-    }
+    private fun createJavaFile(text: String): PsiJavaFile =
+        myFixture.configureByText("converterTestFile.java", text) as PsiJavaFile
 
-    private fun String.removeFirstLine() = substringAfter('\n', "")
-
-    private fun String.removeLastLine() = substringBeforeLast('\n', "")
-
-    protected fun createJavaFile(text: String): PsiJavaFile {
-        return myFixture.configureByText("converterTestFile.java", text) as PsiJavaFile
-    }
-
-    private fun createKotlinFile(text: String): KtFile {
-        return myFixture.configureByText("converterTestFile.kt", text) as KtFile
-    }
+    private fun createKotlinFile(text: String): KtFile =
+        myFixture.configureByText("converterTestFile.kt", text) as KtFile
 }

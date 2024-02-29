@@ -76,6 +76,7 @@
       "borderColor": "Gray10",
       "foreground": "Gray1",
       "linkForeground": "Blue2",
+      "iconHoverBackground": "#0000000D",
       "Button": {
         "background": "Gray14",
         "borderColor": "Gray9",

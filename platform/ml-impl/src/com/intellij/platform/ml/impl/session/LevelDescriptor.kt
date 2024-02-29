@@ -17,15 +17,16 @@ data class LevelDescriptor(
   val apiPlatform: MLApiPlatform,
   val descriptionComputer: DescriptionComputer,
   val usedFeaturesSelectors: PerTier<FeatureSelector>,
-  val notUsedFeaturesSelectors: PerTier<FeatureSelector>,
+  val notUsedFeaturesSelectors: PerTier<FeatureFilter>,
 ) {
-  fun describe(
-    upperLevels: List<DescribedLevel>,
+  suspend fun describe(
+    nextLevelCallParameters: Environment,
     nextLevelMainEnvironment: Environment,
+    upperLevels: List<DescribedLevel>,
     nextLevelAdditionalTiers: Set<Tier<*>>
   ): DescribedLevel {
     val mainEnvironment = Environment.joined(listOf(
-      Environment.of(upperLevels.flatMap { it.main.keys }),
+      Environment.of(upperLevels.flatMap { it.mainInstances.keys + it.additionalInstances.keys }),
       nextLevelMainEnvironment
     ))
 
@@ -41,12 +42,13 @@ data class LevelDescriptor(
       }
 
     val nextLevel = DescribedLevel(
-      main = nextLevelMainEnvironment.tierInstances.associateWith { mainTierInstance ->
+      mainInstances = nextLevelMainEnvironment.tierInstances.associateWith { mainTierInstance ->
         DescribedTierData(extendedEnvironmentDescription.getValue(mainTierInstance.tier))
       },
-      additional = extendedEnvironment.restrictedBy(nextLevelAdditionalTiers).tierInstances.associateWith { mainTierInstance ->
+      additionalInstances = extendedEnvironment.restrictedBy(nextLevelAdditionalTiers).tierInstances.associateWith { mainTierInstance ->
         DescribedTierData(extendedEnvironmentDescription.getValue(mainTierInstance.tier))
       },
+      callParameters = nextLevelCallParameters
     )
 
     return nextLevel
@@ -71,30 +73,33 @@ data class LevelDescriptor(
   // Filter assumes that the feature is either used or not used by the model
   private fun createFilterOfUsedFeatures(tier: Tier<*>): FeatureFilter {
     val usedFeaturesSelector = usedFeaturesSelectors[tier] ?: FeatureSelector.NOTHING
-    val notUsedFeaturesSelector = notUsedFeaturesSelectors.getValue(tier)
     return FeatureFilter {
-      val featureIsUsed = usedFeaturesSelector.select(it)
-      val featureIsNotUsed = notUsedFeaturesSelector.select(it)
-      assert(featureIsUsed || featureIsNotUsed) {
-        "Feature $it of $tier must not have been computed. It is not used by the ML model or marked as not used"
-      }
-      require(featureIsUsed xor featureIsNotUsed) {
-        "${it} of $tier is used by the ML model, but marked as not used at the same time"
-      }
-      featureIsUsed
+      usedFeaturesSelector.select(it)
     }
   }
 
-  private fun Set<Feature>.splitByUsage(usableFeaturesFilter: FeatureFilter): Usage<Set<Feature>> {
-    val usedFeatures = this.filter { usableFeaturesFilter.accept(it.declaration) }
-    val notUsedFeatures = this.filter { !usableFeaturesFilter.accept(it.declaration) }
-    return Usage(usedFeatures.toSet(), notUsedFeatures.toSet())
+  private fun removeRedundantDescription(descriptor: TierDescriptor, computedDescriptionWithRedundancies: Set<Feature>): Set<Feature> {
+    val usedFeaturesSelector = usedFeaturesSelectors[descriptor.tier] ?: FeatureSelector.NOTHING
+    val notUsedFeaturesSelector = notUsedFeaturesSelectors.getValue(descriptor.tier)
+
+    return computedDescriptionWithRedundancies.mapNotNull { computedFeature ->
+      val featureIsUsed = usedFeaturesSelector.select(computedFeature.declaration)
+      val featureIsNotUsed = notUsedFeaturesSelector.accept(computedFeature.declaration)
+      if (!featureIsUsed && !featureIsNotUsed) {
+        if (!descriptor.descriptionPolicy.tolerateRedundantDescription)
+          throw IllegalArgumentException(
+            "Feature $computedFeature of $descriptor must not have been computed. It is not used by the ML model or marked as not used"
+          )
+        else return@mapNotNull null
+      }
+      require(!featureIsUsed || !featureIsNotUsed) {
+        "${computedFeature.declaration.name} of $descriptor is used by the ML model, but marked as not used at the same time"
+      }
+      computedFeature
+    }.toSet()
   }
 
-  private fun makeDescriptionPartition(descriptor: TierDescriptor,
-                                       computedDescription: Set<Feature>,
-                                       usedFeaturesFilter: FeatureFilter): DescriptionPartition {
-
+  private fun validateDescription(descriptor: TierDescriptor, computedDescription: Set<Feature>, usedFeaturesFilter: FeatureFilter) {
     val computedDescriptionDeclaration = computedDescription.map { it.declaration }.toSet()
 
     if (descriptor is ObsoleteTierDescriptor) {
@@ -119,13 +124,35 @@ data class LevelDescriptor(
       descriptor.descriptionDeclaration
 
     val notComputedDescriptionDeclaration = maybePartialDescriptionDeclaration - computedDescriptionDeclaration
-    for (notComputedFeatureDeclaration in notComputedDescriptionDeclaration) {
-      require(!usedFeaturesFilter.accept(notComputedFeatureDeclaration)) {
-        "Feature ${notComputedFeatureDeclaration} was expected to be computed by $descriptor, " +
-        "because was declared and accepted by the feature filter. Computed declaration: $computedDescriptionDeclaration"
-      }
+    var expectedButNotComputedDescriptionDeclaration = notComputedDescriptionDeclaration
+      .filter { usedFeaturesFilter.accept(it) }
+
+    if (descriptor.descriptionPolicy.putNullImplicitly) {
+      expectedButNotComputedDescriptionDeclaration = expectedButNotComputedDescriptionDeclaration
+        .filterNot { it.type is FeatureValueType.Nullable<*> }
     }
 
+    require(expectedButNotComputedDescriptionDeclaration.isEmpty()) {
+      """
+        Features ${expectedButNotComputedDescriptionDeclaration.map { it.name }}
+        were expected to be computed by $descriptor,
+        because was declared and accepted by the feature filter.
+        If the features are nullable, you should mark the declarations as .nullable(),
+        and then either put the 'null' to the result set explicitly, or mark the corresponding
+        descriptor's descriptionPolicy as 'putNullImplicitly'.
+      """.trimIndent()
+    }
+  }
+
+  private fun Set<Feature>.splitByUsage(usableFeaturesFilter: FeatureFilter): Usage<Set<Feature>> {
+    val usedFeatures = this.filter { usableFeaturesFilter.accept(it.declaration) }
+    val notUsedFeatures = this.filter { !usableFeaturesFilter.accept(it.declaration) }
+    return Usage(usedFeatures.toSet(), notUsedFeatures.toSet())
+  }
+
+  private fun makeDescriptionPartition(descriptor: TierDescriptor,
+                                       computedDescription: Set<Feature>,
+                                       usedFeaturesFilter: FeatureFilter): DescriptionPartition {
     val declaredFeatures = mutableSetOf<Feature>()
     val nonDeclaredFeatures = mutableSetOf<Feature>()
 
@@ -144,10 +171,9 @@ data class LevelDescriptor(
     return Declaredness(declaredFeatures.splitByUsage(usedFeaturesFilter), nonDeclaredFeatures.splitByUsage(usedFeaturesFilter))
   }
 
-  private fun describeTier(tier: Tier<*>, tierDescriptors: List<TierDescriptor>, environment: Environment): DescriptionPartition {
+  private suspend fun describeTier(tier: Tier<*>, tierDescriptors: List<TierDescriptor>, environment: Environment): DescriptionPartition {
     val toComputeFilter = createFilterOfFeaturesToCompute(tier, tierDescriptors)
     val usefulTierDescriptors = tierDescriptors.filter { it.couldBeUseful(toComputeFilter) }
-
     val description: Map<TierDescriptor, Set<Feature>> = descriptionComputer.computeDescription(
       tier,
       usefulTierDescriptors,
@@ -157,18 +183,21 @@ data class LevelDescriptor(
 
     val usedByModelFilter = createFilterOfUsedFeatures(tier)
 
-    val descriptionPartition = description.entries
-      .map { (tierDescriptor, computedDescription) ->
-        makeDescriptionPartition(tierDescriptor, computedDescription, usedByModelFilter)
-      }
-      .reduceOrNull { first, second ->
-        Declaredness(
-          declared = Usage(used = first.declared.used + second.declared.used,
-                           notUsed = first.declared.notUsed + second.declared.notUsed),
-          nonDeclared = Usage(used = first.nonDeclared.used + second.nonDeclared.used,
-                              notUsed = first.nonDeclared.notUsed + second.nonDeclared.notUsed)
-        )
-      } ?: Declaredness(Usage(emptySet(), emptySet()), Usage(emptySet(), emptySet()))
+    val descriptionPartition =
+      description.entries
+        .map { (tierDescriptor, computedDescription) ->
+          val redundanciesFreeDescription = removeRedundantDescription(tierDescriptor, computedDescription)
+          validateDescription(tierDescriptor, redundanciesFreeDescription, usedByModelFilter)
+          makeDescriptionPartition(tierDescriptor, redundanciesFreeDescription, usedByModelFilter)
+        }
+        .reduceOrNull { first, second ->
+          Declaredness(
+            declared = Usage(used = first.declared.used + second.declared.used,
+                             notUsed = first.declared.notUsed + second.declared.notUsed),
+            nonDeclared = Usage(used = first.nonDeclared.used + second.nonDeclared.used,
+                                notUsed = first.nonDeclared.notUsed + second.nonDeclared.notUsed)
+          )
+        } ?: Declaredness(Usage(emptySet(), emptySet()), Usage(emptySet(), emptySet()))
 
     return descriptionPartition
   }

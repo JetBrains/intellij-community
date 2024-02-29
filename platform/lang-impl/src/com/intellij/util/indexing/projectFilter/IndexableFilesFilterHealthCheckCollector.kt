@@ -10,18 +10,23 @@ import com.intellij.openapi.project.Project
  * @see <a href="https://youtrack.jetbrains.com/articles/IJPL-A-300/indexable.files.filter">About indexable.files.filter collector</a>
  */
 internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("indexable.files.filter", 6)
+  private val GROUP = EventLogGroup("indexable.files.filter",
+                                    6,
+                                    "FUS",
+                                    "Collects statistics of ProjectIndexableFilesFilterHealthCheck. " +
+                                    "See more here: https://youtrack.jetbrains.com/articles/IJPL-A-300/indexable.files.filter")
 
   override fun getGroup(): EventLogGroup = GROUP
 
   private val filterNameField = EventFields.StringValidatedByEnum("filter_name", "indexable_files_filter_name")
-  private val attemptNumberInProjectField = EventFields.Int("attempt_number_in_project")
-  private val successfulAttemptNumberInProjectField = EventFields.Int("successful_attempt_number_in_project")
+  private val attemptNumberInProjectField = EventFields.Int("attempt_number_in_project", "Health check attempt number in a given project. First is 1.")
+  private val successfulAttemptNumberInProjectField = EventFields.Int("successful_attempt_number_in_project", "Finished (not-cancelled) health check attempt number in a given project. First is 1.")
   private val nonIndexableFilesInFilterField = EventFields.Int("non_indexable_files_in_filter_count")
   private val indexableFilesNotInFilterField = EventFields.Int("indexable_files_not_in_filter_count")
 
   private val indexableFilesFilterHealthCheck = GROUP.registerVarargEvent(
     "indexable_files_filter_health_check",
+    description = "Reports results of health check of ProjectIndexableFilesFilter.",
     filterNameField,
     attemptNumberInProjectField,
     successfulAttemptNumberInProjectField,
@@ -33,6 +38,7 @@ internal object IndexableFilesFilterHealthCheckCollector : CounterUsagesCollecto
     "indexable_files_filter_health_check_started",
     filterNameField,
     attemptNumberInProjectField,
+    description = "Even which happens every time health check is started."
   )
 
   fun reportIndexableFilesFilterHealthcheckStarted(project: Project,

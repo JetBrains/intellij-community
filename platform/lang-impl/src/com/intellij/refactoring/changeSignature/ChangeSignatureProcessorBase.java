@@ -7,7 +7,6 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -169,22 +168,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     final String fqn = CopyReferenceAction.elementToFqn(method);
     SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.createPointer(method);
     if (fqn != null) {
-      UndoableAction action = new BasicUndoableAction() {
-        @Override
-        public void undo() {
-          if (elementListener instanceof UndoRefactoringElementListener) {
-            PsiElement element = pointer.getElement();
-            if (element != null) {
-              ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(element, fqn);
-            }
-          }
-        }
-
-        @Override
-        public void redo() {
-        }
-      };
-      UndoManager.getInstance(myProject).undoableActionPerformed(action);
+      UndoManager.getInstance(myProject).undoableActionPerformed(new UndoChangeSignatureAction(elementListener, pointer, fqn));
     }
     try {
       doChangeSignature(changeInfo, usages);
@@ -245,5 +229,30 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
   public ChangeInfo getChangeInfo() {
     return myChangeInfo;
+  }
+
+  private static class UndoChangeSignatureAction extends BasicUndoableAction {
+    private final RefactoringElementListener myElementListener;
+    private final SmartPsiElementPointer<PsiElement> myPointer;
+    private final String myFqn;
+
+    private UndoChangeSignatureAction(RefactoringElementListener elementListener, SmartPsiElementPointer<PsiElement> pointer, String fqn) {
+      myElementListener = elementListener;
+      myPointer = pointer;
+      myFqn = fqn;
+    }
+
+    @Override
+    public void undo() {
+      if (myElementListener instanceof UndoRefactoringElementListener listener) {
+        PsiElement element = myPointer.getElement();
+        if (element != null) {
+          listener.undoElementMovedOrRenamed(element, myFqn);
+        }
+      }
+    }
+
+    @Override
+    public void redo() { }
   }
 }

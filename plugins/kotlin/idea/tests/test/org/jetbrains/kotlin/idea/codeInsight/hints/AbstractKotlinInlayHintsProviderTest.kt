@@ -2,12 +2,15 @@
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.declarative.DeclarativeInlayHintsProviderTestCase
 import com.intellij.util.ThrowableRunnable
+import junit.framework.ComparisonFailure
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.util.checkPluginIsCorrect
@@ -45,30 +48,50 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
     fun doTest(testPath: String) {
         val defaultFile = File(testPath)
         val file = if (isK2Plugin()) {
-            val file = File(testPath.replace(".kt", ".kt.k2"))
+            val file = File(testPath.replace(".kt", ".k2.kt"))
             file.takeIf(File::exists) ?: defaultFile
         } else {
             defaultFile
         }
 
         configureDependencies(defaultFile)
-        assertThatActualHintsMatch(file)
+        doTestProviders(file = file)
     }
 
     private val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
 
     protected fun configureDependencies(file: File) {
         val parentFile = file.parentFile
+        File(parentFile, "_lib.kt").configureFixture()
         for (suffix in dependencySuffixes) {
             val dependency = file.name.replace(".kt", suffix)
-            val dependencyFile = File(parentFile, dependency)
-            if (dependencyFile.exists()) {
-                myFixture.configureByFile(dependencyFile.absolutePath)
-            }
+            File(parentFile, dependency).configureFixture()
+        }
+    }
+
+    private fun File.configureFixture() {
+        if (this.exists()) {
+            myFixture.configureByFile(this.absolutePath)
         }
     }
 
     protected abstract fun inlayHintsProvider(): InlayHintsProvider
 
-    abstract fun assertThatActualHintsMatch(file: File)
+    protected open fun calculateOptions(fileContents: String): Map<String, Boolean> =
+        emptyMap()
+
+    protected open fun doTestProviders(file: File) {
+        val fileContents: String = FileUtil.loadFile(file, true)
+        val inlayHintsProvider: InlayHintsProvider = inlayHintsProvider()
+        val options: Map<String, Boolean> = calculateOptions(fileContents)
+
+        try {
+            doTestProvider("${file.name.substringBefore(".")}.kt", fileContents, inlayHintsProvider, options)
+        } catch (e: ComparisonFailure) {
+            throw FileComparisonFailedError(
+                e.message,
+                e.expected, e.actual, file.absolutePath, null
+            )
+        }
+    }
 }

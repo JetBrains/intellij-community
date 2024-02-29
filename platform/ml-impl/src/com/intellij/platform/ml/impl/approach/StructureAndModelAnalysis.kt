@@ -41,23 +41,24 @@ class StructureAndModelAnalysis<M : MLModel<P>, P : Any>(
   }
 
   private fun buildAnalysedSessionTree(tree: DescribedSessionTree<M, P>, analysis: GroupedAnalysis<M, P>): AnalysedSessionTree<P> {
-    val treeAnalysisPerInstance: PerTierInstance<AnalysedTierData> = tree.level.main.entries
+    val treeAnalysisPerInstance: PerTierInstance<AnalysedTierData> = tree.levelData.mainInstances.entries
       .associate { (tierInstance, data) ->
         tierInstance to AnalysedTierData(data.description,
                                          analysis.structureAnalysis[tree]?.get(tierInstance.tier) ?: emptySet())
       }
 
-    val analysedLevel = Level(
-      main = treeAnalysisPerInstance,
-      additional = tree.level.additional
+    val analysedLevel = AnalysedLevel(
+      mainInstances = treeAnalysisPerInstance,
+      additionalInstances = tree.levelData.additionalInstances,
+      callParameters = tree.levelData.callParameters
     )
 
     return when (tree) {
-      is SessionTree.Branching<M, DescribedLevel, P> -> {
+      is SessionTree.Branching<M, DescribedTierData, P> -> {
         SessionTree.Branching(analysedLevel,
                               tree.children.map { buildAnalysedSessionTree(it, analysis) })
       }
-      is SessionTree.Leaf<M, DescribedLevel, P> -> {
+      is SessionTree.Leaf<M, DescribedTierData, P> -> {
         SessionTree.Leaf(analysedLevel, tree.prediction)
       }
       is SessionTree.ComplexRoot -> {

@@ -221,16 +221,16 @@
 
     "Code": {
       "Inline": {
-        "backgroundColor": "Grey10",
+        "backgroundColor": "Gray10",
         "backgroundOpacity": 15
       },
       "Block": {
         "backgroundOpacity": 100,
-        "borderColor":"Grey3",
+        "borderColor":"Gray3",
         "EditorPane": {
-          "backgroundColor": "Grey5",
+          "backgroundColor": "Gray5",
           "backgroundOpacity": 20,
-          "borderColor": "Grey3"
+          "borderColor": "Gray3"
         }
       }
     },
@@ -413,6 +413,7 @@
       "borderColor": "Gray4",
       "foreground": "Gray13",
       "linkForeground": "Blue9",
+      "iconHoverBackground": "#FFFFFF1A",
       "Button": {
         "background": "Gray3",
         "borderColor": "Gray7",

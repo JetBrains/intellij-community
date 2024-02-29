@@ -4,6 +4,7 @@ package com.intellij.build;
 import com.intellij.build.events.*;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.Filter;
@@ -31,6 +32,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -1219,6 +1221,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     public boolean isSelected(@NotNull AnActionEvent e) {
       Editor editor = myConsoleViewHandler.getEditor();
       if (editor == null) return false;
+      editor = ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
       Document document = editor.getDocument();
       return document.getLineCount() == 0 || document.getLineNumber(editor.getCaretModel().getOffset()) == document.getLineCount() - 1;
     }
@@ -1232,6 +1235,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Editor editor = myConsoleViewHandler.getEditor();
       if (editor == null) return;
+      editor = ClientEditorManager.getClientEditor(editor, ClientId.getCurrentOrNull());
       if (state) {
         EditorUtil.scrollToTheEnd(editor);
       }

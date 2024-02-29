@@ -2,11 +2,11 @@
 package com.intellij.platform.ml.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.ml.*
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
 import com.intellij.platform.ml.impl.session.AdditionalTierScheme
-import com.intellij.platform.ml.impl.session.Level
 import com.intellij.platform.ml.impl.session.MainTierScheme
 import org.jetbrains.annotations.ApiStatus
 
@@ -18,8 +18,15 @@ import org.jetbrains.annotations.ApiStatus
  * The proper way to create new tasks is to create a static object-inheritor of this class
  * (see inheritors of this class to find all implemented tasks in your project).
  *
+ * The first level in [levels] is usually called "permanentSessionEnvironment"
+ *
  * @param name The unique name of an ML Task
  * @param levels The main tiers of the task that will be provided within the task's application place
+ * @param callParameters Parameters that were available in the place, where the task is applied.
+ * Should be used to pass additional objects to
+ *  - Model's acquisition [com.intellij.platform.ml.impl.model.MLModel.Provider.provideModel]
+ *  - The prediction [com.intellij.platform.ml.impl.model.MLModel.predict]
+ *  - During the analysis, the call parameters are saved in the session tree, see [com.intellij.platform.ml.impl.session.LevelData].
  * @param predictionClass The class of an object, that will serve as "prediction"
  * @param T The type of prediction
  */
@@ -27,8 +34,18 @@ import org.jetbrains.annotations.ApiStatus
 abstract class MLTask<T : Any> protected constructor(
   val name: String,
   val levels: List<Set<Tier<*>>>,
+  val callParameters: List<Set<Tier<*>>>,
   val predictionClass: Class<T>
-)
+) {
+  init {
+    require(callParameters.size == levels.size) {
+      """
+        Task $this has ${levels.size} levels, but in call parameters there are ${callParameters.size} levels.
+        Each level must have its own set of call parameters.
+      """.trimIndent()
+    }
+  }
+}
 
 /**
  * A method of approaching an ML task.
@@ -60,10 +77,15 @@ interface MLTaskApproach<P : Any> {
   /**
    * Acquire the ML model and start the session.
    *
+   * @param callParameters The parameters that were available in the place where the task is applied.
+   * The set of tiers must be equal to the first level of [MLTask.callParameters].
+   * @param permanentSessionEnvironment The instances of the first level of [MLTask.levels], that will be described
+   * to call the ML model.
+   *
    * @return [Session.StartOutcome.Failure] if something went wrong during the start, [Session.StartOutcome.Success]
    * which contains the started session otherwise.
    */
-  fun startSession(permanentSessionEnvironment: Environment): Session.StartOutcome<P>
+  suspend fun startSession(callParameters: Environment, permanentSessionEnvironment: Environment): Session.StartOutcome<P>
 
   data class Declaration(
     val sessionFeatures: Map<String, Set<FeatureDeclaration<*>>>,
@@ -75,23 +97,22 @@ interface MLTaskApproach<P : Any> {
       return apiPlatform.accessApproachFor(task)
     }
 
-    fun <P : Any> startMLSession(task: MLTask<P>,
-                                 permanentSessionEnvironment: Environment,
-                                 apiPlatform: MLApiPlatform = ReplaceableIJPlatform): Session.StartOutcome<P> {
+    suspend fun <P : Any> startMLSession(task: MLTask<P>,
+                                         apiPlatform: MLApiPlatform,
+                                         callParameters: Environment,
+                                         permanentSessionEnvironment: Environment): Session.StartOutcome<P> {
       val approach = findMlApproach(task, apiPlatform)
-      return approach.startSession(permanentSessionEnvironment)
+      return approach.startSession(callParameters, permanentSessionEnvironment)
     }
 
-    fun <P : Any> MLTask<P>.startMLSession(permanentSessionEnvironment: Environment): Session.StartOutcome<P> {
-      return startMLSession(this, permanentSessionEnvironment)
+    suspend fun <P : Any> MLTask<P>.startMLSession(callParameters: Environment, permanentSessionEnvironment: Environment, apiPlatform: MLApiPlatform = ReplaceableIJPlatform): Session.StartOutcome<P> {
+      return startMLSession(this@startMLSession, apiPlatform, callParameters, permanentSessionEnvironment)
     }
 
-    fun <P : Any> MLTask<P>.startMLSession(permanentTierInstances: Iterable<TierInstance<*>>): Session.StartOutcome<P> {
-      return this.startMLSession(Environment.of(permanentTierInstances))
-    }
-
-    fun <P : Any> MLTask<P>.startMLSession(vararg permanentTierInstances: TierInstance<*>): Session.StartOutcome<P> {
-      return this.startMLSession(Environment.of(*permanentTierInstances))
+    fun <P : Any> MLTask<P>.startCoroutineAndMLSession(callParameters: Environment, permanentSessionEnvironment: Environment, apiPlatform: MLApiPlatform = ReplaceableIJPlatform): Session.StartOutcome<P> {
+      return runBlockingCancellable {
+        startMLSession(callParameters, permanentSessionEnvironment, apiPlatform)
+      }
     }
   }
 }
@@ -111,7 +132,7 @@ interface MLTaskApproachInitializer<P : Any> {
    * It is called only once during the application's runtime.
    * So it is crucial that this function will accept the [MLApiPlatform] you want it to.
    *
-   * To access the API in order to build event validator statically,
+   * To access the API to build event validator statically,
    * FUS uses the actual [com.intellij.platform.ml.impl.apiPlatform.IJPlatform], which could be problematic if you
    * want to test FUS logs.
    * So make sure that you will replace it with your test platform in
@@ -124,6 +145,11 @@ interface MLTaskApproachInitializer<P : Any> {
   }
 }
 
-typealias LevelScheme = Level<PerTier<MainTierScheme>, PerTier<AdditionalTierScheme>>
+data class LevelSignature<M, A>(
+  val main: M,
+  val additional: A
+)
 
-typealias LevelTiers = Level<Set<Tier<*>>, Set<Tier<*>>>
+typealias LevelScheme = LevelSignature<PerTier<MainTierScheme>, PerTier<AdditionalTierScheme>>
+
+typealias LevelTiers = LevelSignature<Set<Tier<*>>, Set<Tier<*>>>

@@ -16,15 +16,23 @@ import kotlin.time.Duration.Companion.seconds
 
 
 data class ComponentData(val xpath: String,
+                         val cached: Boolean,
                          val driver: Driver,
                          val robotService: RobotService,
                          val parentSearchContext: SearchContext,
                          val foundComponent: Component?)
 
 open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
-  val component: Component by lazy {
+  private val cachedComponent: Component by lazy {
     data.foundComponent ?: findThisComponent()
   }
+
+  val component: Component
+    get() = if (data.cached) {
+      cachedComponent
+    } else {
+      findThisComponent()
+    }
 
   private fun findThisComponent(): Component {
     waitFor(DEFAULT_FIND_TIMEOUT_SECONDS.seconds,

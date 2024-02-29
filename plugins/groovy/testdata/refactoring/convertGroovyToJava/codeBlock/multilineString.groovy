@@ -12,3 +12,8 @@ class test {
     $object = new test;
     $object-><caret>xyz();
 ''' + "\n\$abc = '123';"
+
+def indented = '''
+     test(1);
+     test(1);\
+'''

@@ -2,6 +2,7 @@
 package com.intellij.platform.ml.impl
 
 import com.intellij.platform.ml.FeatureDeclaration
+import com.intellij.platform.ml.FeatureFilter
 import com.intellij.platform.ml.PerTier
 import org.jetbrains.annotations.ApiStatus
 
@@ -60,21 +61,16 @@ interface FeatureSelector {
       override fun select(availableFeatures: Set<FeatureDeclaration<*>>): Selection = Selection.Complete(availableFeatures)
     }
 
-    infix fun FeatureSelector.or(other: FeatureSelector): FeatureSelector {
+    infix fun FeatureSelector.or(other: FeatureFilter): FeatureSelector {
       return object : FeatureSelector {
         override fun select(availableFeatures: Set<FeatureDeclaration<*>>): Selection {
           val thisSelection = this@or.select(availableFeatures)
-          val otherSelection = other.select(availableFeatures)
-          val joinedSelection = (thisSelection.selectedFeatures + otherSelection.selectedFeatures).toSet()
-          return if (thisSelection is Selection.Incomplete || otherSelection is Selection.Incomplete) {
-            val incompleteSelection = if (thisSelection is Selection.Incomplete)
-              thisSelection
-            else
-              otherSelection as Selection.Incomplete
-
+          val otherSelection = other.accept(availableFeatures)
+          val joinedSelection = thisSelection.selectedFeatures + otherSelection
+          return if (thisSelection is Selection.Incomplete) {
             object : Selection.Incomplete(joinedSelection) {
               override val details: String
-                get() = incompleteSelection.details
+                get() = thisSelection.details
             }
           }
           else
@@ -83,9 +79,20 @@ interface FeatureSelector {
       }
     }
 
-    infix fun PerTier<FeatureSelector>.or(other: PerTier<FeatureSelector>): PerTier<FeatureSelector> {
+    infix fun PerTier<FeatureSelector>.or(other: PerTier<FeatureFilter>): PerTier<FeatureSelector> {
       require(this.keys == other.keys)
       return keys.associateWith { this.getValue(it) or other.getValue(it) }
+    }
+
+    fun FeatureSelector.asFilter() = object : FeatureFilter {
+      override fun accept(featureDeclarations: Set<FeatureDeclaration<*>>): Set<FeatureDeclaration<*>> {
+        val selection = this@asFilter.select(featureDeclarations)
+        return selection.selectedFeatures
+      }
+
+      override fun accept(featureDeclaration: FeatureDeclaration<*>): Boolean {
+        return this@asFilter.select(featureDeclaration)
+      }
     }
   }
 }

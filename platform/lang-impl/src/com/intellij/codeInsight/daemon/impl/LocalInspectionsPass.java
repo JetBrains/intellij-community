@@ -91,7 +91,7 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
     HighlightInfoUpdater highlightInfoUpdater = HighlightInfoUpdater.getInstance(getFile().getProject());
-    HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(getFile(), this, true, false);
+    HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(getFile(), this, true, false, myHighlightingSession);
     try {
       List<HighlightInfo> fileInfos = Collections.synchronizedList(new ArrayList<>());
       List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
@@ -300,12 +300,11 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
       PluginException.logPluginError(LOG, errorMessage, null, toolWrapper.getTool().getClass());
     }
     boolean isInInjected = myInspectInjectedPsi && file.getViewProvider() instanceof InjectedFileViewProvider;
-    HighlightInfo info = builder.create();
+    HighlightInfo info = builder.toolId(toolWrapper.getShortName()).create();
 
     if (info == null || !UpdateHighlightersUtil.HighlightInfoPostFilters.accept(myProject, info)) {
       return;
     }
-    info.toolId = toolWrapper.getShortName();
     if (isInInjected) {
       Document documentRange = documentManager.getDocument(file);
       if (documentRange != null) {
@@ -352,9 +351,9 @@ public final class LocalInspectionsPass extends ProgressableTextEditorHighlighti
       }
       if (start != end || info.startOffset == info.endOffset) {
         registerQuickFixes(builder, fixes, shortName);
+        builder.toolId(info.toolId);
         HighlightInfo patched = builder.createUnconditionally();
         patched.markFromInjection();
-        patched.toolId = info.toolId;
         outInfos.accept(patched);
       }
     }

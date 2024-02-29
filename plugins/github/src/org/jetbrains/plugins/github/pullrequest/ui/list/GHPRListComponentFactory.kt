@@ -127,13 +127,11 @@ internal class GHPRListComponentFactory(
     user: GHPullRequestRequestedReviewer,
     reviewState: ReviewState?
   ): UserPresentation {
-    val avatarIcon = avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.BASE)
-    val icon = if (reviewState != null) {
-      val outlineColor = ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState)
-      CodeReviewAvatarUtils.outlinedAvatarIcon(avatarIcon, outlineColor)
-    }
-    else {
-      avatarIcon
+    val outlineColor = reviewState?.let(ReviewDetailsUIUtil::getReviewStateIconBorder)
+    val avatarIcon = avatarIconsProvider.getIcon(user.avatarUrl, Avatar.Sizes.OUTLINED)
+    val icon = when (outlineColor) {
+      null -> avatarIcon
+      else -> CodeReviewAvatarUtils.createIconWithOutline(avatarIcon, outlineColor)
     }
 
     return UserPresentation.Simple(user.shortName, user.name, icon)

@@ -71,8 +71,12 @@ internal class ApplicationInfoPropertiesImpl(
     microVersion = applicationInfoOverrides?.microVersion ?: versionTag.getAttributeValue("micro") ?: "0"
     patchVersion = applicationInfoOverrides?.patchVersion ?: versionTag.getAttributeValue("patch") ?: "0"
     fullVersionFormat = applicationInfoOverrides?.fullVersionFormat ?: versionTag.getAttributeValue("full") ?: "{0}.{1}"
-    isEAP = (applicationInfoOverrides?.eap ?: System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP) ?: versionTag.getAttributeValue("eap")).toBoolean()
-    versionSuffix = (applicationInfoOverrides?.versionSuffix ?: System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX) ?: versionTag.getAttributeValue("suffix")) ?: (if (isEAP) "EAP" else null)
+    isEAP = (System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP)
+             ?: applicationInfoOverrides?.eap
+             ?: versionTag.getAttributeValue("eap")).toBoolean()
+    versionSuffix = (System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX)
+                     ?: applicationInfoOverrides?.versionSuffix
+                     ?: versionTag.getAttributeValue("suffix")) ?: (if (isEAP) "EAP" else null)
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
     val namesTag = root.getChild("names")!!
     shortProductName = namesTag.getAttributeValue("product")!!
@@ -92,9 +96,15 @@ internal class ApplicationInfoPropertiesImpl(
     }
     this.productCode = productCode!!
     this.majorReleaseDate = run {
-      val majorReleaseDate = applicationInfoOverrides?.majorReleaseDate
-                             ?: System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_MAJOR_RELEASE_DATE)
-                             ?: buildTag.getAttributeValue("majorReleaseDate")
+      val majorReleaseDate = (System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_MAJOR_RELEASE_DATE)
+                             ?: applicationInfoOverrides?.majorReleaseDate
+                             ?: buildTag.getAttributeValue("majorReleaseDate"))?.let {
+                               if (it == "") {
+                                return@let null
+                               } else {
+                                 return@let it
+                               }
+                             }
       when {
         isEAP -> {
           val buildDate = Instant.ofEpochSecond(buildOptions.buildDateInSeconds)

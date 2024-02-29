@@ -344,6 +344,11 @@ public final class GradleProjectResolverUtil {
     return scope != null ? DependencyScope.valueOf(scope) : DependencyScope.COMPILE;
   }
 
+  @NotNull
+  private static DependencyScope getMergedDependencyScope(@Nullable String scope1, @Nullable String scope2) {
+    return DependencyScope.coveringUseCasesOf(getDependencyScope(scope1), getDependencyScope(scope2));
+  }
+
   public static void attachGradleSdkSources(@NotNull final IdeaModule gradleModule,
                                             @Nullable final File libFile,
                                             @NotNull final LibraryData library,
@@ -556,21 +561,21 @@ public final class GradleProjectResolverUtil {
         if (dependency instanceof ExternalLibraryDependency libDependency) {
           if (seenDependency instanceof ExternalLibraryDependency seenLibDependency &&
               !FileUtil.filesEqual(seenLibDependency.getFile(), libDependency.getFile())) {
-            DefaultExternalMultiLibraryDependency mergedDependency = new DefaultExternalMultiLibraryDependency(libDependency);
-            mergedDependency.addArtifactsFrom(seenLibDependency);
-            dependencyMap.put(dependency.getId(), mergedDependency);
+            DefaultExternalMultiLibraryDependency mergedDependency = new DefaultExternalMultiLibraryDependency(seenLibDependency);
+            mergedDependency.setScope(getMergedDependencyScope(mergedDependency.getScope(), libDependency.getScope()).name());
+            mergedDependency.addArtifactsFrom(libDependency);
+            dependencyMap.put(key, mergedDependency);
             continue;
           }
           else if (seenDependency instanceof DefaultExternalMultiLibraryDependency mergedDependency) {
+            mergedDependency.setScope(getMergedDependencyScope(mergedDependency.getScope(), libDependency.getScope()).name());
             mergedDependency.addArtifactsFrom(libDependency);
             continue;
           }
         }
 
-        DependencyScope prevScope =
-          seenDependency.getScope() == null ? DependencyScope.COMPILE : DependencyScope.valueOf(seenDependency.getScope());
-        DependencyScope currentScope =
-          dependency.getScope() == null ? DependencyScope.COMPILE : DependencyScope.valueOf(dependency.getScope());
+        DependencyScope prevScope = getDependencyScope(seenDependency.getScope());
+        DependencyScope currentScope = getDependencyScope(dependency.getScope());
 
         if (prevScope.isForProductionCompile()) continue;
         if (prevScope.isForProductionRuntime() && currentScope.isForProductionRuntime()) continue;

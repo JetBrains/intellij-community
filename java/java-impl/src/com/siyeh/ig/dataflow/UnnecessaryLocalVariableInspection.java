@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,9 +89,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
           int length = list.getAnnotations().length;
           if (length > 0) {
             PsiAnnotation annotation = list.findAnnotation(SuppressWarnings.class.getName());
-            if (annotation == null ||
-                !JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation(list)
-                                    .contains(UnnecessaryLocalVariableInspection.this.getSuppressId())) {
+            if (annotation == null || !JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation(list).contains(getSuppressId())) {
               return;
             }
           }
@@ -117,7 +115,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       }
     }
 
-    private boolean isImmediatelyReturned(PsiVariable variable) {
+    private static boolean isImmediatelyReturned(PsiVariable variable) {
       final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
@@ -141,7 +139,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 
-    private boolean isImmediatelyUsedByYield(PsiVariable variable) {
+    private static boolean isImmediatelyUsedByYield(PsiVariable variable) {
       PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) return false;
       PsiDeclarationStatement declarationStatement = tryCast(variable.getParent(), PsiDeclarationStatement.class);
@@ -155,7 +153,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
              !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 
-    private boolean isImmediatelyThrown(PsiVariable variable) {
+    private static boolean isImmediatelyThrown(PsiVariable variable) {
       final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
@@ -179,7 +177,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       return !isVariableUsedInFollowingDeclarations(variable, declarationStatement);
     }
 
-    private boolean isImmediatelyAssigned(PsiVariable variable) {
+    private static boolean isImmediatelyAssigned(PsiVariable variable) {
       final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;
@@ -227,7 +225,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
       return true;
     }
 
-    private boolean isImmediatelyAssignedAsDeclaration(PsiVariable variable) {
+    private static boolean isImmediatelyAssignedAsDeclaration(PsiVariable variable) {
       final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, true, PsiClass.class);
       if (containingScope == null) {
         return false;

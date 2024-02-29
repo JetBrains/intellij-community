@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
+import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 
 /**
@@ -56,7 +58,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         val docElement = docReference.element
         val targetFqn = targetElement.kotlinFqName ?: return docElement
         if (targetFqn.isRoot) return docElement
-        val replacedDocReference = computeWithoutAddingRedundantImports(docElement.containingKtFile) {
+        val replacedDocReference = modifyPsiWithOptimizedImports(docElement.containingKtFile) {
             val newDocReference = KDocElementFactory(targetElement.project).createNameFromText(targetFqn.asString())
             docReference.expression.replaced(newDocReference)
         }
@@ -85,15 +87,15 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             fqName
         }
         val elementToReplace = expression.getQualifiedElementOrCallableRef()
-        val result = computeWithoutAddingRedundantImports(expression.containingKtFile) {
+        val result = modifyPsiWithOptimizedImports(expression.containingKtFile) {
             when (elementToReplace) {
                 is KtUserType -> elementToReplace.replaceWith(writableFqn)
-                is KtDotQualifiedExpression -> elementToReplace.replaceWith(writableFqn)
-                is KtCallExpression -> elementToReplace.replaceWith(writableFqn)
+                is KtDotQualifiedExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
+                is KtCallExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
                 is KtCallableReferenceExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
                 is KtSimpleNameExpression -> elementToReplace.replaceWith(writableFqn)
                 else -> null
-            } ?: return@computeWithoutAddingRedundantImports null
+            } ?: return@modifyPsiWithOptimizedImports null
         } ?: return expression
         val shouldShorten = shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING && result.canBeShortened
         return if (shouldShorten) {
@@ -119,12 +121,24 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return ReplaceResult(replacedElement)
     }
 
-    private fun KtDotQualifiedExpression.replaceWith(fqName: FqName): ReplaceResult? {
+    private fun PsiElement.isCallableAsExtensionFunction(): Boolean {
+        return if (this is KtProperty) {
+            analyze(this) { (typeReference?.getKtType() as? KtFunctionalType)?.receiverType != null }
+        } else isExtensionDeclaration()
+    }
+
+    private fun KtDotQualifiedExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         val isPartOfImport = parentOfType<KtImportDirective>(withSelf = false) != null
         val selectorExpression = selectorExpression ?: return null
         val newSelectorExpression = when (selectorExpression) {
             is KtSimpleNameExpression -> selectorExpression.replaceShortName(fqName)
-            is KtCallExpression -> selectorExpression.replaceShortName(fqName)
+            is KtCallExpression -> {
+                val newCall = selectorExpression.replaceShortName(fqName)
+                if (targetElement?.isCallableAsExtensionFunction() == true) {
+                    containingKtFile.addImport(fqName)
+                    return ReplaceResult(newCall, false)
+                } else newCall
+            }
             else -> null
         } ?: return null
         return ReplaceResult(replaceWithQualified(fqName, newSelectorExpression), !isPartOfImport)
@@ -138,9 +152,13 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return replaced(newQualifiedExpression)
     }
 
-    private fun KtCallExpression.replaceWith(fqName: FqName): ReplaceResult {
+    private fun KtCallExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
         val newCall = replaceShortName(fqName)
-        return ReplaceResult(newCall.replaceWithQualified(fqName, newCall))
+        if (targetElement?.isCallableAsExtensionFunction() == true) {
+            containingKtFile.addImport(fqName)
+            return ReplaceResult(newCall, false)
+        }
+        return ReplaceResult(newCall.replaceWithQualified(fqName, newCall), true)
     }
 
     private fun KtCallableReferenceExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {

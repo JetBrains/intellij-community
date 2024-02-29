@@ -4,7 +4,6 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -15,6 +14,7 @@ import com.intellij.refactoring.changeSignature.JavaMethodDescriptor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
@@ -112,14 +112,12 @@ public class IntroduceParameterObjectTest extends LightMultiFileTestCase {
   }
 
   public void testTypeParametersWithSubstitution() {
-    final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    final LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.HIGHEST);
     try {
-      projectExtension.setLanguageLevel(LanguageLevel.HIGHEST);
       doTest();
     }
     finally {
-      projectExtension.setLanguageLevel(oldLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
     }
   }
 

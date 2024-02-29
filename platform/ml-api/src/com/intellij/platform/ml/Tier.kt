@@ -37,9 +37,9 @@ abstract class Tier<T : Any> {
     get() = this.javaClass.simpleName
 
   override fun toString(): String = name
-
-  infix fun with(instance: T) = TierInstance(this, instance)
 }
+
+infix fun <T : Any> Tier<T>.with(instance: T) = TierInstance(this, instance)
 
 /**
  * A helper class to type-safely handle pairs of [tier] and the corresponding [instance].

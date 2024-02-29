@@ -1558,6 +1558,11 @@ public abstract class K2JvmBasicCompletionTestGenerated extends AbstractK2JvmBas
                 runTest("../../completion/testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
             }
 
+            @TestMetadata("PrivateFunction.kt")
+            public void testPrivateFunction() throws Exception {
+                runTest("../../completion/testData/basic/common/namedArguments/PrivateFunction.kt");
+            }
+
             @TestMetadata("TypeAliasParameter.kt")
             public void testTypeAliasParameter() throws Exception {
                 runTest("../../completion/testData/basic/common/namedArguments/TypeAliasParameter.kt");

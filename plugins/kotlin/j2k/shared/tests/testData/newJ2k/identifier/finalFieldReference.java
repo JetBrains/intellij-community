@@ -1,4 +1,3 @@
-//file
 class $$$$$ {}
 
 class $ {}

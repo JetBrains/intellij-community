@@ -1,6 +1,5 @@
 import org.jetbrains.annotations.Nullable;
 
-//file
 class A {
     int field = foo();
 

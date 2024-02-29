@@ -320,7 +320,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Before  // runs after (all overrides of) setUp()
   public void before() throws Throwable {
-    getIndexingMode().ensureIndexingStatus(getProject());
+    if (getProject() != null) {
+      getIndexingMode().ensureIndexingStatus(getProject());
+    }
   }
 
   @Override

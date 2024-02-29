@@ -2,8 +2,8 @@ package de.plushnikov.intellij.plugin.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
@@ -14,11 +14,11 @@ public class LombokOnXCompletionContributorFilterTest extends AbstractLombokLigh
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
   }
 
   public void testOnConstructorJdk7() {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     testOnAnnotation("""
                            import lombok.AllArgsConstructor;
 

@@ -134,7 +134,7 @@ val header = x("//div[@text='AI Assistant']")
 header.shouldBe("AI assistant header not present", visible)
 ```
 
-To simplify exploration of UIs and make XPath selectors easier to write, you can use UI hierarchy web interface. It can be enabled via a VM option `-Dexpose.ui.hierarchy.url=true`. UI hierarchy is available then from a web browser at http://localhost:63343/api/remote-driver/.
+To simplify exploration of UIs and make XPath selectors easier to write, you can use UI hierarchy web interface. It can be enabled via a VM option `-Dexpose.ui.hierarchy.url=true`. UI hierarchy is available then from a web browser at http://localhost:<buildin server port>/api/remote-driver/.
 
 UI Robot enables you to reuse locators via a Page Object pattern: 
 ```kotlin
@@ -179,7 +179,7 @@ waitForCodeAnalysis(file)
 
 The easiest way to prepare a product under test is JUnit extension - `DriverManager`. It enables you to specify product, project, SDK, system properties and command line arguments via `DriverBuilder`.
 
-DriverManager enables sensitive defaults including UI hierarchy available by default at http://localhost:63343/api/remote-driver/.
+DriverManager enables sensitive defaults including UI hierarchy available by default at http://localhost:<port>/api/remote-driver/. The exact link is printed to the test output. 
 
 Example:
 ```kotlin

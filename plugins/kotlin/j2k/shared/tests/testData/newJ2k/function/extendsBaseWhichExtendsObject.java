@@ -1,4 +1,3 @@
-//file
 
 class Test extends Base {
   @Override

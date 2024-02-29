@@ -7,13 +7,16 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.MutableAccessor
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
 import org.jdom.Content
 import org.jdom.Element
 import org.jdom.Namespace
 import org.jdom.Text
+import org.jetbrains.annotations.ApiStatus.Internal
 
-internal class OptionTagBinding(
-  @JvmField internal val binding: Binding?,
+@Internal
+class TagBinding(
+  @JvmField val binding: Binding?,
   override val accessor: MutableAccessor,
   private val nameAttributeValue: String?,
   converterClass: Class<out Converter<*>>?,
@@ -53,7 +56,7 @@ internal class OptionTagBinding(
       return toJson(bean = bean, accessor = accessor, converter = converter)
     }
     else {
-      val value = accessor.read(bean) ?: return null
+      val value = accessor.read(bean) ?: return JsonNull
       return binding.toJson(value, filter)
     }
   }

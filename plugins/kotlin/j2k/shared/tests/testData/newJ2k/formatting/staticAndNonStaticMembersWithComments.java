@@ -1,4 +1,3 @@
-//file
 class F {
 
   //c1

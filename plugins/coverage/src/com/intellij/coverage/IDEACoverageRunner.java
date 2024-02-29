@@ -58,7 +58,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       // Do not overwrite existing patterns if present, as they are written in the format expected by IDEA,
       // while the patterns passed to the agent are converted to the regex format.
       if (ArrayUtil.isEmpty(javaSuite.getIncludeFilters())) {
-        String[] includeFilters = extractPatterns(projectData.getIncudePatterns());
+        String[] includeFilters = extractPatterns(projectData.getIncludePatterns());
         javaSuite.setIncludeFilters(includeFilters);
       }
       if (ArrayUtil.isEmpty(javaSuite.getExcludePatterns())) {

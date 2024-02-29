@@ -84,7 +84,7 @@ class GitLabLazyProject(
     .modelFlow(parentCs, LOG)
 
   private val initialData: Deferred<GitLabProjectDTO> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    api.graphQL.getProject(projectCoordinates).body()
+    api.graphQL.findProject(projectCoordinates).body() ?: error("Project not found $projectCoordinates")
   }
 
   override val defaultBranch: Deferred<String?> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
@@ -119,7 +119,7 @@ class GitLabLazyProject(
     send(false)
   }.modelFlow(parentCs, LOG)
 
-  override val emojis: Deferred<List<ParsedGitLabEmoji>> = project.service<GitLabEmojiService>().emojis
+  override val emojis: Deferred<List<ParsedGitLabEmoji>> = service<GitLabEmojiService>().emojis
 
   @Throws(GitLabGraphQLMutationException::class)
   override suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO {

@@ -234,7 +234,7 @@ public class CoverageSuitesBundle {
     boolean hasEmptyFilters = false;
     Set<String> result = new HashSet<>();
     for (ProjectData data : dataList) {
-      List<Pattern> patterns = data.getIncudePatterns();
+      List<Pattern> patterns = data.getIncludePatterns();
       if (patterns == null || patterns.isEmpty()) {
         hasEmptyFilters = true;
       }

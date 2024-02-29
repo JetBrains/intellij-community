@@ -4,7 +4,6 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -22,7 +21,7 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_21);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_21);
   }
 
   @NotNull

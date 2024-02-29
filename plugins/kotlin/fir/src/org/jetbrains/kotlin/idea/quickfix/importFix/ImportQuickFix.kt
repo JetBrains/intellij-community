@@ -190,7 +190,7 @@ class ImportQuickFix(
         val invisibleReferenceFactory = diagnosticFixFactory(KtFirDiagnostic.InvisibleReference::class) { getFixes(it.psi) }
 
         // this factory is used only for importing references on the fly; in all other cases import fixes for unresolved references
-        // are created by [org.jetbrains.kotlin.idea.codeInsight.KotlinFirUnresolvedReferenceQuickFixProvider]
+        // are created by [org.jetbrains.kotlin.idea.quickfix.KotlinFirUnresolvedReferenceQuickFixProvider]
         val unresolvedReferenceFactory = diagnosticFixFactory(KtFirDiagnostic.UnresolvedReference::class) { getFixes(it.psi) }
 
         context(KtAnalysisSession)

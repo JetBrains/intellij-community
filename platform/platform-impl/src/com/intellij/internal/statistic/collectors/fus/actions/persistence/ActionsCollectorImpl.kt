@@ -278,21 +278,13 @@ class ActionsCollectorImpl : ActionsCollector() {
       }
     }
 
-    private fun toReportedResult(result: AnActionResult): ObjectEventData {
-      if (result.isPerformed) {
-        return ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("performed"))
-      }
-      if (result == AnActionResult.IGNORED) {
-        return ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("ignored"))
-      }
-      val error = result.failureCause
-      return if (error != null) {
-        ObjectEventData(
-          ActionsEventLogGroup.RESULT_TYPE.with("failed"),
-          ActionsEventLogGroup.ERROR.with(error.javaClass)
-        )
-      }
-      else ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("unknown"))
+    private fun toReportedResult(result: AnActionResult): ObjectEventData = when {
+      result.isPerformed -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("performed"))
+      result.isIgnored -> ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("ignored"))
+      else -> ObjectEventData(
+        ActionsEventLogGroup.RESULT_TYPE.with("failed"),
+        ActionsEventLogGroup.ERROR.with(result.failureCause.javaClass)
+      )
     }
 
     private fun addLanguageContextFields(project: Project?,

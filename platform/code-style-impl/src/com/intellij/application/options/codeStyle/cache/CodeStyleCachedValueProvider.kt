@@ -11,8 +11,10 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.psi.FileViewProvider
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.FileCodeStyleProvider
@@ -25,6 +27,7 @@ import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Supplier
 
 private val LOG = logger<CodeStyleCachedValueProvider>()
 
@@ -32,8 +35,10 @@ private val LOG = logger<CodeStyleCachedValueProvider>()
 private class CodeStyleCachedValueProviderService(@JvmField val coroutineScope: CoroutineScope) {
 }
 
-internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewProvider,
-                                            private val project: Project) : CachedValueProvider<CodeStyleSettings?> {
+internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<VirtualFile>,
+                                            private val project: Project,
+                                            private val dataHolder: UserDataHolder) : CachedValueProvider<CodeStyleSettings?> {
+  private val file get() = fileSupplier.get()
   private val computation = AsyncComputation(project)
   private val computationLock: Lock = object : ReentrantLock() {
     override fun equals(other: Any?): Boolean = other is ReentrantLock
@@ -45,7 +50,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
   fun tryGetSettings(): CodeStyleSettings? {
     if (computationLock.tryLock()) {
       try {
-        return CachedValuesManager.getManager(project).getCachedValue(viewProvider, this)
+        return CachedValuesManager.getManager(project).getCachedValue(dataHolder, this)
       }
       finally {
         computationLock.unlock()
@@ -67,7 +72,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     }
     catch (ignored: ProcessCanceledException) {
       computation.reset()
-      LOG.debug { "Computation was cancelled for ${viewProvider.virtualFile.name}" }
+      LOG.debug { "Computation was cancelled for ${file.name}" }
       return CachedValueProvider.Result(null, ModificationTracker.EVER_CHANGED)
     }
     if (settings != null) {
@@ -90,13 +95,14 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
       dependencies.add(settings.modificationTracker)
     }
     dependencies.add(computation.tracker)
+    dependencies.add(file)
     return ArrayUtil.toObjectArray(dependencies)
   }
 
   private fun logCached(settings: CodeStyleSettings) {
-    LOG.debug(String.format(
-      "File: %s (%s), cached: %s, tracker: %d", viewProvider.virtualFile.name, Integer.toHexString(viewProvider.hashCode()),
-      settings, settings.modificationTracker.modificationCount))
+    LOG.debug { String.format(
+      "File: %s (%s), cached: %s, tracker: %d", file.name, Integer.toHexString(file.hashCode()),
+      settings, settings.modificationTracker.modificationCount) }
   }
 
   /**
@@ -124,7 +130,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     private fun start() {
       val app = ApplicationManager.getApplication()
       if (app.isDispatchThread && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
-        LOG.debug { "async for ${viewProvider.virtualFile.name}" }
+        LOG.debug { "async for ${file.name}" }
         job = project.service<CodeStyleCachedValueProviderService>().coroutineScope.launch {
           readAction {
             computeSettings()
@@ -135,7 +141,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
         }
       }
       else {
-        LOG.debug { "sync for ${viewProvider.virtualFile.name}" }
+        LOG.debug { "sync for ${file.name}" }
         app.runReadAction(::computeSettings)
         if (app.isDispatchThread) {
           notifyCachedValueComputed()
@@ -149,7 +155,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     }
 
     fun cancel() {
-      LOG.debug { "expire computation for ${viewProvider.virtualFile.name}" }
+      LOG.debug { "expire computation for ${file.name}" }
       job?.cancel()
       currentResult = null
     }
@@ -167,7 +173,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     }
 
     private fun computeSettings() {
-      val file = viewProvider.virtualFile
+      val file = file
       val psiFile = psiFile
       if (psiFile == null) {
         cancel()
@@ -181,7 +187,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
         oldTrackerSetting = currSettings.modificationTracker.modificationCount
         @Suppress("TestOnlyProblems")
         if (currSettings !== settingsManager.temporarySettings) {
-          val modifiableSettings = TransientCodeStyleSettings(viewProvider, currSettings)
+          val modifiableSettings = TransientCodeStyleSettings(this@CodeStyleCachedValueProvider.file, project, currSettings)
           modifiableSettings.applyIndentOptionsFromProviders(project, file)
           LOG.debug { "Created TransientCodeStyleSettings for ${file.name}" }
           for (modifier in CodeStyleSettingsModifier.EP_NAME.extensionList) {
@@ -214,7 +220,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
 
     fun getCurrentResult(): CodeStyleSettings? {
       if (isActive.compareAndSet(false, true)) {
-        LOG.debug { "Computation initiated for ${viewProvider.virtualFile.name}" }
+        LOG.debug { "Computation initiated for ${file.name}" }
         start()
       }
       return currentResult
@@ -223,7 +229,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
     fun reset() {
       scheduledRunnables.clear()
       isActive.set(false)
-      LOG.debug { "Computation reset for ${viewProvider.virtualFile.name}" }
+      LOG.debug { "Computation reset for ${file.name}" }
     }
 
     private fun notifyCachedValueComputed() {
@@ -233,7 +239,7 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
       if (oldTrackerSetting < newTrackerSetting && !insideRestartedComputation) {
         insideRestartedComputation = true
         try {
-          LOG.debug { "restarted for ${viewProvider.virtualFile.name}" }
+          LOG.debug { "restarted for ${file.name}" }
           start()
         }
         finally {
@@ -241,15 +247,15 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
         }
         return
       }
-      LOG.debug { "running scheduled runnables for ${viewProvider.virtualFile.name}" }
+      LOG.debug { "running scheduled runnables for ${file.name}" }
       for (runnable in scheduledRunnables) {
         runnable.run()
       }
       if (!project.isDisposed) {
-        CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(viewProvider.virtualFile)
+        CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file)
       }
       computation.reset()
-      LOG.debug { "Computation finished normally for ${viewProvider.virtualFile.name}" }
+      LOG.debug { "Computation finished normally for ${file.name}" }
     }
 
     override fun equals(other: Any?): Boolean {
@@ -261,12 +267,12 @@ internal class CodeStyleCachedValueProvider(private val viewProvider: FileViewPr
   }
 
   private val psiFile: PsiFile?
-    get() = viewProvider.getPsi(viewProvider.baseLanguage)
+    get() = if (file.isValid) PsiManager.getInstance(project).findFile(file) else null
 
   // Check provider equivalence by file ref. Other fields make no sense since AsyncComputation is a stateful object
   // whose state (active=true->false) changes over time due to long computation.
   override fun equals(other: Any?): Boolean {
-    return other is CodeStyleCachedValueProvider && viewProvider == other.viewProvider
+    return other is CodeStyleCachedValueProvider && file == other.file
   }
 }
 

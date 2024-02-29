@@ -104,9 +104,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       }
     }
 
-    actionTask("GotoClass") {
-      LessonsBundle.message("search.everywhere.goto.class", action(it))
-    }
+    replaceClassWithTypes()
 
     task(goToClassSearchQuery) {
       text(LessonsBundle.message("search.everywhere.type.class.name", code(it)))
@@ -168,6 +166,12 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   }
 
   protected open fun LessonContext.configurationTasks() {}
+
+  protected open fun LessonContext.replaceClassWithTypes() {
+    actionTask("GotoClass") {
+      LessonsBundle.message("search.everywhere.goto.class", action(it))
+    }
+  }
 
   open fun LessonContext.epilogue() = Unit
 

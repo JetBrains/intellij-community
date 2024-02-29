@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -13,22 +13,28 @@ import org.jetbrains.annotations.NotNull;
  * Extension point for adding user-configurable widgets to the status bar.
  * <p>
  * By default, a widget would be available only in the main IDE, but not in Light Edit.
- * In order to make the widget available in Light Edit, the factory should implement {@link com.intellij.ide.lightEdit.LightEditCompatible}.
+ * To make the widget available in Light Edit, the factory should implement {@link com.intellij.ide.lightEdit.LightEditCompatible}.
  * Prohibiting the widget for the main IDE could be done in the {@link StatusBarWidgetFactory#isAvailable(Project)} method.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/status-bar-widgets.html">Status Bar Widgets (IntelliJ Platform Docs)</a>
  */
 public interface StatusBarWidgetFactory {
   ExtensionPointName<StatusBarWidgetFactory> EP_NAME = new ExtensionPointName<>("com.intellij.statusBarWidgetFactory");
 
   /**
    * @return Widget identifier, must match extension {@code id} in {@code plugin.xml}. Used to store visibility settings.
-   **/
-  @NotNull @NonNls String getId();
+   */
+  @NotNull
+  @NonNls
+  String getId();
 
   /**
-   * @return Widget's display name. Used to refer a widget in UI,
-   * e.g. for "Enable/disable &lt;display name>" action names or for checkbox texts in settings.
+   * @return Widget's display name. Used to refer to a widget in UI,
+   * e.g., for "Enable/disable &lt;display name>" action names or for checkbox texts in settings.
    */
-  @NotNull @NlsContexts.ConfigurableName String getDisplayName();
+  @NotNull
+  @NlsContexts.ConfigurableName
+  String getDisplayName();
 
   /**
    * Returns availability of the widget.
@@ -104,7 +110,7 @@ public interface StatusBarWidgetFactory {
   /**
    * Returns whether the user should be able to enable or disable the widget.
    * <p>
-   * Some widgets are controlled by application-level settings (e.g. the Memory Indicator)
+   * Some widgets are controlled by application-level settings (e.g., the Memory Indicator)
    * or cannot be disabled (like the Write Thread), and thus shouldn't be configurable via the context menu or settings.
    */
   default boolean isConfigurable() {

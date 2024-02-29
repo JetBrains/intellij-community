@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k
 
 import com.intellij.psi.CommonClassNames
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.references.mainReference

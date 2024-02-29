@@ -46,6 +46,7 @@ UFile (package = ) [public abstract interface Callback {...]
 })(external java(), Undetermined)
                         UQualifiedReferenceExpression [Callback.java] = external java()
                             UClassLiteralExpression [Callback] = Callback
+                                USimpleNameReferenceExpression (identifier = Callback) [Callback] = external Callback()
                             USimpleNameReferenceExpression (identifier = java) [java] = external java()
                         ULambdaExpression [{ ...}] = Undetermined
                             UBlockExpression [{...}] = Nothing

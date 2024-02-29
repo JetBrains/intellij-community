@@ -76,7 +76,7 @@ private class GHECloneDialogLoginPanel(
     Disposer.register(this@GHECloneDialogLoginPanel, this)
 
     if (account == null) setServer("", true)
-    setTokenUi()
+    setTokenUi(needsWarning = true)
   }
 
   init {

@@ -46,7 +46,7 @@ interface SettingsService {
   fun getJbService(): JbService
   fun getExternalService(): ExternalService
 
-  suspend fun warmUp(scope: CoroutineScope)
+  suspend fun warmUp()
 
   suspend fun shouldShowImport(): Boolean
 
@@ -67,7 +67,7 @@ interface SettingsService {
   fun isLoggedIn(): Boolean = jbAccount.value != null
 }
 
-class SettingsServiceImpl : SettingsService, Disposable.Default {
+class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : SettingsService, Disposable.Default {
 
   private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
   private var pluginsPreloadedDeferred: Deferred<Set<PluginId>>? = null
@@ -84,25 +84,22 @@ class SettingsServiceImpl : SettingsService, Disposable.Default {
     if (shouldUseMockData) TestExternalService()
     else SettingTransferService.getInstance()
 
-  override suspend fun warmUp(scope: CoroutineScope) {
-    pluginsPreloadedDeferred = scope.async { MarketplaceRequests.getInstance().getMarketplacePlugins(null) }
-    scope.async { getJbService().warmUp() }
-    scope.async { getExternalService().warmUp(scope) }
+  override suspend fun warmUp() {
+    pluginsPreloadedDeferred = coroutineScope.async { MarketplaceRequests.getInstance().getMarketplacePlugins(null) }
+    coroutineScope.async { getJbService().warmUp() }
+    coroutineScope.async { getExternalService().warmUp(coroutineScope) }
   }
 
   override suspend fun shouldShowImport(): Boolean {
     val startTime = System.currentTimeMillis()
-    return coroutineScope {
-      val importFromJetBrainsAvailable = async { getJbService().hasDataToImport() }
-      val importFromExternalAvailable = async { getExternalService().hasDataToImport() }
-      val result = select {
-        importFromJetBrainsAvailable.onAwait { it || importFromExternalAvailable.await() }
-        importFromExternalAvailable.onAwait { it || importFromJetBrainsAvailable.await() }
-      }
-      coroutineContext.job.cancelChildren()
-      thisLogger().info("Took ${System.currentTimeMillis() - startTime}ms. to calculate shouldShowImport")
-      result
+    val importFromJetBrainsAvailable = coroutineScope.async { getJbService().hasDataToImport() }
+    val importFromExternalAvailable = coroutineScope.async { getExternalService().hasDataToImport() }
+    val result = select {
+      importFromExternalAvailable.onAwait { it || importFromJetBrainsAvailable.await() }
+      importFromJetBrainsAvailable.onAwait { it || importFromExternalAvailable.await() }
     }
+    thisLogger().info("Took ${System.currentTimeMillis() - startTime}ms. to calculate shouldShowImport")
+    return result
   }
 
   override val importCancelled = Signal<Unit>().apply {

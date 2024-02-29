@@ -94,11 +94,6 @@ fun KotlinFacet.configureFacet(
             platform,
             compilerVersion
         )
-        val apiLevel = apiLevel
-        val languageLevel = languageLevel
-        if (languageLevel != null && apiLevel != null && apiLevel > languageLevel) {
-            this.apiLevel = languageLevel
-        }
         this.pureKotlinSourceFolders = pureKotlinSourceFolders
     }
 

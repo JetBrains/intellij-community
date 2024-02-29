@@ -10,6 +10,7 @@ UFile (package = test.pkg)
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
+                                USimpleNameReferenceExpression (identifier = String)
                             USimpleNameReferenceExpression (identifier = java)
         UMethod (name = systemService1)
             UParameter (name = $this$systemService1)
@@ -21,6 +22,7 @@ UFile (package = test.pkg)
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
+                                USimpleNameReferenceExpression (identifier = T)
                             USimpleNameReferenceExpression (identifier = java)
     UClass (name = Context)
         UMethod (name = ownSystemService2)
@@ -31,6 +33,7 @@ UFile (package = test.pkg)
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
+                                USimpleNameReferenceExpression (identifier = String)
                             USimpleNameReferenceExpression (identifier = java)
         UMethod (name = Context)
         UMethod (name = ownSystemService1)
@@ -41,4 +44,5 @@ UFile (package = test.pkg)
                         USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
+                                USimpleNameReferenceExpression (identifier = T)
                             USimpleNameReferenceExpression (identifier = java)

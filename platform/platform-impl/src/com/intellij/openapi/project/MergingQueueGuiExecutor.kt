@@ -186,11 +186,15 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
   open fun shouldShowProgressIndicator(): Boolean = true
 
+  protected open val taskId: Any? = null
+
   private fun startInBackgroundWithVisibleOrInvisibleProgress(task: (ProgressIndicator) -> Unit) {
     val backgroundableTask = object : Task.Backgroundable(project, myProgressTitle, false) {
       override fun run(visibleIndicator: ProgressIndicator) {
         task(visibleIndicator)
       }
+
+      override fun getId() = taskId
     }
 
     if (shouldShowProgressIndicator()) {

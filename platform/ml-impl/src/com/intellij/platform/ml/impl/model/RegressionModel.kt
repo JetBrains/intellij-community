@@ -2,16 +2,13 @@
 package com.intellij.platform.ml.impl.model
 
 import com.intellij.internal.ml.DecisionFunction
-import com.intellij.platform.ml.Feature
-import com.intellij.platform.ml.FeatureDeclaration
-import com.intellij.platform.ml.PerTier
-import com.intellij.platform.ml.Tier
+import com.intellij.platform.ml.*
 import com.intellij.platform.ml.impl.FeatureSelector
 import com.intellij.platform.ml.impl.LevelTiers
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * A wrapper for using legacy [DecisionFunction] as the new API's [MLModel].
+ * A wrapper for using legacy [DecisionFunction] as the new API`s [MLModel].
  */
 @ApiStatus.Internal
 open class RegressionModel private constructor(
@@ -36,7 +33,7 @@ open class RegressionModel private constructor(
     featuresTiers
   )
 
-  override fun predict(features: PerTier<Set<Feature>>): Double {
+  override fun predict(callParameters: List<Environment>, features: PerTier<Set<Feature>>): Double {
     val array = DoubleArray(decisionFunction.featuresOrder.size)
     val featurePerSerializedName = features
       .flatMap { (tier, tierFeatures) -> tierFeatures.map { tier to it } }
@@ -62,7 +59,8 @@ open class RegressionModel private constructor(
     fun deserialize(serializedFeatureName: String, availableTiersPerName: Map<String, Tier<*>>): Pair<Tier<*>, String>
   }
 
-  class DefaultSerialization : FeatureNameSerialization {
+  @Suppress("UNUSED")
+  object DefaultFeatureSerialization : FeatureNameSerialization {
     private val SERIALIZED_FEATURE_SEPARATOR = '/'
 
     override fun serialize(tier: Tier<*>, featureName: String): String {
@@ -74,8 +72,12 @@ open class RegressionModel private constructor(
       require(indexOfLastSeparator >= 0) { "Feature name '$serializedFeatureName' does not contain tier's name" }
       val featureTierName = serializedFeatureName.slice(0 until indexOfLastSeparator)
       val featureName = serializedFeatureName.slice(indexOfLastSeparator until serializedFeatureName.length)
-      val featureTier = requireNotNull(
-        availableTiersPerName[featureTierName]) { "Serialized feature '$serializedFeatureName' has tier $featureTierName, but all available tiers are ${availableTiersPerName.keys}" }
+      val featureTier = requireNotNull(availableTiersPerName[featureTierName]) {
+        """
+          Serialized feature '$serializedFeatureName' has tier $featureTierName,
+          but all available tiers are ${availableTiersPerName.keys}
+        """.trimIndent()
+      }
       return featureTier to featureName
     }
   }
@@ -96,43 +98,37 @@ open class RegressionModel private constructor(
   ) {
     private val availableTiersPerName: Map<String, Tier<*>> = availableTiers.associateBy { it.name }
 
-    fun getKnownFeatures(): PerTier<Set<String>> {
+    val knownFeatures: PerTier<Set<String>> = run {
       val knownFeaturesSerializedNames = decisionFunction.featuresOrder.map { it.featureName }.toSet()
-      return knownFeaturesSerializedNames
+      knownFeaturesSerializedNames
         .map { featureNameSerialization.deserialize(it, availableTiersPerName) }
         .groupBy({ it.first }, { it.second })
         .mapValues { it.value.toSet() }
     }
 
-    fun getRequiredFeaturesPerTier(): PerTier<Set<String>> {
+    val requiredFeaturesPerTier: PerTier<Set<String>> = run {
       val availableTiersPerName = availableTiers.associateBy { it.name }
       val requiredFeaturesSerializedNames = decisionFunction.requiredFeatures.filterNotNull().toSet()
-      return requiredFeaturesSerializedNames
+      requiredFeaturesSerializedNames
         .map { serializedFeatureName -> featureNameSerialization.deserialize(serializedFeatureName, availableTiersPerName) }
         .groupBy({ it.first }, { it.second })
         .mapValues { it.value.toSet() }
     }
 
     fun getUnknownFeatures(tier: Tier<*>, featuresNames: Set<String>): Set<String> {
-      val featureNamePerSerializedName = featuresNames
-        .associateBy { featureNameSerialization.serialize(tier, it) }
-
-      val unknownFeaturesSerializedNames = decisionFunction.getUnknownFeatures(featureNamePerSerializedName.keys).filterNotNull()
-
-      return unknownFeaturesSerializedNames.map {
-        requireNotNull(featureNamePerSerializedName[it]) { "Decision function returned an unknown feature that was not given: '$it'" }
-      }.toSet()
+      val knownTierFeatures = knownFeatures[tier] ?: return featuresNames
+      return featuresNames.filterNot { it in knownTierFeatures }.toSet()
     }
   }
 
   companion object {
     private fun createFeatureSelectors(decisionFunction: DecisionFunctionWrapper,
                                        featuresTiers: Set<Tier<*>>): PerTier<FeatureSelector> {
-      val requiredFeaturesPerTier = decisionFunction.getRequiredFeaturesPerTier()
+      val requiredFeaturesPerTier = decisionFunction.requiredFeaturesPerTier
 
       fun createFeatureSelector(tier: Tier<*>) = object : FeatureSelector {
         init {
-          val knownFeatures = decisionFunction.getKnownFeatures()
+          val knownFeatures = decisionFunction.knownFeatures
           knownFeatures.forEach { (tier, tierFeatures) ->
             val nonConsistentlyKnownFeatures = decisionFunction.getUnknownFeatures(tier, tierFeatures)
             require(nonConsistentlyKnownFeatures.isEmpty()) {

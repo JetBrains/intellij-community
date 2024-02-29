@@ -11,9 +11,9 @@ import com.intellij.compiler.chainsSearch.ChainRelevance;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
 import com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor;
 import com.intellij.compiler.chainsSearch.completion.lookup.JavaRelevantChainLookupElement;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SmartList;
@@ -37,7 +37,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     Registry.get(MethodChainCompletionContributor.REGISTRY_KEY).setValue(true, myFixture.getTestRootDisposable());
     myDefaultAutoCompleteOnCodeCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = false;
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
     CompilerReferenceService.getInstanceIfEnabled(getProject());
   }
 

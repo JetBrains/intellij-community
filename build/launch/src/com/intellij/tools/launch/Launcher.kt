@@ -49,7 +49,6 @@ object Launcher {
       "-Didea.log.path=${paths.logFolder.canonicalPath}",
       "-Didea.is.internal=true",
       "-Didea.debug.mode=true",
-      "-Didea.jre.check=true",
       "-Didea.fix.mac.env=true",
       "-Djdk.attach.allowAttachSelf",
       "-Djdk.module.illegalAccess.silent=true",

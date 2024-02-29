@@ -36,9 +36,7 @@ class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
   private val gradientCache: GradientTextureCache = GradientTextureCache(
     scheme = editor.colorsScheme,
     colorStartKey = BlockTerminalColors.BLOCK_BACKGROUND_START,
-    colorEndKey = BlockTerminalColors.BLOCK_BACKGROUND_END,
-    defaultColorStart = TerminalUi.blockBackgroundStart,
-    defaultColorEnd = TerminalUi.blockBackgroundEnd
+    colorEndKey = BlockTerminalColors.BLOCK_BACKGROUND_END
   )
 
   init {
@@ -249,7 +247,7 @@ class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
       val width = JBUI.scale(TerminalUi.cornerToBlockInset)
       val oldColor = g.color
       try {
-        g.color = TerminalUi.terminalBackground
+        g.color = editor.colorsScheme.getColor(BlockTerminalColors.DEFAULT_BACKGROUND)
         g.fillRect(visibleArea.width - width, visibleArea.y, width, visibleArea.height)
       }
       finally {

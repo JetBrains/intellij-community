@@ -76,7 +76,7 @@ class StateDatabaseParser(private val scope: CoroutineScope, private val setting
 }
 
 private fun createTemporaryFileCopy(file: File): File {
-  val newFile = File(PathManager.getTempPath(), file.name)
+  val newFile = File(PathManager.getTempPath(), "${file.nameWithoutExtension}.${ProcessHandle.current().pid()}.${file.extension}")
   return file.copyTo(newFile, overwrite = true)
 }
 

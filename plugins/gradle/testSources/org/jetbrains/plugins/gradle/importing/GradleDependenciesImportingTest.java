@@ -32,7 +32,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
@@ -74,6 +74,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       }
       """;
     super.importProject(config);
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    super.tearDown();
+    GradleSystemSettings.getInstance().setDownloadSources(false);
   }
 
   protected void assertCompileClasspathOrdering(String moduleName) {
@@ -1678,7 +1684,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testJavadocAndSourcesForDependencyWithMultipleArtifacts() throws Exception {
-    GradleSettings.getInstance(myProject).setDownloadSources(true);
+    GradleSystemSettings.getInstance().setDownloadSources(true);
     createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/ivy-1.0-SNAPSHOT.xml",
                          """
                            <?xml version="1.0" encoding="UTF-8"?>
@@ -1736,7 +1742,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testJavadocAndSourcesForDependencyWithMultipleArtifactsWithIvyLayout() throws Exception {
-    GradleSettings.getInstance(myProject).setDownloadSources(true);
+    GradleSystemSettings.getInstance().setDownloadSources(true);
     // IvyArtifactRepository.IVY_ARTIFACT_PATTERN = "[organisation]/[module]/[revision]/[type]s/[artifact](.[ext])"
     createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/ivys/ivy.xml",
                          """
@@ -1800,7 +1806,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testJavadocAndSourcesForDependencyWithMultipleArtifactsWithCustomIvyLayout() throws Exception {
-    GradleSettings.getInstance(myProject).setDownloadSources(true);
+    GradleSystemSettings.getInstance().setDownloadSources(true);
     final String customIvyPattern = "[organisation]/[module]/[revision]/[module]_[artifact]_[revision]_[type].[ext]";
     createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact_ivy_1.0-SNAPSHOT_ivy.xml",
                          """
@@ -1857,6 +1863,60 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDep("project.main", depName, classesPaths, sourcesPaths, javadocPaths);
     assertModuleLibDepScope("project.main", depName, DependencyScope.COMPILE);
     assertModuleLibDep("project.test", depName, classesPaths, sourcesPaths, javadocPaths);
+    assertModuleLibDepScope("project.test", depName, DependencyScope.COMPILE);
+  }
+
+  @Test
+  public void testScopeConflictOnDependencyWithMultipleConfigurations() throws Exception {
+    createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/ivy-1.0-SNAPSHOT.xml",
+                         """
+                           <?xml version="1.0" encoding="ISO-8859-1"?>
+                           <ivy-module version="1.0">
+                             <info organisation="depGroup" module="depArtifact" revision="1.0-SNAPSHOT" status="integration"/>
+                             <configurations>
+                               <conf name="api"/>
+                               <conf name="runtime" extends="api"/>
+                             </configurations>
+                             <publications>
+                               <artifact name="depArtifact-api" ext="jar" type="jar" conf="api"/>
+                               <artifact name="depArtifact-runtime" ext="jar" type="jar" conf="runtime"/>
+                             </publications>
+                             <dependencies/>
+                           </ivy-module>
+                           """);
+    String apiJar = createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-api-1.0-SNAPSHOT.jar").getUrl();
+    String runtimeJar =  createProjectJarSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/depArtifact-runtime-1.0-SNAPSHOT.jar").getUrl();
+
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .addPrefix("repositories { ivy { url = file('repo') } }")
+        .addPrefix("""
+                     dependencies {
+                       implementation 'depGroup:depArtifact:1.0-SNAPSHOT' targetConfiguration 'api'
+                       runtimeOnly 'depGroup:depArtifact:1.0-SNAPSHOT' targetConfiguration 'runtime'
+                     }
+                     """)
+        .withIdeaPlugin()
+        .generate()
+    );
+
+    assertModules("project", "project.main", "project.test");
+
+    assertModuleModuleDepScope("project.test", "project.main", DependencyScope.COMPILE);
+
+    // Gradle itself can correctly resolve the above dependencies as follows:
+    // - compileClasspath: listOf(apiJar)
+    // - runtimeClasspath: listOf(apiJar, runtimeJar)
+    // Unfortunately, since the dependencies' GAV coordinates are the same, IntelliJ merges the 2 JAR artifacts into a single dependency.
+    // For lack of a better option, such a dependency should have a scope that covers all the scopes of its artifacts (e.g. if apiJar is in
+    // COMPILE scope and runtimeJar is in RUNTIME, then the merged dependency should inherit the broader COMPILE scope). This allows the IDE
+    // to provide assistance to the developer when they're writing code that uses the dependency.
+    // For context, see IDEA-338741
+    final String depName = "Gradle: depGroup:depArtifact:1.0-SNAPSHOT";
+    assertModuleLibDep("project.main", depName, List.of(apiJar, runtimeJar), null, null);
+    assertModuleLibDepScope("project.main", depName, DependencyScope.COMPILE);
+    assertModuleLibDep("project.test", depName, List.of(apiJar, runtimeJar), null, null);
     assertModuleLibDepScope("project.test", depName, DependencyScope.COMPILE);
   }
 

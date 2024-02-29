@@ -74,18 +74,10 @@ internal class GitLabCloneComponent(
     cloneVm.doClone(checkoutListener)
   }
 
-  override fun doValidateAll(): List<ValidationInfo> {
-    val dialogPanel = wrapper.targetComponent as? DialogPanel ?: return emptyList()
-    dialogPanel.apply()
-    val errors = dialogPanel.validateAll()
-    if (errors.isNotEmpty()) {
-      errors.first().component?.let {
-        CollaborationToolsUIUtil.focusPanel(it)
-      }
-    }
-
-    return errors
-  }
+  override fun doValidateAll(): List<ValidationInfo> =
+    (wrapper.targetComponent as? DialogPanel)?.validationsOnApply?.values?.flatten()?.mapNotNull {
+      it.validate()
+    } ?: emptyList()
 
   override fun onComponentSelected() {
     dialogStateListener.onOkActionNameChanged(DvcsBundle.message("clone.button"))

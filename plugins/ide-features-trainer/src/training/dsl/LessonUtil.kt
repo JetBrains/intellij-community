@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
+import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
@@ -9,12 +10,11 @@ import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.ui.UIExperiment
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.DataManagerImpl
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationBundle
@@ -33,6 +33,8 @@ import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
@@ -59,6 +61,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import org.assertj.swing.timing.Timeout
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import training.FeaturesTrainerIcons
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.lang.LangManager
 import training.learn.LearnBundle
@@ -67,6 +70,7 @@ import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
+import training.util.LessonEndInfo
 import training.util.getActionById
 import training.util.learningToolWindow
 import training.util.surroundWithNonBreakSpaces
@@ -276,6 +280,43 @@ object LessonUtil {
         val range = xRange(ui.width)
         return@l Rectangle(range.first, y, range.last - range.first + 1, editor.lineHeight)
       }
+    }
+  }
+
+  fun LessonContext.highlightInEditor(charsToHighlight: String) {
+    task {
+      lateinit var rectangle: Rectangle
+      before {
+        val charsSequence = editor.document.charsSequence
+
+        val startPoint = editor.offsetToXY(charsSequence.indexOf(charsToHighlight))
+        val endPoint = editor.offsetToXY(charsToHighlight.let { charsSequence.indexOf(it) + it.length })
+
+        rectangle = Rectangle(startPoint.x - 3, startPoint.y, endPoint.x - startPoint.x + 6,
+                              endPoint.y - startPoint.y + editor.lineHeight)
+      }
+      triggerAndBorderHighlight().componentPart l@{ ui: EditorComponentImpl ->
+        if (ui.editor != editor) return@l null
+        rectangle
+      }
+    }
+  }
+
+  fun TaskContext.highlightRunGutter(highlightInside: Boolean = false, usePulsation: Boolean = false, singleLineGutter: Boolean = false) {
+    triggerAndBorderHighlight {
+      this.highlightInside = highlightInside
+      this.usePulsation = usePulsation
+    }.componentPart l@{ ui: EditorGutterComponentEx ->
+      if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
+      val runGutterLines = (0 until editor.document.lineCount).mapNotNull { lineInd ->
+        if (ui.getGutterRenderers(lineInd).any { (it as? LineMarkerInfo.LineMarkerGutterIconRenderer<*>)?.featureId == "run" })
+          lineInd
+        else null
+      }
+      val startLineY = editor.visualLineToY(runGutterLines.first())
+      val endLineY = editor.visualLineToY(runGutterLines.last())
+      val startX = if (singleLineGutter) 30 else 25
+      Rectangle(startX, startLineY, ui.width - 40, endLineY - startLineY + editor.lineHeight)
     }
   }
 
@@ -634,7 +675,7 @@ fun LessonContext.highlightButtonById(actionId: String,
           }
         }
         catch (e: Throwable) {
-          // Just go to the next step if we cannot find needed button (when this method is used as pass trigger)
+          // Just go to the next step if we cannot find the needed button (when this method is used as pass trigger)
           taskInvokeLater { feature.complete(false) }
           throw IllegalStateException("Cannot find button for $actionId", e)
         }
@@ -765,3 +806,40 @@ fun TaskRuntimeContext.addNewRunConfigurationFromContext(editConfiguration: (Run
   val newSettings = RunnerAndConfigurationSettingsImpl(runManager, runConfiguration)
   runManager.addConfiguration(newSettings)
 }
+
+fun showEndOfLessonDialogAndFeedbackForm(onboardingLesson: Lesson, lessonEndInfo: LessonEndInfo, project: Project) {
+  if (!lessonEndInfo.lessonPassed) {
+    LessonUtil.showFeedbackNotification(onboardingLesson, project)
+    return
+  }
+  val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
+  invokeLater {
+    val result = MessageDialogBuilder.yesNoCancel(LessonsBundle.message("onboarding.finish.title"),
+                                                  LessonsBundle.message("onboarding.finish.text",
+                                                                            LessonUtil.returnToWelcomeScreenRemark()))
+      .yesText(LessonsBundle.message("onboarding.finish.exit"))
+      .noText(LessonsBundle.message("onboarding.finish.modules"))
+      .icon(FeaturesTrainerIcons.PluginIcon)
+      .show(project)
+
+    when (result) {
+      Messages.YES -> invokeLater {
+        LessonManager.instance.stopLesson()
+        val closeAction = getActionById("CloseProject")
+        dataContextPromise.onSuccess { context ->
+          invokeLater {
+            val event = AnActionEvent.createFromAnAction(closeAction, null, ActionPlaces.LEARN_TOOLWINDOW, context)
+            ActionUtil.performActionDumbAwareWithCallbacks(closeAction, event)
+          }
+        }
+      }
+      Messages.NO -> invokeLater {
+        LearningUiManager.resetModulesView()
+      }
+    }
+    if (result != Messages.YES) {
+      LessonUtil.showFeedbackNotification(onboardingLesson, project)
+    }
+  }
+}
+

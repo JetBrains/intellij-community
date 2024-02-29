@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.wm.impl.status.widget
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
@@ -42,7 +43,7 @@ class StatusBarWidgetsManager(private val project: Project,
           return LoadingOrder(anchor)
         }
         catch (e: Throwable) {
-          LOG.error("Cannot parse anchor ${anchor}", e)
+          LOG.error("Cannot parse anchor '${anchor}'", e)
           return LoadingOrder.ANY
         }
       }
@@ -108,7 +109,9 @@ class StatusBarWidgetsManager(private val project: Project,
       widgetIdMap.put(widget.ID(), factory)
       parentScope.launch(Dispatchers.EDT) {
         when (val statusBar = WindowManager.getInstance().getStatusBar(project)) {
-          null -> LOG.error("Cannot add a widget for project without root status bar: ${factory.id}")
+          null -> PluginException.logPluginError(LOG, "Cannot add a widget for project without root status bar: ${factory.id}",
+                                                 null,
+                                                 factory.javaClass)
           is IdeStatusBarImpl -> statusBar.addWidget(widget, order)
           else -> {
             @Suppress("DEPRECATION")
@@ -167,8 +170,8 @@ class StatusBarWidgetsManager(private val project: Project,
       .filter {
         val id = it.id
         if (id == null) {
-          LOG.warn("${it.implementationClassName} doesn't define id for extension (point=com.intellij.statusBarWidgetFactory). " +
-                   "Please specify `id` attribute.")
+          LOG.warn("${it.implementationClassName} doesn't define 'id' for extension (point=com.intellij.statusBarWidgetFactory). " +
+                   "Please specify `id` attribute. Plugin ID: ${it.pluginDescriptor.pluginId}")
           true
         }
         else {
@@ -194,7 +197,9 @@ class StatusBarWidgetsManager(private val project: Project,
       val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()
       for ((factory, anchor) in pendingFactories) {
         if (widgetFactories.containsKey(factory)) {
-          LOG.error("Factory has been added already: ${factory.id}")
+          PluginException.logPluginError(LOG, "Factory has been added already: ${factory.id}",
+                                         null,
+                                         factory.javaClass)
           continue
         }
 
@@ -216,7 +221,9 @@ class StatusBarWidgetsManager(private val project: Project,
 
         synchronized(widgetFactories) {
           if (widgetFactories.containsKey(extension)) {
-            LOG.error("Factory has been added already: ${extension.id}")
+            PluginException.logPluginError(LOG, "Factory has been added already: ${extension.id}",
+                                           null,
+                                           extension.javaClass)
             return
           }
 

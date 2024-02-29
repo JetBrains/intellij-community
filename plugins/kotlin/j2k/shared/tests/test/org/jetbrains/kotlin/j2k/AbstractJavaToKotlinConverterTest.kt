@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
@@ -27,7 +27,7 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
 
         val testName = getTestName(false)
         if (testName.contains("Java17") || testName.contains("java17")) {
-            LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_17
+            IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_17)
         }
         vfsDisposable = KotlinTestUtils.allowProjectRootAccess(this)
         invalidateLibraryCache(project)
@@ -49,7 +49,7 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         addFile(File(KotlinRoot.DIR, "j2k/shared/tests/testData/$fileName"), dirName)
     }
 
-    protected fun addFile(file: File, dirName: String?): VirtualFile {
+    protected fun addFile(file: File, dirName: String? = null): VirtualFile {
         return addFile(FileUtil.loadFile(file, true), file.name, dirName)
     }
 

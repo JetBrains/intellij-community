@@ -1,4 +1,3 @@
-//file
 class A extends B {
     public void foo(String s) {}
 }

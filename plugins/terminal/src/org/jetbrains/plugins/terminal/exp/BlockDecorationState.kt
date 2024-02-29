@@ -18,7 +18,8 @@ internal interface BlockDecorationState {
 internal class DefaultBlockDecorationState(gradientCache: GradientTextureCache) : BlockDecorationState {
   override val backgroundRenderer: CustomHighlighterRenderer = TerminalBlockBackgroundRenderer(gradientCache)
   override val cornersRenderer: CustomHighlighterRenderer = TerminalBlockCornersRenderer(gradientCache)
-  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(gradientCache.colorStartKey)
+  override val leftAreaRenderer: LineMarkerRenderer = TerminalBlockLeftAreaRenderer(backgroundKey = gradientCache.colorStartKey,
+                                                                                    failoverBackgroundKey = gradientCache.colorEndKey)
 }
 
 internal class SelectedBlockDecorationState : BlockDecorationState {

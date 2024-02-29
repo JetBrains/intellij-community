@@ -50,7 +50,6 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
   private transient @Nullable GradleBuild myMainGradleBuild = null;
   private transient @Nullable Collection<? extends GradleBuild> myNestedGradleBuilds = null;
   private transient @Nullable ModelConverter myModelConverter = null;
-  private transient @Nullable GradleOpenTelemetry myTelemetry = null;
 
   public GradleModelFetchAction addProjectImportModelProviders(
     @NotNull Collection<? extends ProjectImportModelProvider> providers
@@ -118,23 +117,20 @@ public class GradleModelFetchAction implements BuildAction<AllModels>, Serializa
   }
 
   private <T> T withOpenTelemetry(@NotNull Function<GradleOpenTelemetry, T> action) {
-    boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
-    if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
-      myTelemetry = new GradleOpenTelemetry();
-      if (myTracingContext != null) {
-        myTelemetry.start(myTracingContext);
-      }
+    if (myTracingContext == null) {
+      GradleOpenTelemetry noopTelemetry = new GradleOpenTelemetry();
+      return action.apply(noopTelemetry);
     }
 
-    assert myTelemetry != null;
-
+    GradleOpenTelemetry telemetry = new GradleOpenTelemetry();
+    telemetry.start(myTracingContext);
     try {
-      return action.apply(myTelemetry);
+      return action.apply(telemetry);
     }
     finally {
-      if (!isProjectsLoadedAction && myAllModels != null) {
-        byte[] trace = myTelemetry.shutdown();
-        myAllModels.setOpenTelemetryTrace(trace);
+      byte[] trace = telemetry.shutdown();
+      if (myAllModels != null) {
+        myAllModels.addOpenTelemetryTrace(trace);
       }
     }
   }

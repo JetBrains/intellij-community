@@ -4,6 +4,8 @@ package com.intellij.collaboration.ui.codereview.list
 import com.intellij.collaboration.messages.CollaborationToolsBundle.message
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.createTagLabel
 import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
+import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.ui.popup.Balloon
@@ -32,6 +34,9 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
   private val toolTipManager
     get() = IdeTooltipManager.getInstance()
 
+  private val titleSpacer = JLabel().apply {
+    preferredSize = JBDimension(1, CodeReviewAvatarUtils.expectedIconHeight(Avatar.Sizes.OUTLINED))
+  }
   private val unseen = JLabel().apply {
     icon = UnreadDotIcon()
     border = JBEmptyBorder(0, 2, 0, 0)
@@ -63,6 +68,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
       add(title, SwingConstants.LEFT as Any)
       add(tags, SwingConstants.LEFT as Any)
 
+      add(titleSpacer, SwingConstants.RIGHT as Any)
       add(stateLabel, SwingConstants.RIGHT as Any)
       add(nonMergeable, SwingConstants.RIGHT as Any)
       add(buildStatus, SwingConstants.RIGHT as Any)
@@ -78,7 +84,6 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
     UIUtil.forEachComponentInHierarchy(this) {
       it.isFocusable = false
     }
-    updateRendering()
   }
 
   private fun updateRendering() {
@@ -189,6 +194,8 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
       isVisible = counter != null
       border = JBUI.Borders.emptyRight(1)
     }
+
+    updateRendering()
 
     return this
   }

@@ -3,29 +3,21 @@ package com.jetbrains.performancePlugin.commands
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
-import com.intellij.openapi.ui.TypingTarget
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
-import com.intellij.util.ui.UIUtil
 import com.jetbrains.performancePlugin.PerformanceTestSpan
+import com.jetbrains.performancePlugin.utils.findTypingTarget
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Scope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import java.awt.KeyboardFocusManager
 import kotlin.coroutines.resume
 import kotlin.time.Duration.Companion.seconds
 
@@ -44,7 +36,7 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
     val project = context.project
     project.waitForSmartMode()
     withTimeout(40.seconds) {
-      checkFocusInEditor(context, project)
+      findTypingTarget(project)
     }
 
     val busConnection = project.messageBus.simpleConnect()
@@ -112,42 +104,6 @@ class DoLocalInspection(text: String, line: Int) : PlaybackCommandCoroutineAdapt
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)!!
         DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
       }
-    }
-  }
-
-  private suspend fun checkFocusInEditor(context: PlaybackContext, project: Project) {
-    if (!context.isUseTypingTargets) {
-      return
-    }
-
-    withContext(Dispatchers.EDT) {
-      val focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
-      var each = focusOwner
-      while (each != null) {
-        if (each is TypingTarget) {
-          return@withContext
-        }
-        each = each.parent
-      }
-
-      val editorTracker = EditorTracker.getInstance(project)
-      val message = "There is no focus in editor (focusOwner=${
-        focusOwner?.let {
-          UIUtil.uiParents(it, false).joinToString(separator = "\n  ->\n")
-        }
-      },\neditorTracker=$editorTracker)"
-
-      takeScreenshotOfAllWindows("no-focus-in-editor")
-
-      if (focusOwner == null) {
-        val activeEditors = editorTracker.activeEditors
-        activeEditors.firstOrNull()?.let {
-          it.contentComponent.requestFocusInWindow()
-          logger<DoLocalInspection>().warn(message)
-          return@withContext
-        }
-      }
-      throw IllegalStateException(message)
     }
   }
 

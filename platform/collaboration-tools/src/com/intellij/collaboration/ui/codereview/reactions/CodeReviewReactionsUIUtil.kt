@@ -2,8 +2,6 @@
 package com.intellij.collaboration.ui.codereview.reactions
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -14,15 +12,33 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
-import java.awt.Component
-import java.awt.Font
-import java.awt.Graphics
-import java.awt.Graphics2D
+import java.awt.*
 import java.awt.font.TextLayout
 import java.awt.geom.Point2D
 import javax.swing.Icon
 
 object CodeReviewReactionsUIUtil {
+  private val PREFERRED_EMOJI_FONTS: List<String> = listOf(
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"
+  )
+
+  internal val EMOJI_FONT: Font? by lazy(::findEmojiFont)
+
+  private fun findEmojiFont(): Font? {
+    var found: Pair<Int, Font>? = null
+    for (font in GraphicsEnvironment.getLocalGraphicsEnvironment().allFonts) {
+      val name = font.name
+      var priority = PREFERRED_EMOJI_FONTS.indexOf(name)
+      if (priority < 0 && name.contains("emoji", true)) {
+        priority = Int.MAX_VALUE
+      }
+      if (priority >= 0 && (found == null || priority < found.first)) {
+        found = priority to font
+      }
+    }
+    return found?.second
+  }
+
   internal const val VARIATION_SELECTOR: String = "\uFE0F"
 
   const val BUTTON_HEIGHT: Int = 24
@@ -82,7 +98,11 @@ private class UnicodeEmojiIcon(text: String, private val size: Int) : Icon {
       g2d.font = paintData.font
       val frc = g2d.fontMetrics.fontRenderContext
       val layout = TextLayout(text, g2d.font, frc)
-      val textBounds = layout.bounds
+      // Use getPixelBounds instead of getBounds because visual bounds can be empty on Linux.
+      // This seems to be because sun.font.FreetypeFontScaler.getGlyphOutlineBoundsNative outputs `null`.
+      // getPixelBounds measures the area in which a glyph image is drawn.
+      // java.awt.font.TextLine.isSimple is true, so no double rendering should occur.
+      val textBounds = layout.getPixelBounds(null, 0f, 0f).bounds2D
       val offsetX = (paintData.size - textBounds.width).coerceAtLeast(0.0) / 2
       val offsetY = (paintData.size - textBounds.height).coerceAtLeast(0.0) / 2
       val baseline = Point2D.Double(offsetX - textBounds.x, offsetY - textBounds.y)
@@ -99,13 +119,9 @@ private class UnicodeEmojiIcon(text: String, private val size: Int) : Icon {
   override fun getIconHeight(): Int = getPaintData().size
 
   private val paintDataCache = ScaleContextCache {
-    val labelFont = UIUtil.getLabelFont()
-    val fontSize = CodeReviewReactionsUIUtil.EMOJI_FONT_SIZE
-    val pref = FontPreferencesImpl().apply {
-      setFontSize(labelFont.family, fontSize)
-    }
-    val font = ComplementaryFontsRegistry.getFontAbleToDisplay(text, 0, text.length, Font.PLAIN, pref, null).font
-      .deriveFont(JBUIScale.scale(fontSize)) // we don't use font scale here, bc it's not a text, but icon
+    // we don't use font scale here, bc it's not a text, but icon
+    val fontSize = JBUIScale.scale(CodeReviewReactionsUIUtil.EMOJI_FONT_SIZE)
+    val font = (CodeReviewReactionsUIUtil.EMOJI_FONT ?: UIUtil.getLabelFont()).deriveFont(fontSize)
     PaintData(JBUI.scale(size), font)
   }
 

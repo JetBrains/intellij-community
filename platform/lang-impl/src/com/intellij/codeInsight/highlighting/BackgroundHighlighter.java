@@ -278,6 +278,9 @@ final class BackgroundHighlighter {
                                                       @NotNull PsiFile newFile,
                                                       @NotNull Editor newEditor) {
     ReadAction.nonBlocking(() -> {
+        if (!newFile.isValid()) {
+          return null;
+        }
         int textLength = newFile.getTextLength();
         if (textLength == -1 | hostEditor.isDisposed()) {
           // sometimes some crazy stuff is returned (EA-248725)

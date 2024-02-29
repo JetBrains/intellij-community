@@ -13,3 +13,8 @@ class test {
     $object = new test;
     $object->xyz();
 """ + "\n$abc = '123';";
+java.lang.String indented = """
+
+     test(1);
+     test(1);\
+""";

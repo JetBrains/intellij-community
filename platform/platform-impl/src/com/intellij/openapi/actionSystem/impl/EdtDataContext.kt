@@ -142,7 +142,7 @@ open class EdtDataContext : DataContext, UserDataHolder, InjectedDataContextSupp
 
     answer = calcData(dataId, component)
     if (CommonDataKeys.EDITOR.`is`(dataId) || CommonDataKeys.HOST_EDITOR.`is`(dataId) || InjectedDataKeys.EDITOR.`is`(dataId)) {
-      answer = DataManagerImpl.validateEditor(answer as Editor?, component)
+      answer = DataManagerImpl.validateEditor(answer as? Editor, component)
     }
     if (cacheable) {
       cachedData.put(dataId, answer ?: CustomizedDataContext.EXPLICIT_NULL)

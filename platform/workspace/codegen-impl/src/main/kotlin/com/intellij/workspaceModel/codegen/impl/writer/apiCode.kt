@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer
 
 import com.intellij.workspaceModel.codegen.impl.writer.classes.*
@@ -124,12 +124,16 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
   }
   val mandatoryFields = allFields.mandatoryFields()
   if (mandatoryFields.isNotEmpty()) {
-    val fields = mandatoryFields.joinToString { "${it.name}: ${it.valueType.javaType}" }
     section(companionObjectHeader) {
       line("@${JvmOverloads::class.fqn}")
       line("@${JvmStatic::class.fqn}")
       line("@${JvmName::class.fqn}(\"create\")")
-      section("$generatedCodeVisibilityModifier operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
+      line("$generatedCodeVisibilityModifier operator fun invoke(")
+      mandatoryFields.forEach { field ->
+        line(" ".repeat(this.indentSize) + "${field.name}: ${field.valueType.javaType},")
+      }
+      line(" ".repeat(this.indentSize) + "init: (Builder$builderGeneric.() -> Unit)? = null,")
+      section("): $javaFullName") {
         line("val builder = builder()")
         list(mandatoryFields) {
           if (this.valueType is ValueType.Set<*> && !this.valueType.isRefType()) {
@@ -173,7 +177,12 @@ fun ObjClass<*>.generateExtensionCode(): String? {
 
   return lines {
     if (!openness.extendable) {
-      line("$generatedCodeVisibilityModifier fun ${MutableEntityStorage}.modifyEntity(entity: $name, modification: $name.Builder.() -> Unit): $name = modifyEntity($name.Builder::class.java, entity, modification)")
+      line("$generatedCodeVisibilityModifier fun ${MutableEntityStorage}.modifyEntity(")
+      line("  entity: $name,")
+      line("  modification: $name.Builder.() -> Unit,")
+      line("): $name {")
+      line("  return modifyEntity($name.Builder::class.java, entity, modification)")
+      line("}")
     }
     fields.sortedWith(compareBy({ it.receiver.name }, { it.name })).forEach { line(it.wsCode) }
   }

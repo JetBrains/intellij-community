@@ -8,7 +8,6 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 internal class LightServiceMigrationInspectionTest : LightServiceMigrationInspectionTestBase() {
 
   private val CANNOT_BE_LIGHT_SERVICE_XML = "cannotBeLightService.xml"
-  private val CANNOT_BE_LIGHT_SERVICE_JAVA = "CannotBeLightService.java"
   private val MY_SERVICE_JAVA = "MyService.java"
 
   override fun getBasePath(): String = DevkitJavaTestsUtil.TESTDATA_PATH + "inspections/lightServiceMigration"
@@ -39,7 +38,7 @@ internal class LightServiceMigrationInspectionTest : LightServiceMigrationInspec
   }
 
   fun testServiceInterface() {
-    doTest(CANNOT_BE_LIGHT_SERVICE_JAVA, getXmlFilePath())
+    doTest(MY_SERVICE_JAVA, getXmlFilePath())
   }
 
   fun testPersistentStateComponent() {
@@ -47,7 +46,11 @@ internal class LightServiceMigrationInspectionTest : LightServiceMigrationInspec
   }
 
   fun testPreload() {
-    doTest(CANNOT_BE_LIGHT_SERVICE_JAVA, getXmlFilePath())
+    doTest(MY_SERVICE_JAVA, getXmlFilePath())
+  }
+
+  fun testConfigurationSchemaKey() {
+    doTest(MY_SERVICE_JAVA, getXmlFilePath())
   }
 
   fun testLightService() {

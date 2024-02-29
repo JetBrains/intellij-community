@@ -1,4 +1,3 @@
-//file
 class Test {
     private char c = 0;
 

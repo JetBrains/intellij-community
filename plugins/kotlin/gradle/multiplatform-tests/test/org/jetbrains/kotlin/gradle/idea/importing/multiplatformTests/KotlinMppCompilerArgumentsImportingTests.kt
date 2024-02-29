@@ -29,6 +29,12 @@ class KotlinMppCompilerArgumentsImportingTests : AbstractKotlinMppGradleImportin
 
     @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     @Test
+    fun testApiVersionExceedingLanguageVersion() {
+        doTest()
+    }
+
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
+    @Test
     fun testCompilerOptionsInCompilationTask() {
         doTest()
     }

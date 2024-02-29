@@ -8,12 +8,14 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.lang.jvm.actions.groupActionsByType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -39,7 +41,7 @@ private fun getTargetCallExpression(element: KtElement): KtCallExpression? {
 
 private fun KtSimpleNameExpression.referenceNameOfElement(): Boolean = getReferencedNameElementType() == KtTokens.IDENTIFIER
 
-private fun buildRequestsAndActions(callExpression: KtCallExpression): List<IntentionAction> {
+internal fun buildRequestsAndActions(callExpression: KtCallExpression): List<IntentionAction> {
     val methodRequests = buildRequests(callExpression)
     val extensions = EP_NAME.extensions
     return methodRequests.flatMap { (clazz, request) ->
@@ -58,32 +60,53 @@ internal fun buildRequests(callExpression: KtCallExpression): Map<JvmClass, Crea
     analyze(callExpression) {
         // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
         val defaultClassForReceiverOrFile = calleeExpression.getReceiverOrContainerClass()
-        defaultClassForReceiverOrFile?.let {
-            val packageNameOfReceiver = calleeExpression.getReceiverOrContainerClassPackageName()
-            val modifiers = if (packageNameOfReceiver != null && packageNameOfReceiver == callExpression.containingKtFile.packageFqName)
-              listOf(JvmModifier.PUBLIC)
-            else listOf()
-            requests[it] = CreateMethodFromKotlinUsageRequest(callExpression, modifiers, receiverExpression)
+        if (defaultClassForReceiverOrFile != null) {
+            val modifiers = computeModifiers(calleeExpression, callExpression)
+            requests[defaultClassForReceiverOrFile] = CreateMethodFromKotlinUsageRequest(callExpression, modifiers, receiverExpression)
         }
-    }
-
-    // Register create-abstract/extension-callable-from-usage request.
-    val abstractContainerClass = analyze(callExpression) {
+        // Register create-abstract/extension-callable-from-usage request.
         val abstractTypeOfContainer = calleeExpression.getAbstractTypeOfReceiver()
-        abstractTypeOfContainer?.convertToClass()
-    }
-    when {
-        abstractContainerClass != null -> requests.registerCreateAbstractCallableFromUsage(
-            abstractContainerClass, callExpression, receiverExpression
-        )
+        val abstractContainerClass = abstractTypeOfContainer?.convertToClass()
+        when {
+            abstractContainerClass != null -> requests.registerCreateAbstractCallableFromUsage(
+                abstractContainerClass, callExpression, receiverExpression
+            )
 
-        receiverExpression != null -> requests.registerCreateExtensionCallableFromUsage(
-            callExpression, calleeExpression, receiverExpression
-        )
+            receiverExpression != null -> requests.registerCreateExtensionCallableFromUsage(
+                callExpression, calleeExpression, receiverExpression
+            )
+        }
     }
     return requests
 }
 
+// assume the map is linked, because we require order
+val modifiers: Map<KtModifierKeywordToken, JvmModifier> = mapOf(
+    KtTokens.PRIVATE_KEYWORD to JvmModifier.PRIVATE,
+    KtTokens.INTERNAL_KEYWORD to JvmModifier.PRIVATE, // create private from internal
+    KtTokens.PROTECTED_KEYWORD to JvmModifier.PROTECTED,
+    KtTokens.PUBLIC_KEYWORD to JvmModifier.PUBLIC
+)
+
+context (KtAnalysisSession)
+private fun computeModifiers(calleeExpression: KtSimpleNameExpression, callExpression: KtCallExpression): List<JvmModifier> {
+    val packageNameOfReceiver = calleeExpression.getReceiverOrContainerClassPackageName()
+    if (packageNameOfReceiver != null && packageNameOfReceiver == callExpression.containingKtFile.packageFqName) {
+        return listOf(JvmModifier.PUBLIC)
+    }
+    val modifierOwner = callExpression.getNonStrictParentOfType<KtModifierListOwner>() ?: return emptyList()
+
+    for (modifier in modifiers) {
+        if (modifierOwner.hasModifier(modifier.key)) {
+            return listOf(modifier.value)
+        }
+    }
+    val modifier = org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil.computeVisibilityModifier(callExpression)
+    if (modifier != null) {
+        return listOf(modifiers[modifier]!!)
+    }
+    return emptyList()
+}
 /**
  * Returns the type of the class containing this [KtSimpleNameExpression] if the class is abstract. Otherwise, returns null.
  */
@@ -93,7 +116,11 @@ private fun KtSimpleNameExpression.getAbstractTypeOfContainingClass(): KtType? {
     if (containingClass is KtEnumEntry || containingClass.isAnnotation()) return null
 
     val classSymbol = containingClass.getSymbol() as? KtClassOrObjectSymbol ?: return null
-    val classType = buildClassType(classSymbol)
+    val classType = buildClassType(classSymbol) {
+        for (typeParameter in containingClass.typeParameters) {
+            argument(KtStarTypeProjection(token))
+        }
+    }
     if (containingClass.modifierList.hasAbstractModifier() || classSymbol.classKind == KtClassKind.INTERFACE) return classType
 
     // KtType.getAbstractSuperType() does not guarantee it's the closest abstract super type. We can implement it as a
@@ -127,7 +154,7 @@ private fun KtSimpleNameExpression.getAbstractTypeOfReceiver(): KtType? {
     return receiver.getTypeOfAbstractSuperClass()
 }
 
-private fun LinkedHashMap<JvmClass, CreateMethodRequest>.registerCreateAbstractCallableFromUsage(
+private fun MutableMap<JvmClass, CreateMethodRequest>.registerCreateAbstractCallableFromUsage(
     abstractContainerClass: KtClass, callExpression: KtCallExpression, receiverExpression: KtExpression?
 ) {
     val jvmClassWrapper = JvmClassWrapperForKtClass(abstractContainerClass)
@@ -136,7 +163,7 @@ private fun LinkedHashMap<JvmClass, CreateMethodRequest>.registerCreateAbstractC
     )
 }
 
-private fun LinkedHashMap<JvmClass, CreateMethodRequest>.registerCreateExtensionCallableFromUsage(
+private fun MutableMap<JvmClass, CreateMethodRequest>.registerCreateExtensionCallableFromUsage(
     callExpression: KtCallExpression, calleeExpression: KtSimpleNameExpression, receiverExpression: KtExpression?
 ) {
     val containerClassForExtension = calleeExpression.getNonStrictParentOfType<KtClassOrObject>() ?: calleeExpression.containingKtFile

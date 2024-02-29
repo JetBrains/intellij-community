@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiJavaFile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.j2k.WithProgressProcessor
 
 class NewJ2kWithProgressProcessor(

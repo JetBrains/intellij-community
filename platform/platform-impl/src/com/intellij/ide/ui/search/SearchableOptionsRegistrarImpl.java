@@ -157,6 +157,11 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     return storage.keySet();
   }
 
+  @ApiStatus.Internal
+  public Map<CharSequence, long[]> getStorage() {
+    return new HashMap<>(storage);
+  }
+
   static void processSearchableOptions(@NotNull Predicate<? super String> fileNameFilter,
                                        @NotNull BiConsumer<? super String, ? super Element> consumer) {
     Set<ClassLoader> visited = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -233,7 +238,8 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     return _groupName << 48 | _id << 32 | _hit << 16 | _path/* << 0*/;
   }
 
-  private OptionDescription unpack(long data) {
+  @ApiStatus.Internal
+  public OptionDescription unpack(long data) {
     int _groupName = (int)(data >> 48 & 0xffff);
     int _id = (int)(data >> 32 & 0xffff);
     int _hit = (int)(data >> 16 & 0xffff);

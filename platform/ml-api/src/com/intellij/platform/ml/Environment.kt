@@ -47,6 +47,8 @@ interface Environment {
      */
     fun joined(environments: Iterable<Environment>): Environment = TierInstanceStorage.joined(environments)
 
+    fun joined(vararg environments: Environment): Environment = TierInstanceStorage.joined(environments.toList())
+
     fun empty(): Environment = joined(emptySet())
 
     /**

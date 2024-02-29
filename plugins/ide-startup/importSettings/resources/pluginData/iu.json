@@ -76,7 +76,7 @@
   },
   {
     "vsCodeId": "donjayamanne.python-environment-manager",
-    "ideaName": "Python Community Edition",
+    "ideaName": "Python",
     "ideaId": "Pythonid"
   },
   {
@@ -241,17 +241,17 @@
   },
   {
     "vsCodeId": "ms-python.black-formatter",
-    "ideaName": "Python Community Edition",
+    "ideaName": "Python",
     "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "ms-python.isort",
-    "ideaName": "Python Community Edition",
+    "ideaName": "Python",
     "ideaId": "Pythonid"
   },
   {
     "vsCodeId": "ms-python.python",
-    "ideaName": "Python Community Edition",
+    "ideaName": "Python",
     "ideaId": "Pythonid"
   },
   {
@@ -376,7 +376,7 @@
   },
   {
     "vsCodeId": "tht13.python",
-    "ideaName": "Python Community Edition",
+    "ideaName": "Python",
     "ideaId": "Pythonid"
   },
   {

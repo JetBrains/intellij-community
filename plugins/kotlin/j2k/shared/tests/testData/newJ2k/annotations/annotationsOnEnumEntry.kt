@@ -8,11 +8,8 @@ internal enum class Foo {
     @Ann1
     @Ann2
     A,
-
     @Ann1
-    B,
-
-    @Ann1
+    B, @Ann1
     C
 }
 
@@ -22,7 +19,6 @@ internal class Outer {
     internal enum class NestedEnum {
         @Value("NV1")
         NValue1,
-
         @Value("NV2")
         NValue2,
     }
@@ -31,7 +27,6 @@ internal class Outer {
 internal enum class TopLevelEnum {
     @Value("TV1")
     TValue1,
-
     @Value("TV2")
     TValue2,
 }

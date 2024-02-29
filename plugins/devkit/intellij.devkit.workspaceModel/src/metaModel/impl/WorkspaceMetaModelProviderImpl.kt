@@ -50,17 +50,19 @@ internal class WorkspaceMetaModelProviderImpl(
     if (cached != null && cached.second == moduleDescriptor) return cached.first
     val packageViewDescriptor = moduleDescriptor.getPackage(FqName(packageName))
     val objModuleStub = createObjModuleStub(moduleDescriptor, packageViewDescriptor, packageName)
-    val result = registerObjModuleContent(packageViewDescriptor, objModuleStub)
+    val result = registerObjModuleContent(packageViewDescriptor, objModuleStub, moduleDescriptor)
     objModuleByName[packageName] = result to moduleDescriptor
     return result
   }
 
   private fun registerObjModuleContent(packageViewDescriptor: PackageViewDescriptor,
-                                objModuleStub: ObjModuleStub): CompiledObjModule {
+                                       objModuleStub: ObjModuleStub,
+                                       moduleDescriptor: ModuleDescriptor): CompiledObjModule {
     val extensionProperties = packageViewDescriptor.fragments.flatMap { fragment ->
       fragment.getMemberScope().getContributedDescriptors(DescriptorKindFilter.VARIABLES)
         .filterIsInstance<PropertyDescriptor>()
         .filter { it.isExtensionProperty }
+        .filter { it.module == moduleDescriptor }
     }
     val externalProperties = extensionProperties.mapNotNull { property ->
           val receiver = property.extensionReceiverParameter?.value?.type?.constructor?.declarationDescriptor as? ClassDescriptor
@@ -75,6 +77,7 @@ internal class WorkspaceMetaModelProviderImpl(
       fragment.getMemberScope().getContributedDescriptors(DescriptorKindFilter.CLASSIFIERS)
         .filterIsInstance<ClassDescriptor>()
         .filter { it.isEntityInterface }
+        .filter { it.module == moduleDescriptor }
     }
 
     val module = CompiledObjModuleImpl(packageName)
@@ -82,7 +85,7 @@ internal class WorkspaceMetaModelProviderImpl(
       it.value to createObjTypeStub(it.value, module)
     }
 
-    return ObjModuleStub(module, types, moduleDescriptor.moduleAbstractTypes)
+    return ObjModuleStub(module, types, moduleDescriptor.moduleAbstractTypes, moduleDescriptor)
   }
 
   private fun getObjClass(entityInterface: ClassDescriptor): ObjClass<*> {
@@ -94,13 +97,15 @@ internal class WorkspaceMetaModelProviderImpl(
 
   private inner class ObjModuleStub(val module: CompiledObjModuleImpl,
                                     val types: List<Pair<ClassDescriptor, ObjClassImpl<Obj>>>,
-                                    val moduleAbstractTypes: List<ClassDescriptor>) {
+                                    val moduleAbstractTypes: List<ClassDescriptor>,
+                                    val moduleDescriptor: ModuleDescriptor) {
     fun registerContent(extProperties: List<Pair<PropertyDescriptor, ClassDescriptor>>): CompiledObjModule {
       var extPropertyId = 0
       for ((classDescriptor, objType) in types) {
         val properties = classDescriptor.unsubstitutedMemberScope.getContributedDescriptors()
           .filterIsInstance<PropertyDescriptor>()
           .filter { it.kind.isReal }
+          .filter { it.module == moduleDescriptor }
         for ((propertyId, property) in properties.withIndex()) {
           val kind = computeKind(property)
           if (kind !is ObjProperty.ValueKind.Computable ||

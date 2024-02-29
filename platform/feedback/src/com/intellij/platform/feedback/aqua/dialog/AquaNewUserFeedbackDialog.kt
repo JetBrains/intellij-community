@@ -40,7 +40,7 @@ class AquaNewUserFeedbackDialog(
         )
       },
       "primary_daily_tasks"
-    ).addOtherTextField(),
+    ).addOtherTextField().requireAnswer(),
     ComboBoxBlock(
       AquaFeedbackBundle.message("new.user.dialog.team.size.label"),
       List(5) {
@@ -57,7 +57,7 @@ class AquaNewUserFeedbackDialog(
         )
       },
       "primary_testing_targets"
-    ).addOtherTextField(),
+    ).addOtherTextField().requireAnswer(),
   )
 
   override val mySystemInfoData: CommonFeedbackSystemData by lazy {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.lang.ASTNode;
@@ -871,10 +871,13 @@ public class ExpressionGenerator extends Generator {
     final String value = GrStringUtil.unescapeString(GrStringUtil.removeQuotes(text));
     if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
       if (com.intellij.psi.util.PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, literal)) {
-        builder
-          .append("\"\"\"\n")
-          .append(PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.escapeStringCharacters(value)))
-          .append("\"\"\"");
+        String content = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.escapeStringCharacters(value));
+        if (!content.endsWith("\n") && PsiLiteralUtil.getTextBlockIndent(content.split("\n", -1)) > 0) {
+          builder.append("\"\"\"\n").append(content).append("\\\n").append("\"\"\"");
+        }
+        else {
+          builder.append("\"\"\"\n").append(content).append("\"\"\"");
+        }
       }
       else {
         String content = StringUtil.escapeStringCharacters(value).replaceAll("\\\\n([^\"])", "\\\\n\" +\n \"$1");

@@ -9,7 +9,6 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.io.deleteRecursively
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
-import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.junit.Assume
@@ -32,11 +31,9 @@ abstract class GradleDependencySourcesImportingTestCase : GradleImportingTestCas
     gradleUserHome.resolve(DEPENDENCY_CACHE_PATH)
       .deleteRecursively()
 
-    val gradleSettings = GradleSettings.getInstance(myProject)
-    gradleSettings.isDownloadSources = settings.ideaSettingsValue
-
     val gradleSystemSettings = GradleSystemSettings.getInstance()
     gradleSystemSettings.gradleVmOptions = null
+    gradleSystemSettings.isDownloadSources = settings.ideaSettingsValue
     if (settings.forceFlagValue != null) {
       gradleSystemSettings.gradleVmOptions = "-D$FORCE_ARGUMENT_PROPERTY_NAME=${settings.forceFlagValue}"
     }
@@ -44,8 +41,8 @@ abstract class GradleDependencySourcesImportingTestCase : GradleImportingTestCas
 
   override fun tearDown() {
     runAll(
-      { GradleSystemSettings.getInstance().gradleVmOptions = null },
-      { super.tearDown() }
+      { super.tearDown() },
+      { GradleSystemSettings.getInstance().apply { isDownloadSources = false; gradleVmOptions = null } },
     )
   }
 

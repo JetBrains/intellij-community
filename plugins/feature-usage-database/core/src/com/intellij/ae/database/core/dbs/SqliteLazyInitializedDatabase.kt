@@ -56,6 +56,8 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
   private val actionsBeforeDatabaseDisposal = mutableListOf<suspend (isFinal: Boolean) -> Unit>()
   private val closeDispatcher = Dispatchers.IO.limitedParallelism(1)
 
+  private val loggingAttempt = AtomicInteger(0)
+
   init {
     if (System.getProperty("ae.database.fullLock")?.toBoolean() == true) {
       myConnection.set(State.Locked)
@@ -82,16 +84,21 @@ class SqliteLazyInitializedDatabase(private val cs: CoroutineScope) : ISqliteExe
 
   private var isFinalClosed = false
   private suspend fun CoroutineScope.mainClosingLogic(timeout: Duration, reason: String, isFinal: Boolean) {
+    val shouldLog = isFinal || loggingAttempt.getAndIncrement() % 10 == 0
     if (isFinalClosed) {
       logger.info("Close database for reason \"${reason}\" ignored: already closed.")
     }
 
-    logger.info("Starting saving database (reason: $reason)")
+    if (shouldLog) {
+      logger.info("Starting saving database (reason: $reason)")
+    }
     try {
       withTimeout(timeout) {
         withContext(closeDispatcher) {
           closeDatabaseImpl(isFinal)?.join()
-          logger.info("Saving completed (reason: $reason)")
+          if (shouldLog) {
+            logger.info("Saving completed (reason: $reason)")
+          }
         }
       }
     }

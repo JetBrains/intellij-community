@@ -526,6 +526,7 @@
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"
                     serviceImplementation="com.intellij.ide.startup.impl.StartupManagerImpl" preload="notHeadless"/>
+    <!--suppress LightServiceMigrationXML -->
     <projectService serviceImplementation="com.intellij.openapi.ui.MasterDetailsStateService"/>
 
     <projectService serviceInterface="com.intellij.ui.docking.DockManager"

@@ -4,32 +4,48 @@ package com.intellij.openapi.application.migrations
 import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.tryReadPluginIdsFromFile
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 
-class AIAssistant241 : PluginMigration() {
+internal class AIAssistant241 : PluginMigration() {
   private val PLUGIN_ID = "com.intellij.ml.llm"
-  private val productIds = setOf("IU", "PY", "WS", "RM", "PS", "GO", "CL", "RD", "RR")
+  private val PRODUCT_IDS = setOf("IU", "PY", "WS", "DG", "RM", "PS", "GO", "CL", "RD", "RR", "QA")
 
   override fun migratePlugins(descriptor: PluginMigrationDescriptor) {
+    if (descriptor.options.previousVersion != "2023.3") return
+
     val productCode = PluginManagerCore.buildNumber.productCode
-    if (!productIds.contains(productCode)) return
+    if (!PRODUCT_IDS.contains(productCode)) return
 
-    if (StringUtil.compareVersionNumbers(descriptor.options.currentProductVersion, "241") >= 0) {
-      val disabledPluginsConfig = descriptor.options.oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
+    val oldConfigDir = descriptor.options.oldConfigDir
+    val disabledPluginsConfig = oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
 
-      val disabledIds: Set<PluginId> = if (Files.exists(disabledPluginsConfig)) {
-        tryReadPluginIdsFromFile(disabledPluginsConfig, Logger.getInstance(AIAssistant241::class.java))
+    val disabledIds: Set<PluginId> = if (Files.exists(disabledPluginsConfig)) {
+      tryReadPluginIdsFromFile(disabledPluginsConfig, Logger.getInstance(AIAssistant241::class.java))
+    }
+    else {
+      emptySet()
+    }
+
+    if (!disabledIds.contains(PluginId.getId(PLUGIN_ID))) {
+      descriptor.addPluginIfNeeded(PLUGIN_ID)
+    }
+    else {
+      try {
+        Files.createFile(descriptor.options.newConfigDir.resolve(NOT_MIGRATED_FILENAME))
       }
-      else {
-        emptySet()
-      }
-
-      if (!disabledIds.contains(PluginId.getId(PLUGIN_ID))) {
-        descriptor.addPluginIfNeeded(PLUGIN_ID)
+      catch (_: Throwable) {
       }
     }
   }
+}
+
+private const val NOT_MIGRATED_FILENAME = ".ai-migration-disabled"
+
+@ApiStatus.Internal
+fun isAIDisabledBeforeMigrated(): Boolean {
+  return Files.exists(PathManager.getConfigDir().resolve(NOT_MIGRATED_FILENAME))
 }

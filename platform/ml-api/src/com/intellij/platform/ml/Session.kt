@@ -26,11 +26,6 @@ sealed interface Session<P : Any> {
      */
     val session: Session<P>?
 
-    fun requireSuccess(): Session<P> = when (this) {
-      is Failure -> throw this.asThrowable()
-      is Success -> this.session
-    }
-
     /**
      * Indicates that nothing went wrong, and the start was successful
      */
@@ -54,7 +49,14 @@ sealed interface Session<P : Any> {
 
     class UncaughtException<P : Any>(val exception: Throwable) : Failure<P>() {
       override fun asThrowable(): Throwable {
-        return Exception("An unexpected exception", exception)
+        return exception
+      }
+    }
+
+    companion object {
+      fun <P : Any> StartOutcome<P>.requireSuccess(): Session<P> = when (this) {
+        is Failure -> throw this.asThrowable()
+        is Success -> this.session
       }
     }
   }
@@ -68,18 +70,19 @@ interface NestableMLSession<P : Any> : Session<P> {
    * Start another nested session within this one, that will inherit
    * this session's features.
    *
+   * @param callParameters The parameters passed by the MLTask's user
    * @param levelMainEnvironment The main session's environment that contains main ML task's tiers.
    *
    * @return Either [NestableMLSession] or [SinglePrediction], depending on whether the
    * last ML task's level has been reached.
    */
-  fun createNestedSession(levelMainEnvironment: Environment): Session<P>
+  suspend fun createNestedSession(callParameters: Environment, levelMainEnvironment: Environment): Session<P>
 
   /**
    * Declare that no more nested sessions will be created from this moment on.
    * It must be called.
    */
-  fun onLastNestedSessionCreated()
+  suspend fun onLastNestedSessionCreated()
 }
 
 /**
@@ -90,11 +93,11 @@ interface SinglePrediction<P : Any> : Session<P> {
    * Call ML model's inference and produce the prediction.
    * On one object, exactly one function must be called during its lifetime: this or [cancelPrediction]
    */
-  fun predict(): P
+  suspend fun predict(): P
 
   /**
    * Declare that model's inference will not be called.
    * It must be called in case it's decided that a prediction is not needed.
    */
-  fun cancelPrediction()
+  suspend fun cancelPrediction()
 }

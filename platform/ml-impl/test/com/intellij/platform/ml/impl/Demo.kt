@@ -9,7 +9,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.util.Version
 import com.intellij.platform.ml.*
-import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startMLSession
+import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startCoroutineAndMLSession
 import com.intellij.platform.ml.impl.apiPlatform.CodeLikePrinter
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
@@ -28,8 +28,7 @@ import com.intellij.platform.ml.impl.session.analysis.StructureAnalyser
 import com.intellij.platform.ml.impl.session.analysis.StructureAnalysis
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
-import java.io.BufferedWriter
-import java.io.FileWriter
+import kotlinx.coroutines.runBlocking
 import java.net.URI
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
@@ -81,13 +80,15 @@ class CompletionSessionFeatures1 : TierDescriptor {
 
   override val tier: Tier<*> = TierCompletionSession
 
+  override val descriptionPolicy: DescriptionPolicy = DescriptionPolicy(false, false)
+
   override val additionallyRequiredTiers: Set<Tier<*>> = setOf(TierGit)
 
   override val descriptionDeclaration: Set<FeatureDeclaration<*>> = setOf(
     CALL_ORDER, LANGUAGE_ID, GIT_USER, COMPLETION_TYPE
   )
 
-  override fun describe(environment: Environment, usefulFeaturesFilter: FeatureFilter): Set<Feature> {
+  override suspend fun describe(environment: Environment, usefulFeaturesFilter: FeatureFilter): Set<Feature> {
     val completionSession = environment[TierCompletionSession]
     val gitRepository = environment[TierGit]
     return setOf(
@@ -107,11 +108,13 @@ class ItemFeatures1 : TierDescriptor {
 
   override val tier: Tier<*> = TierItem
 
+  override val descriptionPolicy: DescriptionPolicy = DescriptionPolicy(false, false)
+
   override val descriptionDeclaration: Set<FeatureDeclaration<*>> = setOf(
     DECORATIONS, LENGTH
   )
 
-  override fun describe(environment: Environment, usefulFeaturesFilter: FeatureFilter): Set<Feature> {
+  override suspend fun describe(environment: Environment, usefulFeaturesFilter: FeatureFilter): Set<Feature> {
     val item = environment[TierItem]
     return setOf(
       DECORATIONS with item.decoration.size,
@@ -128,11 +131,13 @@ class GitFeatures1 : TierDescriptor {
 
   override val tier: Tier<*> = TierGit
 
+  override val descriptionPolicy: DescriptionPolicy = DescriptionPolicy(false, false)
+
   override val descriptionDeclaration: Set<FeatureDeclaration<*>> = setOf(
     N_COMMITS, HAS_USER
   )
 
-  override fun describe(environment: Environment, usefulFeaturesFilter: FeatureFilter) = setOf(
+  override suspend fun describe(environment: Environment, usefulFeaturesFilter: FeatureFilter) = setOf(
     N_COMMITS with environment[TierGit].commits.size,
     HAS_USER with environment[TierGit].user.isNotEmpty()
   )
@@ -205,7 +210,7 @@ class RandomModelSeedAnalyser : MLModelAnalyser<RandomModel, Double> {
     return CompletableFuture.supplyAsync {
       // Pretend that analysis is taking some long time
       TimeUnit.SECONDS.sleep(1)
-      setOf(SEED with sessionTreeRoot.root.seed)
+      setOf(SEED with sessionTreeRoot.rootData.seed)
     }
   }
 }
@@ -214,11 +219,10 @@ class RandomModel(val seed: Int) : MLModel<Double>, Versioned, LanguageSpecific 
   private val generator = Random(seed)
 
   class Provider : MLModel.Provider<RandomModel, Double> {
-    override val requiredTiers: Set<Tier<*>> = emptySet()
-
-    override fun provideModel(sessionTiers: List<LevelTiers>, environment: Environment): RandomModel? {
-      return if (Random.nextBoolean()) {
-        if (Random.nextBoolean()) RandomModel(1) else throw IllegalStateException()
+    private val generator = Random(1)
+    override fun provideModel(callParameters: Environment, environment: Environment, sessionTiers: List<LevelTiers>): RandomModel? {
+      return if (generator.nextBoolean()) {
+        if (generator.nextBoolean()) RandomModel(generator.nextInt()) else throw IllegalStateException()
       }
       else null
     }
@@ -231,7 +235,7 @@ class RandomModel(val seed: Int) : MLModel<Double>, Versioned, LanguageSpecific 
     TierItem to FeatureSelector.EVERYTHING,
   )
 
-  override fun predict(features: PerTier<Set<Feature>>): Double {
+  override fun predict(callParameters: List<Environment>, features: PerTier<Set<Feature>>): Double {
     return generator.nextDouble()
   }
 
@@ -354,6 +358,11 @@ object MockTask : MLTask<Double>(
     setOf(TierCompletionSession),
     setOf(TierLookup),
     setOf(TierItem)
+  ),
+  callParameters = listOf(
+    setOf(),
+    setOf(),
+    setOf()
   )
 )
 
@@ -379,14 +388,14 @@ class MockTaskApproach(
 
   override val mlModelProvider = RandomModel.Provider()
 
-  override val notUsedDescription: PerTier<FeatureSelector> = mapOf(
-    TierCompletionSession to FeatureSelector.NOTHING,
-    TierLookup to FeatureSelector.NOTHING,
-    TierItem to FeatureSelector.NOTHING,
-    TierGit to FeatureSelector.NOTHING
+  override fun getNotUsedDescription(callParameters: Environment, mlModel: RandomModel) = mapOf(
+    TierCompletionSession to FeatureFilter.REJECT_ALL,
+    TierLookup to FeatureFilter.REJECT_ALL,
+    TierItem to FeatureFilter.REJECT_ALL,
+    TierGit to FeatureFilter.REJECT_ALL
   )
 
-  override val descriptionComputer: DescriptionComputer = StateFreeDescriptionComputer()
+  override val descriptionComputer: DescriptionComputer = StateFreeDescriptionComputer
 
   class Initializer : MLTaskApproachInitializer<Double> {
     override val task: MLTask<Double> = MockTask
@@ -413,30 +422,35 @@ class TestTask : BasePlatformTestCase() {
 
           println("Demo session #$sessionIndex has started")
 
-          val startOutcome = startMLSession(MockTask, Environment.of(
-            TierCompletionSession with CompletionSession(
-              language = PlainTextLanguage.INSTANCE,
-              callOrder = 1,
-              completionType = CompletionType.SMART
+          val startOutcome = MockTask.startCoroutineAndMLSession(
+            callParameters = Environment.of(),
+            permanentSessionEnvironment = Environment.of(
+              TierCompletionSession with CompletionSession(
+                language = PlainTextLanguage.INSTANCE,
+                callOrder = 1,
+                completionType = CompletionType.SMART
+              )
             )
-          ))
+          )
 
           val completionSession = startOutcome.session ?: return@repeat
 
-          completionSession.withNestedSessions { lookupSessionCreator ->
+          runBlocking {
+            completionSession.withNestedSessions { lookupSessionCreator ->
 
-            lookupSessionCreator.nestConsidering(Environment.of(TierLookup with LookupImpl(true, 1)))
-              .withPredictions {
-                it.predictConsidering(Environment.of(TierItem with LookupItem("hello", emptyMap())))
-                it.predictConsidering(Environment.of(TierItem with LookupItem("world", emptyMap())))
-              }
+              lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(true, 1)))
+                .withPredictions {
+                  it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("hello", emptyMap())))
+                  it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("world", emptyMap())))
+                }
 
-            lookupSessionCreator.nestConsidering(Environment.of(TierLookup with LookupImpl(false, 2)))
-              .withPredictions {
-                it.predictConsidering(Environment.of(TierItem with LookupItem("hello!!!", mapOf("bold" to true))))
-                it.predictConsidering(Environment.of(TierItem with LookupItem("AAAAA!!", mapOf("strikethrough" to true))))
-                it.consider(Environment.of(TierItem with LookupItem("AAAAAAAAAAAAAAAAA", mapOf("cursive" to true))))
-              }
+              lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(false, 2)))
+                .withPredictions {
+                  it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("hello!!!", mapOf("bold" to true))))
+                  it.predictConsidering(Environment.of(), Environment.of(TierItem with LookupItem("AAAAA!!", mapOf("strikethrough" to true))))
+                  it.consider(Environment.of(), Environment.of(TierItem with LookupItem("AAAAAAAAAAAAAAAAA", mapOf("cursive" to true))))
+                }
+            }
           }
 
           // Wait until the analysis will be over
@@ -449,35 +463,8 @@ class TestTask : BasePlatformTestCase() {
       }
     }
 
-    convertListToJsonAndWriteToFile(logs)
+    val jsonSaver = MLLogsToJsonSaver(Path.of(".") / "testResources")
+
+    jsonSaver.save(logs)
   }
-}
-
-fun mapToJson(map: Map<String, Any>): String {
-  val entrySet = map.entries.joinToString(", ") {
-    "\"${it.key}\": ${valueToJson(it.value)}"
-  }
-  return "{$entrySet}"
-}
-
-fun listToJson(list: List<Any>): String =
-  list.joinToString(", ") { valueToJson(it) }
-
-@Suppress("UNCHECKED_CAST")
-fun valueToJson(value: Any): String =
-  when (value) {
-    is String -> "\"$value\""
-    is Map<*, *> -> mapToJson(value as Map<String, Any>)
-    is List<*> -> "[${listToJson(value as List<Any>)}]"
-    else -> value.toString()
-  }
-
-fun convertListToJsonAndWriteToFile(list: MutableList<Pair<String, Map<String, Any>>>) {
-  // Prepare content to write to file
-  val logs = list.joinToString(",\n") { mapToJson(mapOf("eventId" to it.first, "data" to it.second)) }
-  val content = "let logs = [\n$logs\n];"
-
-  // Write content to file
-  val filePath = Path.of(".") / "testResources" / "ml_logs.js"
-  BufferedWriter(FileWriter(filePath.toFile())).use { it.write(content) }
 }

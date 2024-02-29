@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Paths
@@ -58,7 +59,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(HAS_CUSTOM_GRADLE_VM_OPTIONS.metric(!gradleSettings.gradleVmOptions.isNullOrBlank()))
     usages.add(SHOW_SELECTIVE_IMPORT_DIALOG_ON_INITIAL_IMPORT.metric(gradleSettings.showSelectiveImportDialogOnInitialImport()))
     usages.add(STORE_PROJECT_FILES_EXTERNALLY.metric(gradleSettings.storeProjectFilesExternally))
-    usages.add(GRADLE_DOWNLOAD_DEPENDENCY_SOURCES.metric(gradleSettings.isDownloadSources))
+    usages.add(GRADLE_DOWNLOAD_DEPENDENCY_SOURCES.metric(GradleSystemSettings.getInstance().isDownloadSources))
     usages.add(GRADLE_PARALLEL_MODEL_FETCH.metric(gradleSettings.isParallelModelFetch))
   }
 

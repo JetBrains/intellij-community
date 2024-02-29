@@ -72,7 +72,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     Iterable<JvmField> addedNonPrivateFields = filter(diff.fields().added(), f -> !f.isPrivate());
     Iterable<JvmField> exposedFields = filter(map(diff.fields().changed(), ch -> ch.getDiff().accessExpanded()? ch.getPast() : null), Objects::nonNull);
 
-    if (diff.superClassChanged() || !diff.interfaces().unchanged()) {
+    if (isKotlinNode(changedClass) && (diff.superClassChanged() || !diff.interfaces().unchanged())) {
       Difference.Specifier<JvmNodeReferenceID, ?> sealedDiff = Difference.diff(
         map(filter(present.allDirectSupertypes(change.getPast()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID),
         map(filter(future.allDirectSupertypes(change.getNow()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID)
@@ -190,11 +190,13 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     JvmMethod changedMethod = methodChange.getPast();
     JvmNodeReferenceID clsId = changedClass.getReferenceID();
 
-    if (isKotlinNode(changedClass) && methodChange.getDiff().valueChanged()) {
-      debug("Method was inlineable, or has become inlineable or a body of inline method has changed; affecting method usages ", changedMethod);
-      affectMemberUsages(context, clsId, changedMethod, future.collectSubclassesWithoutMethod(clsId, changedMethod));
+    if (methodChange.getDiff().valueChanged()) {
+      KmFunction kmFunction = getKmFunction(changedClass, changedMethod);
+      if (kmFunction != null) {
+        debug("Method was inlineable, or has become inlineable or a body of inline method has changed; affecting method usages ", changedMethod);
+        affectLookupUsages(context, flat(asIterable(clsId), future.collectSubclassesWithoutMethod(clsId, changedMethod)), kmFunction.getName(), future);
+      }
     }
-
     return true;
   }
 
@@ -244,12 +246,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         getters.put(methodName.substring(methodName.startsWith("is")? 2 : 3), method);
       }
       else if (isSetter(method)) {
-        String propName = methodName.substring(3);
-        List<JvmMethod> candidates = setters.get(propName);
-        if (candidates == null) {
-          setters.put(propName, candidates = new SmartList<>());
-        }
-        candidates.add(method);
+        setters.computeIfAbsent(methodName.substring(3), k -> new SmartList<>()).add(method);
       }
     }
     return map(getters.entrySet(), e -> {
@@ -296,6 +293,13 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     return !iterator.hasNext();
   }
 
+  private void affectLookupUsages(DifferentiateContext context, Iterable<JvmNodeReferenceID> symbolOwners, String symbolName, Utils utils) {
+    affectUsages(context, "lookup usage", symbolOwners, id -> {
+      String kotlinName = getKotlinName(id, utils);
+      return new LookupNameUsage(kotlinName != null ? new JvmNodeReferenceID(kotlinName) : id, symbolName);
+    }, null);
+  }
+
   private static KmFunction getKmFunction(JvmClass cls, JvmMethod method) {
     JvmMethodSignature methodSignature = new JvmMethodSignature(method.getName(), method.getDescriptor());
     return find(allKmFunctions(cls), f -> methodSignature.equals(JvmExtensionsKt.getSignature(f)));
@@ -308,6 +312,23 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   private static Iterable<KmFunction> allKmFunctions(Node<?, ?> node) {
     KotlinMeta meta = getKotlinMeta(node);
     return meta != null? meta.getKmFunctions() : Collections.emptyList();
+  }
+
+  @Nullable
+  private static String getKotlinName(JvmNodeReferenceID cls, Utils utils) {
+    return find(map(utils.getNodes(cls, JvmClass.class), c -> getKotlinName(c)), Objects::nonNull);
+  }
+
+  @Nullable
+  private static String getKotlinName(JvmClass cls) {
+    KmDeclarationContainer container = getDeclarationContainer(cls);
+    if (container instanceof KmPackage) {
+      return cls.getPackageName();
+    }
+    if (container instanceof KmClass) {
+      return ((KmClass)container).getName();
+    }
+    return null;
   }
 
   private static KmDeclarationContainer getDeclarationContainer(Node<?, ?> node) {

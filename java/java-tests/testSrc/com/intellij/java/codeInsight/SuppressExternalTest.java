@@ -31,10 +31,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
-import org.junit.Ignore;
 
 import java.io.File;
 
@@ -66,12 +66,12 @@ public class SuppressExternalTest extends UsefulTestCase {
 
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(myFixture.getProject());
     myLanguageLevel = LanguageLevelProjectExtension.getInstance(facade.getProject()).getLanguageLevel();
-    LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    IdeaTestUtil.setProjectLanguageLevel(facade.getProject(), LanguageLevel.JDK_1_5);
   }
 
   @Override
   public void tearDown() throws Exception {
-    LanguageLevelProjectExtension.getInstance(myFixture.getProject()).setLanguageLevel(myLanguageLevel);
+    IdeaTestUtil.setProjectLanguageLevel(myFixture.getProject(), myLanguageLevel);
 
     try {
       myFixture.tearDown();

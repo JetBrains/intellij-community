@@ -14,12 +14,16 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.createFromUsage.setupEditorSelection
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
+import org.jetbrains.kotlin.idea.refactoring.getContainer
+import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -49,10 +53,21 @@ internal class CreateKotlinCallablePsiEditor(
     private val pointerToContainer: SmartPsiElementPointer<*>,
     private val callableInfo: NewCallableInfo,
 ) {
-    fun execute() {
+    fun execute(anchor: PsiElement) {
         val factory = KtPsiFactory(project)
         var function = factory.createFunction(callableInfo.definitionAsString)
-        function = pointerToContainer.element?.let { function.addToContainer(it) } as? KtNamedFunction ?: return
+        val passedContainerElement = pointerToContainer.element
+        if (passedContainerElement == null) return
+        val shouldComputeContainerFromAnchor = if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile
+        else passedContainerElement.getContainer() == anchor.getContainer()
+        val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
+            (anchor.getExtractionContainers().firstOrNull() ?: return)
+        } else {
+            passedContainerElement
+        }
+        function = CreateFromUsageUtil.placeDeclarationInContainer(function, insertContainer, anchor)
+
+        //function = function.addToContainer(container) as? KtNamedFunction ?: return
         function = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function) ?: return
         runTemplate(function)
     }

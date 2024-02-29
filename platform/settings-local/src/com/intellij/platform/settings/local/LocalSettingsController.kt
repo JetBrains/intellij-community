@@ -18,14 +18,14 @@ fun clearCacheStore() {
 }
 
 @TestOnly
-internal suspend fun compactCacheStore() {
+internal fun compactCacheStore() {
   serviceIfCreated<InternalAndCacheStorageManager>()?.storeManager?.compactStore()
 }
 
 private class LocalSettingsController : DelegatedSettingsController {
   private val storageManager = SynchronizedClearableLazy { service<InternalAndCacheStorageManager>() }
 
-  override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T> {
+  override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
     for (tag in key.tags) {
       if (tag is PropertyManagerAdapterTag) {
         val propertyManager = PropertiesComponent.getInstance()
@@ -93,7 +93,7 @@ private class InternalAndCacheStorageManager : SettingsSavingComponent {
 
   // Telemetry is not ready at this point yet
   val cacheMap by lazy {
-    InternalStateStorageService(storeManager.openMap("cache_v1"), telemetryScopeName = "cacheStateStorage")
+    InternalStateStorageService(storeManager.openMap("cache_v2"), telemetryScopeName = "cacheStateStorage")
   }
 
   val internalMap by lazy {

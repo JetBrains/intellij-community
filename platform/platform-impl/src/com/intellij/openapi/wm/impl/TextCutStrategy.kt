@@ -5,4 +5,6 @@ import java.awt.FontMetrics
 
 interface TextCutStrategy {
   fun calcShownText(text: String, metrics: FontMetrics, maxWidth: Int): String
+
+  fun calcMinTextWidth(text: String, metrics: FontMetrics): Int
 }

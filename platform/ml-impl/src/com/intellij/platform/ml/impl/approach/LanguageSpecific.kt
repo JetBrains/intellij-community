@@ -31,6 +31,6 @@ class ModelLanguageAnalyser<M, P : Any> : MLModelAnalyser<M, P>
   override val analysisDeclaration = setOf(LANGUAGE_ID)
 
   override fun analyse(sessionTreeRoot: DescribedRootContainer<M, P>): CompletableFuture<Set<Feature>> = CompletableFuture.completedFuture(
-    setOf(LANGUAGE_ID with sessionTreeRoot.root.languageId)
+    setOf(LANGUAGE_ID with sessionTreeRoot.rootData.languageId)
   )
 }

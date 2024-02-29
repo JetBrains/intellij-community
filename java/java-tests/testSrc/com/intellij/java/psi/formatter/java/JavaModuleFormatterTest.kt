@@ -1,14 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java
 
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.IdeaTestUtil
 
 class JavaModuleFormatterTest : AbstractJavaFormatterTest() {
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(getProject()).languageLevel = LanguageLevel.JDK_1_9
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_9)
   }
 
   fun testEmpty() {

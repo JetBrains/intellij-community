@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
@@ -82,7 +83,7 @@ fun Row.projectWizardJdkComboBox(
   cell(combo)
     .columns(COLUMNS_LARGE)
     .apply {
-      val commentCell = comment("")
+      val commentCell = comment(component.comment, 50)
       component.addItemListener {
         commentCell.comment?.let { it.text = component.comment }
       }
@@ -104,7 +105,7 @@ fun Row.projectWizardJdkComboBox(
       context.projectJdk = sdkProperty.get()
 
       when (val selected = combo.selectedItem) {
-        is NoJdk -> JdkComboBoxCollector.noJdkRegistered()
+        is NoJdk -> JdkComboBoxCollector.noJdkSelected()
         is DownloadJdk -> JdkComboBoxCollector.jdkDownloaded((selected.task as JdkDownloadTask).jdkItem)
       }
     }
@@ -241,7 +242,7 @@ class ProjectWizardJdkComboBox(
                                                 isSelected: Boolean,
                                                 cellHasFocus: Boolean): Component {
         val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-        if (index == -1 && (isLoadingExistingJdks || isLoadingDownloadItem)) {
+        if (index == -1 && (isLoadingExistingJdks || isLoadingDownloadItem) && selectedItem !is DownloadJdk) {
           val panel = object : CellRendererPanel(BorderLayout()) {
             override fun getAccessibleContext(): AccessibleContext = component.accessibleContext
           }
@@ -325,7 +326,7 @@ class ProjectWizardJdkComboBox(
 
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       detected
-        .filter { d -> registered.none { r -> d.home == r.jdk.homePath } }
+        .filter { d -> registered.none { r -> FileUtil.pathsEqual(d.home, r.jdk.homePath) } }
         .forEach {
           detectedJDKs.add(it)
           addItem(it)
@@ -368,7 +369,10 @@ class ProjectWizardJdkComboBox(
   val comment: String?
     get() = when (selectedItem) {
       is DownloadJdk -> JavaUiBundle.message("jdk.download.comment")
-      is NoJdk -> JavaUiBundle.message("jdk.missing.item.comment")
+      is NoJdk -> when {
+        (0 until itemCount).any { getItemAt(it) is DownloadJdk } -> JavaUiBundle.message("jdk.missing.item.comment")
+        else -> JavaUiBundle.message("jdk.missing.item.no.internet.comment")
+      }
       else -> null
     }
 }
@@ -384,7 +388,7 @@ private fun registerJdk(path: String, combo: ProjectWizardJdkComboBox) {
   runReadAction {
     SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())?.let {
       JdkComboBoxCollector.jdkRegistered(it)
-      combo.detectedJDKs.find { detected -> detected.home == path }?.let { item ->
+      combo.detectedJDKs.find { detected -> FileUtil.pathsEqual(detected.home, path) }?.let { item ->
         combo.removeItem(item)
         combo.detectedJDKs.remove(item)
       }

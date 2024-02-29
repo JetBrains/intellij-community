@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform.Companion.ensureApproachesInitialized
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
@@ -50,11 +51,12 @@ class MLEventsLogger : CounterUsagesCollector() {
   object Manager {
     private val defaultPlatform = ReplaceableIJPlatform
 
-    internal fun ensureInitialized(okIfInitializing: Boolean, apiPlatform: MLApiPlatform = defaultPlatform) {
+    internal fun ensureInitialized(okIfInitializing: Boolean, apiPlatform: MLApiPlatform = defaultPlatform): State {
       when (val state = Initializer.state) {
         is State.FailedToInitialize -> throw Exception("ML Event Log already has failed to initialize", state.exception)
-        State.Initializing -> if (okIfInitializing) return else throw IllegalStateException("Initialization recursion")
+        State.Initializing -> if (!okIfInitializing) throw IllegalStateException("Initialization recursion")
         State.NonInitialized -> Initializer.initializeGroup(apiPlatform)
+        State.Cancelled -> Initializer.initializeGroup(apiPlatform)
         is State.Initialized -> {
           val currentApiPlatformState = apiPlatform.staticState
           require(currentApiPlatformState == state.context.staticState) {
@@ -66,6 +68,7 @@ class MLEventsLogger : CounterUsagesCollector() {
           }
         }
       }
+      return Initializer.state
     }
   }
 
@@ -79,18 +82,19 @@ class MLEventsLogger : CounterUsagesCollector() {
 
     data object Initializing : State
 
+    data object Cancelled : State
+
     class FailedToInitialize(val exception: Throwable) : State
 
     class Initialized(val context: InitializationContext) : State
   }
 
   internal object Initializer {
-    val GROUP = EventLogGroup("ml", 1)
+    val GROUP = EventLogGroup("ml", 2)
 
     var state: State = State.NonInitialized
 
     fun initializeGroup(apiPlatform: MLApiPlatform) {
-      require(state == State.NonInitialized)
       state = State.Initializing
       try {
         apiPlatform.ensureApproachesInitialized()
@@ -103,6 +107,10 @@ class MLEventsLogger : CounterUsagesCollector() {
           event.onEventGroupInitialized(eventId)
         }
         state = State.Initialized(InitializationContext(apiPlatform, apiPlatformState))
+      }
+      catch (e: ProcessCanceledException) {
+        state = State.Cancelled
+        throw e
       }
       catch (e: Throwable) {
         state = State.FailedToInitialize(e)

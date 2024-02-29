@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.java.frontback.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
   </component>
 </module>

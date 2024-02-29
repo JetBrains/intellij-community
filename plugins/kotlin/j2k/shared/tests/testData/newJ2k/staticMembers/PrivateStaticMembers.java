@@ -1,4 +1,3 @@
-//file
 class A {
     private static final String s = "abc";
 

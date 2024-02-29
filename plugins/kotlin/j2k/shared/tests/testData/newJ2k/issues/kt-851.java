@@ -1,4 +1,3 @@
-//file
 class Test {
     void putInt(int i) {}
 

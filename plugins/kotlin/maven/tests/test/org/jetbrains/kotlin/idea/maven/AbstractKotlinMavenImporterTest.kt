@@ -3924,6 +3924,63 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertEmpty(testModuleSources)
         }
     }
+
+    internal class ApiVersionExceedingLanguageVersion : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testApiVersionExceedingLanguageVersion() = runBlocking {
+            createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
+
+            val kotlinMavenPluginVersion = "1.6.20"
+            importProjectAsync(
+                """
+            <groupId>test</groupId>
+            <artifactId>project</artifactId>
+            <version>1.0.0</version>
+
+            <dependencies>
+                <dependency>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-stdlib</artifactId>
+                    <version>$kotlinVersion</version>
+                </dependency>
+            </dependencies>
+
+            <build>
+                <sourceDirectory>src/main/kotlin</sourceDirectory>
+
+                <plugins>
+                    <plugin>
+                        <groupId>org.jetbrains.kotlin</groupId>
+                        <artifactId>kotlin-maven-plugin</artifactId>
+                        <version>$kotlinMavenPluginVersion</version>
+
+                        <executions>
+                            <execution>
+                                <id>compile</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <languageVersion>1.1</languageVersion>
+                            <apiVersion>1.2</apiVersion>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            """
+            )
+
+            with(facetSettings) {
+                Assert.assertEquals("1.1", languageLevel!!.versionString)
+                Assert.assertEquals("1.1", compilerArguments!!.languageVersion)
+                Assert.assertEquals("1.2", apiLevel!!.versionString)
+                Assert.assertEquals("1.2", compilerArguments!!.apiVersion)
+            }
+        }
+    }
 }
 
 fun File.toJpsVersionAgnosticKotlinBundledPath(): String {

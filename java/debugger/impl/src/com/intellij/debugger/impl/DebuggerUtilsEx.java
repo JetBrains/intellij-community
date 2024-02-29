@@ -1230,6 +1230,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess, StackTraceElement stackTraceElement) {
+    return findOrCreateLocation(debugProcess, debugProcess.getVirtualMachineProxy()::classesByName, stackTraceElement);
+  }
+
+  @NotNull
+  public static Location findOrCreateLocation(DebugProcessImpl debugProcess,
+                                              @NotNull ClassesByNameProvider classesByName,
+                                              StackTraceElement stackTraceElement) {
+    return findOrCreateLocation(debugProcess,
+                                classesByName,
+                                stackTraceElement.getClassName(),
+                                stackTraceElement.getMethodName(),
+                                stackTraceElement.getLineNumber());
+  }
+
+  @NotNull
   public static Location findOrCreateLocation(DebugProcessImpl debugProcess,
                                               @NotNull String className,
                                               @NotNull String methodName,

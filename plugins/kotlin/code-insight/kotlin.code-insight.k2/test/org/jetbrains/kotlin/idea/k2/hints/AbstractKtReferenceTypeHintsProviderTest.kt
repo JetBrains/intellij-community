@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.k2.hints
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
-import org.jetbrains.kotlin.idea.codeInsight.hints.KtReferencesTypeHintsProvider
+import org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtReferencesTypeHintsProvider
 
 abstract class AbstractKtReferenceTypeHintsProviderTest: AbstractKotlinReferenceTypeHintsProviderTest() {
 

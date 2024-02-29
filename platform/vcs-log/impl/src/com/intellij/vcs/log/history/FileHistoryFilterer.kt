@@ -145,9 +145,11 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
           return@filter Pair(visiblePack, commitCount)
         }
         catch (e: VcsException) {
+          scope.recordError(e)
           return Pair(VisiblePack.ErrorVisiblePack(dataPack, filters, e), commitCount)
         }
         catch (e: UnsupportedHistoryFiltersException) {
+          scope.recordError(e)
           return Pair(VisiblePack.ErrorVisiblePack(dataPack, filters, e), commitCount)
         }
       }

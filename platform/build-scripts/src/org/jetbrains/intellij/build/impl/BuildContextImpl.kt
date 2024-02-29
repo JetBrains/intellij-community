@@ -79,7 +79,7 @@ class BuildContextImpl(
     get() = if (useModularLoader) "com.intellij.platform.runtime.loader.IntellijLoader" else productProperties.mainClassName
   
   override val useModularLoader: Boolean
-    get() = productProperties.supportModularLoading && options.useModularLoader
+    get() = productProperties.rootModuleForModularLoader != null && options.useModularLoader
 
   override val generateRuntimeModuleRepository: Boolean
     get() = useModularLoader || isEmbeddedJetBrainsClientEnabled && options.generateRuntimeModuleRepository
@@ -101,7 +101,7 @@ class BuildContextImpl(
     check(!systemSelector.contains(' ')) {
       "System selector must not contain spaces: $systemSelector"
     }
-    options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
+    options.buildStepsToSkip += productProperties.incompatibleBuildSteps
     if (!options.buildStepsToSkip.isEmpty()) {
       Span.current().addEvent("build steps to be skipped", Attributes.of(
         AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip)
@@ -244,7 +244,6 @@ class BuildContextImpl(
       options.pathToCompiledClassesArchivesMetadata = null
       options.pathToCompiledClassesArchive = null
     }
-    options.buildStepsToSkip = sourceOptions.buildStepsToSkip
     options.targetArch = sourceOptions.targetArch
     options.targetOs = sourceOptions.targetOs
 
@@ -324,7 +323,7 @@ class BuildContextImpl(
       jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_JAR_PATH}".let { if (isScript) '"' + it + '"' else it })
     }
     if (useModularLoader) {
-      jvmArgs.add("-Dintellij.platform.root.module=${productProperties.applicationInfoModule}")
+      jvmArgs.add("-Dintellij.platform.root.module=${productProperties.rootModuleForModularLoader!!}")
       jvmArgs.add("-Dintellij.platform.product.mode=${productProperties.productMode.id}")
     }
 

@@ -197,7 +197,12 @@ def analyze_numeric_column(column):
     if unique_values <= ColumnVisualisationUtils.NUM_BINS:
         res = column.value_counts().sort_index().to_dict()
     else:
-        format_function = int if column.dtype.kind == 'i' else lambda x: round(x, 1)
+        def format_function(x):
+            if x == int(x):
+                return int(x)
+            else:
+                return round(x, 3)
+
         counts, bin_edges = np.histogram(column.dropna(), bins=ColumnVisualisationUtils.NUM_BINS)
 
         # so the long dash will be correctly viewed both on Mac and Windows

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.nj2k.externalCodeProcessing
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.j2k.AccessorKind.GETTER

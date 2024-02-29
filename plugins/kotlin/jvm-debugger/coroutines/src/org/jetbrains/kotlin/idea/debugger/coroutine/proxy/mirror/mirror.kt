@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
 import com.sun.jdi.*
@@ -55,8 +55,7 @@ data class MirrorOfStackFrame(
 ) {
     fun toCoroutineStackFrameItem(context: DefaultExecutionContext, locationCache: LocationCache): CoroutineStackFrameItem? {
         val stackTraceElement = baseContinuationImpl.stackTraceElement?.stackTraceElement() ?: return null
-        val locationClass = context.findClassSafe(stackTraceElement.className) ?: return null
-        val generatedLocation = locationCache.createLocation(locationClass, stackTraceElement.methodName, stackTraceElement.lineNumber)
+        val generatedLocation = locationCache.createLocation(stackTraceElement)
         val spilledVariables = baseContinuationImpl.spilledValues(context)
         return DefaultCoroutineStackFrameItem(generatedLocation, spilledVariables)
     }

@@ -37,8 +37,7 @@ class JavaModuleExtensionsTest {
   }
 
   private fun setLanguageLevel(project: Project, newLevel: LanguageLevel) {
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = newLevel
-    IndexingTestUtil.waitUntilIndexesAreReady(project)
+    IdeaTestUtil.setProjectLanguageLevel(project, newLevel)
   }
 
   @Test

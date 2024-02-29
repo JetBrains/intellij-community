@@ -24,7 +24,6 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
-import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import java.io.ByteArrayOutputStream
@@ -151,24 +150,21 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     }
 
     val pluginDistributionEntriesDeferred = async {
-      buildPlugins(
-        request = request,
-        context = context,
-        runDir = runDir,
-        platformLayout = platformLayout,
-        artifactTask = artifactTask,
-      )
+      buildPlugins(request, context, runDir, platformLayout, artifactTask)
     }
 
     launch {
-      val pluginEntries = pluginDistributionEntriesDeferred.await()
+      val (pluginEntries, additionalEntries) = pluginDistributionEntriesDeferred.await()
       spanBuilder("generate plugin classpath").useWithScope(Dispatchers.IO) {
-        val data = generatePluginClassPath(pluginEntries = pluginEntries, writeDescriptor = !isUnpackedDist)
+        val mainData = generatePluginClassPath(pluginEntries, writeDescriptor = !isUnpackedDist)
+        val additionalData = additionalEntries?.let { generatePluginClassPathFromFiles(it, writeDescriptor = !isUnpackedDist) }
 
         val byteOut = ByteArrayOutputStream()
         val out = DataOutputStream(byteOut)
-        writePluginClassPathHeader(out, isJarOnly = !isUnpackedDist, pluginEntries.size)
-        out.write(data)
+        val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
+        writePluginClassPathHeader(out, isJarOnly = !isUnpackedDist, pluginCount)
+        out.write(mainData)
+        additionalData?.let { out.write(it) }
         out.close()
         Files.write(runDir.resolve(PLUGIN_CLASSPATH), byteOut.toByteArray())
       }
@@ -177,20 +173,15 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     if (context.generateRuntimeModuleRepository) {
       launch {
         val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
-                                     pluginDistributionEntriesDeferred.await().asSequence().map { it.second }.flatten()
+                                     pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
         spanBuilder("generate runtime repository").useWithScope(Dispatchers.IO) {
-          generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
+          generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context)
         }
       }
     }
 
     launch {
-      computeIdeFingerprint(
-        platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
-        pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
-        runDir = runDir,
-        homePath = request.homePath,
-      )
+      computeIdeFingerprint(platformDistributionEntriesDeferred, pluginDistributionEntriesDeferred, runDir, request.homePath)
     }
   }
     .invokeOnCompletion {
@@ -250,12 +241,11 @@ private suspend fun compileIfNeeded(context: BuildContext) {
 
 private suspend fun computeIdeFingerprint(
   platformDistributionEntriesDeferred: Deferred<List<DistributionFileEntry>>,
-  pluginDistributionEntriesDeferred: Deferred<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>>,
+  pluginDistributionEntriesDeferred: Deferred<Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?>>,
   runDir: Path,
   homePath: Path,
 ) {
   val hasher = Hashing.komihash5_0().hashStream()
-
   val debug = StringBuilder()
 
   val distributionFileEntries = platformDistributionEntriesDeferred.await()
@@ -271,7 +261,7 @@ private suspend fun computeIdeFingerprint(
     debug.append(java.lang.Long.toUnsignedString(entry.hash, Character.MAX_RADIX)).append(" ").append(path).append('\n')
   }
 
-  val pluginDistributionEntries = pluginDistributionEntriesDeferred.await()
+  val (pluginDistributionEntries, _) = pluginDistributionEntriesDeferred.await()
   hasher.putInt(pluginDistributionEntries.size)
   for ((plugin, entries) in pluginDistributionEntries) {
     hasher.putInt(entries.size)
@@ -291,11 +281,13 @@ private suspend fun computeIdeFingerprint(
   Span.current().addEvent("IDE fingerprint: $fingerprint")
 }
 
-private suspend fun buildPlugins(request: BuildRequest,
-                                 context: BuildContext,
-                                 runDir: Path,
-                                 platformLayout: Deferred<PlatformLayout>,
-                                 artifactTask: Job): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
+private suspend fun buildPlugins(
+  request: BuildRequest,
+  context: BuildContext,
+  runDir: Path,
+  platformLayout: Deferred<PlatformLayout>,
+  artifactTask: Job
+): Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?> {
   val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, request.additionalModules)
 
   val pluginRootDir = runDir.resolve("plugins")
@@ -328,19 +320,11 @@ private suspend fun buildPlugins(request: BuildRequest,
 
   artifactTask.join()
 
-  val pluginEntries = buildPlugins(pluginBuildDescriptors = pluginBuildDescriptors,
-                                   platformLayout = platformLayout.await(),
-                                   context = context)
+  val pluginEntries = buildPlugins(pluginBuildDescriptors, platformLayout = platformLayout.await(), context)
 
-  val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
-  if (additionalPluginPaths.isNotEmpty()) {
-    withContext(Dispatchers.IO) {
-      for (sourceDir in additionalPluginPaths) {
-        copyDir(sourceDir = sourceDir, targetDir = pluginRootDir.resolve(sourceDir.fileName))
-      }
-    }
-  }
-  return pluginEntries
+  val additionalPlugins = copyAdditionalPlugins(context)
+
+  return pluginEntries to additionalPlugins
 }
 
 private suspend fun createBuildContext(
@@ -372,9 +356,11 @@ private suspend fun createBuildContext(
           outRootDir = runDir,
         )
         options.setTargetOsAndArchToCurrent()
-        options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
-        options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
-        options.buildStepsToSkip.add(BuildOptions.FUS_METADATA_BUNDLE_STEP)
+        options.buildStepsToSkip += listOf(
+          BuildOptions.PREBUILD_SHARED_INDEXES,
+          BuildOptions.GENERATE_JAR_ORDER_STEP,
+          BuildOptions.FUS_METADATA_BUNDLE_STEP,
+        )
 
         if (isUnpackedDist && options.enableEmbeddedJetBrainsClient) {
           options.enableEmbeddedJetBrainsClient = false

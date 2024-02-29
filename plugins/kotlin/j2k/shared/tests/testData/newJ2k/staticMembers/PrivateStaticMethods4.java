@@ -1,4 +1,3 @@
-//file
 class A {
     public class Inner {
         void foo() {

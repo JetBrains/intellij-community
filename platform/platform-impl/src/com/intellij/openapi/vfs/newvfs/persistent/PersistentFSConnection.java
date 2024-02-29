@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.core.CoreBundle;
@@ -23,6 +23,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
+import com.intellij.util.ThreadSafeThrottler;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -56,8 +57,7 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Indexe
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.*;
 
 @ApiStatus.Internal
 public final class PersistentFSConnection {
@@ -348,22 +348,25 @@ public final class PersistentFSConnection {
     return enumeratedAttributeId;
   }
 
+  private final ThreadSafeThrottler corruptionNotificationThrottler = new ThreadSafeThrottler(5, MINUTES);
+
   void markAsCorruptedAndScheduleRebuild(@NotNull Throwable cause) throws RuntimeException, Error {
     try {
       int corruptions = corruptionsDetected.incrementAndGet();
       records.setErrorsAccumulated(corruptions);
-      Application app = ApplicationManager.getApplication();
       if (corruptions == 1) {
-        if (app != null && !app.isHeadlessEnvironment()) {
-          showCorruptionNotification(/*insist: */ false);
-        }
-        doForce();//forces ErrorsAccumulated to be written on disk
+        //Persist ErrorsAccumulated.
+        // No need to force() on each error -- we don't bother not persist exact count of errors,
+        // but we do want to persist (errors > 0) transition:
+        doForce();
       }
-      else if (corruptions % INSIST_TO_RESTART_AFTER_ERRORS_COUNT == INSIST_TO_RESTART_AFTER_ERRORS_COUNT - 1) {
-        if (app != null && !app.isHeadlessEnvironment()) {
-          showCorruptionNotification(/*insist: */ true);
-        }
-      }
+      corruptionNotificationThrottler.runThrottled(System.nanoTime(), () -> {
+        Application app = ApplicationManager.getApplication();
+          if (app != null && !app.isHeadlessEnvironment()) {
+            boolean insistRestart = (corruptions >= INSIST_TO_RESTART_AFTER_ERRORS_COUNT);
+            showCorruptionNotification(insistRestart);
+          }
+      });
     }
     catch (IOException ioException) {
       LOG.error(ioException);
@@ -431,8 +434,8 @@ public final class PersistentFSConnection {
 
   /** @throws IndexOutOfBoundsException if fileId is outside already allocated file ids */
   void ensureFileIdIsValid(int fileId) throws IndexOutOfBoundsException {
-    int maxAllocatedID = records.maxAllocatedID();
-    if (fileId <= FSRecords.NULL_FILE_ID || fileId > maxAllocatedID) {
+    if (!records.isValidFileId(fileId)) {
+      int maxAllocatedID = records.maxAllocatedID();
       throw new IndexOutOfBoundsException("fileId[" + fileId + "] is outside valid/allocated ids range [1.." + maxAllocatedID + "]");
     }
   }

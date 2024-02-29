@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalUi
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toFloatAndScale
@@ -115,15 +116,17 @@ class TerminalBlockCornersRenderer private constructor(
     val g2d = g.create() as Graphics2D
     try {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2d.color = TerminalUi.terminalBackground
+      g2d.color = editor.colorsScheme.getColor(BlockTerminalColors.DEFAULT_BACKGROUND)
       // override the selection with the default terminal background
       g2d.fill(topRect)
       g2d.fill(bottomRect)
 
-      g2d.paint = gradientCache?.getTexture(g2d, width.toInt()) ?: editor.colorsScheme.getColor(backgroundKey!!)
-      // paint the top and bottom parts of the block with the rounded corner on the right
-      g2d.fill(topCornerPath)
-      g2d.fill(bottomCornerPath)
+      getBlockBackgroundPaint(editor, g2d, width.toInt(), gradientCache, backgroundKey)?.let {
+        g2d.paint = it
+        // paint the top and bottom parts of the block with the rounded corners
+        g2d.fill(topCornerPath)
+        g2d.fill(bottomCornerPath)
+      }
 
       if (strokePath != null) {
         g2d.paint = strokeBackground

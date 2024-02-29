@@ -134,6 +134,12 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
+  public boolean isValidFileId(int recordId) {
+    final int allocatedSoFar = allocatedRecordsCount.get();
+    return FSRecords.NULL_FILE_ID < recordId && recordId <= allocatedSoFar;
+  }
+
+  @Override
   public <R, E extends Throwable> R readRecord(final int recordId,
                                                final @NotNull RecordReader<R, E> reader) throws E, IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
@@ -772,8 +778,8 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   private void checkRecordIdIsValid(final int recordId) throws IndexOutOfBoundsException {
-    final int recordsAllocatedSoFar = allocatedRecordsCount.get();
-    if (!(NULL_ID < recordId && recordId <= recordsAllocatedSoFar)) {
+    if (!isValidFileId(recordId)) {
+      final int recordsAllocatedSoFar = allocatedRecordsCount.get();
       throw new IndexOutOfBoundsException(
         "recordId(=" + recordId + ") is outside of allocated IDs range (0, " + recordsAllocatedSoFar + "]");
     }

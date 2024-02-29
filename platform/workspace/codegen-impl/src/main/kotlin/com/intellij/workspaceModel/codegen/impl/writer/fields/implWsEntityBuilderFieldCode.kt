@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
 import com.intellij.workspaceModel.codegen.impl.writer.classes.*
@@ -56,7 +56,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
           line("val _diff = diff")
           `if`("_diff != null && value is ${ModifiableWorkspaceEntityBase}<*, *> && value.diff == null") {
             backrefSetup(field)
-            line("_diff.addEntity(value)")
+            line("_diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
           }
           section("if (_diff != null && (value !is ${ModifiableWorkspaceEntityBase}<*, *> || value.diff != null))") {
             line("_diff.${getterSetterNames.setter}($connectionName, this, value)")
@@ -98,7 +98,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                   }<*, *>)?.diff == null") {
                     lineComment("Backref setup before adding to store an abstract entity")
                     backrefSetup(field, "item_value")
-                    line("_diff.addEntity(item_value)")
+                    line("_diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
                   }
                 }
                 line("_diff.${EntityStorage.updateOneToAbstractManyChildrenOfParent}($connectionName, this, value.asSequence())")
@@ -138,7 +138,7 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
                     lineComment("Backref setup before adding to store")
                     backrefSetup(field, "item_value")
                     line()
-                    line("_diff.addEntity(item_value)")
+                    line("_diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)")
                   }
                 }
                 line("_diff.${EntityStorage.updateOneToManyChildrenOfParent}($connectionName, this, value)")

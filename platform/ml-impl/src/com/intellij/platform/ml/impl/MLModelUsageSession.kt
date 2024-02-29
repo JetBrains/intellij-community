@@ -2,8 +2,9 @@
 package com.intellij.platform.ml.impl
 
 import com.intellij.platform.ml.*
+import com.intellij.platform.ml.ScopeEnvironment.Companion.narrowedTo
 import com.intellij.platform.ml.impl.model.MLModel
-import com.intellij.platform.ml.impl.session.DescribedLevel
+import com.intellij.platform.ml.impl.session.DescribedTierData
 import com.intellij.platform.ml.impl.session.NestableStructureCollector
 import com.intellij.platform.ml.impl.session.PredictionCollector
 import com.intellij.platform.ml.impl.session.SessionTree
@@ -14,17 +15,17 @@ import org.jetbrains.annotations.ApiStatus
  * The session's structure is collected by [collector], after the prediction is done or canceled.
  */
 @ApiStatus.Internal
-class MLModelPrediction<T : SessionTree.PredictionContainer<M, DescribedLevel, P>, M : MLModel<P>, P : Any>(
+class MLModelPrediction<T : SessionTree.PredictionContainer<M, DescribedTierData, P>, M : MLModel<P>, P : Any>(
   private val mlModel: M,
   private val collector: PredictionCollector<T, M, P>,
 ) : SinglePrediction<P> {
-  override fun predict(): P {
-    val prediction = mlModel.predict(collector.usableDescription)
+  override suspend fun predict(): P {
+    val prediction = mlModel.predict(collector.callParameters, collector.usableDescription)
     collector.submitPrediction(prediction)
     return prediction
   }
 
-  override fun cancelPrediction() {
+  override suspend fun cancelPrediction() {
     collector.submitPrediction(null)
   }
 }
@@ -35,34 +36,39 @@ class MLModelPrediction<T : SessionTree.PredictionContainer<M, DescribedLevel, P
  * and all nested sessions' structures are collected.
  */
 @ApiStatus.Internal
-class MLModelPredictionBranching<T : SessionTree.ChildrenContainer<M, DescribedLevel, P>, M : MLModel<P>, P : Any>(
+class MLModelPredictionBranching<T : SessionTree.ChildrenContainer<M, DescribedTierData, P>, M : MLModel<P>, P : Any>(
   private val mlModel: M,
   private val collector: NestableStructureCollector<T, M, P>
 ) : NestableMLSession<P> {
-  override fun createNestedSession(levelMainEnvironment: Environment): Session<P> {
+  override suspend fun createNestedSession(callParameters: Environment, levelMainEnvironment: Environment): Session<P> {
+    val nestedLevelCallParameters = collector.levelPositioning.lowerCallParameters.first()
+    val safeCallParameters = callParameters.narrowedTo(nestedLevelCallParameters)
+
     val nestedLevelScheme = collector.levelPositioning.lowerTiers.first()
-    verifyTiersInMain(nestedLevelScheme.main, levelMainEnvironment.tiers)
+    verifyExactTiersSet(nestedLevelScheme.main, levelMainEnvironment.tiers, "main tiers")
+    verifyExactTiersSet(nestedLevelCallParameters, callParameters.tiers, "call parameters")
     val levelAdditionalTiers = nestedLevelScheme.additional
 
+
     return if (collector.levelPositioning.lowerTiers.size == 1) {
-      val nestedCollector = collector.nestPrediction(levelMainEnvironment, levelAdditionalTiers)
+      val nestedCollector = collector.nestPrediction(safeCallParameters, levelMainEnvironment, levelAdditionalTiers)
       MLModelPrediction(mlModel, nestedCollector)
     }
     else {
       assert(collector.levelPositioning.lowerTiers.size > 1)
-      val nestedCollector = collector.nestBranch(levelMainEnvironment, levelAdditionalTiers)
+      val nestedCollector = collector.nestBranch(safeCallParameters, levelMainEnvironment, levelAdditionalTiers)
       MLModelPredictionBranching(mlModel, nestedCollector)
     }
   }
 
-  override fun onLastNestedSessionCreated() {
+  override suspend fun onLastNestedSessionCreated() {
     collector.onLastNestedCollectorCreated()
   }
 }
 
-private fun verifyTiersInMain(expected: Set<Tier<*>>, actual: Set<*>) {
+private fun verifyExactTiersSet(expected: Set<Tier<*>>, actual: Set<*>, setName: String) {
   require(expected == actual) {
-    "Tier set in the main environment is not like it was declared. " +
+    "Tier set in $setName is not as expected." +
     "Declared $expected, " +
     "but given $actual"
   }

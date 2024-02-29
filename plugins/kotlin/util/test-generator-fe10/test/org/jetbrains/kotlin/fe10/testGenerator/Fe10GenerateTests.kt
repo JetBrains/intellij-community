@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAn
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsProviderTest
+import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
@@ -156,6 +157,7 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 import org.jetbrains.uast.test.kotlin.comparison.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -982,12 +984,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("repl/completion")
         }
 
+        val inlayHintsFileRegexp = forRegex("^([^_]\\w+)\\.kt$")
+
         testClass<AbstractKotlinArgumentsHintsProviderTest> {
-            model("codeInsight/hints/arguments")
+            model("codeInsight/hints/arguments", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractKotlinReferenceTypeHintsProviderTest> {
-            model("codeInsight/hints/types")
+            model("codeInsight/hints/types", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractKotlinLambdasHintsProvider> {
@@ -995,6 +999,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
         testClass<AbstractKotlinRangesHintsProviderTest> {
             model("codeInsight/hints/ranges")
+        }
+
+        testClass<AbstractKotlinCallChainHintsProviderTest> {
+            model("codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
         }
 
         testClass<AbstractKotlinCodeVisionProviderTest> {

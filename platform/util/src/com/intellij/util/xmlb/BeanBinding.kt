@@ -11,7 +11,7 @@ import com.intellij.serialization.MutableAccessor
 import com.intellij.serialization.PropertyCollector
 import com.intellij.util.ThreeState
 import com.intellij.util.xml.dom.XmlElement
-import com.intellij.util.xmlb.XmlSerializerImpl.XmlSerializerBase
+import com.intellij.util.xmlb.XmlSerializerImpl.createClassBinding
 import com.intellij.util.xmlb.annotations.*
 import it.unimi.dsi.fastutil.objects.Object2FloatMap
 import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap
@@ -104,10 +104,6 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
     var index = 0
     val extraSize = if (includeClassDiscriminator) 1 else 0
     for (binding in bindings) {
-      if (bean is SerializationFilter && !bean.accepts(binding.accessor, bean)) {
-        continue
-      }
-
       if (isPropertySkipped(filter = filter, binding = binding, bean = bean, isFilterPropertyItself = true)) {
         continue
       }
@@ -170,10 +166,6 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
   open fun serializeProperties(bean: Any, preCreatedElement: Element?, filter: SerializationFilter?): Element? {
     var element = preCreatedElement
     for (binding in bindings!!) {
-      if (bean is SerializationFilter && !bean.accepts(binding.accessor, bean)) {
-        continue
-      }
-
       element = serializeProperty(binding = binding, bean = bean, parentElement = element, filter = filter, isFilterPropertyItself = true)
     }
     return element
@@ -470,7 +462,7 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
   }
   else {
     // do not cache because it depends on accessor
-    binding = XmlSerializerBase.createClassBinding(aClass, accessor, type, serializer)
+    binding = createClassBinding(aClass, accessor, type, serializer)
     if (binding == null) {
       // BeanBinding doesn't depend on accessor, get from cache or compute
       binding = serializer.getRootBinding(aClass, type)
@@ -493,7 +485,7 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
   }
 
   accessor.getAnnotation(Tag::class.java)?.let { tagAnnotation ->
-    return OptionTagBinding(
+    return TagBinding(
       binding = binding,
       accessor = accessor,
       nameAttributeValue = null,
@@ -525,7 +517,7 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
 
   val xCollection = accessor.getAnnotation(XCollection::class.java)
   if (xCollection != null && (!xCollection.propertyElementName.isEmpty() || xCollection.style == XCollection.Style.v2)) {
-    return OptionTagBinding(
+    return TagBinding(
       binding = binding,
       accessor = accessor,
       nameAttributeValue = null,
@@ -539,7 +531,7 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
 
   if (optionTag == null) {
     accessor.getAnnotation(XMap::class.java)?.let { xMapAnnotation ->
-      return OptionTagBinding(
+      return TagBinding(
         binding = binding,
         accessor = accessor,
         nameAttributeValue = null,
@@ -556,7 +548,7 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
   }
 
   if (optionTag == null) {
-    return OptionTagBinding(
+    return TagBinding(
       binding = binding,
       accessor = accessor,
       nameAttributeValue = accessor.name,
@@ -571,12 +563,12 @@ private fun createBinding(accessor: MutableAccessor, serializer: Serializer, pro
   }
 }
 
-private fun createOptionTagBindingByAnnotation(optionTag: OptionTag, accessor: MutableAccessor, binding: Binding?): OptionTagBinding {
+private fun createOptionTagBindingByAnnotation(optionTag: OptionTag, accessor: MutableAccessor, binding: Binding?): TagBinding {
   val customTag = optionTag.tag
   val nameAttribute = optionTag.nameAttribute.takeIf { it.isNotEmpty() }
   val converter = XmlSerializerUtil.getConverter(optionTag)
   val isSerializedAsPrimitive = binding == null || converter != null
-  return OptionTagBinding(
+  return TagBinding(
     binding = binding,
     accessor = accessor,
     nameAttributeValue = if (nameAttribute == null) null else optionTag.value.ifEmpty { accessor.name },
@@ -658,6 +650,11 @@ private fun getTagNameFromAnnotation(aClass: Class<*>): String? = aClass.getAnno
 @Internal
 fun isPropertySkipped(filter: SerializationFilter?, binding: NestedBinding, bean: Any, isFilterPropertyItself: Boolean): Boolean {
   val accessor = binding.accessor
+
+  if (bean is SerializationFilter && !bean.accepts(accessor, bean)) {
+    return true
+  }
+
   val property = accessor.getAnnotation(Property::class.java)
   if (property == null || !property.alwaysWrite) {
     if (filter != null && isFilterPropertyItself) {

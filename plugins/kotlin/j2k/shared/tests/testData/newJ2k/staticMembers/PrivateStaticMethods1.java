@@ -1,4 +1,3 @@
-//file
 class A {
     public void foo() {
         privateStatic1();

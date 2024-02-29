@@ -134,7 +134,7 @@ public class HighlightInfo implements Segment {
   private final @NotNull HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
   private final ProblemGroup myProblemGroup;
-  volatile Object toolId; // inspection.getShortName() in case when the inspection generated this info
+  final Object toolId; // inspection.getShortName() in case when the inspection generated this info
   private int group;
   /**
    * Quick fix text range: the range within which the Alt-Enter should open the quick fix popup.
@@ -464,6 +464,7 @@ public class HighlightInfo implements Segment {
            info.startOffset == startOffset &&
            info.endOffset == endOffset &&
            Comparing.equal(info.type, type) &&
+           Comparing.equal(info.toolId, toolId) &&
            Comparing.equal(info.gutterIconRenderer, gutterIconRenderer) &&
            Comparing.equal(info.forcedTextAttributes, forcedTextAttributes) &&
            Comparing.equal(info.forcedTextAttributesKey, forcedTextAttributesKey) &&
@@ -537,6 +538,8 @@ public class HighlightInfo implements Segment {
     @NotNull Builder problemGroup(@NotNull ProblemGroup problemGroup);
 
     @NotNull Builder inspectionToolId(@NotNull String inspectionTool);
+
+    @NotNull Builder toolId(@Nullable Object toolId);
 
     // only one allowed
     @NotNull Builder description(@DetailedDescription @NotNull String description);

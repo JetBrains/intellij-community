@@ -4,13 +4,11 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
-import com.intellij.collaboration.ui.util.bindChildIn
-import com.intellij.collaboration.ui.util.name
-import com.intellij.collaboration.ui.util.toAnAction
-import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.collaboration.ui.util.*
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.ui.JBFont
@@ -125,7 +123,7 @@ object CommentInputActionsComponentFactory {
           validate()
           repaint()
 
-          installActionShortcut(this, cfg.primaryAction, SUBMIT_SHORTCUT)
+          installActionShortcut(this, cfg.primaryAction, SUBMIT_SHORTCUT, true)
           installActionShortcut(this, cfg.cancelAction, CANCEL_SHORTCUT)
 
           try {
@@ -146,16 +144,20 @@ object CommentInputActionsComponentFactory {
       add(component)
       add(create(cs, cfg))
 
-      installActionShortcut(cs, cfg.primaryAction, SUBMIT_SHORTCUT)
+      // override action bound to Ctrl+Enter because convenience wins
+      installActionShortcut(cs, cfg.primaryAction, SUBMIT_SHORTCUT, true)
       installActionShortcut(cs, cfg.cancelAction, CANCEL_SHORTCUT)
     }
 
-  private fun JComponent.installActionShortcut(cs: CoroutineScope, action: StateFlow<Action?>, shortcut: ShortcutSet) {
+  private fun JComponent.installActionShortcut(cs: CoroutineScope,
+                                               action: StateFlow<Action?>,
+                                               shortcut: ShortcutSet,
+                                               overrideEditorAction: Boolean = false) {
     val component = this
     cs.launch {
       action.filterNotNull().collectLatest { action ->
         // installed as AnAction, bc otherwise Esc is stolen by editor
-        val anAction = action.toAnAction()
+        val anAction = if (overrideEditorAction) action.toAnAction() else action.toAnActionWithEditorPromotion()
         try {
           putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
           anAction.registerCustomShortcutSet(shortcut, component)
@@ -165,6 +167,26 @@ object CommentInputActionsComponentFactory {
           anAction.unregisterCustomShortcutSet(component)
         }
       }
+    }
+  }
+
+  /**
+   * This is required for Exc handler to work properly (close popup or clear selection)
+   * Otherwise our Esc handler will fire first
+   */
+  private fun Action.toAnActionWithEditorPromotion(): AnAction {
+    val action = this
+    return object : DumbAwareAction(action.name.orEmpty()), ActionPromoter {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+      override fun update(e: AnActionEvent) {
+        e.presentation.isEnabled = action.isEnabled
+      }
+
+      override fun actionPerformed(event: AnActionEvent) = performAction(event)
+
+      override fun promote(actions: MutableList<out AnAction>, context: DataContext): List<AnAction> =
+        actions.filterIsInstance<EditorAction>()
     }
   }
 }

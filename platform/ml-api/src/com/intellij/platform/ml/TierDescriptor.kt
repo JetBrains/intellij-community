@@ -22,6 +22,8 @@ interface TierDescriptor : TierRequester {
    */
   val tier: Tier<*>
 
+  val descriptionPolicy: DescriptionPolicy
+
   /**
    * All features that could ever be used in the declaration.
    *
@@ -48,7 +50,7 @@ interface TierDescriptor : TierRequester {
    * and it is declared, but not present in the result.
    * @throws IllegalArgumentException If a redundant feature was computed, that was not declared.
    */
-  fun describe(environment: Environment, usefulFeaturesFilter: FeatureFilter): Set<Feature>
+  suspend fun describe(environment: Environment, usefulFeaturesFilter: FeatureFilter): Set<Feature>
 
   /**
    * Declares a requirement and ensures, that [describe] will be called if and only if
@@ -79,3 +81,18 @@ interface TierDescriptor : TierRequester {
     val EP_NAME: ExtensionPointName<TierDescriptor> = ExtensionPointName.create("com.intellij.platform.ml.descriptor")
   }
 }
+
+@ApiStatus.Internal
+data class DescriptionPolicy(
+  /**
+   * Tolerate redundant computations, because the computations are "light-weight".
+   * When an ML model is not aware of the feature, it's still allowing computing it in [TierDescriptor.describe].
+   * Otherwise, an exception will be thrown
+   */
+  val tolerateRedundantDescription: Boolean,
+
+  /**
+   * When the feature is nullable, allow not putting the 'null' explicitly to the result set of [TierDescriptor.describe].
+   */
+  val putNullImplicitly: Boolean
+)

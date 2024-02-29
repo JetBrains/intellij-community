@@ -299,7 +299,7 @@
       <reference ref="ToggleBookmarkWithMnemonic"/>
       <separator/>
 
-      <add-to-group group-id="EditorGutterPopupMenu" anchor="after" relative-to-action="EditorGutterVcsPopupMenu"/>
+      <add-to-group group-id="EditorGutterPopupMenu" anchor="before" relative-to-action="EditorToggleUseSoftWraps"/>
     </group>
 
     <group id="popup@ExpandableBookmarkContextMenu" popup="true" searchable="false">
