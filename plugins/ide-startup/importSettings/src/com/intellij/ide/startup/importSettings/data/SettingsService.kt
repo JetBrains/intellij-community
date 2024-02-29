@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileChooser.FileChooser
@@ -30,7 +31,9 @@ import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.ISignal
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.Signal
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
@@ -92,8 +95,12 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
 
   override suspend fun shouldShowImport(): Boolean {
     val startTime = System.currentTimeMillis()
-    val importFromJetBrainsAvailable = coroutineScope.async { getJbService().hasDataToImport() }
-    val importFromExternalAvailable = coroutineScope.async { getExternalService().hasDataToImport() }
+    val importFromJetBrainsAvailable = coroutineScope.async {
+      logger.runAndLogException { getJbService().hasDataToImport() } ?: false
+    }
+    val importFromExternalAvailable = coroutineScope.async {
+      logger.runAndLogException { getExternalService().hasDataToImport() } ?: false
+    }
     val result = select {
       importFromExternalAvailable.onAwait { it || importFromJetBrainsAvailable.await() }
       importFromJetBrainsAvailable.onAwait { it || importFromExternalAvailable.await() }
@@ -162,6 +169,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
   }
 }
 
+private val logger = logger<SettingsServiceImpl>()
 
 interface SyncService : JbService {
   enum class SYNC_STATE {
