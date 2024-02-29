@@ -92,17 +92,14 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
 
   override suspend fun shouldShowImport(): Boolean {
     val startTime = System.currentTimeMillis()
-    return coroutineScope {
-      val importFromJetBrainsAvailable = async { getJbService().hasDataToImport() }
-      val importFromExternalAvailable = async { getExternalService().hasDataToImport() }
-      val result = select {
-        importFromJetBrainsAvailable.onAwait { it || importFromExternalAvailable.await() }
-        importFromExternalAvailable.onAwait { it || importFromJetBrainsAvailable.await() }
-      }
-      coroutineContext.job.cancelChildren()
-      thisLogger().info("Took ${System.currentTimeMillis() - startTime}ms. to calculate shouldShowImport")
-      result
+    val importFromJetBrainsAvailable = coroutineScope.async { getJbService().hasDataToImport() }
+    val importFromExternalAvailable = coroutineScope.async { getExternalService().hasDataToImport() }
+    val result = select {
+      importFromExternalAvailable.onAwait { it || importFromJetBrainsAvailable.await() }
+      importFromJetBrainsAvailable.onAwait { it || importFromExternalAvailable.await() }
     }
+    thisLogger().info("Took ${System.currentTimeMillis() - startTime}ms. to calculate shouldShowImport")
+    return result
   }
 
   override val importCancelled = Signal<Unit>().apply {
