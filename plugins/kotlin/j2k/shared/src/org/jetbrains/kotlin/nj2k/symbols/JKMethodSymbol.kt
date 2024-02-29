@@ -54,8 +54,12 @@ class JKMultiverseMethodSymbol(
         get() = target.containingClass?.let {
             JKClassType(symbolProvider.provideDirectSymbol(it) as JKClassSymbol)
         }
+
+    context(KtAnalysisSession)
     override val parameterTypes: List<JKType>
         get() = target.parameterList.parameters.map { typeFactory.fromPsiType(it.type) }
+
+    context(KtAnalysisSession)
     override val returnType: JKType
         get() = target.returnType?.let { typeFactory.fromPsiType(it) } // null for constructor call
             ?: symbolProvider.provideClassSymbol(target.kotlinFqName!!).asType(Nullability.NotNull)
@@ -97,8 +101,7 @@ class JKMultiverseFunctionSymbol(
 
 class JKUnresolvedMethod(
     override val target: String,
-    override val typeFactory: JKTypeFactory,
-    override val returnType: JKType = JKNoType
+    override val typeFactory: JKTypeFactory
 ) : JKMethodSymbol(), JKUnresolvedSymbol {
     constructor(target: PsiReference, typeFactory: JKTypeFactory) : this(target.canonicalText, typeFactory)
 
@@ -109,6 +112,10 @@ class JKUnresolvedMethod(
     context(KtAnalysisSession)
     override val parameterTypes: List<JKType>
         get() = emptyList()
+
+    context(KtAnalysisSession)
+    override val returnType: JKType
+        get() = JKNoType
 }
 
 class KtClassImplicitConstructorSymbol(
