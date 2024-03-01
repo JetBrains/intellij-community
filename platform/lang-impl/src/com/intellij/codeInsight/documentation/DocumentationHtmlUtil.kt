@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.documentation
 
 import com.intellij.lang.documentation.DocumentationMarkup.*
+import com.intellij.lang.documentation.QuickDocHighlightingHelper
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.getDefaultDocCodeStyles
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.getDefaultFormattingStyles
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -9,6 +10,7 @@ import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.module.UnknownModuleType
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
@@ -119,14 +121,40 @@ object DocumentationHtmlUtil {
     return result
   }
 
+  private val dropPrecedingEmptyParagraphTags = CollectionFactory.createCharSequenceSet(false).also {
+    it.addAll(listOf("ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "p", "tr", "td"))
+  }
+
+  /**
+   * This method allows preprocessing HTML code before feeding the DocumentationEditorPane with it.
+   *
+   * It performs some string transformations required to work around the limitations of the HTML support implementation.
+   */
   @JvmStatic
   @Contract(pure = true)
-  fun addWordBreaks(text: String): String {
-    val codePoints = text.codePoints().iterator()
-    if (!codePoints.hasNext()) return ""
-    val result = StringBuilder(text.length + 50)
-    var codePoint = codePoints.nextInt()
-    val tagName = StringBuilder()
+  fun transpileForHtmlEditorPaneInput(text: String): String =
+    HtmlEditorPaneInputTranspiler(text).process()
+
+  /**
+   * Transpiler performs some simple lexing to understand where are tags, attributes and text.
+   *
+   * For performance reasons, all the following actions are applied in a single run:
+   * - Add `<wbr>` after `.` if surrounded by letters
+   * - Add `<wbr>` after `]`, `)` or `/` followed by a char or digit
+   * - Remove empty <p> before some tags - workaround for Swing html renderer not removing empty paragraphs before non-inline tags
+   * - Replace `<blockquote>\\s*<pre>` with [QuickDocHighlightingHelper.CODE_BLOCK_PREFIX]
+   * - Replace `</pre>\\s*</blockquote>` with [QuickDocHighlightingHelper.CODE_BLOCK_SUFFIX]
+   * - Replace `<pre><code>` with [QuickDocHighlightingHelper.CODE_BLOCK_PREFIX]
+   * - Replace `</code></pre>` with [QuickDocHighlightingHelper.CODE_BLOCK_SUFFIX]
+   */
+  private class HtmlEditorPaneInputTranspiler(text: String) {
+    private val codePoints = text.codePoints().iterator()
+    private val result = StringBuilder(text.length + 50)
+    private var codePoint = codePoints.nextInt()
+    private var openingTag = false
+    private val tagStart = StringBuilder()
+    private val tagName = StringBuilder()
+    private val tagBuffer = StringBuilder()
 
     fun next(builder: StringBuilder = result) {
       builder.appendCodePoint(codePoint)
@@ -136,97 +164,200 @@ object DocumentationHtmlUtil {
         -1
     }
 
-    while (codePoint >= 0) {
-      // break after dot if surrounded by letters
-      when {
-        Character.isLetter(codePoint) -> {
-          next()
-          if (codePoint == '.'.code) {
-            next()
-            if (Character.isLetter(codePoint)) {
-              result.append("<wbr>")
-            }
-          }
+    fun readTagStart() {
+      assert(codePoint == '<'.code)
+      tagStart.clear()
+      tagName.clear()
+      next(tagStart)
+      if (codePoint == '/'.code) {
+        openingTag = false
+        next(tagStart)
+      }
+      else if (codePoint == '!'.code) {
+        next(tagStart)
+        if (consume("--", tagStart)) {
+          skipUntil("->", tagStart)
         }
-        // break after ], ) or / followed by a char or digit
-        codePoint == ')'.code || codePoint == ']'.code || codePoint == '/'.code -> {
-          next()
-          if (Character.isLetterOrDigit(codePoint)) {
-            result.append("<wbr>")
+      }
+      else {
+        openingTag = true
+      }
+      if (!Character.isLetter(codePoint))
+        return
+      while (Character.isLetterOrDigit(codePoint) || codePoint == '-'.code) {
+        next(tagName)
+      }
+      tagStart.append(tagName)
+    }
+
+    fun consume(text: String, builder: StringBuilder): Boolean {
+      for (c in text) {
+        if (codePoint != c.code) return false
+        next(builder)
+      }
+      return true
+    }
+
+    fun skipUntil(text: String, builder: StringBuilder) {
+      loop@ while (codePoint >= 0) {
+        for (i in text.indices) {
+          val c = text[i]
+          if (codePoint != c.code) {
+            if (i == 0) next(builder)
+            continue@loop
           }
+          next(builder)
         }
-        // skip tag
-        codePoint == '<'.code -> {
-          next()
-          if (codePoint == '/'.code)
-            next()
-          if (!Character.isLetter(codePoint))
-            continue
-          tagName.clear()
-          while (Character.isLetterOrDigit(codePoint) || codePoint == '-'.code) {
-            next(tagName)
-          }
-          result.append(tagName)
-          if (tagName.contentEquals("style", true)
-              || tagName.contentEquals("title", true)
-              || tagName.contentEquals("script", true)) {
-            val curTag = tagName.toString()
-            do {
-              if (codePoint == '<'.code) {
-                next()
-                if (codePoint == '/'.code) {
-                  next()
-                  tagName.clear()
-                  while (Character.isLetterOrDigit(codePoint) || codePoint == '-'.code) {
-                    next(tagName)
-                  }
-                  result.append(tagName)
-                  if (tagName.contentEquals(curTag, true)) {
-                    while (codePoint >= 0 && codePoint != '>'.code) {
-                      next()
-                    }
-                    break
-                  }
-                }
-              }
-              else next()
-            }
-            while (true)
-          }
-          else {
-            while (codePoint >= 0) {
-              when (codePoint) {
-                '>'.code -> {
-                  next()
-                  break
-                }
-                '\''.code, '"'.code -> {
-                  val quoteStyle = codePoint
-                  next()
-                  while (codePoint >= 0) {
-                    when (codePoint) {
-                      '\\'.code -> {
-                        next()
-                        if (codePoint >= 0)
-                          next()
-                      }
-                      quoteStyle -> {
-                        next()
-                        break
-                      }
-                      else -> next()
-                    }
-                  }
-                }
-                else -> next()
-              }
-            }
-          }
-        }
-        else -> next()
+        return
       }
     }
 
-    return result.toString()
+    fun skipToTagEnd(builder: StringBuilder) {
+      while (codePoint >= 0) {
+        when (codePoint) {
+          '>'.code -> {
+            next(builder)
+            break
+          }
+          '\''.code, '"'.code -> {
+            val quoteStyle = codePoint
+            next(builder)
+            while (codePoint >= 0) {
+              when (codePoint) {
+                '\\'.code -> {
+                  next(builder)
+                  if (codePoint >= 0)
+                    next(builder)
+                }
+                quoteStyle -> {
+                  next(builder)
+                  break
+                }
+                else -> next(builder)
+              }
+            }
+          }
+          else -> next(builder)
+        }
+      }
+    }
+
+    fun handleTag() {
+      val isP = tagName.contentEquals("p", true)
+      val isPre = tagName.contentEquals("pre", true)
+      val isCode = tagName.contentEquals("code", true)
+      val isBlockquote = tagName.contentEquals("blockquote", true)
+      val isOpeningTag = openingTag
+      if (!isP && !isPre && !(isCode && !isOpeningTag) && !(isBlockquote && isOpeningTag)) {
+        result.append(tagStart)
+        skipToTagEnd(result)
+        return
+      }
+
+      tagBuffer.clear()
+      tagBuffer.append(tagStart)
+      skipToTagEnd(tagBuffer)
+      if (isP || isBlockquote || (isPre && !isOpeningTag)) {
+        // Skip whitespace
+        while (codePoint >= 0 && Character.isWhitespace(codePoint)) {
+          next(tagBuffer)
+        }
+      }
+      if (codePoint == '<'.code) {
+        readTagStart()
+        if (isP) {
+          // Remove empty <p> before some tags - workaround for Swing html renderer not removing empty paragraphs before non-inline tags
+          if (tagName !in dropPrecedingEmptyParagraphTags) {
+            result.append(tagBuffer)
+          }
+          handleTag()
+        }
+        else {
+          // Replace <blockquote>\\s*<pre> with QuickDocHighlightingHelper.CODE_BLOCK_PREFIX
+          // Replace </pre>\\s*</blockquote> with QuickDocHighlightingHelper.CODE_BLOCK_SUFFIX
+          // Replace <pre><code> with QuickDocHighlightingHelper.CODE_BLOCK_PREFIX
+          // Replace </code></pre> with QuickDocHighlightingHelper.CODE_BLOCK_SUFFIX
+          val nextTag = if (isPre) {
+            if (isOpeningTag) "code" else "blockquote"
+          }
+          else "pre"
+          if (tagName.contentEquals(nextTag, true) && (isOpeningTag == openingTag)) {
+            skipToTagEnd(tagBuffer)
+            if (isCode || (isPre && !isOpeningTag)) {
+              // trim trailing whitespace
+              result.setLength(result.indexOfLast { !Character.isWhitespace(it) } + 1)
+            }
+            result.append(if (isOpeningTag) QuickDocHighlightingHelper.CODE_BLOCK_PREFIX else QuickDocHighlightingHelper.CODE_BLOCK_SUFFIX)
+          }
+          else {
+            result.append(tagBuffer)
+            handleTag()
+          }
+        }
+      }
+      else {
+        result.append(tagBuffer)
+      }
+    }
+
+    fun process(): String {
+      if (!codePoints.hasNext()) return ""
+
+
+      while (codePoint >= 0) {
+        when {
+          // break after dot if surrounded by letters
+          Character.isLetter(codePoint) -> {
+            next()
+            if (codePoint == '.'.code) {
+              next()
+              if (Character.isLetter(codePoint)) {
+                result.append("<wbr>")
+              }
+            }
+          }
+          // break after ], ) or / followed by a char or digit
+          codePoint == ')'.code || codePoint == ']'.code || codePoint == '/'.code -> {
+            next()
+            if (Character.isLetterOrDigit(codePoint)) {
+              result.append("<wbr>")
+            }
+          }
+          // process tags
+          codePoint == '<'.code -> {
+            readTagStart()
+            if (tagName.isEmpty()) {
+              result.append(tagStart)
+              continue
+            }
+            if (tagName.contentEquals("style", true)
+                || tagName.contentEquals("title", true)
+                || tagName.contentEquals("script", true)
+                || tagName.contentEquals("textarea", true)) {
+              result.append(tagStart)
+              val curTag = tagName.toString()
+              do {
+                if (codePoint == '<'.code) {
+                  readTagStart()
+                  result.append(tagStart)
+                  if (tagName.contentEquals(curTag, true) && !openingTag) {
+                    skipUntil(">", result)
+                    break
+                  }
+                }
+                else next()
+              }
+              while (codePoint >= 0)
+            }
+            else
+              handleTag()
+          }
+          else -> next()
+        }
+      }
+
+      return result.toString()
+    }
+
   }
 }

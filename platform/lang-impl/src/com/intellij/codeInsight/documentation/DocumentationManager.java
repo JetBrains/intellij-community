@@ -1970,21 +1970,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (links != null) {
       text += getBottom().child(links);
     }
-    //workaround for Swing html renderer not removing empty paragraphs before non-inline tags
-    text = PARAGRAPH_BEFORE_NON_INLINE_TAG_PATTERN.matcher(text).replaceAll("$1");
     text = addExternalLinksIcon(text);
-    //convert <blockquote><pre> and <pre><code> into code blocks
-    text = BLOCKQUOTE_PRE_CODE_OPEN_PATTERN.matcher(text).replaceAll(QuickDocHighlightingHelper.CODE_BLOCK_PREFIX);
-    text = BLOCKQUOTE_PRE_CODE_CLOSE_PATTERN.matcher(text).replaceAll(QuickDocHighlightingHelper.CODE_BLOCK_SUFFIX);
-    text = DocumentationHtmlUtil.addWordBreaks(text);
-    return text;
+    return DocumentationHtmlUtil.transpileForHtmlEditorPaneInput(text);
   }
-
-  private static final Pattern PARAGRAPH_BEFORE_NON_INLINE_TAG_PATTERN = Pattern.compile("<p>\\s*(<(?:[uo]l|h\\d|p|tr|td))");
-  private static final Pattern BLOCKQUOTE_PRE_CODE_OPEN_PATTERN =
-    Pattern.compile("<blockquote>[\\s\\n\\r]*<pre>|<pre><code>", Pattern.MULTILINE);
-  private static final Pattern BLOCKQUOTE_PRE_CODE_CLOSE_PATTERN =
-    Pattern.compile("</pre>[\\s\\n\\r]*</blockquote>|</code></pre>", Pattern.MULTILINE);
 
   private static int indexOfIgnoreQuotesType(@NotNull String text, @NotNull String substring) {
     return StreamEx.of(
