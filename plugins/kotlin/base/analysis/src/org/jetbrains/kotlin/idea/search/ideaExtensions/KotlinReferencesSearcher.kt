@@ -327,16 +327,15 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 }
 
                 is KtProperty -> {
-                    if (element.isExpectDeclaration()) {
-                        val declaration = ExpectActualSupport.getInstance(element.project).actualsForExpected(element)
-                            .firstOrNull { it is KtProperty && getLightClassPropertyMethods(it).allDeclarations.isNotEmpty() }
-                        if (declaration != null) {
-                            searchLightElements(declaration)
-                        }
-                        return
+                    val propertyAccessors = if (element.isExpectDeclaration()) {
+                        ExpectActualSupport.getInstance(element.project)
+                            .actualsForExpected(element)
+                            .filterIsInstance<KtProperty>()
+                            .map { getLightClassPropertyMethods(it) }
+                    } else listOfNotNull(getLightClassPropertyMethods(element))
+                    propertyAccessors.forEach { propertyAccessor ->
+                        propertyAccessor.allDeclarations.forEach(::searchNamedElement)
                     }
-                    val propertyDeclarations = getLightClassPropertyMethods(element).allDeclarations
-                    propertyDeclarations.forEach(::searchNamedElement)
                     processStaticsFromCompanionObject(element)
                 }
 
@@ -398,14 +397,14 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
         @RequiresReadLock
         private fun processKtClassOrObject(element: KtClassOrObject) {
-            val className = element.name ?: return
-            val lightClass = element.toLightClass() ?: if (element.isExpectDeclaration()) {
+            if (element.name == null) return
+            val lightClasses = (if (element.isExpectDeclaration()) {
                 ExpectActualSupport.getInstance(element.project)
                     .actualsForExpected(element)
-                    .mapNotNull { (it as? KtClassOrObject)?.toLightClass() }.firstOrNull()
-            } else null ?: return
+                    .mapNotNull { (it as? KtClassOrObject)?.toLightClass() }
+            } else listOfNotNull(element.toLightClass()))
 
-            searchNamedElement(lightClass, className)
+            lightClasses.forEach(::searchNamedElement)
 
             if (element is KtObjectDeclaration && element.isCompanion()) {
                 getLightFieldForCompanionObject(element)?.let(::searchNamedElement)
