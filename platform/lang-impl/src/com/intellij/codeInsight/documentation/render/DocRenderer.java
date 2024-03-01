@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.codeInsight.documentation.DocumentationActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationFontSize;
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.documentation.QuickDocHighlightingHelper;
@@ -306,6 +307,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       text = unwrapTipsText(text);
       text = ShortcutExtension.Companion.patchShortcutTags(text, false);
       useTipsKit = true;
+    } else {
+      text = DocumentationHtmlUtil.transpileForHtmlEditorPaneInput(text);
     }
     EditorPane pane = new EditorPane(!reusable);
     pane.setEditable(false);
