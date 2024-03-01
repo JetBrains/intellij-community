@@ -10,71 +10,82 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.intentions.ReplaceItWithExplicitFunctionLiteralParamIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-
 private val scopeFunctions: List<FqName> = listOf(
     "kotlin.also",
     "kotlin.let",
     "kotlin.takeIf",
-    "kotlin.takeUnless"
+    "kotlin.takeUnless",
 ).map { FqName(it) }
 
-class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return lambdaExpressionVisitor(fun(lambda: KtLambdaExpression) {
-            if (lambda.valueParameters.isNotEmpty()) return
-            if (lambda.getStrictParentOfType<KtLambdaExpression>() == null) return
+internal class NestedLambdaShadowedImplicitParameterInspection : AbstractKotlinInspection() {
 
-            val context = lambda.safeAnalyzeNonSourceRootCode()
-            val implicitParameter = lambda.getImplicitParameter(context) ?: return
-            if (lambda.getParentImplicitParameterLambda(context) == null) return
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): PsiElementVisitor = lambdaExpressionVisitor { lambda ->
+        if (lambda.valueParameters.isNotEmpty()) return@lambdaExpressionVisitor
+        if (lambda.getStrictParentOfType<KtLambdaExpression>() == null) return@lambdaExpressionVisitor
 
-            val qualifiedExpression = lambda.getStrictParentOfType<KtQualifiedExpression>()
-            if (qualifiedExpression != null) {
-                val receiver = qualifiedExpression.receiverExpression
-                val call = qualifiedExpression.callExpression
-                if (receiver.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier && call?.isCalling(scopeFunctions, context) == true) return
+        val context = lambda.safeAnalyzeNonSourceRootCode()
+        val implicitParameter = lambda.getImplicitParameter(context)
+            ?: return@lambdaExpressionVisitor
+
+        lambda.getParentImplicitParameterLambda(context)
+            ?: return@lambdaExpressionVisitor
+
+        val qualifiedExpression = lambda.getStrictParentOfType<KtQualifiedExpression>()
+        if (qualifiedExpression != null
+            && qualifiedExpression.receiverExpression.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
+            && qualifiedExpression.callExpression?.isCalling(scopeFunctions, context) == true
+        ) return@lambdaExpressionVisitor
+
+        lambda.forEachDescendantOfType<KtNameReferenceExpression> { expression ->
+            if (expression.isImplicitParameterReference(lambda, implicitParameter, context)) {
+                holder.registerProblem(
+                    expression,
+                    KotlinBundle.message("implicit.parameter.it.of.enclosing.lambda.is.shadowed"),
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                    AddExplicitParameterToOuterLambdaFix(),
+                    IntentionWrapper(ReplaceItWithExplicitFunctionLiteralParamIntention()),
+                )
             }
-
-            val containingFile = lambda.containingFile
-            lambda.forEachDescendantOfType<KtNameReferenceExpression> {
-                if (it.isImplicitParameterReference(lambda, implicitParameter, context)) {
-                    holder.registerProblem(
-                        it,
-                        KotlinBundle.message("implicit.parameter.it.of.enclosing.lambda.is.shadowed"),
-                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                        AddExplicitParameterToOuterLambdaFix(),
-                        IntentionWrapper(ReplaceItWithExplicitFunctionLiteralParamIntention())
-                    )
-                }
-            }
-        })
+        }
     }
 
     private class AddExplicitParameterToOuterLambdaFix : LocalQuickFix {
+
         override fun getName() = KotlinBundle.message("add.explicit.parameter.to.outer.lambda.fix.text")
 
         override fun getFamilyName() = name
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        override fun applyFix(
+            project: Project,
+            descriptor: ProblemDescriptor,
+        ) {
             val implicitParameterReference = descriptor.psiElement as? KtNameReferenceExpression ?: return
             val lambda = implicitParameterReference.getStrictParentOfType<KtLambdaExpression>() ?: return
             val parentLambda = lambda.getParentImplicitParameterLambda() ?: return
-            val parameter = parentLambda.functionLiteral.getOrCreateParameterList().addParameterBefore(
-                KtPsiFactory(project).createLambdaParameterList(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier).parameters.first(), null
-            )
+
+            val parameter = parentLambda.functionLiteral
+                .getOrCreateParameterList()
+                .addParameterBefore(
+                    KtPsiFactory(project).createLambdaParameterList(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier).parameters.first(),
+                    null,
+                )
+
             val editor = parentLambda.findExistingEditor() ?: return
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
             editor.caretModel.moveToOffset(parameter.startOffset)
@@ -87,13 +98,14 @@ private fun KtLambdaExpression.getImplicitParameter(context: BindingContext): Va
     return context[BindingContext.FUNCTION, functionLiteral]?.valueParameters?.singleOrNull()
 }
 
-private fun KtLambdaExpression.getParentImplicitParameterLambda(context: BindingContext = this.analyze()): KtLambdaExpression? {
-    return getParentOfTypesAndPredicate(true, KtLambdaExpression::class.java) { lambda ->
-        if (lambda.valueParameters.isNotEmpty()) return@getParentOfTypesAndPredicate false
-        val implicitParameter = lambda.getImplicitParameter(context) ?: return@getParentOfTypesAndPredicate false
-        lambda.anyDescendantOfType<KtNameReferenceExpression> {
-            it.isImplicitParameterReference(lambda, implicitParameter, context)
-        }
+private fun KtLambdaExpression.getParentImplicitParameterLambda(
+    context: BindingContext = this.analyze(),
+): KtLambdaExpression? = getParentOfTypesAndPredicate(true, KtLambdaExpression::class.java) { lambda ->
+    if (lambda.valueParameters.isNotEmpty()) return@getParentOfTypesAndPredicate false
+    val implicitParameter = lambda.getImplicitParameter(context) ?: return@getParentOfTypesAndPredicate false
+
+    lambda.anyDescendantOfType<KtNameReferenceExpression> {
+        it.isImplicitParameterReference(lambda, implicitParameter, context)
     }
 }
 
@@ -101,8 +113,6 @@ private fun KtNameReferenceExpression.isImplicitParameterReference(
     lambda: KtLambdaExpression,
     implicitParameter: ValueParameterDescriptor,
     context: BindingContext
-): Boolean {
-    return text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
-            && getStrictParentOfType<KtLambdaExpression>() == lambda
-            && getResolvedCall(context)?.resultingDescriptor == implicitParameter
-}
+): Boolean = text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
+        && getStrictParentOfType<KtLambdaExpression>() == lambda
+        && getResolvedCall(context)?.resultingDescriptor == implicitParameter
