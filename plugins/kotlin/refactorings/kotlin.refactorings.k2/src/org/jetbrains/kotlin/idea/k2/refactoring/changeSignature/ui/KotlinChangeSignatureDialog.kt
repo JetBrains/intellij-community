@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui
 
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor.Kind
@@ -120,7 +122,7 @@ internal class KotlinChangeSignatureDialog(
 
 
     override fun createRefactoringProcessor(): BaseRefactoringProcessor {
-        val changeInfo = evaluateChangeSignatureInfo(false)
+        val changeInfo = ActionUtil.underModalProgress(project, KotlinBundle.message("fix.change.signature.prepare")) { evaluateChangeSignatureInfo(false) }
         return KotlinChangeSignatureProcessor(project, changeInfo)
     }
 
@@ -134,7 +136,7 @@ internal class KotlinChangeSignatureDialog(
                 receiverInfo = parameterInfo
             }
 
-            parameterInfo.setType(parameter.typeCodeFragment.text)
+            parameterInfo.setType((parameter.typeCodeFragment as KtTypeCodeFragment).getCanonicalText(forPreview))
 
             val codeFragment = parameter.defaultValueCodeFragment as KtExpressionCodeFragment
 
@@ -161,7 +163,7 @@ internal class KotlinChangeSignatureDialog(
             parameterInfos = parametersWithReceiverInFirstPosition,
             receiver = receiverInfo,
             aNewVisibility = myVisibilityPanel.visibility ?: methodDescriptor.visibility,
-            newReturnTypeInfo = KotlinTypeInfo(myReturnTypeCodeFragment?.text, callable)
+            newReturnTypeInfo = KotlinTypeInfo((myReturnTypeCodeFragment as? KtTypeCodeFragment)?.getCanonicalText(forPreview), callable)
         )
     }
 
@@ -253,4 +255,15 @@ internal class KotlinChangeSignatureDialog(
             Visibilities.Public
         )
     )
+}
+
+internal fun KtTypeCodeFragment.getCanonicalText(forPreview: Boolean): String {
+    val contextElement = getContentElement()
+    if (contextElement != null && !forPreview) {
+        analyze(contextElement) {
+            return contextElement.getKtType().render(position = Variance.IN_VARIANCE)
+        }
+    } else {
+        return text
+    }
 }
