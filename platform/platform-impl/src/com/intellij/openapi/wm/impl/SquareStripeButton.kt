@@ -280,7 +280,9 @@ private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
   group.addSeparator()
   group.add(createMoveGroup())
   group.addSeparator()
-  group.add(ToolWindowShowNamesAction())
+  if (ResizeStripeManager.enabled()) {
+    group.add(ToolWindowShowNamesAction())
+  }
   return group
 }
 
