@@ -35,7 +35,7 @@ internal class SearchEverywhereTextFeaturesProvider : SearchEverywhereElementFea
    * Null if there was no element found within the psi file range, or element lost its validity
    */
   private fun isComment(usage: UsageInfo2UsageAdapter): Boolean? {
-    val element = usage.usageInfo.psiFileRange.element ?: return null
+    val element = usage.usageInfo.psiFileRange?.element ?: return null
     return ApplicationManager.getApplication().runReadAction<Boolean> {
       if (!element.isValid) return@runReadAction null
       CommentUtilCore.isComment(element)
