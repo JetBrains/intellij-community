@@ -48,7 +48,10 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
     override fun perform(project: Project,
                          embeddersManager: MavenEmbeddersManager,
                          indicator: ProgressIndicator) {
-      doRefreshFiles(myFiles)
+      val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+      cs.launch {
+        doRefreshFiles(myFiles)
+      }
     }
   }
 
