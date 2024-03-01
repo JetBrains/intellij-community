@@ -3,6 +3,7 @@ package com.intellij.ui.icons
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.Icon
 
@@ -11,6 +12,9 @@ interface PredefinedIconOverlayService {
   companion object {
     @JvmStatic
     fun getInstance(): PredefinedIconOverlayService = ApplicationManager.getApplication().service()
+
+    @JvmStatic
+    fun getInstanceOrNull(): PredefinedIconOverlayService? = ApplicationManager.getApplication().serviceOrNull()
   }
 
   fun createSymlinkIcon(icon: Icon): Icon
