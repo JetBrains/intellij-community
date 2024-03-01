@@ -24,7 +24,6 @@ public final class DefaultIdeaErrorLogger {
       if (app == null || app.isDisposed()) return false;
 
       var t = event.getThrowable();
-      if (t instanceof MessagePool.TooManyErrorsException) return false;
       if (getOOMErrorKind(t) != null) return true;
 
       UpdateChecker.checkForUpdate(event);
