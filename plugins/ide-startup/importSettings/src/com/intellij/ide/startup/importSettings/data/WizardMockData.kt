@@ -17,7 +17,9 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
 
-class WizardServiceTest : WizardService {
+class WizardServiceTest : StartupWizardService {
+  override val isActive = true
+
   override fun getKeymapService(): KeymapService {
     return TestKeymapService()
   }

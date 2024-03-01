@@ -3,34 +3,35 @@ package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.openapi.components.service
-import com.intellij.util.SystemProperties
-import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reactive.IPropertyView
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.Icon
 
-interface WizardProvider {
+interface StartupWizardService {
   companion object {
-    fun getInstance(): WizardProvider = service()
+    fun getInstance(): StartupWizardService? {
+      val service =
+        if (useMockDataForStartupWizard) WizardServiceTest()
+        else service<StartupWizardService>()
+      return if (service.isActive) service else null
+    }
   }
 
-  fun getWizardService(): WizardService? = null
-}
+  val isActive: Boolean
 
-class WizardProviderImpl : WizardProvider {
-  private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
-
-  override fun getWizardService(): WizardService? {
-    return if (shouldUseMockData) WizardServiceTest() else null
-  }
-}
-
-interface WizardService {
   fun getKeymapService(): KeymapService
 
   fun getThemeService(): ThemeService
 
   fun getPluginService(): PluginService
+}
+
+class DisabledStartupWizardPages : StartupWizardService {
+  override val isActive = false
+  override fun getKeymapService() = error("Startup wizard is disabled.")
+  override fun getThemeService() = error("Startup wizard is disabled.")
+  override fun getPluginService() = error("Startup wizard is disabled.")
 }
 
 interface ThemeService {
