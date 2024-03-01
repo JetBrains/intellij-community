@@ -128,6 +128,8 @@ interface BuildContext : CompilationContext {
                            prepareForBuild: Boolean = true): BuildContext
 
   suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
+
+  fun checkDistributionBuildNumber()
 }
 
 suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,

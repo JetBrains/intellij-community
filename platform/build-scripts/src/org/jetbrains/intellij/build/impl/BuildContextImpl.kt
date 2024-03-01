@@ -56,10 +56,12 @@ class BuildContextImpl(
   override val systemSelector: String
     get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
+  private val baseBuildNumber: String by lazy {
+    readSnapshotBuildNumber(paths.communityHomeDirRoot).removeSuffix(".SNAPSHOT")
+  }
+
   override val buildNumber: String by lazy {
     val suppliedBuildNumber = options.buildNumber
-    val snapshotBuildNumber = readSnapshotBuildNumber(paths.communityHomeDirRoot)
-    val baseBuildNumber = snapshotBuildNumber.removeSuffix(".SNAPSHOT")
     if (suppliedBuildNumber != null) {
       suppliedBuildNumber
     }
@@ -67,6 +69,14 @@ class BuildContextImpl(
       val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(options.buildDateInSeconds), ZoneOffset.UTC)
       // .SNAPSHOT suffix is required for a remote dev + IDE built from sources scenario, IJI-1603
       "$baseBuildNumber.${pluginDateFormat.format(buildDate)}.SNAPSHOT"
+    }
+  }
+
+  override fun checkDistributionBuildNumber() {
+    val suppliedBuildNumber = options.buildNumber
+    check(suppliedBuildNumber == null || suppliedBuildNumber.startsWith(baseBuildNumber)) {
+      "Supplied build number '$suppliedBuildNumber' is expected to start with '$baseBuildNumber' base build number " +
+      "defined in ${paths.communityHomeDirRoot.snapshotBuildNumberFile}"
     }
   }
 
