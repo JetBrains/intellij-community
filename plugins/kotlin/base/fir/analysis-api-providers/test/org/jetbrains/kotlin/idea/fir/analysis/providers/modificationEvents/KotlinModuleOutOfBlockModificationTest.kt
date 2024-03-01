@@ -3,13 +3,22 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers.modificationEvents
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.messages.MessageBusConnection
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleOutOfBlockModificationListener
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.junit.Assert
 
@@ -431,6 +440,98 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         trackerB.assertNotModified("unmodified not-under-content-root file B")
         trackerC.assertNotModified("unmodified module C")
         trackerD.assertNotModified("unmodified script D")
+    }
+
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    fun `test code fragment out-of-block modification does not happen after body modification`() {
+        val contextModule = createModuleInTmpDir("ctx") {
+            val contextFile = FileWithText(
+                "context.kt",
+                """
+                    fun main() {
+                        val x = 0
+                    }
+                """.trimIndent()
+            )
+
+            listOf(contextFile)
+        }
+
+        val contextTracker = createTracker(contextModule)
+
+        contextModule.configureEditorForFile("context.kt").apply {
+            val contextCall = findDescendantOfType<KtVariableDeclaration> { it.name == "x" }
+
+            val codeFragment = KtExpressionCodeFragment(project, "fragment.kt", "secondary()", imports = null, contextCall)
+            assert(codeFragment.viewProvider.isEventSystemEnabled)
+
+            val codeFragmentModule = ProjectStructureProvider.getModule(project, codeFragment, contextualModule = null)
+            val codeFragmentTracker = createTracker(codeFragmentModule)
+
+            allowAnalysisOnEdt {
+                analyze(codeFragment) {
+                    val callExpression = codeFragment.findDescendantOfType<KtCallExpression>() ?: error("Replaced call is not found")
+                    val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull()
+                    assert(resolvedCall == null)
+                }
+            }
+
+            runWriteAction {
+                executeCommand(project) {
+                    val newContentElement = KtPsiFactory(project).createExpression("main()")
+                    codeFragment.getContentElement()!!.replace(newContentElement)
+                }
+            }
+
+            codeFragmentTracker.assertNotModified("code fragment")
+
+            allowAnalysisOnEdt {
+                analyze(codeFragment) {
+                    val callExpression = codeFragment.findDescendantOfType<KtCallExpression>() ?: error("Replaced call is not found")
+                    val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull()
+                    val resolvedFunction = resolvedCall?.symbol as? KtFunctionSymbol
+                    assert(resolvedFunction != null && resolvedFunction.name.asString() == "main" )
+                }
+            }
+        }
+
+        contextTracker.assertNotModified("unmodified context module")
+    }
+
+    fun `test code fragment out-of-block modification happens after import insertion`() {
+        val contextModule = createModuleInTmpDir("ctx") {
+            val contextFile = FileWithText(
+                "context.kt",
+                """
+                    fun main() {
+                        val x = 0
+                    }
+                """.trimIndent()
+            )
+
+            listOf(contextFile)
+        }
+
+        val contextTracker = createTracker(contextModule)
+
+        contextModule.configureEditorForFile("context.kt").apply {
+            val contextCall = findDescendantOfType<KtVariableDeclaration> { it.name == "x" }
+
+            val codeFragment = KtExpressionCodeFragment(project, "fragment.kt", "File(\"\")", imports = null, contextCall)
+            assert(codeFragment.viewProvider.isEventSystemEnabled)
+
+            val codeFragmentTracker = createTracker(codeFragment)
+
+            runWriteAction {
+                executeCommand(project) {
+                    codeFragment.addImportsFromString("java.io.File")
+                }
+            }
+
+            codeFragmentTracker.assertModifiedOnce("code fragment")
+        }
+
+        contextTracker.assertNotModified("unmodified context module")
     }
 
     private fun KtFile.configureEditor() {

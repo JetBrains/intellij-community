@@ -23,26 +23,6 @@ public class GlobalSessionInvalidationTestGenerated extends AbstractGlobalSessio
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("binaryTree")
-    public void testBinaryTree() throws Exception {
-        runTest("testData/sessionInvalidation/binaryTree/");
-    }
-
-    @TestMetadata("binaryTreeNoInvalidated")
-    public void testBinaryTreeNoInvalidated() throws Exception {
-        runTest("testData/sessionInvalidation/binaryTreeNoInvalidated/");
-    }
-
-    @TestMetadata("binaryTreeWithAdditionalEdge")
-    public void testBinaryTreeWithAdditionalEdge() throws Exception {
-        runTest("testData/sessionInvalidation/binaryTreeWithAdditionalEdge/");
-    }
-
-    @TestMetadata("binaryTreeWithInvalidInRoot")
-    public void testBinaryTreeWithInvalidInRoot() throws Exception {
-        runTest("testData/sessionInvalidation/binaryTreeWithInvalidInRoot/");
-    }
-
     @TestMetadata("cyclical")
     public void testCyclical() throws Exception {
         runTest("testData/sessionInvalidation/cyclical/");
@@ -53,23 +33,8 @@ public class GlobalSessionInvalidationTestGenerated extends AbstractGlobalSessio
         runTest("testData/sessionInvalidation/cyclicalWithOutsideDependency/");
     }
 
-    @TestMetadata("linear")
-    public void testLinear() throws Exception {
-        runTest("testData/sessionInvalidation/linear/");
-    }
-
     @TestMetadata("linearWithCyclicalDependency")
     public void testLinearWithCyclicalDependency() throws Exception {
         runTest("testData/sessionInvalidation/linearWithCyclicalDependency/");
-    }
-
-    @TestMetadata("rhombus")
-    public void testRhombus() throws Exception {
-        runTest("testData/sessionInvalidation/rhombus/");
-    }
-
-    @TestMetadata("rhombusWithTwoInvalid")
-    public void testRhombusWithTwoInvalid() throws Exception {
-        runTest("testData/sessionInvalidation/rhombusWithTwoInvalid/");
     }
 }

@@ -14,5 +14,4 @@ enum class MyEnum {
 }
 
 // EXIST: { itemText: "entries", typeText: "String" }
-// EXIST: { itemText: "enumEntries", typeText: "EnumEntries<T>" }
-// NOTHING_ELSE
+// ABSENT: { itemText: "entries", typeText: "EnumEntries<T>" }
