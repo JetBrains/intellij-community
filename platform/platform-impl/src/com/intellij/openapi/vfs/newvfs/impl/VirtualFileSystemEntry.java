@@ -96,7 +96,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @NotNull VfsData getVfsData() {
-    VfsData data = getSegment().owningVfsData;
+    VfsData data = mySegment.owningVfsData;
     PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
     if (!owningPersistentFS.isOwnData(data)) {
       //PersistentFSImpl re-creates VfsData on (re-)connect
