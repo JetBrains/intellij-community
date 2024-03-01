@@ -511,7 +511,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         //no stratum or source path => use default one
         val referenceFqName = location.declaringType().name()
         // JDI names are of form "package.Class$InnerClass"
-        return referenceFqName.replace('.', '/')
+        return referenceFqName.fqnToInternalName()
     }
 
     override fun getAllClasses(sourcePosition: SourcePosition): List<ReferenceType> {
@@ -710,7 +710,7 @@ private fun LocalVariableImpl.isVisible(location: Location): Boolean =
 
 fun Location.getClassName(): String? {
     val currentLocationFqName = declaringType().name() ?: return null
-    return JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.replace('/', '.')
+    return JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.internalNameToFqn()
 }
 
 private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: Int): List<ReferenceType> {

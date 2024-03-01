@@ -45,7 +45,7 @@ class KotlinExtraSteppingFilter : ExtraSteppingFilter {
 
                 val classNames = classNameProvider
                     .getCandidates(sourcePosition)
-                    .map { it.replace('/', '.') }
+                    .map { it.internalNameToFqn() }
 
                 for (className in classNames) {
                     for (filter in settings.steppingFilters) {
