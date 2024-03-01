@@ -150,6 +150,7 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.JAVA
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_JAVA
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
@@ -157,7 +158,6 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
-import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 import org.jetbrains.uast.test.kotlin.comparison.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -458,11 +458,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractHighlightingTest>(commonSuite = false) {
-            model("highlighter", pattern = Patterns.KT_OR_JAVA)
+            model("highlighter", pattern = KT_OR_JAVA)
         }
 
         testClass<AbstractK1HighlightingMetaInfoTest> {
-            model("highlighterMetaInfo", pattern = Patterns.KT_OR_KTS)
+            model("highlighterMetaInfo", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractDslHighlighterTest> {
@@ -996,7 +996,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("repl/completion")
         }
 
-        val inlayHintsFileRegexp = forRegex("^([^_]\\w+)\\.kt$")
+        val inlayHintsFileRegexp = Patterns.forRegex("^([^_]\\w+)\\.kt$")
 
         testClass<AbstractKotlinArgumentsHintsProviderTest> {
             model("codeInsight/hints/arguments", pattern = inlayHintsFileRegexp)

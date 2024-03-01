@@ -57,7 +57,6 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
-import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
@@ -82,7 +81,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("base/fir/analysis-api-providers") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
-            model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or Patterns.JAVA)
+            model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or JAVA)
         }
 
         testClass<AbstractLocalSessionInvalidationTest> {
@@ -457,7 +456,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractHighLevelJavaCompletionHandlerTest> {
-            model("handlers/injava", pattern = Patterns.JAVA)
+            model("handlers/injava", pattern = JAVA)
         }
 
         testClass<AbstractFirKeywordCompletionHandlerTest> {
@@ -580,7 +579,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractK2MultiModuleHighlightingTest> {
-            model("resolve/anchors", isRecursive = false, pattern = forRegex("^([^\\._]+)$"))
+            model("resolve/anchors", isRecursive = false, pattern = Patterns.forRegex("^([^\\._]+)$"))
         }
 
         testClass<AbstractK2ReferenceResolveWithResolveExtensionTest> {
