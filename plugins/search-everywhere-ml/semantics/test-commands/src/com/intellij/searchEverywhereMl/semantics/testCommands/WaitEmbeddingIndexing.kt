@@ -14,7 +14,7 @@ class WaitEmbeddingIndexing(text: @NonNls String, line: Int) : PerformanceComman
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    EmbeddingIndexSettingsImpl.getInstance(context.project).registerClientSettings(
+    EmbeddingIndexSettingsImpl.getInstance().registerClientSettings(
       object : EmbeddingIndexSettings {
         override val shouldIndexFiles: Boolean = true
         override val shouldIndexClasses: Boolean = true

@@ -3,6 +3,8 @@ package com.intellij.platform.ml.embeddings.search.services
 
 
 interface EmbeddingIndexSettings {
+  val shouldIndexActions: Boolean
+    get() = false
   val shouldIndexFiles: Boolean
     get() = false
   val shouldIndexClasses: Boolean

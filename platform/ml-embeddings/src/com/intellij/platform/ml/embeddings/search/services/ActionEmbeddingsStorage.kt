@@ -4,11 +4,13 @@ package com.intellij.platform.ml.embeddings.search.services
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import java.io.File
 
@@ -30,8 +32,11 @@ class ActionEmbeddingsStorage : EmbeddingsStorage {
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     ActionEmbeddingStorageManager.getInstance().triggerIndexing() // trigger indexing on first search usage
     if (index.size == 0) return emptyList()
+    val searchStartTime = System.nanoTime()
     val embedding = generateEmbedding(text) ?: return emptyList()
-    return index.findClosest(searchEmbedding = embedding, topK = topK, similarityThreshold = similarityThreshold)
+    val neighbours = index.findClosest(searchEmbedding = embedding, topK = topK, similarityThreshold = similarityThreshold)
+    EmbeddingSearchLogger.searchFinished(null, EmbeddingSearchLogger.Index.ACTIONS, TimeoutUtil.getDurationMillis(searchStartTime))
+    return neighbours
   }
 
   @RequiresBackgroundThread

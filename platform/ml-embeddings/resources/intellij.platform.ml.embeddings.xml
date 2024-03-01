@@ -34,6 +34,9 @@
       defaultValue="50"
       description="Embedding indexing per-application memory limit (MB)"
       key="intellij.platform.ml.embeddings.index.memory.limit"/>
+
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger"/>
   </extensions>
 
 </idea-plugin>

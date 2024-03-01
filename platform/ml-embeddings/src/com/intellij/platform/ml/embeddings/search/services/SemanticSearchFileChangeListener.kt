@@ -38,7 +38,7 @@ class SemanticSearchFileChangeListener(private val project: Project, cs: Corouti
   fun clearEvents() = reindexQueue.get().clear()
 
   override fun prepareChange(events: MutableList<out VFileEvent>): AsyncFileListener.ChangeApplier? {
-    if (!EmbeddingIndexSettingsImpl.getInstance(project).shouldIndexAnything) return null
+    if (!EmbeddingIndexSettingsImpl.getInstance().shouldIndexAnythingFileBased) return null
     events.forEach { it.file?.let { file -> reindexQueue.get().add(file) } }
     return object : AsyncFileListener.ChangeApplier {
       override fun afterVfsChange() {

@@ -2,10 +2,12 @@
 package com.intellij.platform.ml.embeddings.search.services
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
 
@@ -13,12 +15,17 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
                                                                       private val cs: CoroutineScope) : EmbeddingsStorage {
   abstract val index: DiskSynchronizedEmbeddingSearchIndex
 
+  internal abstract val reportableIndex: EmbeddingSearchLogger.Index
+
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
     if (index.size == 0) return emptyList()
+    val searchStartTime = System.nanoTime()
     val embedding = generateEmbedding(text) ?: return emptyList()
-    return index.findClosest(embedding, topK, similarityThreshold)
+    val neighbours = index.findClosest(embedding, topK, similarityThreshold)
+    EmbeddingSearchLogger.searchFinished(project, reportableIndex, TimeoutUtil.getDurationMillis(searchStartTime))
+    return neighbours
   }
 
   @RequiresBackgroundThread
