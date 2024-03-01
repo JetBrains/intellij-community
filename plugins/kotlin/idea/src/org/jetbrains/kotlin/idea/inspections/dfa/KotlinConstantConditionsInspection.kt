@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsStatement
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 import org.jetbrains.kotlin.types.typeUtil.isNullableNothing
 
@@ -581,9 +582,9 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         if (token === KtTokens.EQEQ || token === KtTokens.EXCLEQ || token === KtTokens.EQEQEQ || token === KtTokens.EXCLEQEQEQ) {
                             // like if (x == 0) when 'x' is known to be 0: report 'always true' instead
                             val left = parent.left
-                            if (left != null && ConstantExpressionEvaluator.getConstant(left, bindingContext)?.getValue(kotlinType) == 0) return true
+                            if (left != null && isZero(left, bindingContext, kotlinType)) return true
                             val right = parent.right
-                            if (right != null && ConstantExpressionEvaluator.getConstant(right, bindingContext)?.getValue(kotlinType) == 0) return true
+                            if (right != null && isZero(right, bindingContext, kotlinType)) return true
                         }
                     }
                 }
@@ -631,6 +632,11 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 return true
             }
             return expression.isUsedAsStatement(expression.analyze(BodyResolveMode.FULL))
+        }
+
+        private fun isZero(expr: KtExpression, bindingContext: BindingContext, kotlinType: KotlinType): Boolean {
+            val value = ConstantExpressionEvaluator.getConstant(expr, bindingContext)?.getValue(kotlinType)
+            return value is Number && value.toDouble() == 0.0
         }
 
         // x || return y
