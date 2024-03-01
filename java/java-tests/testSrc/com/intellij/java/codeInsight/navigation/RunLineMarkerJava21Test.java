@@ -1,8 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.execution.application.ApplicationRunLineMarkerProvider;
+import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
@@ -214,7 +220,7 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
             public static void main(String[] args) {
                 System.out.println("main with parameters");
             }
-                
+        
             static void main() {
                 System.out.println("main without parameters");
             }
@@ -233,14 +239,47 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
               int hello() {
                   return 1;
               }
-          
+        
               public static void main(String[] args) {
-          
+        
               }
           }
         """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(2, marks.size()); // class and one method
+    });
+  }
+
+  public void testImplicitClassDumbMode() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      PsiJavaFile file = (PsiJavaFile) myFixture.configureByText("MainTest.java", """
+        void main<caret>() {
+        }
+        """);
+      PsiClass implicitClass = file.getClasses()[0];
+      PsiMethod mainMethod = implicitClass.getMethods()[0];
+      ApplicationRunLineMarkerProvider provider = new ApplicationRunLineMarkerProvider();
+      DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+        RunLineMarkerContributor.Info info = provider.getInfo(mainMethod.getNameIdentifier());
+        assertNotNull(info);
+      });
+    });
+  }
+
+  public void testClassWithMainMethodDumbMode() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      PsiJavaFile file = (PsiJavaFile) myFixture.configureByText("MainTest.java", """
+        public class MainTest<caret>{
+          public static void main<caret>() {
+          }
+        }
+        """);
+      PsiClass psiClass = file.getClasses()[0];
+      ApplicationRunLineMarkerProvider provider = new ApplicationRunLineMarkerProvider();
+      DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+        RunLineMarkerContributor.Info info = provider.getInfo(psiClass.getNameIdentifier());
+        assertNotNull(info);
+      });
     });
   }
 }
