@@ -15,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -97,7 +96,7 @@ class IjentProcessWatcher private constructor(internal val process: Process, pri
       val processWatcher = IjentProcessWatcher(process, lastStderrMessages)
 
       coroutineScope.launch(coroutineScope.coroutineNameAppended("$ijentId > exit code awaiter")) {
-        ijentProcessExitCodeAwaiter(ijentId, processWatcher, lastStderrMessages)
+        ijentProcessExitCodeAwaiter(coroutineScope, ijentId, processWatcher, lastStderrMessages)
       }
 
       coroutineScope.launch(coroutineScope.coroutineNameAppended("$ijentId > finalizer")) {
@@ -145,6 +144,7 @@ private fun logIjentStderr(ijentId: IjentId, line: String) {
 
 @OptIn(DelicateCoroutinesApi::class)
 private suspend fun ijentProcessExitCodeAwaiter(
+  ijentCoroutineScope: CoroutineScope,
   ijentId: IjentId,
   processWatcher: IjentProcessWatcher,
   lastStderrMessages: MutableSharedFlow<String?>,
@@ -159,7 +159,7 @@ private suspend fun ijentProcessExitCodeAwaiter(
   }
 
   if (isExitExpected) {
-    coroutineContext.cancel(CancellationException("The process expectedly exited with code $exitCode"))
+    ijentCoroutineScope.cancel(CancellationException("The process expectedly exited with code $exitCode"))
   }
   else {
     val message = "The process suddenly exited with the code $exitCode"
@@ -178,7 +178,7 @@ private suspend fun ijentProcessExitCodeAwaiter(
         LOG.error(RuntimeExceptionWithAttachments(message, Attachment("stderr", stderr.toString())))
       }
     }
-    coroutineContext.cancel(CancellationException(message))
+    ijentCoroutineScope.cancel(CancellationException(message))
   }
 }
 
