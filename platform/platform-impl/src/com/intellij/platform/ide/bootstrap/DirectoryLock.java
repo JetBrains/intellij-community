@@ -62,6 +62,8 @@ final class DirectoryLock {
 
   private static final Logger LOG = getLogger();
   private static final AtomicInteger COUNT = new AtomicInteger();  // to ensure redirected port file uniqueness in tests
+  private static final long TIMEOUT_MS = Integer.getInteger("ij.dir.lock.timeout", 5_000);
+  private static final List<String> ACK_PACKET = List.of("<<ACK>>");
 
   private static Logger getLogger() {
     Logger logger = Logger.getInstance(DirectoryLock.class);
@@ -76,7 +78,6 @@ final class DirectoryLock {
   private final @Nullable Path myRedirectedPortFile;
   private final Function<List<String>, CliResult> myProcessor;
 
-  private long myTimeoutMs = Integer.getInteger("ij.dir.lock.timeout", 5_000);
   private volatile @Nullable ServerSocketChannel myServerChannel = null;
 
   DirectoryLock(@NotNull Path configPath, @NotNull Path systemPath, @NotNull Function<List<String>, CliResult> processor) {
@@ -160,10 +161,10 @@ final class DirectoryLock {
       throw new CannotActivateException(e);
     }
 
-    if (LOG.isDebugEnabled()) LOG.debug("Deleting " + myPortFile);
+    if (LOG.isDebugEnabled()) LOG.debug("deleting " + myPortFile);
     Files.deleteIfExists(myPortFile);
     if (myRedirectedPortFile != null) {
-      if (LOG.isDebugEnabled()) LOG.debug("Deleting " + myRedirectedPortFile);
+      if (LOG.isDebugEnabled()) LOG.debug("deleting " + myRedirectedPortFile);
       Files.deleteIfExists(myRedirectedPortFile);
     }
 
@@ -178,7 +179,7 @@ final class DirectoryLock {
     var serverChannel = myServerChannel;
     myServerChannel = null;
     if (serverChannel != null) {
-      if (LOG.isDebugEnabled()) LOG.debug("Cleaning up");
+      if (LOG.isDebugEnabled()) LOG.debug("cleaning up");
       Suppressions.runSuppressing(
         () -> serverChannel.close(),
         () -> {
@@ -217,10 +218,10 @@ final class DirectoryLock {
       if (LOG.isDebugEnabled()) LOG.debug("connecting to " + address);
       socketChannel.register(selector, SelectionKey.OP_CONNECT);
       if (!socketChannel.connect(address)) {
-        if (selector.select(myTimeoutMs) == 0) throw new SocketTimeoutException(BootstrapBundle.message("bootstrap.error.timeout", address));
+        if (selector.select(TIMEOUT_MS) == 0) throw timeoutException(address, "connection failed");
         socketChannel.finishConnect();
       }
-      if (LOG.isDebugEnabled()) LOG.debug("connected to " + address);
+      LOG.debug("... connected");
       socketChannel.register(selector, SelectionKey.OP_READ);
 
       allowActivation();
@@ -230,17 +231,22 @@ final class DirectoryLock {
       request.addAll(args);
       sendLines(socketChannel, request);
 
-      if (selector.select(myTimeoutMs) == 0) {
-        var e = new SocketTimeoutException(BootstrapBundle.message("bootstrap.error.timeout", address));
-        e.addSuppressed(new Exception("response was not received"));
-        throw e;
-      }
-      var response = readLines(socketChannel);
+      if (selector.select(TIMEOUT_MS) == 0) throw timeoutException(address, "no response");
+      var ack = receiveLines(socketChannel);
+      if (!ack.equals(ACK_PACKET)) throw new IOException(BootstrapBundle.message("bootstrap.error.malformed.response", ack));
+
+      var response = receiveLines(socketChannel);
       if (response.size() != 2) throw new IOException(BootstrapBundle.message("bootstrap.error.malformed.response", response));
       var exitCode = Integer.parseInt(response.get(0));
       var message = response.get(1);
       return new CliResult(exitCode, message.isEmpty() ? null : message);
     }
+  }
+
+  private static SocketTimeoutException timeoutException(SocketAddress address, String reason) {
+    var e = new SocketTimeoutException(BootstrapBundle.message("bootstrap.error.timeout", address));
+    e.addSuppressed(new Exception(reason));
+    return e;
   }
 
   private void allowActivation() {
@@ -345,7 +351,9 @@ final class DirectoryLock {
 
   private void handleConnection(SocketChannel socketChannel) {
     try (socketChannel) {
-      var request = readLines(socketChannel);
+      var request = receiveLines(socketChannel);
+
+      sendLines(socketChannel, ACK_PACKET);
 
       CliResult result;
       try {
@@ -371,12 +379,6 @@ final class DirectoryLock {
     return myRedirectedPortFile;
   }
 
-  @VisibleForTesting
-  DirectoryLock withConnectTimeout(long timeoutMs) {
-    myTimeoutMs = timeoutMs;
-    return this;
-  }
-
   private static void sendLines(SocketChannel socketChannel, List<String> lines) throws IOException {
     var buffer = ByteBuffer.allocate(BUFFER_LENGTH);
     buffer.putInt(MARKER).putShort((short)0);
@@ -389,38 +391,45 @@ final class DirectoryLock {
 
     buffer.putShort(4, (short)buffer.position());
 
+    if (LOG.isDebugEnabled()) LOG.debug("sending: " + lines + ", bytes:" + buffer.position());
     buffer.flip();
     while (buffer.hasRemaining()) {
       socketChannel.write(buffer);
     }
   }
 
-  private static List<String> readLines(SocketChannel socketChannel) throws IOException {
+  private static List<String> receiveLines(SocketChannel socketChannel) throws IOException {
     var buffer = ByteBuffer.allocate(BUFFER_LENGTH);
 
+    buffer.limit(HEADER_LENGTH);
     while (buffer.position() < HEADER_LENGTH) {
       if (socketChannel.read(buffer) < 0) {
         throw new EOFException("Expected " + HEADER_LENGTH + " bytes, got " + buffer.position());
       }
     }
+    var marker = buffer.getInt(0);
+    if (marker != MARKER) throw new StreamCorruptedException("Invalid marker: 0x" + Integer.toHexString(marker));
     var length = buffer.getShort(4);
+    if (LOG.isDebugEnabled()) LOG.debug("receiving: " + length + " bytes");
+    buffer.limit(length);
     while (buffer.position() < length) {
       if (socketChannel.read(buffer) < 0) {
         throw new EOFException("Expected " + length + " bytes, got " + buffer.position());
       }
     }
 
-    buffer.flip();
-    var marker = buffer.getInt();
-    if (marker != MARKER) throw new StreamCorruptedException("Invalid marker: 0x" + Integer.toHexString(marker));
-    buffer.getShort();
-
+    buffer.position(HEADER_LENGTH);
     var lines = new ArrayList<String>();
     while (buffer.hasRemaining()) {
-      length = buffer.getShort();
-      var bytes = new byte[length];
-      buffer.get(bytes);
-      lines.add(new String(bytes, StandardCharsets.UTF_8));
+      var lineLength = buffer.getShort();
+      if (lineLength > 0) {
+        var bytes = new byte[lineLength];
+        buffer.get(bytes);
+        lines.add(new String(bytes, StandardCharsets.UTF_8));
+      }
+      else {
+        lines.add("");
+      }
     }
     return lines;
   }
