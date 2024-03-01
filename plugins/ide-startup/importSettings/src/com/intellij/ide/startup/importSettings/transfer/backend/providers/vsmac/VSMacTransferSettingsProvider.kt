@@ -12,8 +12,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SmartList
 import com.jetbrains.rd.util.Date
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.io.path.Path
 
 private val logger = logger<VSMacTransferSettingsProvider>()
 
@@ -25,7 +28,9 @@ class VSMacTransferSettingsProvider : TransferSettingsProvider {
   override fun isAvailable(): Boolean = SystemInfoRt.isMac
 
   override suspend fun hasDataToImport(): Boolean =
-    getIdeVersions(emptyList()).any()
+    withContext(Dispatchers.IO) {
+      Files.isDirectory(Path(vsPreferences))
+    }
 
   override fun getIdeVersions(skipIds: List<String>): SmartList<IdeVersion> = when (val version = detectVSForMacVersion()) {
     null -> SmartList()
