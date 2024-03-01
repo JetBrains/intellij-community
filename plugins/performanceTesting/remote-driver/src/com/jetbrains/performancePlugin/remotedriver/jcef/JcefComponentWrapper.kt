@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin.remotedriver.jcef
 
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
 import kotlinx.coroutines.*
@@ -29,7 +28,8 @@ internal class JcefComponentWrapper(private val component: Component) {
    * @return the result of the JavaScript code execution
    * @throws IllegalStateException if no result is received from the script within the specified timeout
    */
-  fun callJs(js: String, executeTimeoutMs: Long): String = runBlockingCancellable { jsExecutor.callJs(js, executeTimeoutMs) }
+  @Suppress("SSBasedInspection")
+  fun callJs(js: String, executeTimeoutMs: Long): String = runBlocking { jsExecutor.callJs(js, executeTimeoutMs) }
 
   /**
    * Finds the JBCefBrowserBase component associated with the given component.
