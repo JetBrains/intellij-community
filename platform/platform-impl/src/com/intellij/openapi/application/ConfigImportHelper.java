@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
@@ -873,7 +874,8 @@ public final class ConfigImportHelper {
         else if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)) {
           NioFiles.createDirectories(target.getParent());
           Files.copy(file, target, LinkOption.NOFOLLOW_LINKS);
-        } else if (options.importSettings != null && options.importSettings.shouldForceCopy(file)) {
+        }
+        else if (overwriteOnImport(file)) {
           NioFiles.createDirectories(target.getParent());
           Files.copy(file, target, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.REPLACE_EXISTING);
         }
@@ -1393,6 +1395,10 @@ public final class ConfigImportHelper {
            fileName.startsWith(CHROME_USER_DATA) ||
            fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName())) ||
            (settings != null && settings.shouldSkipPath(path));
+  }
+
+  private static boolean overwriteOnImport(Path path) {
+    return path.endsWith(EarlyAccessRegistryManager.fileName);
   }
 
   private static String defaultConfigPath(String selector) {
