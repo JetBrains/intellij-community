@@ -107,7 +107,10 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
 
         @Override
         public boolean isSelected() {
-          return myForcedSoftWrap || myTextSettings.isUseSoftWraps();
+          boolean hasForcedSoftWraps = ContainerUtil.exists(myEditors.get(), editor -> {
+            return Boolean.TRUE.equals(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
+          });
+          return myForcedSoftWrap || myTextSettings.isUseSoftWraps() || hasForcedSoftWraps;
         }
 
         @Override
