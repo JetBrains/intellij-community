@@ -24,6 +24,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem as GHPRTimelineItemDTO
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -34,9 +35,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineIte
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.UpdateableGHPRTimelineCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.UpdateableGHPRTimelineReviewViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import java.util.*
-
-private typealias GHPRTimelineItemDTO = org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 
 interface GHPRTimelineViewModel {
   val ghostUser: GHUser
@@ -108,6 +106,11 @@ internal class GHPRTimelineViewModelImpl(
     val disposable = Disposer.newDisposable()
     timelineLoader.addLoadingStateChangeListener(disposable) {
       trySend(timelineLoader.loading)
+
+      // Update the last seen date to the last time a fully loaded timeline was loaded
+      if (!timelineLoader.canLoadMore() && !timelineLoader.loading) {
+        updateLastSeen(System.currentTimeMillis())
+      }
     }
     send(timelineLoader.loading)
     awaitClose { Disposer.dispose(disposable) }
@@ -142,28 +145,23 @@ internal class GHPRTimelineViewModelImpl(
         timelineModel.add(addedData)
         itemsFromModel.value = timelineModel.getItemsList()
 
-        // Update the 'last seen' date to now if there are no further timeline items
-        val prId = detailsVm.details.value.getOrNull()?.id ?: return
-        val latestItemLoaded =
-          if (!timelineLoader.canLoadMore()) System.currentTimeMillis()
-          else addedData.mapNotNull { it.createdAt }.maxOrNull()?.time
-        interactionState.updateStateFor(prId) { st ->
-          PRState(
-            prId,
-            if (latestItemLoaded != null && st?.lastSeen != null) maxOf(latestItemLoaded, st.lastSeen)
-            else latestItemLoaded ?: st?.lastSeen)
-        }
+        val latestLoadedItemTime = loadedData.mapNotNull { it.createdAt }.maxOrNull()?.time
+        updateLastSeen(latestLoadedItemTime ?: System.currentTimeMillis())
       }
 
       override fun onDataUpdated(idx: Int) {
         val newItem = timelineLoader.loadedData[idx]
         timelineModel.update(idx, newItem)
         itemsFromModel.value = timelineModel.getItemsList()
+
+        updateLastSeen(System.currentTimeMillis())
       }
 
       override fun onDataRemoved(idx: Int) {
         timelineModel.remove(idx)
         itemsFromModel.value = timelineModel.getItemsList()
+
+        updateLastSeen(System.currentTimeMillis())
       }
 
       override fun onAllDataRemoved() {
@@ -172,6 +170,13 @@ internal class GHPRTimelineViewModelImpl(
         timelineLoader.loadMore()
       }
     })
+  }
+
+  private fun updateLastSeen(lastSeenMillis: Long) {
+    val prId = detailsVm.details.value.getOrNull()?.id ?: return
+    interactionState.updateStateFor(prId) { st ->
+      PRState(prId, maxOf(lastSeenMillis, st?.lastSeen ?: 0L))
+    }
   }
 
   private fun getItemID(data: GHPRTimelineItemDTO): Any =
