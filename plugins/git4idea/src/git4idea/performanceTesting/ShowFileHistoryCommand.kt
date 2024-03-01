@@ -3,6 +3,7 @@ package git4idea.performanceTesting
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vcs.actions.VcsContextUtil
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -32,6 +33,8 @@ class ShowFileHistoryCommand(text: String, line: Int) : PerformanceCommandCorout
       val focusedComponent = IdeFocusManager.findInstance().focusOwner
       val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
       val selectedFiles = VcsContextUtil.selectedFilePaths(dataContext)
+      LOG.debug("Selected file paths ${selectedFiles.size}")
+
       val historyProvider: VcsLogFileHistoryProvider = context.project.getService(VcsLogFileHistoryProvider::class.java)
       if (!historyProvider.canShowFileHistory(selectedFiles, null)) {
         throw RuntimeException("Can't show file history for $selectedFiles")
@@ -71,5 +74,6 @@ class ShowFileHistoryCommand(text: String, line: Int) : PerformanceCommandCorout
     const val FIRST_PACK_SPAN_NAME = "showFirstPack"
     const val COMMAND_NAME = "showFileHistory"
     const val PREFIX = "${CMD_PREFIX}$COMMAND_NAME"
+    private val LOG = logger<ShowFileHistoryCommand>()
   }
 }
