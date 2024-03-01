@@ -20,7 +20,8 @@ private val EXTRA_LIBRARIES = setOf(
   "lucene-highlighter",
   "lucene-memory",
   "lucene-sandbox",
-  "lucene-queries"
+  "lucene-queries",
+  "jackson-dataformat-xml"
 )
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
