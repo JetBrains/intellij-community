@@ -41,7 +41,6 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
     override fun bindToElement(ktReference: KtReference, element: PsiElement): PsiElement = allowAnalysisOnEdt {
         return allowAnalysisFromWriteAction {
-            if (ktReference.isReferenceTo(element)) return element
             when (ktReference) {
                 is KtSimpleNameReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
                 is KDocReference -> bindToElement(ktReference, element, KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING)
@@ -57,6 +56,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         shorteningMode: KtSimpleNameReference.ShorteningMode
     ): PsiElement {
         val docElement = docReference.element
+        if (docReference.isReferenceTo(targetElement)) return docElement
         val targetFqn = targetElement.kotlinFqName ?: return docElement
         if (targetFqn.isRoot) return docElement
         val replacedDocReference = modifyPsiWithOptimizedImports(docElement.containingKtFile) {
@@ -80,10 +80,15 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     ): PsiElement = allowAnalysisOnEdt {
         return allowAnalysisFromWriteAction {
             val expression = simpleNameReference.expression
+            if (targetElement != null) { // if we are already referencing the target, there is no need to call bindToElement
+                if (simpleNameReference.isReferenceTo(targetElement)) return expression
+            } else {
+                val oldTarget = simpleNameReference.resolve()
+                if (oldTarget?.isCallableAsExtensionFunction() == targetElement?.isCallableAsExtensionFunction()
+                    && oldTarget?.kotlinFqName == fqName
+                ) return expression
+            }
             if (fqName.isRoot) return expression
-            val oldTarget = simpleNameReference.resolve()
-            val isImportable = (oldTarget as? KtCallableDeclaration)?.receiverTypeReference == null || oldTarget is KtClassLikeDeclaration
-            if (isImportable && oldTarget?.kotlinFqName == fqName) return expression
             val writableFqn = if (fqName.pathSegments().last().asString() == "Companion") {
                 fqName.parent()
             } else {
