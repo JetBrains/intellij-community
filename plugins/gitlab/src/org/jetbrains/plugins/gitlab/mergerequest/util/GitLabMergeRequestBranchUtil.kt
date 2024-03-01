@@ -30,7 +30,10 @@ object GitLabMergeRequestBranchUtil {
   }
 
   suspend fun fetchAndCheckoutBranch(mapping: GitLabProjectMapping, details: GitLabMergeRequestFullDetails) {
-    val localPrefix = if (details.isFork()) FORK_BRANCH_PREFIX else null
+    val localPrefix = if (details.isFork()) {
+      if (details.sourceProject != null) "${FORK_BRANCH_PREFIX}/${details.sourceProject.ownerPath}"
+      else "${FORK_BRANCH_PREFIX}/${details.author.username}"
+    } else null
 
     val remoteBranch = findSourceRemoteBranch(mapping, details) ?: return
     GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(mapping.gitRepository, remoteBranch, localPrefix)
