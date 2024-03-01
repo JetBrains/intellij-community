@@ -34,10 +34,12 @@ public final class PyCellUtil {
     return PsiTreeUtil.nextLeaf(el);
   }
 
+  public static boolean isBlockDefinition(String text) {
+    return text.startsWith("# %%") || text.startsWith("#%%") || text.startsWith("# <codecell>") || text.startsWith("# In[");
+  }
+
   public static boolean isBlockCell(PsiElement element) {
-    return (element instanceof PsiComment) &&
-           (element.getText().startsWith("# %%") || element.getText().startsWith("#%%") || element.getText().startsWith("# <codecell>")) ||
-      element.getText().startsWith("# In[");
+    return (element instanceof PsiComment) && isBlockDefinition(element.getText());
   }
 
   @NotNull
