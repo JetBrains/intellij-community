@@ -8,3 +8,5 @@ class C {
 class Test {
     val f = C.Companion::foo
 }
+
+// IGNORE_K2

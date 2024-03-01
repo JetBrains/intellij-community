@@ -7,3 +7,5 @@ class Foo {
         test { <caret>function() }
     }
 }
+
+// IGNORE_K2

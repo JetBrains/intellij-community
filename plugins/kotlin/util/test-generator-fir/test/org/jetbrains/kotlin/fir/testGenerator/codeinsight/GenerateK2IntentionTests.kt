@@ -25,6 +25,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/importMember", pattern = pattern)
             model("${idea}intentions/chop", pattern = pattern)
             model("${idea}intentions/convertConcatenationToBuildString", pattern = pattern)
+            model("${idea}intentions/convertLambdaToReference", pattern = pattern)
             model("${idea}intentions/convertStringTemplateToBuildString", pattern = pattern)
             model("${idea}intentions/convertToBlockBody", pattern = pattern)
             model("${idea}intentions/addWhenRemainingBranches", pattern = pattern)
@@ -173,7 +174,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertBlockCommentToLineComment", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeSingleExpressionStringTemplate", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertLambdaToMultiLine", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/convertLambdaToReference", pattern = pattern, isIgnored = true)
             model("${idea}intentions/introduceVariable", pattern = pattern, isIgnored = true)
         }
 

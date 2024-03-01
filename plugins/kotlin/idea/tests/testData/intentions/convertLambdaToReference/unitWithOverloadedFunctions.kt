@@ -13,3 +13,5 @@ class Random {
 fun main() {
     val random: (Int) -> Unit = {<caret> Random().nextInt(it) }
 }
+
+// IGNORE_K2

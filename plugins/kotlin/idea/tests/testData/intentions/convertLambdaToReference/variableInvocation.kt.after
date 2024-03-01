@@ -7,3 +7,5 @@ class Foo {
         test(function)
     }
 }
+
+// IGNORE_K2

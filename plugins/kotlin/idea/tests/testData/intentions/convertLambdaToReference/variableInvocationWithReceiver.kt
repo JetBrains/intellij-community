@@ -7,3 +7,5 @@ class Bar {
 fun bar(bar: Bar) {
     test { <caret>bar.function() }
 }
+
+// IGNORE_K2

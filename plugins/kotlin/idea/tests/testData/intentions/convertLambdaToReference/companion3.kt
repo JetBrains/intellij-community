@@ -8,3 +8,5 @@ class C {
 class Test {
     val f = {<caret> s: String -> C.foo(s) }
 }
+
+// IGNORE_K2
