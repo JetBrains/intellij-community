@@ -1,6 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.nj2k;
+package org.jetbrains.kotlin.j2k.k2;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
@@ -14,14 +14,14 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("j2k/k1.new/tests")
+@TestRoot("j2k/k2/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../shared/tests/testData/partialConverter")
-public abstract class PartialConverterTestGenerated extends AbstractPartialConverterTest {
+public abstract class K2JavaToKotlinConverterPartialTestGenerated extends AbstractK2JavaToKotlinConverterPartialTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/partialConverter/field")
-    public static class Field extends AbstractPartialConverterTest {
+    public static class Field extends AbstractK2JavaToKotlinConverterPartialTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -94,7 +94,7 @@ public abstract class PartialConverterTestGenerated extends AbstractPartialConve
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/partialConverter/function")
-    public static class Function extends AbstractPartialConverterTest {
+    public static class Function extends AbstractK2JavaToKotlinConverterPartialTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

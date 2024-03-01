@@ -1,3 +1,4 @@
+// IGNORE_K2
 class Base {
   private String <caret>myFirst;
 }
