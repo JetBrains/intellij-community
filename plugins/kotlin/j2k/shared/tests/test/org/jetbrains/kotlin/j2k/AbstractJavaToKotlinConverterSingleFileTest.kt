@@ -9,15 +9,15 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.regex.Pattern
 
 private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method|class)\n")
-private val ignoreDirectives = setOf(IGNORE_K1, IGNORE_K2)
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
@@ -40,10 +40,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
     open fun doTest(javaPath: String) {
         val javaFile = File(javaPath)
-        val fileContents = javaFile.getTextWithoutDirectives()
-        val disableTestDirective = if (isFirPlugin) IGNORE_K2 else IGNORE_K1
+        val fileContents = javaFile.getFileTextWithoutDirectives()
 
-        IgnoreTests.runTestIfNotDisabledByFileDirective(javaFile.toPath(), disableTestDirective) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(javaFile.toPath(), getDisableTestDirective()) {
             withCustomCompilerOptions(fileContents, project, module) {
                 doTest(javaFile, fileContents)
             }
@@ -59,16 +58,13 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
 
         val actualText = if (prefix == "file") {
-            dumpTextWithErrors(createKotlinFile(convertedText))
+            createKotlinFile(convertedText).getFileTextWithErrors()
         } else {
             convertedText
         }
         val expectedFile = File(javaFile.path.replace(".java", ".kt"))
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
     }
-
-    private fun File.getTextWithoutDirectives(): String =
-        readLines().filterNot { it.trim() in ignoreDirectives }.joinToString(separator = "\n")
 
     private fun addExternalFiles(javaFile: File) {
         val externalFileName = "${javaFile.nameWithoutExtension}.external"
@@ -122,8 +118,6 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         }
 
     abstract fun fileToKotlin(text: String, settings: ConverterSettings): String
-
-    abstract fun dumpTextWithErrors(file: KtFile): String
 
     private fun methodToKotlin(text: String, settings: ConverterSettings): String {
         val result = fileToKotlin("final class C {$text}", settings)

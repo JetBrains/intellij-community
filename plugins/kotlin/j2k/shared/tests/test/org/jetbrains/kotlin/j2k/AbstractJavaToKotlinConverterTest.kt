@@ -4,19 +4,28 @@ package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
-import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
+
+private val ignoreDirectives: Set<String> = setOf(IGNORE_K1, IGNORE_K2)
 
 abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixtureTestCase() {
     private var vfsDisposable: Ref<Disposable>? = null
@@ -62,6 +71,18 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         runWriteAction { virtualFile.delete(this) }
     }
 
+    protected fun getDisableTestDirective(): String =
+        if (isFirPlugin) IGNORE_K2 else IGNORE_K1
+
+    protected fun File.getFileTextWithoutDirectives(): String =
+        readText().getTextWithoutDirectives()
+
+    protected fun String.getTextWithoutDirectives(): String =
+        split("\n").filterNot { it.trim() in ignoreDirectives }.joinToString(separator = "\n")
+
+    protected fun KtFile.getFileTextWithErrors(): String =
+        if (isFirPlugin) dumpK2TextWithErrors() else dumpTextWithErrors()
+
     // Needed to make the Kotlin compiler think it is running on JDK 16+
     // see org.jetbrains.kotlin.resolve.jvm.checkers.JvmRecordApplicabilityChecker
     private fun addJavaLangRecordClass() {
@@ -99,4 +120,41 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
             """.trimIndent()
         )
     }
+}
+
+// TODO: adapted from `org.jetbrains.kotlin.idea.test.TestUtilsKt.dumpTextWithErrors`
+@OptIn(KtAllowAnalysisOnEdt::class)
+private fun KtFile.dumpK2TextWithErrors(): String {
+    val text = text
+    if (InTextDirectivesUtils.isDirectiveDefined(text, "// DISABLE-ERRORS")) return text
+
+    val errors = run {
+        var lastException: Exception? = null
+        for (attempt in 0 until 2) {
+            try {
+                allowAnalysisOnEdt {
+                    analyze(this@dumpK2TextWithErrors) {
+                        val diagnostics = this@dumpK2TextWithErrors.collectDiagnosticsForFile(filter = EXTENDED_AND_COMMON_CHECKERS).asSequence()
+                        return@run diagnostics
+                            // TODO: For some reason, there is a "redeclaration" error on every declaration for K2 tests
+                            .filter { it.factoryName != "PACKAGE_OR_CLASSIFIER_REDECLARATION" }
+                            .filter { it.severity == Severity.ERROR }
+                            .map { it.defaultMessage.replace('\n', ' ') }
+                            .toList()
+                    }
+                }
+            } catch (e: Exception) {
+                if (e is ControlFlowException) {
+                    lastException = e.cause as? Exception ?: e
+                    continue
+                }
+                lastException = e
+            }
+        }
+        throw lastException ?: IllegalStateException()
+    }
+
+    if (errors.isEmpty()) return text
+    val header = errors.joinToString(separator = "\n", postfix = "\n") { "// ERROR: $it" }
+    return header + text
 }

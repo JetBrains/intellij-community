@@ -3,10 +3,8 @@
 package org.jetbrains.kotlin.nj2k
 
 import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
-import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.j2k.ConverterSettings
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.FlexibleTypeImpl
 
 abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterSingleFileTest() {
@@ -22,6 +20,4 @@ abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKo
         return NewJavaToKotlinConverter(project, module, settings)
             .filesToKotlin(listOf(file), NewJ2kPostProcessor()).results.single()
     }
-
-    override fun dumpTextWithErrors(file: KtFile): String = file.dumpTextWithErrors()
 }
