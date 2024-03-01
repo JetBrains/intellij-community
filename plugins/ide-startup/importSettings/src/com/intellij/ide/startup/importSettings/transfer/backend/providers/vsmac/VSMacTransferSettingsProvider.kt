@@ -3,7 +3,7 @@ package com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.TransferableIdeId
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
 import com.intellij.ide.startup.importSettings.providers.vsmac.VSMacSettingsProcessor
 import com.intellij.ide.startup.importSettings.providers.vsmac.VSMacSettingsProcessor.Companion.getGeneralSettingsFile

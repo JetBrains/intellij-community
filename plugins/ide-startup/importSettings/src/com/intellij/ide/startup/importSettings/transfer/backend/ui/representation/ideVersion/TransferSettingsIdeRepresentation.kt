@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.ui.representation.ideVersion
 
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.ui.representation.TransferSettingsRepresentationPanel
 import com.intellij.ide.startup.importSettings.ui.representation.ideVersion.sections.TransferSettingsSection
 import com.intellij.openapi.ui.DialogPanel

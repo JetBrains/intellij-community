@@ -4,7 +4,7 @@ package com.intellij.ide.startup.importSettings.transfer.backend
 import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -49,7 +49,10 @@ class TransferSettingsDataProvider(val providers: List<TransferSettingsProvider>
     baseIdeVersions.addAll(newBase)
 
     ideVersions.addAll(newBase.filterIsInstance<IdeVersion>())
-    ideVersions.sortByDescending { it.lastUsed }
+    ideVersions.sortWith(
+      compareBy<IdeVersion> { it.sortKey }
+        .thenComparing(compareByDescending { it.lastUsed })
+    )
     TransferSettingsCollector.logIdeVersionsFound(ideVersions)
 
     failedIdeVersions.addAll(newBase.filterIsInstance<FailedIdeVersion>())

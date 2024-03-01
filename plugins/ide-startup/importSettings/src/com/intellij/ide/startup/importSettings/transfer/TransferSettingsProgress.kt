@@ -6,7 +6,7 @@ import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.jb.JbProductInfo
 import com.intellij.ide.startup.importSettings.jb.NameMappings
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator

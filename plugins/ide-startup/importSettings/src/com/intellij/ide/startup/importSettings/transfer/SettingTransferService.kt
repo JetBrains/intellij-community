@@ -5,14 +5,9 @@ import com.intellij.ide.startup.importSettings.DefaultTransferSettingsConfigurat
 import com.intellij.ide.startup.importSettings.TransferSettingsConfiguration
 import com.intellij.ide.startup.importSettings.data.ExternalProductService
 import com.intellij.ide.startup.importSettings.data.ExternalService
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.ide.startup.importSettings.models.SettingsPreferencesKind
-import com.intellij.ide.startup.importSettings.providers.TransferSettingsPerformContext
-import com.intellij.ide.startup.importSettings.providers.vscode.VSCodeTransferSettingsProvider
 import com.intellij.ide.startup.importSettings.transfer.backend.TransferSettingsDataProvider
-import com.intellij.ide.startup.importSettings.transfer.backend.providers.PluginInstallationState
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
