@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -35,6 +35,7 @@ import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -52,7 +53,6 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -607,7 +607,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testSpecifyJetBrainsAsVendorQuickFix() {
-    PsiUtil.markAsIdeaProject(getProject(), true);
+    ProjectIconsAccessor.markAsIdeaProject(getProject(), true);
     try {
       myFixture.configureByFile("pluginWithoutVendor_before.xml");
       IntentionAction fix = myFixture.findSingleIntention("Specify JetBrains");
@@ -615,7 +615,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
       myFixture.checkResultByFile("pluginWithoutVendor_after.xml");
     }
     finally {
-      PsiUtil.markAsIdeaProject(getProject(), false);
+      ProjectIconsAccessor.markAsIdeaProject(getProject(), false);
     }
   }
 
@@ -668,12 +668,12 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
 
   private void testHighlightingInIdeaProject(String path) {
-    PsiUtil.markAsIdeaProject(getProject(), true);
+    ProjectIconsAccessor.markAsIdeaProject(getProject(), true);
     try {
       doHighlightingTest(path);
     }
     finally {
-      PsiUtil.markAsIdeaProject(getProject(), false);
+      ProjectIconsAccessor.markAsIdeaProject(getProject(), false);
     }
   }
 
