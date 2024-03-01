@@ -59,9 +59,6 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.CoroutineScopeKt;
-import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +78,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
-import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance(LookupImpl.class);
@@ -100,6 +96,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final FontPreferences myFontPreferences = new FontPreferencesImpl();
 
   private final long myCreatedTimestamp;
+  private final ClientProjectSession mySession;
   private long myStampShown = 0;
   protected boolean myShown = false;
   private boolean myHidden = false;
@@ -123,13 +120,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(SupervisorJob(null).plus(Dispatchers.getDefault()));
 
-  public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
+  public LookupImpl(ClientProjectSession session, Editor editor, @NotNull LookupArranger arranger) {
     super(new JPanel(new BorderLayout()));
     setForceShowAsPopup(true);
     setCancelOnClickOutside(false);
     setResizable(true);
 
-    this.project = project;
+    mySession = session;
+    this.project = session.getProject();
     this.editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     myArranger = arranger;
     myPresentableArranger = arranger;
@@ -706,7 +704,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public boolean vetoesHiding() {
-    return myGuardedChanges > 0;
+    // the second condition means that the Lookup belongs to another connected client
+    return myGuardedChanges > 0 || mySession != ClientSessionsManager.getProjectSession(myProject);
   }
 
   public boolean isAvailableToUser() {

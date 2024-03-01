@@ -182,6 +182,13 @@
     <projectService serviceInterface="com.intellij.codeInsight.lookup.LookupManager"
                     serviceImplementation="com.intellij.codeInsight.lookup.impl.LookupManagerImpl"/>
 
+    <projectService serviceInterface="com.intellij.codeInsight.lookup.impl.ClientLookupManager"
+                    serviceImplementation="com.intellij.codeInsight.lookup.impl.LocalClientLookupManager"
+                    client="local"/>
+    <projectService serviceInterface="com.intellij.codeInsight.lookup.impl.ClientLookupManager"
+                    serviceImplementation="com.intellij.codeInsight.lookup.impl.GuestLookupManager"
+                    client="remote"/>
+
     <applicationService serviceInterface="com.intellij.psi.meta.MetaDataRegistrar"
                         serviceImplementation="com.intellij.psi.impl.meta.MetaRegistry"/>
 
