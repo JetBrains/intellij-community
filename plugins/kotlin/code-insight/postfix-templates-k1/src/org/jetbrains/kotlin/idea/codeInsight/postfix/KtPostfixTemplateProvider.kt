@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.postfix.templates.*
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil.findElementOfClassAtRange
@@ -60,14 +61,14 @@ class KtPostfixTemplateProvider : PostfixTemplateProvider {
         )
     }
 
-    override fun getTemplates() = templatesSet
+    override fun getTemplates(): Set<PostfixTemplateWithExpressionSelector> = templatesSet
 
-    override fun isTerminalSymbol(currentChar: Char) = currentChar == '.' || currentChar == '!'
+    override fun isTerminalSymbol(currentChar: Char): Boolean = currentChar == '.' || currentChar == '!'
 
     override fun afterExpand(file: PsiFile, editor: Editor) {
     }
 
-    override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int) = copyFile
+    override fun preCheck(copyFile: PsiFile, realEditor: Editor, currentOffset: Int): PsiFile = copyFile
 
     override fun preExpand(file: PsiFile, editor: Editor) {
     }
@@ -82,7 +83,7 @@ private class KtNotPostfixTemplate(provider: PostfixTemplateProvider) : NotPostf
 private class KtIntroduceVariablePostfixTemplate(
     val kind: String,
     provider: PostfixTemplateProvider
-) : PostfixTemplateWithExpressionSelector(kind, kind, "$kind name = expression", createExpressionSelector(), provider) {
+) : PostfixTemplateWithExpressionSelector(kind, kind, "$kind name = expression", createExpressionSelector(), provider), DumbAware {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         K1IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
             expression.project, editor, expression as KtExpression,
@@ -94,10 +95,10 @@ private class KtIntroduceVariablePostfixTemplate(
 }
 
 internal object KtPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
-    override fun createExpression(context: PsiElement, prefix: String, suffix: String) =
+    override fun createExpression(context: PsiElement, prefix: String, suffix: String): KtExpression =
         KtPsiFactory(context.project).createExpression(prefix + context.text + suffix)
 
-    override fun getNegatedExpression(element: PsiElement) = (element as KtExpression).negate()
+    override fun getNegatedExpression(element: PsiElement): KtExpression = (element as KtExpression).negate()
 }
 
 internal fun createExpressionSelector(
@@ -106,25 +107,35 @@ internal fun createExpressionSelector(
     typePredicate: ((KotlinType) -> Boolean)? = null
 ): PostfixTemplateExpressionSelector {
     val predicate: ((KtExpression, BindingContext) -> Boolean)? =
-        if (typePredicate != null) { expression, bindingContext ->
-            expression.getType(bindingContext)?.let(typePredicate) ?: false
+        typePredicate?.let { predicate ->
+            { expression, bindingContext ->
+                expression.getType(bindingContext)?.let(predicate) ?: false
+            }
         }
-        else null
-    return createExpressionSelectorWithComplexFilter(checkCanBeUsedAsValue, statementsOnly, predicate)
+    return createExpressionSelectorWithComplexFilter(checkCanBeUsedAsValue, statementsOnly, predicate = predicate)
 }
 
 internal fun createExpressionSelectorWithComplexFilter(
     // Do not suggest expressions like 'val a = 1'/'for ...'
     checkCanBeUsedAsValue: Boolean = true,
     statementsOnly: Boolean = false,
+    expressionPredicate: ((KtExpression)-> Boolean)? = null,
     predicate: ((KtExpression, BindingContext) -> Boolean)? = null
-): PostfixTemplateExpressionSelector = KtExpressionPostfixTemplateSelector(checkCanBeUsedAsValue, statementsOnly, predicate)
+): PostfixTemplateExpressionSelector =
+    KtExpressionPostfixTemplateSelector(checkCanBeUsedAsValue, statementsOnly, expressionPredicate, predicate)
 
 private class KtExpressionPostfixTemplateSelector(
     private val checkCanBeUsedAsValue: Boolean,
     private val statementsOnly: Boolean,
+    private val expressionPredicate: ((KtExpression)-> Boolean)?,
     private val predicate: ((KtExpression, BindingContext) -> Boolean)?
 ) : PostfixTemplateExpressionSelector {
+
+    init {
+      check((expressionPredicate?.let { 1 } ?: 0) + (predicate?.let { 1 } ?: 0) < 2) {
+          "Either expressionPredicate or predicate should be defined, not both"
+      }
+    }
 
     private fun filterElement(element: PsiElement): Boolean {
         if (element !is KtExpression) return false
@@ -145,6 +156,10 @@ private class KtExpressionPostfixTemplateSelector(
             if (!KtPsiUtil.isStatement(element.getQualifiedExpressionForReceiverOrThis())) return false
         }
         if (checkCanBeUsedAsValue && !element.canBeUsedAsValue()) return false
+
+        expressionPredicate?.let {
+            return it.invoke(element)
+        }
 
         return predicate?.invoke(element, element.safeAnalyze(element.getResolutionFacade(), BodyResolveMode.PARTIAL)) ?: true
     }

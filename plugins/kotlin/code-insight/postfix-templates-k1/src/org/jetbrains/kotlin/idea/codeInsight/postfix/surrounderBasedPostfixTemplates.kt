@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.KotlinWhenSurrounder
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.KotlinWithIfExpressionSurrounder
@@ -18,38 +19,38 @@ internal class KtIfExpressionPostfixTemplate(provider: PostfixTemplateProvider) 
     "if", "if (expr)",
     KtPostfixTemplatePsiInfo, createExpressionSelector { it.isBoolean() }, provider
 ) {
-    override fun getSurrounder() = KotlinWithIfExpressionSurrounder(withElse = false)
+    override fun getSurrounder(): KotlinWithIfExpressionSurrounder = KotlinWithIfExpressionSurrounder(withElse = false)
 }
 
 internal class KtElseExpressionPostfixTemplate(provider: PostfixTemplateProvider) : SurroundPostfixTemplateBase(
     "else", "if (!expr)",
     KtPostfixTemplatePsiInfo, createExpressionSelector { it.isBoolean() }, provider
 ) {
-    override fun getSurrounder() = KotlinWithIfExpressionSurrounder(withElse = false)
-    override fun getWrappedExpression(expression: PsiElement?) = (expression as KtExpression).negate()
+    override fun getSurrounder(): KotlinWithIfExpressionSurrounder = KotlinWithIfExpressionSurrounder(withElse = false)
+    override fun getWrappedExpression(expression: PsiElement?): KtExpression = (expression as KtExpression).negate()
 }
 
 internal class KtNotNullPostfixTemplate(val name: String, provider: PostfixTemplateProvider) : SurroundPostfixTemplateBase(
     name, "if (expr != null)",
     KtPostfixTemplatePsiInfo, createExpressionSelector(typePredicate = TypeUtils::isNullableType), provider
 ) {
-    override fun getSurrounder() = KotlinWithIfExpressionSurrounder(withElse = false)
-    override fun getTail() = "!= null"
+    override fun getSurrounder(): KotlinWithIfExpressionSurrounder = KotlinWithIfExpressionSurrounder(withElse = false)
+    override fun getTail(): String = "!= null"
 }
 
 internal class KtIsNullPostfixTemplate(provider: PostfixTemplateProvider) : SurroundPostfixTemplateBase(
     "null", "if (expr == null)",
     KtPostfixTemplatePsiInfo, createExpressionSelector(typePredicate = TypeUtils::isNullableType), provider
 ) {
-    override fun getSurrounder() = KotlinWithIfExpressionSurrounder(withElse = false)
-    override fun getTail() = "== null"
+    override fun getSurrounder(): KotlinWithIfExpressionSurrounder = KotlinWithIfExpressionSurrounder(withElse = false)
+    override fun getTail(): String = "== null"
 }
 
 internal class KtWhenExpressionPostfixTemplate(provider: PostfixTemplateProvider) : SurroundPostfixTemplateBase(
     "when", "when (expr)",
     KtPostfixTemplatePsiInfo, createExpressionSelector(), provider
-) {
-    override fun getSurrounder() = KotlinWhenSurrounder()
+), DumbAware {
+    override fun getSurrounder(): KotlinWhenSurrounder = KotlinWhenSurrounder()
 }
 
 internal class KtTryPostfixTemplate(provider: PostfixTemplateProvider) : SurroundPostfixTemplateBase(
@@ -61,6 +62,6 @@ internal class KtTryPostfixTemplate(provider: PostfixTemplateProvider) : Surroun
         statementsOnly = true
     ),
     provider
-) {
-    override fun getSurrounder() = KotlinTryCatchSurrounder()
+), DumbAware {
+    override fun getSurrounder(): KotlinTryCatchSurrounder = KotlinTryCatchSurrounder()
 }
