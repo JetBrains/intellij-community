@@ -410,7 +410,7 @@ open class ProjectRootManagerComponent(project: Project,
   }
 
   private inner class AppListener : ApplicationListener {
-    override fun beforeWriteActionStart(action: Any) {
+    override fun writeActionStarted(action: Any) {
       insideWriteAction++
     }
 
