@@ -300,6 +300,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   LogicalPosition myLastMousePressedLocation;
 
   Point myLastMousePressedPoint;
+  private boolean myLastPressedOnGutterIcon;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
   private boolean myRectangularSelectionInProgress;
@@ -2614,15 +2615,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDragOnGutterSelectionStartLine = -1;
     }
 
-    var lastPressedPoint = myLastMousePressedPoint == null
-                           ? null
-                           : SwingUtilities.convertPoint(myEditorComponent, myLastMousePressedPoint, myGutterComponent);
-    boolean isDraggingGutterIcon = lastPressedPoint != null && myGutterComponent.getGutterRenderer(lastPressedPoint) != null;
     if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA &&
         NewUI.isEnabled() && EditorUtil.isBreakPointsOnLineNumbers() &&
         getMouseSelectionState() != MOUSE_SELECTION_STATE_LINE_SELECTED &&
         //IDEA-295653 We should not select a line if we are dragging an object. For example, a breakpoint
-        !isDraggingGutterIcon) {
+        !myLastPressedOnGutterIcon) {
       selectLineAtCaret(true); //IDEA-305975
       getGutterComponentEx().putClientProperty("active.line.number", null); //clear hovered breakpoint
     }
@@ -2669,7 +2666,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (dx == 0 && dy == 0) {
       myScrollingTimer.stop();
 
-      if (isDraggingGutterIcon) {
+      if (myLastPressedOnGutterIcon) {
         return;
       }
 
@@ -4141,6 +4138,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLastPressWasAtBlockInlay = false;
       myLastMousePressedLocation = event.getLogicalPosition();
       myLastMousePressedPoint = new RelativePoint(event.getMouseEvent()).getPoint(myEditorComponent);
+      var lastPressedPointOnGutter = SwingUtilities.convertPoint(myEditorComponent, myLastMousePressedPoint, myGutterComponent);
+      myLastPressedOnGutterIcon = myGutterComponent.getGutterRenderer(lastPressedPointOnGutter) != null;
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
       myDragStarted = false;
