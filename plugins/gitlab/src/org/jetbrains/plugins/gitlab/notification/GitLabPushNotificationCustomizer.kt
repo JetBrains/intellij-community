@@ -11,6 +11,7 @@ import git4idea.account.RepoAndAccount
 import git4idea.branch.GitBranchUtil
 import git4idea.push.GitPushNotificationCustomizer
 import git4idea.push.GitPushRepoResult
+import git4idea.push.isSuccessful
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -43,6 +44,7 @@ class GitLabPushNotificationCustomizer(private val project: Project) : GitPushNo
     pushResult: GitPushRepoResult,
     customParams: Map<String, VcsPushOptionValue>
   ): List<AnAction> {
+    if (!pushResult.isSuccessful) return emptyList()
     val repoAndAccount = selectRepoAndAccount(repository, pushResult) ?: return emptyList()
     val exists = doesReviewExist(pushResult, repoAndAccount) ?: return emptyList()
     if (exists) return emptyList()

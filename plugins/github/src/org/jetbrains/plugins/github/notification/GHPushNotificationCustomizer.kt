@@ -11,6 +11,7 @@ import git4idea.account.RepoAndAccount
 import git4idea.branch.GitBranchUtil
 import git4idea.push.GitPushNotificationCustomizer
 import git4idea.push.GitPushRepoResult
+import git4idea.push.isSuccessful
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GHGQLRequests
@@ -40,6 +41,7 @@ class GHPushNotificationCustomizer(private val project: Project) : GitPushNotifi
     pushResult: GitPushRepoResult,
     customParams: Map<String, VcsPushOptionValue>
   ): List<AnAction> {
+    if (!pushResult.isSuccessful) return emptyList()
     val repoAndAccount = selectRepoAndAccount(repository, pushResult) ?: return emptyList()
     val exists = doesReviewExist(pushResult, repoAndAccount) ?: return emptyList()
     if (exists) return emptyList()
