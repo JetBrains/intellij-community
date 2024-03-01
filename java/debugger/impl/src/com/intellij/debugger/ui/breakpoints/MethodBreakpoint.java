@@ -350,9 +350,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return "";
   }
 
-  private static @Nls String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
+  private static @Nls String getEventMessage(boolean entry, Method method, Location location, @NotNull String defaultFileName) {
     String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
-    String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> defaultFileName);
+    String locationFileName = DebuggerUtilsEx.getSourceName(location, defaultFileName);
     int locationLine = location.lineNumber();
     return JavaDebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",
                                       method.declaringType().name() + "." + method.name() + "()",

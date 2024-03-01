@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -102,7 +102,7 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
       }
       if (checkCacheEntry(res, location)) return res;
 
-      String sourceName = DebuggerUtilsEx.getSourceName(location, e -> null);
+      String sourceName = DebuggerUtilsEx.getSourceName(location, (String)null);
       FileType fileType = sourceName != null ? FileTypeManager.getInstance().getFileTypeByFileName(sourceName) : null;
 
       return iterate(positionManager -> {

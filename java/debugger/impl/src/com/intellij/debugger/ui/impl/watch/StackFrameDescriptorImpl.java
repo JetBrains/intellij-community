@@ -209,7 +209,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       }
     }
     if (settings.SHOW_SOURCE_NAME) {
-      label.append(", ").append(DebuggerUtilsEx.getSourceName(myLocation, e -> "Unknown Source"));
+      label.append(", ").append(DebuggerUtilsEx.getSourceName(myLocation, "Unknown Source"));
     }
     return label.toString();
   }
