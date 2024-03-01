@@ -18,3 +18,10 @@ class V2<T: KotlinDataClass> {
         val (f2, b2) = t2
     }
 }
+
+typealias TypeAliasForKotlinDataClass = KotlinDataClass
+
+fun testAlias(kdc: TypeAliasForKotlinDataClass, l: List<TypeAliasForKotlinDataClass>) {
+    val (f3, b3) = kdc
+    val (f4, b4) = l.first()
+}
