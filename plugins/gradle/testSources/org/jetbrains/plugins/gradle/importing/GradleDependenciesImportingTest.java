@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
@@ -78,8 +79,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    super.tearDown();
-    GradleSystemSettings.getInstance().setDownloadSources(false);
+    new RunAll(
+      () -> GradleSystemSettings.getInstance().setDownloadSources(false),
+      () -> super.tearDown()
+    ).run();
   }
 
   protected void assertCompileClasspathOrdering(String moduleName) {
