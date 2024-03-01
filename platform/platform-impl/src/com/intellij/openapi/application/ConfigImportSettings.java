@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -40,10 +40,12 @@ public interface ConfigImportSettings {
   /**
    * Allows editing lists of plugins that are about to be migrated or downloaded during import.
    */
-  default void processPluginsToMigrate(@NotNull Path newConfigDir,
-                                       @NotNull Path oldConfigDir,
-                                       @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
-                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload) { }
+  default void processPluginsToMigrate(
+    @NotNull Path newConfigDir,
+    @NotNull Path oldConfigDir,
+    @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+    @NotNull List<IdeaPluginDescriptor> pluginsToDownload
+  ) { }
 
   /**
    * @param prefix a platform prefix of {@code configDirectory}
@@ -57,14 +59,6 @@ public interface ConfigImportSettings {
    * Whether a file should be skipped during configuration import.
    */
   default boolean shouldSkipPath(@NotNull Path path) {
-    return false;
-  }
-
-  /**
-   * Whether a file should be copied to the destination directory even if it's already exists (overwrite)
-   * This is true, for instance, for importing early-access-registry.txt, which is created early during app init
-   */
-  default boolean shouldForceCopy(@NotNull Path path) {
     return false;
   }
 }

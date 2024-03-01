@@ -45,7 +45,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.function.Consumer
 import kotlin.io.path.*
 
 class JbSettingsImporter(private val configDirPath: Path,
@@ -471,17 +470,12 @@ class JbSettingsImporter(private val configDirPath: Path,
     importOptions.isHeadless = true
     importOptions.headlessProgressIndicator = progressIndicator
     importOptions.importSettings = object : ConfigImportSettings {
-      private val oldEarlyAccessRegistryTxt = configDirPath.resolve(EarlyAccessRegistryManager.fileName)
       override fun processPluginsToMigrate(newConfigDir: Path,
                                            oldConfigDir: Path,
                                            bundledPlugins: MutableList<IdeaPluginDescriptor>,
                                            nonBundledPlugins: MutableList<IdeaPluginDescriptor>) {
         nonBundledPlugins.removeIf { !pluginIds.contains(it.pluginId) }
         bundledPlugins.removeIf { !pluginIds.contains(it.pluginId) }
-      }
-
-      override fun shouldForceCopy(path: Path): Boolean {
-        return path == oldEarlyAccessRegistryTxt
       }
     }
     return importOptions
