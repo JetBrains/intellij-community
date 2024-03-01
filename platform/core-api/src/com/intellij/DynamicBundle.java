@@ -38,8 +38,7 @@ public class DynamicBundle extends AbstractBundle {
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
 
-  @ApiStatus.Internal
-  public static final ConcurrentMap<String, ResourceBundle> bundles = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, ResourceBundle> bundles = new ConcurrentHashMap<>();
 
   /**
    * Creates a new instance of the message bundle. It's usually stored in a private static final field, and static methods delegating
@@ -374,6 +373,11 @@ public class DynamicBundle extends AbstractBundle {
 
   public static @NotNull Locale getLocale() {
     return Locale.forLanguageTag(ourLangTag);
+  }
+
+  @ApiStatus.Internal
+  public static Map<String, ResourceBundle> getResourceBundles() {
+    return Collections.unmodifiableMap(bundles);
   }
 
   private enum BundleOrder {
