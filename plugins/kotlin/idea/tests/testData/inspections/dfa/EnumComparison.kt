@@ -28,7 +28,9 @@ fun ordinal(e : Enum) {
     }
 }
 
-fun foo(<warning descr="[UNUSED_PARAMETER] Parameter 'x' is never used">x</warning>: Int) {}
+fun foo(x: Int) {
+    println(x)
+}
 
 fun bar() {
     foo(if (<warning descr="Condition 'Enum.A == Enum.A' is always true">Enum.A == Enum.A</warning>) 1 else 2)
