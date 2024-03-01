@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -12,7 +11,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +18,8 @@ import javax.swing.*;
 import java.io.IOException;
 
 /**
- * @author gregsh
+ * Root for files placed under the "Scratches" folder in the
+ * "Scratches and Consoles" section of the project view.
  */
 public final class ScratchRootType extends RootType {
   @NotNull
@@ -37,12 +36,10 @@ public final class ScratchRootType extends RootType {
     return ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
   }
 
-  @Nullable
   @Override
-  public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
-    if (file.isDirectory()) return null;
-    Icon icon = ObjectUtils.notNull(super.substituteIcon(project, file), AllIcons.FileTypes.Text);
-    return new ScratchFileTypeIcon(icon);
+  public @NotNull Icon patchIcon(@NotNull Icon baseIcon, @NotNull VirtualFile file, int flags, @Nullable Project project) {
+      if (file.isDirectory()) return baseIcon;
+      return new ScratchFileTypeIcon(baseIcon);
   }
 
   @Nullable

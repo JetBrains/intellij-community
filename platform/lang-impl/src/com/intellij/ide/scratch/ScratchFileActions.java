@@ -362,7 +362,7 @@ public final class ScratchFileActions {
     }
 
     protected @Nullable Language fileLanguage(@NotNull Project project,
-                                             @NotNull VirtualFile file) {
+                                              @NotNull VirtualFile file) {
       Language lang = ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
       return lang != null ? lang : LanguageUtil.getLanguageForPsi(project, file);
     }
