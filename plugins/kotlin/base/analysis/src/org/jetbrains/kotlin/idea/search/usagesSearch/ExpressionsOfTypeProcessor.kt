@@ -21,6 +21,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.diagnostics.PsiDiagnosticUtils
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.util.excludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -87,6 +89,7 @@ class ExpressionsOfTypeProcessor(
                 val fqName = element.kotlinFqName?.asString()
                     ?: (element as? KtNamedDeclaration)?.name
                 when (element) {
+                    is PsiTypeParameter -> element.name
                     is PsiMethod -> fqName + element.parameterList.text
                     is KtFunction -> fqName + element.valueParameterList!!.text
                     is KtParameter -> {
@@ -647,10 +650,18 @@ class ExpressionsOfTypeProcessor(
             }
 
             is KtTypeParameter -> { // <expr> as `<reified T : ClassName>`
-                typeRefParent.extendsBound?.let {
-                    addCallableDeclarationOfOurType(it)
-                    return true
+                (typeRefParent.toLightElements().firstOrNull() as? PsiClass)?.let {
+                    addClassToProcess(it)
                 }
+                return true
+            }
+
+            is KtTypeConstraint -> {
+                val typeParameter = typeRefParent.subjectTypeParameterName?.mainReference?.resolve() as? KtTypeParameter ?: return true
+                (typeParameter.toLightElements().firstOrNull() as? PsiClass)?.let {
+                    addClassToProcess(it)
+                }
+                return true
             }
         }
 
