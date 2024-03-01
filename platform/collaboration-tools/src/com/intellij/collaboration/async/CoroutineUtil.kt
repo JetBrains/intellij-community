@@ -234,7 +234,6 @@ fun <T> Flow<T>.withInitial(initial: T): Flow<T> = flow {
  * In principle, it is an analogue of [stateIn] with [SharingStarted.Eagerly],
  * with a notable difference being that a [defaultValue] may never be emitted if a value is already available in the source flow
  */
-@ApiStatus.Internal
 fun <T> Flow<T>.stateInNow(cs: CoroutineScope, defaultValue: T): StateFlow<T> {
   val result = MutableStateFlow(defaultValue)
   cs.launchNow {
