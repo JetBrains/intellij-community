@@ -130,19 +130,19 @@ class DescriptorsGenerator {
 
     // prepare caches
     final Set<ModuleNode> modules = packagesDeclaredInModules.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
-    final Map<PsiJavaModule, ModuleNode> nodesByDescriptor = new HashMap<>();
-    final Map<Module, ModuleNode> nodesByModule = new HashMap<>();
+    final Map<PsiJavaModule, ModuleNode> nodeByDescriptor = new HashMap<>();
+    final Map<Module, ModuleNode> nodeByModule = new HashMap<>();
     final Map<Library, ModuleNode> nodeByLibrary = new HashMap<>();
     for (ModuleNode module : modules) {
       if (module.getModule() != null) {
-        nodesByModule.put(module.getModule(), module);
+        nodeByModule.put(module.getModule(), module);
       }
     }
 
     // calculate dependencies
     for (ModuleNode module : modules) {
       if (module.getDescriptor() != null) {
-        nodesByDescriptor.put(module.getDescriptor(), module);
+        nodeByDescriptor.put(module.getDescriptor(), module);
       }
       if (module.getModule() != null) {
         // compare with JPS model
@@ -151,7 +151,7 @@ class DescriptorsGenerator {
           if (!(entry instanceof ExportableOrderEntry)) continue;
           if (entry instanceof ModuleOrderEntry moduleOrderEntry && moduleOrderEntry.getModule() != null) {
             if (moduleOrderEntry.isExported()) { // use all transitive dependencies
-              ModuleNode node = nodesByModule.get(moduleOrderEntry.getModule());
+              ModuleNode node = nodeByModule.get(moduleOrderEntry.getModule());
               if (node == null) continue;
               module.getDependencies().compute(node, (key, old) -> merge(old, Set.of(TRANSITIVE),
                                                                          () -> EnumSet.noneOf(DependencyType.class)));
@@ -170,7 +170,7 @@ class DescriptorsGenerator {
                   final VirtualFile file = directory.getVirtualFile();
                   final List<OrderEntry> indexedOrderEntries = ReadAction.compute(() -> projectFileIndex.getOrderEntriesForFile(file));
                   if (!indexedOrderEntries.contains(moduleOrderEntry)) continue;
-                  final ModuleNode node = nodesByModule.get(moduleOrderEntry.getModule());
+                  final ModuleNode node = nodeByModule.get(moduleOrderEntry.getModule());
                   if (node == null) continue;
                   module.getDependencies().computeIfAbsent(node, k -> Set.of());
                 }
@@ -181,7 +181,7 @@ class DescriptorsGenerator {
             final Library library = libraryOrderEntry.getLibrary();
             if (library == null) continue;
             final ModuleNode cachedNode = nodeByLibrary.computeIfAbsent(library, lib -> findLibraryNode(packagesDeclaredInModules,
-                                                                                                        nodesByDescriptor, myProject, lib));
+                                                                                                        nodeByDescriptor, myProject, lib));
             if (cachedNode == null) continue;
             nodeByLibrary.put(library, cachedNode);
             if (libraryOrderEntry.isExported()) { // use all transitive libraries
@@ -208,13 +208,13 @@ class DescriptorsGenerator {
 
   @Nullable
   private static ModuleNode findLibraryNode(@NotNull Map<String, Set<ModuleNode>> packagesDeclaredInModules,
-                                            @NotNull Map<PsiJavaModule, ModuleNode> nodesByDescriptor,
+                                            @NotNull Map<PsiJavaModule, ModuleNode> nodeByDescriptor,
                                             @NotNull Project project,
                                             @NotNull Library library) {
     final PsiJavaModule descriptor = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByLibrary(library, project));
     if (descriptor == null) return null;
 
-    final ModuleNode node = nodesByDescriptor.computeIfAbsent(descriptor, d -> new ModuleNode(d));
+    final ModuleNode node = nodeByDescriptor.computeIfAbsent(descriptor, d -> new ModuleNode(d));
     for (PsiPackageAccessibilityStatement export : descriptor.getExports()) {
       final String packageName = export.getPackageName();
       if (packageName != null) packagesDeclaredInModules.computeIfAbsent(packageName, l -> new HashSet<>()).add(node);
