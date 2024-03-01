@@ -45,10 +45,7 @@ fun getStripeTitleSupplier(id: String, project: Project, pluginDescriptor: Plugi
   if (id == "Project") {
     val weakProjectRef = WeakReference(project)
     return Supplier {
-      val unwrappedProject = weakProjectRef.get()?.takeUnless { it.isDisposed } ?: run {
-        LOG.error("Project can not be used after it is disposed.")
-        return@Supplier ""
-      }
+      val unwrappedProject = weakProjectRef.get()?.takeUnless { it.isDisposed } ?: return@Supplier ""
       IdeUICustomization.getInstance().getProjectViewTitle(unwrappedProject)
     }
   }
