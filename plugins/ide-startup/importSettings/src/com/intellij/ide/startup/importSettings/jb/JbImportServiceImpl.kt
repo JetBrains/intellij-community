@@ -272,12 +272,13 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         val jbProductInfo: JbProductInfo = toJbProductInfo(confDir) ?: continue
         jbProductInfo.prefetchData(coroutineScope, context)
         products[confDir.name] = jbProductInfo
-        hasDataProcessed.completeWith(Result.success(true))
+        if (!ConfigImportHelper.isConfigOld(jbProductInfo.lastUsageTime))
+          hasDataProcessed.completeWith(Result.success(true))
       }
     }
     warmUpComplete.completeWith(Result.success(true))
     if (!hasDataProcessed.isCompleted) {
-      hasDataProcessed.completeWith(Result.success(products.isNotEmpty()))
+      hasDataProcessed.completeWith(Result.success(products().isNotEmpty()))
     }
   }
 
