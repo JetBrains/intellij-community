@@ -6,3 +6,5 @@ fun <U> PairIntT<U>.boo() = this
 fun main() {
     Pair(1, 1).apply(PairIntT<Int>::boo)
 }
+
+// IGNORE_K2

@@ -8,3 +8,5 @@ fun <T1, T2> AIntListT1T2<T1, T2>.foo() = this
 fun main() {
     A<Int, List<Int>, Int>().apply {<caret> foo() }
 }
+
+// IGNORE_K2
