@@ -31,7 +31,9 @@ class TransferSettingsDataProvider(val providers: List<TransferSettingsProvider>
   suspend fun hasDataToImport(): Boolean =
     coroutineScope {
       val result: Boolean = providers.map { provider ->
-        async { logger.runAndLogException { provider.hasDataToImport() } ?: false }::await.asFlow()
+        async {
+          logger.runAndLogException { provider.isAvailable() && provider.hasDataToImport() } ?: false
+        }::await.asFlow()
       }.merge().firstOrNull { it } ?: false
 
       coroutineContext.job.cancelChildren()
@@ -72,6 +74,7 @@ private class TransferSettingsDataProviderSession(private val providers: List<Tr
 
       try {
         val startTime = System.nanoTime().nanoseconds
+        @Suppress("SSBasedInspection") // we are ok with Steam API because of parallelStream
         val result = provider.getIdeVersions(skipIds ?: emptyList()).stream()
         val endTime = System.nanoTime().nanoseconds
         TransferSettingsCollector.logPerformanceMeasured(
