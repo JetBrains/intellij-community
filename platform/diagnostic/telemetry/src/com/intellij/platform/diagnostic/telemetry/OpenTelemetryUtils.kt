@@ -21,23 +21,23 @@ object OpenTelemetryUtils {
   fun toCsvStream(metricData: MetricData): Sequence<String> {
     return when (metricData.type) {
       MetricDataType.LONG_SUM -> metricData.longSumData.points.asSequence().map { p: LongPointData ->
-        concatToCsvLine(metricData.name, p.startEpochNanos, p.epochNanos, p.value.toString())
+        concatToCsvLine(metricData.name, p.startEpochNanos.toString(), p.epochNanos.toString(), p.value.toString())
       }
       MetricDataType.DOUBLE_SUM -> metricData.doubleSumData.points.asSequence().map { p: DoublePointData ->
-        concatToCsvLine(metricData.name, p.startEpochNanos, p.epochNanos, p.value.toString())
+        concatToCsvLine(metricData.name, p.startEpochNanos.toString(), p.epochNanos.toString(), p.value.toString())
       }
       MetricDataType.LONG_GAUGE -> metricData.longGaugeData.points.asSequence().map { p: LongPointData ->
-        concatToCsvLine(metricData.name, p.startEpochNanos, p.epochNanos, p.value.toString())
+        concatToCsvLine(metricData.name, p.startEpochNanos.toString(), p.epochNanos.toString(), p.value.toString())
       }
       MetricDataType.DOUBLE_GAUGE -> metricData.doubleGaugeData.points.asSequence().map { p: DoublePointData ->
-        concatToCsvLine(metricData.name, p.startEpochNanos, p.epochNanos, p.value.toString())
+        concatToCsvLine(metricData.name, p.startEpochNanos.toString(), p.epochNanos.toString(), p.value.toString())
       }
-      else -> sequenceOf(concatToCsvLine(metricData.name, -1, -1, "<metrics type " + metricData.type + " is not supported yet>"))
+      else -> sequenceOf(concatToCsvLine(metricData.name, "-1", "-1", "<metrics type " + metricData.type + " is not supported yet>"))
     }
   }
 
-  private fun concatToCsvLine(name: String, startEpochNanos: Long, endEpochNanos: Long, value: String): String {
-    return ("$name,$startEpochNanos,$endEpochNanos,$value")
+  private fun concatToCsvLine(name: String, vararg values: String): String {
+    return ("$name,${values.joinToString(separator = ",")}")
   }
 
   fun csvHeadersLines(): List<String> {
@@ -52,7 +52,7 @@ object OpenTelemetryUtils {
   /** @return base path for metrics reporting, or null, if metrics reporting is configured to be off */
   fun metricsReportingPath(): Path? {
     val metricsReportingPath = System.getProperty("idea.diagnostic.opentelemetry.metrics.file", "open-telemetry-metrics.csv")
-    if(metricsReportingPath.isBlank()){
+    if (metricsReportingPath.isBlank()) {
       return null
     }
     // if a metrics path is relative -> resolve it against IDEA logDir:

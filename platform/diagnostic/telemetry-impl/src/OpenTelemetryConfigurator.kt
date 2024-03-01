@@ -4,6 +4,9 @@ package com.intellij.platform.diagnostic.telemetry.impl
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.diagnostic.telemetry.*
+import com.intellij.platform.diagnostic.telemetry.exporters.RollingFileSupplier
+import com.intellij.platform.diagnostic.telemetry.exporters.meters.CsvMetricsExporter
+import com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporter
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.api.common.AttributeKey
@@ -74,6 +77,17 @@ class OpenTelemetryConfigurator(@JvmField internal val sdkBuilder: OpenTelemetry
         FilteredMetricsExporter(
           underlyingExporter = SynchronizedClearableLazy {
             CsvMetricsExporter(writeToFileSupplier = RollingFileSupplier(metricsReportingPath))
+          },
+          predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
+        ),
+      ),
+      duration = 1.minutes)
+    )
+    result.add(MetricsExporterEntry(
+      metrics = listOf(
+        FilteredMetricsExporter(
+          underlyingExporter = SynchronizedClearableLazy {
+            TelemetryMeterJsonExporter(writeToFileSupplier = RollingFileSupplier(metricsReportingPath))
           },
           predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
         ),

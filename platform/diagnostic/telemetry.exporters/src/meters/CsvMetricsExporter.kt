@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.diagnostic.telemetry.impl
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.diagnostic.telemetry.exporters.meters
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.csvHeadersLines
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.toCsvStream
-import com.intellij.platform.diagnostic.telemetry.impl.CsvMetricsExporter.Companion.HTML_PLOTTER_NAME
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
+import com.intellij.platform.diagnostic.telemetry.exporters.RollingFileSupplier
+import com.intellij.platform.diagnostic.telemetry.exporters.initRollingFileSupplier
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.metrics.InstrumentType
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality
@@ -21,6 +21,21 @@ import java.nio.file.StandardOpenOption
 private val LOG: Logger
   get() = logger<CsvMetricsExporter>()
 
+/** Copy html file with plotting scripts into targetDir  */
+private fun copyHtmlPlotterToOutputDir(targetDir: Path) {
+  val targetToCopyTo = targetDir.resolve(CsvMetricsExporter.HTML_PLOTTER_NAME)
+  val plotterHtmlUrl = CsvMetricsExporter::class.java.getResource(CsvMetricsExporter.HTML_PLOTTER_NAME)
+  if (plotterHtmlUrl == null) {
+    LOG.warn("${CsvMetricsExporter.HTML_PLOTTER_NAME} is not found in classpath")
+  }
+  else {
+    plotterHtmlUrl.openStream().use { stream ->
+      val bytes = stream.readAllBytes()
+      Files.write(targetToCopyTo, bytes)
+    }
+  }
+}
+
 /**
  * Export [MetricData] into a file in a simple CSV format:
  * name, epochStartNanos, epochEndNanos, value
@@ -35,28 +50,20 @@ private val LOG: Logger
  *
  * TODO not all metrics types are supported now, see .toCSVLine()
  * TODO no support for attributes now, see .toCSVLine()
+ *
+ * @see com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporter
  */
 @ApiStatus.Internal
-class CsvMetricsExporter internal constructor(private val writeToFileSupplier: RollingFileSupplier) : MetricExporter {
+class CsvMetricsExporter(private val writeToFileSupplier: RollingFileSupplier) : MetricExporter {
   companion object {
     @VisibleForTesting
     const val HTML_PLOTTER_NAME: String = "open-telemetry-metrics-plotter.html"
   }
 
   init {
-    val writeToFile = writeToFileSupplier.get()
-    if (!Files.exists(writeToFile)) {
-      val parentDir = writeToFile.parent
-      if (!Files.isDirectory(parentDir)) {
-        //RC: createDirectories() _does_ throw FileAlreadyExistsException if path is a _symlink_ to a directory, not a directory
-        // itself (JDK-8130464). Check !isDirectory() above should work around that case.
-        Files.createDirectories(parentDir)
-      }
+    initRollingFileSupplier(writeToFileSupplier).also {
+      copyHtmlPlotterToOutputDir(it.parent)
     }
-    if (!Files.exists(writeToFile) || Files.size(writeToFile) == 0L) {
-      Files.write(writeToFile, csvHeadersLines(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
-    }
-    copyHtmlPlotterToOutputDir(writeToFile.parent)
   }
 
   override fun getAggregationTemporality(instrumentType: InstrumentType): AggregationTemporality {
@@ -70,8 +77,9 @@ class CsvMetricsExporter internal constructor(private val writeToFileSupplier: R
 
     val result = CompletableResultCode()
     val writeToFile = writeToFileSupplier.get()
+
     val lines = metrics.asSequence()
-      .flatMap { toCsvStream(it) }
+      .flatMap { OpenTelemetryUtils.toCsvStream(it) }
       .toList()
     try {
       Files.write(writeToFile, lines, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
@@ -87,19 +95,4 @@ class CsvMetricsExporter internal constructor(private val writeToFileSupplier: R
   override fun flush(): CompletableResultCode = CompletableResultCode.ofSuccess()
 
   override fun shutdown(): CompletableResultCode = CompletableResultCode.ofSuccess()
-}
-
-/** Copy html file with plotting scripts into targetDir  */
-private fun copyHtmlPlotterToOutputDir(targetDir: Path) {
-  val targetToCopyTo = targetDir.resolve(HTML_PLOTTER_NAME)
-  val plotterHtmlUrl = CsvMetricsExporter::class.java.getResource(HTML_PLOTTER_NAME)
-  if (plotterHtmlUrl == null) {
-    LOG.warn("$HTML_PLOTTER_NAME is not found in classpath")
-  }
-  else {
-    plotterHtmlUrl.openStream().use { stream ->
-      val bytes = stream.readAllBytes()
-      Files.write(targetToCopyTo, bytes)
-    }
-  }
 }
