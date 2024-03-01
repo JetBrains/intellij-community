@@ -41,7 +41,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
                     container = container.containingKtFile
                 }
                 val actionText = CreateKotlinCallableActionTextBuilder(
-                    KotlinBundle.message("text.function.0", 1),
+                    KotlinBundle.message("text.function"),
                     request.methodName,
                     request.receiverExpression,
                     request.isAbstractClassOrInterface,
