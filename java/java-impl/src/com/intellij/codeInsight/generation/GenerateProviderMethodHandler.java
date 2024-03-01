@@ -30,8 +30,7 @@ public class GenerateProviderMethodHandler implements CodeInsightActionHandler {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(targetClass)) return;
 
     WriteCommandAction.writeCommandAction(project, file)
-      .run(() -> JigsawUtil.addProviderMethod(targetClass, editor, getOffset(context, offset),
-                                              (currentOffset, content) -> editor.getDocument().insertString(currentOffset, content)));
+      .run(() -> JigsawUtil.addProviderMethod(targetClass, editor, getOffset(context, offset)));
   }
 
   /**

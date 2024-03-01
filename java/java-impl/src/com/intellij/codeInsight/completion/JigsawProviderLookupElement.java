@@ -3,9 +3,10 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInspection.jigsaw.JigsawApiConstants;
 import com.intellij.codeInspection.jigsaw.JigsawUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaModule;
 import org.jetbrains.annotations.NotNull;
 
 public class JigsawProviderLookupElement extends LookupElement {
@@ -15,20 +16,18 @@ public class JigsawProviderLookupElement extends LookupElement {
 
   @Override
   public @NotNull String getLookupString() {
-    return JigsawApiConstants.PROVIDER;
+    return PsiJavaModule.PROVIDER_METHOD;
   }
 
   @Override
   public void renderElement(@NotNull LookupElementPresentation presentation) {
     super.renderElement(presentation);
-    presentation.setTypeText("provider() method declaration");
+    presentation.setTypeText(JavaBundle.message("completion.provider.method.declaration.type"));
   }
 
   @Override
   public void handleInsert(@NotNull InsertionContext context) {
-    int selectionLength = context.getSelectionEndOffset() - context.getStartOffset();
-    JigsawUtil.addProviderMethod(myPsiClass, context.getEditor(), context.getStartOffset(),
-                                 (offset, content) -> context.getDocument().replaceString(offset, offset + selectionLength,
-                                                                                          content));
+    context.getDocument().replaceString(context.getStartOffset(), context.getSelectionEndOffset(), "");
+    JigsawUtil.addProviderMethod(myPsiClass, context.getEditor(), context.getStartOffset());
   }
 }

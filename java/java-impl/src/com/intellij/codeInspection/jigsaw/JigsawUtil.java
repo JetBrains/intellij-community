@@ -12,30 +12,32 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiConsumer;
-
 public final class JigsawUtil {
   private JigsawUtil() { }
 
-  public static void addProviderMethod(@NotNull PsiClass targetClass,
-                                       @NotNull Editor editor,
-                                       int startOffset,
-                                       @NotNull BiConsumer<Integer, String> setMethod) {
+  /**
+   * Adds a provider static method to a target class (java service) at the specified start offset in the editor.
+   * The provider method returns the target class instance.
+   *
+   * @param targetClass The class to which the provider method will be added.
+   * @param editor      The editor in which the changes will be made.
+   * @param startOffset The start offset in the editor where the provider method will be inserted.
+   */
+  public static void addProviderMethod(@NotNull PsiClass targetClass, @NotNull Editor editor, int startOffset) {
     String className = targetClass.getName();
     if (className == null) return;
 
-    String methodStringBeforeCursor = "public static " + className + " " + JigsawApiConstants.PROVIDER + "() {" +
+    String methodStringBeforeCursor = "public static " + className + " " + PsiJavaModule.PROVIDER_METHOD + "() {" +
                                       "return new " + className + "(";
     String methodStringAfterCursor = ");}";
 
     Document document = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(targetClass.getProject());
 
-    setMethod.accept(startOffset, methodStringBeforeCursor + methodStringAfterCursor);
+    editor.getDocument().insertString(startOffset, methodStringBeforeCursor + methodStringAfterCursor);
 
     editor.getCaretModel().moveToOffset(startOffset + methodStringBeforeCursor.length());
     documentManager.commitDocument(document);
-    documentManager.doPostponedOperationsAndUnblockDocument(document);
 
     PsiFile psiFile = documentManager.getPsiFile(document);
     if (psiFile != null) {
@@ -44,10 +46,19 @@ public final class JigsawUtil {
     }
   }
 
+  /**
+   * Verifies the accessibility of the provider method for a specified class. The target class must meet the following criteria:
+   * - It implements an interface that is listed in the module-info provider section.
+   * - It is declared in the module-info provider section.
+   * - It does not have a provider method.
+   *
+   * @param targetClass The class to be checked for provider method accessibility.
+   * @return true if the provider method is accessible, false otherwise.
+   */
   @Contract("null -> false")
   public static boolean checkProviderMethodAccessible(@Nullable PsiClass targetClass) {
     if (targetClass == null || targetClass.getName() == null) return false;
-    JvmMethod[] methods = targetClass.findMethodsByName(JigsawApiConstants.PROVIDER);
+    JvmMethod[] methods = targetClass.findMethodsByName(PsiJavaModule.PROVIDER_METHOD);
     for (JvmMethod method : methods) {
       if (!method.hasParameters()) return false;
     }

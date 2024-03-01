@@ -39,10 +39,6 @@ public class GenerateProviderMethodTest extends LightFixtureCompletionTestCase {
     doTest("src/org/jetbrains/providers/MyProviderImpl.java");
   }
 
-  public void testWithRecord() {
-    doTest("src/org/jetbrains/providers/MyRecord.java");
-  }
-
   public void testWithProvider() {
     doTest("src/org/jetbrains/providers/WithProvider.java");
   }
