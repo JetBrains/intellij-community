@@ -3,7 +3,6 @@ package com.jetbrains.builtInHelp
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ResourceUtil
 import com.jetbrains.builtInHelp.mapping.HelpMap
@@ -21,8 +20,7 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
     "searchAlgoliaIndexName", "versionsService"
   )
 
-  private val xmlMapper = XmlMapper().apply { registerModule(kotlinModule()) }
-
+  private val xmlMapper = XmlMapper()
   override fun process(
     urlDecoder: QueryStringDecoder,
     request: FullHttpRequest,
