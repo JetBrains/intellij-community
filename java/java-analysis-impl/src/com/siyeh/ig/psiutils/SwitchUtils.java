@@ -107,7 +107,7 @@ public final class SwitchUtils {
   }
 
   public static boolean canBeSwitchCase(PsiExpression expression, PsiExpression switchExpression, LanguageLevel languageLevel,
-                                        Set<Object> existingCaseValues, boolean isPatternMatch) {
+                                        @NotNull Set<Object> existingCaseValues, boolean isPatternMatch) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (isPatternMatch) {
       if (canBePatternSwitchCase(expression, switchExpression)) {
@@ -124,20 +124,14 @@ public final class SwitchUtils {
         return false;
       }
     }
-    if (JavaFeature.STRING_SWITCH.isSufficient(languageLevel)) {
-      final PsiExpression stringSwitchExpression = determinePossibleJdk17SwitchExpression(expression, existingCaseValues);
-      if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, stringSwitchExpression)) {
-        return true;
-      }
-    }
     final EqualityCheck check = EqualityCheck.from(expression);
     if (check != null) {
       final PsiExpression left = check.getLeft();
       final PsiExpression right = check.getRight();
-      if (canBeCaseLabel(left, languageLevel, null)) {
+      if (canBeCaseLabel(left, languageLevel, existingCaseValues)) {
         return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, right);
       }
-      else if (canBeCaseLabel(right, languageLevel, null)) {
+      else if (canBeCaseLabel(right, languageLevel, existingCaseValues)) {
         return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(switchExpression, left);
       }
     }
@@ -251,12 +245,6 @@ public final class SwitchUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) {
       return null;
-    }
-    if (JavaFeature.STRING_SWITCH.isSufficient(languageLevel)) {
-      final PsiExpression jdk17Expression = determinePossibleJdk17SwitchExpression(expression, null);
-      if (jdk17Expression != null) {
-        return jdk17Expression;
-      }
     }
     final EqualityCheck check = EqualityCheck.from(expression);
     if (check != null) {
@@ -439,29 +427,6 @@ public final class SwitchUtils {
           }
         }
         return builder.toString();
-      }
-    }
-    return null;
-  }
-
-  private static PsiExpression determinePossibleJdk17SwitchExpression(PsiExpression expression,
-                                                                      Set<Object> existingCaseValues) {
-    final EqualityCheck check = EqualityCheck.from(expression);
-    if (check == null) {
-      return null;
-    }
-    final PsiExpression left = check.getLeft();
-    final PsiExpression right = check.getRight();
-    final Object leftValue = ExpressionUtils.computeConstantExpression(left);
-    if (leftValue!= null) {
-      if (existingCaseValues == null || existingCaseValues.add(leftValue)) {
-        return right;
-      }
-    }
-    final Object rightValue = ExpressionUtils.computeConstantExpression(right);
-    if (rightValue != null) {
-      if (existingCaseValues == null || existingCaseValues.add(rightValue)) {
-        return left;
       }
     }
     return null;
