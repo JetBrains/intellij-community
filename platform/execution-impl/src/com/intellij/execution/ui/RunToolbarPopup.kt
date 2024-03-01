@@ -212,8 +212,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
   init {
     serviceState = RunConfigurationStartHistory.getInstance(project)
     list.setExpandableItemsEnabled(false)
-    myStep as ActionPopupStep
-    myStep.setSubStepContextAdjuster { context, action ->
+    (myStep as ActionPopupStep).setSubStepContextAdjuster { context, action ->
       if (action is SelectConfigAction) {
         CustomizedDataContext.create(context) { dataId ->
           if (RUN_CONFIGURATION_KEY.`is`(dataId)) action.configuration else null
@@ -221,7 +220,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       }
       else context
     }
-    pinnedSize = myStep.values.asSequence()
+    pinnedSize = (myStep as ActionPopupStep).values.asSequence()
       .filter { it.action !is Separator }
       .takeWhile { it.getClientProperty(ActionUtil.SEARCH_TAG) == TAG_PINNED }
       .count()
