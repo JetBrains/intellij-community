@@ -133,7 +133,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             val isKotlinStrataAvailable = location.declaringType().containsKotlinStrata()
             if (isKotlinStrataAvailable) {
                 try {
-                    val javaSourceFileName = location.sourceName("Java")
+                    val javaSourceFileName = location.sourceName(DebugProcess.JAVA_STRATUM)
                     val javaClassName = JvmClassName.byInternalName(defaultInternalName(location))
                     val project = debugProcess.project
 

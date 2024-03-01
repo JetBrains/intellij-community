@@ -10,6 +10,7 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.StackFrame
+import org.jetbrains.kotlin.codegen.inline.KOTLIN_DEBUG_STRATA_NAME
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -331,8 +332,8 @@ private fun fetchCallLocations(
         // The scope introduction variable on the other hand should start inside an
         // inline function.
         val startOffset = firstInlineScopeVariable.location
-        val callLineNumber = startOffset.safeLineNumber("KotlinDebug")
-        val callSourceName = startOffset.safeSourceName("KotlinDebug")
+        val callLineNumber = startOffset.safeLineNumber(KOTLIN_DEBUG_STRATA_NAME)
+        val callSourceName = startOffset.safeSourceName(KOTLIN_DEBUG_STRATA_NAME)
         if (callLineNumber != -1 && callSourceName != null) {
             // Find the closest location to startOffset with the correct line number and source name.
             val callLocation = allLocations.lastOrNull { location ->

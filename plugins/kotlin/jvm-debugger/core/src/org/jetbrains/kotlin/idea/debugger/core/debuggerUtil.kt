@@ -264,9 +264,9 @@ fun isKotlinFakeLineNumber(location: Location): Boolean {
     // the lambda is on the same line. When stepping, we do not want to stop at such fake line
     // numbers. They cause us to step to line 1 of the current file.
     try {
-        if (location.lineNumber("Kotlin") == 1 &&
-            location.sourceName("Kotlin") == "fake.kt" &&
-            Path.of(location.sourcePath("Kotlin")) == Path.of("kotlin/jvm/internal/FakeKt")
+        if (location.lineNumber(KOTLIN_STRATA_NAME) == 1 &&
+            location.sourceName(KOTLIN_STRATA_NAME) == "fake.kt" &&
+            Path.of(location.sourcePath(KOTLIN_STRATA_NAME)) == Path.of("kotlin/jvm/internal/FakeKt")
         ) {
             return true
         }
