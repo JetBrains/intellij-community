@@ -32,7 +32,7 @@ class ShowBundleMessagesDialogAction : AnAction(), DumbAware {
     }
 
     override fun createCenterPanel(): JComponent {
-      val bundleMap = DynamicBundle.bundles
+      val bundleMap = DynamicBundle.getResourceBundles()
       table = JBTable(object : DefaultTableModel(Vector(listOf("Bundle name", "Values")), bundleMap.size) {
         override fun isCellEditable(row: Int, column: Int): Boolean {
           return false
