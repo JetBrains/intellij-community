@@ -119,7 +119,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     if (lineNumber < 0) {
       return true
     }
-    if (x > showInlayPopupWidth(editor)) {
+    if (x - editor.scrollingModel.horizontalScrollOffset > showInlayPopupWidth(editor)) {
       currentEditor.clear()
       currentLineNumber = -1
       return true
@@ -189,7 +189,9 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       }
       firstNonSpaceSymbol++
     }
-    return editor.offsetToXY(firstNonSpaceSymbol)
+    return editor.offsetToXY(firstNonSpaceSymbol).let {
+      Point(it.x - editor.scrollingModel.horizontalScrollOffset, it.y)
+    }
   }
 
   @RequiresEdt
@@ -275,7 +277,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     val editorContentComponent = editor.contentComponent
     val position = SwingUtilities.convertPoint(
       editorContentComponent,
-      Point(xPosition, lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE)) / 2),
+      Point(xPosition + editor.scrollingModel.horizontalScrollOffset, lineY + (editor.lineHeight - JBUI.scale(ACTION_BUTTON_SIZE)) / 2),
       rootPane.layeredPane
     )
 
