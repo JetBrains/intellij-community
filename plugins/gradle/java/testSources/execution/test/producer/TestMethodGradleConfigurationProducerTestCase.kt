@@ -22,7 +22,7 @@ import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.runners.Parameterized
 
-abstract class GradleConfigurationProducerTestCase : GradleImportingTestCase() {
+abstract class TestMethodGradleConfigurationProducerTestCase : GradleImportingTestCase() {
 
   protected fun assertTestFilter(className: String, methodName: String?, testFilter: String) {
     val locationProvider = { c: PsiClass?, m: PsiMethod? -> PsiLocation.fromPsiElement((m ?: c) as PsiElement?) }

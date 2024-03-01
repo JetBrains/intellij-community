@@ -5,7 +5,7 @@ import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
 
-class TestMethodGradleConfigurationProducerTest : GradleConfigurationProducerTestCase() {
+class TestMethodGradleConfigurationProducerTest : TestMethodGradleConfigurationProducerTestCase() {
 
   @Test
   fun `test junit parameterized tests`() {
