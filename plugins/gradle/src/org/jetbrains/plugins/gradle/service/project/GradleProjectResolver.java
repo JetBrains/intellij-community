@@ -476,12 +476,15 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     resolverCtx.putUserData(GRADLE_HOME_DIR, gradleHomeDir);
 
-    for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
-      final DataNode<ModuleData> moduleDataNode = pair.first;
-      final IdeaModule ideaModule = pair.second;
-      tracedResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
-      tracedResolverChain.populateModuleExtraModels(ideaModule, moduleDataNode);
-    }
+    ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "PopulateModules", __ -> {
+      for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
+        final DataNode<ModuleData> moduleDataNode = pair.first;
+        final IdeaModule ideaModule = pair.second;
+        tracedResolverChain.populateModuleDependencies(ideaModule, moduleDataNode, projectDataNode);
+        tracedResolverChain.populateModuleExtraModels(ideaModule, moduleDataNode);
+      }
+    });
+
     mergeSourceSetContentRoots(moduleMap, resolverCtx);
     if (resolverCtx.isResolveModulePerSourceSet()) {
       mergeLibraryAndModuleDependencyData(resolverCtx, projectDataNode, resolverCtx.getGradleUserHome(), gradleHomeDir, gradleVersion);
