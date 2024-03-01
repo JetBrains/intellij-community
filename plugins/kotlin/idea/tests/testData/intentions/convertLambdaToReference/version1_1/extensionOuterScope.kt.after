@@ -13,3 +13,5 @@ class Test {
 }
 
 fun Test.foo(s: String) {}
+
+// IGNORE_K2

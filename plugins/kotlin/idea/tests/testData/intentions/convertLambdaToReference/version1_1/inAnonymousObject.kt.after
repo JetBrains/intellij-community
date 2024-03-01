@@ -16,3 +16,5 @@ fun create(): I {
         fun baz(i: Int) {}
     }
 }
+
+// IGNORE_K2

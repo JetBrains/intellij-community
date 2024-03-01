@@ -11,3 +11,5 @@ class Outer {
         }
     }
 }
+
+// IGNORE_K2
