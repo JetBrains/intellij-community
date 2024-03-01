@@ -126,19 +126,26 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     private fun PsiElement.isCallableAsExtensionFunction(): Boolean {
+        if (isExtensionDeclaration()) return true
         return if (this is KtProperty) {
             analyze(this) {
                 val returnType = getReturnKtType()
                 returnType is KtFunctionalType && returnType.receiverType != null
             }
-        } else isExtensionDeclaration()
+        } else false
     }
 
     private fun KtDotQualifiedExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         val isPartOfImport = parentOfType<KtImportDirective>(withSelf = false) != null
         val selectorExpression = selectorExpression ?: return null
         val newSelectorExpression = when (selectorExpression) {
-            is KtSimpleNameExpression -> selectorExpression.replaceShortName(fqName, targetElement)
+            is KtSimpleNameExpression -> {
+                val newShortName = selectorExpression.replaceShortName(fqName, targetElement)
+                if (targetElement?.isCallableAsExtensionFunction() == true && !isPartOfImport) {
+                    containingKtFile.addImport(fqName)
+                    return ReplaceResult(newShortName, false)
+                } else newShortName
+            }
             is KtCallExpression -> {
                 val newCall = selectorExpression.replaceShortName(fqName)
                 if (targetElement?.isCallableAsExtensionFunction() == true) {
