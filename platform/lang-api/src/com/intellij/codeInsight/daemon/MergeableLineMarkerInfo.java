@@ -192,9 +192,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       for (int i = 0; i < myGroups.size(); i++) {
         ActionGroup popupActions = myGroups.get(i);
         if (popupActions != null) {
-          if (commonActionGroup.getChildrenCount() > 0) {
-            commonActionGroup.addSeparator();
-          }
+          commonActionGroup.addSeparator();
           commonActionGroup.addAll(popupActions);
         }
         else {
