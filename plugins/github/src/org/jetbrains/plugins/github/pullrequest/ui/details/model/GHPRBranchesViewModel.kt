@@ -49,7 +49,7 @@ class GHPRBranchesViewModel internal constructor(
 
   override val isCheckedOut: SharedFlow<Boolean> = gitRepository.changesSignalFlow().withInitial(Unit)
     .combine(detailsState) { _, details ->
-      val remote = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return@combine false
+      val remote = details.getHeadRemoteDescriptor(mapping.repository.serverPath) ?: return@combine false
       GitRemoteBranchesUtil.isRemoteBranchCheckedOut(gitRepository, remote, details.headRefName)
     }.modelFlow(cs, thisLogger())
 
@@ -59,7 +59,7 @@ class GHPRBranchesViewModel internal constructor(
   override fun fetchAndCheckoutRemoteBranch() {
     cs.launch {
       val details = detailsState.first()
-      val remoteDescriptor = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return@launch
+      val remoteDescriptor = details.getHeadRemoteDescriptor(mapping.repository.serverPath) ?: return@launch
       val localPrefix = if (details.headRepository?.isFork == true) "fork/${details.headRepository.owner.login}" else null
       GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.headRefName, localPrefix)
     }
@@ -69,7 +69,7 @@ class GHPRBranchesViewModel internal constructor(
   override fun fetchAndShowInLog() {
     cs.launch {
       val details = detailsState.first()
-      val remoteDescriptor = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return@launch
+      val remoteDescriptor = details.getHeadRemoteDescriptor(mapping.repository.serverPath) ?: return@launch
       GitRemoteBranchesUtil.fetchAndShowRemoteBranchInLog(gitRepository, remoteDescriptor, details.headRefName, details.baseRefName)
     }
   }
@@ -84,7 +84,7 @@ class GHPRBranchesViewModel internal constructor(
   }
 
   companion object {
-    fun GHPullRequest.getRemoteDescriptor(server: GithubServerPath): HostedGitRepositoryRemote? = headRepository?.let {
+    fun GHPullRequest.getHeadRemoteDescriptor(server: GithubServerPath): HostedGitRepositoryRemote? = headRepository?.let {
       HostedGitRepositoryRemote(
         it.owner.login,
         server.toURI(),
