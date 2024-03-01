@@ -21,10 +21,29 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
 
   override fun loadState(state: State) {
     _state = state
+    initTabOrderIfEmpty(state)
   }
 
+  //For migrating from older versions that don't have an 'order' field
+  private fun initTabOrderIfEmpty(state: State) {
+    _state.openTabs.onEachIndexed { index, entry ->
+      var myState = state.tabStates[entry.key]
+      if (myState == null) {
+        createProperties(entry.key)
+        myState = state.tabStates[entry.key]!!
+        myState.tabOrder = index + 1
+      }
+      else if (myState.tabOrder == 0) {
+        myState.tabOrder = index + 1
+      }
+    }
+  }
+
+
   override fun createProperties(id: String): MainVcsLogUiProperties {
-    _state.tabStates.putIfAbsent(id, MyState())
+    val myState = MyState()
+    myState.tabOrder = _state.openTabs.size + 1
+    _state.tabStates.putIfAbsent(id, myState)
     return MyVcsLogUiPropertiesImpl(id)
   }
 
@@ -42,7 +61,7 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   }
 
   val tabs: Map<String, VcsLogTabLocation>
-    get() = _state.openTabs
+    get() = _state.openTabs.toSortedMap(compareBy { _state.tabStates[it]?.tabOrder })
 
   fun getRecentlyFilteredGroups(filterName: String): List<List<String>> {
     return getRecentGroup(_state.recentFilters, filterName)
@@ -117,6 +136,9 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   class MyState : VcsLogUiPropertiesImpl.State() {
     @get:OptionTag("CUSTOM_BOOLEAN_PROPERTIES")
     var customBooleanProperties: MutableMap<String, Boolean> = HashMap()
+
+    @get: OptionTag("TAB_ORDER")
+    var tabOrder = 0
   }
 
   open class CustomBooleanTabProperty(name: @NonNls String) : VcsLogUiProperty<Boolean>(name) {
