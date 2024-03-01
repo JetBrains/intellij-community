@@ -60,7 +60,7 @@ class GHPRBranchesViewModel internal constructor(
     cs.launch {
       val details = detailsState.first()
       val remoteDescriptor = details.getRemoteDescriptor(mapping.repository.serverPath) ?: return@launch
-      val localPrefix = if (details.headRepository?.isFork == true) "fork" else null
+      val localPrefix = if (details.headRepository?.isFork == true) "fork/${details.headRepository.owner.login}" else null
       GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.headRefName, localPrefix)
     }
   }
