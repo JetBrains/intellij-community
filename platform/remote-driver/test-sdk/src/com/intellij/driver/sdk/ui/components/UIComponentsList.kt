@@ -22,7 +22,7 @@ class UIComponentsList<T : UiComponent>(private val xpath: String,
       }
       type.getConstructor(
         ComponentData::class.java
-      ).newInstance(ComponentData(xpath, true, driver, robotService, searchContext, c))
+      ).newInstance(ComponentData(xpath, driver, robotService, searchContext, c))
     }
   }
 }
