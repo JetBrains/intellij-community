@@ -293,9 +293,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       invokeLaterOnEdtInScheduledTasksScope(start = CoroutineStart.ATOMIC) {
         try {
           ensureActive()
-          blockingContext {
-            queueTaskOnEdt(task, modality, trace)
-          }
+          queueTaskOnEdt(task, modality, trace)
         }
         catch (t: CancellationException) {
           Disposer.dispose(task)
@@ -310,7 +308,6 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     return scheduledTasksScope.launch(modality.asContextElement() + Dispatchers.EDT + currentThreadContext().minusKey(Job), start, block)
   }
 
-  @RequiresBlockingContext
   private fun queueTaskOnEdt(task: DumbModeTask, modality: ModalityState, trace: Throwable) {
     ThreadingAssertions.assertEventDispatchThread()
     myLatestReceipt = myTaskQueue.addTask(task)
