@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
 
   protected final Map<String, IndexingContext> myContexts = new HashMap<>();
+  protected final Set<String> myLocks = Collections.synchronizedSet(new HashSet<>());
   private final Indexer myIndexer;
   private final IndexUpdater myUpdater;
   private final Scanner myScanner;
@@ -141,13 +142,20 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     throws MavenServerProcessCanceledException, MavenServerIndexerException {
     try {
       final IndexingContext context = getIndex(mavenIndexId);
-      synchronized (context) {
-        File repository = context.getRepository();
-        if (repository != null) { // is local repository
-          scanAndUpdateLocalRepositoryIndex(indicator, context, multithreaded);
+      boolean readyToUpdate = myLocks.add(mavenIndexId.indexId);
+
+      if (readyToUpdate) {
+        try {
+          File repository = context.getRepository();
+          if (repository != null) { // is local repository
+            scanAndUpdateLocalRepositoryIndex(indicator, context, multithreaded);
+          }
+          else {
+            downloadRemoteIndex(indicator, context);
+          }
         }
-        else {
-          downloadRemoteIndex(indicator, context);
+        finally {
+          myLocks.remove(mavenIndexId.indexId);
         }
       }
     }
@@ -182,6 +190,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     while (!indicator.isCanceled()) {
       try {
         future.get(100, TimeUnit.MILLISECONDS);
+        return;
       }
       catch (TimeoutException ignore) {
       }

@@ -87,16 +87,22 @@ public class WagonTransferListenerAdapter implements TransferListener {
   }
 
   private void updateProgress(String resourceName, DownloadData data) {
-    String prefix = "";
+
     if (data.finished) {
-      prefix = "Finished ";
-    }
-    if (data.failed) {
-      prefix = "Failed ";
+      try {
+        myIndicator.setIndeterminate(true);
+        myIndicator.setText2("Unpacking index");
+        return;
+      }
+      catch (RemoteException e) {
+        throw new RuntimeRemoteException(e);
+      }
     }
 
+    String prefix = data.failed ? "Failed " : "";
+
     String sizeInfo;
-    if (data.finished || data.failed || data.total <= 0) {
+    if (data.failed || data.total <= 0) {
       sizeInfo = StringUtilRt.formatFileSize(data.downloaded);
     }
     else {
