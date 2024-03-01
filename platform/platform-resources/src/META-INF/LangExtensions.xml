@@ -463,6 +463,9 @@
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$AccessExtension"/>
     <projectViewNodeDecorator implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$FilePresentation"/>
     <fileIconProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$FilePresentation"/>
+    <!-- Register the icon patcher for scratch files last, so files in the "Scratches" folder are sure to have the
+         indicator icon present -->
+    <fileIconPatcher order="last" implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$FilePresentation"/>
     <editorTabTitleProvider implementation="com.intellij.ide.scratch.ScratchFileServiceImpl$FilePresentation"/>
     <syntaxHighlighter factoryClass="com.intellij.ide.scratch.ScratchFileServiceImpl$Highlighter" order="first"/>
     <indexedRootsProvider implementation="com.intellij.ide.scratch.ScratchesAndConsolesIndexSetContributor"/>

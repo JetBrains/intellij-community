@@ -175,7 +175,9 @@ internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<V
     private fun computeSettings() {
       val file = file
       val psiFile = psiFile
-      if (psiFile == null) {
+      // If the psiFile is added and deleted in the same write action,
+      // it might still be present, but invalid.
+      if (psiFile == null || !psiFile.isValid) {
         cancel()
         return
       }
