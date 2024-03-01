@@ -417,6 +417,13 @@ object Utils {
                         useDarkIcons: Boolean,
                         progressPoint: RelativePoint? = null,
                         expire: (() -> Boolean)?) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("fillMenu: " + operationName(group, "", place) {
+        if (it is ActionIdProvider) it.id
+        else if (it is AnAction) ActionManager.getInstance().getId(it)
+        else null
+      })
+    }
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
       throw ProcessCanceledException()
     }
@@ -641,6 +648,11 @@ object Utils {
 
   @JvmStatic
   fun operationName(action: Any, op: String?, place: String?): String {
+    return operationName(action, op, place) { (it as? ActionIdProvider)?.id }
+  }
+
+  @JvmStatic
+  fun operationName(action: Any, op: String?, place: String?, idProvider: ((Any) -> String?)?): String {
     var c: Class<*> = action.javaClass
     val sb = StringBuilder(200)
     if (!op.isNullOrEmpty()) {
@@ -653,12 +665,14 @@ object Utils {
     var x = action
     while (x is ActionWithDelegate<*>) {
       sb.append(StringUtilRt.getShortName(c.getName())).append('/')
-      (x as? ActionIdProvider)?.id?.let { sb.append("(id=").append(it).append(')') }
+      idProvider?.invoke(x)?.let { sb.append("(id=").append(it).append(')') }
       x = x.getDelegate()
       c = x.javaClass
     }
-    sb.append(c.getName())
-    (x as? ActionIdProvider)?.id?.let { sb.append("(id=").append(it).append(')') }
+    sb.append(c.getName()
+                .removePrefix("com.intellij.openapi.actionSystem.")
+                .removePrefix("com.intellij.ide.actions."))
+    idProvider?.invoke(x)?.let { sb.append("(id=").append(it).append(')') }
     sb.append(")")
     sb.insert(0, StringUtilRt.getShortName(c.getName()))
     return sb.toString()
