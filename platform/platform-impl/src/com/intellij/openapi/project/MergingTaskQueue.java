@@ -177,6 +177,9 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
           newTask = mergedTask;
           myTasksQueue.remove(i);
           disposeQueue.add(oldTask);
+          if (mergedTask != task) {
+            disposeQueue.add(task);
+          }
           break;
         }
       }

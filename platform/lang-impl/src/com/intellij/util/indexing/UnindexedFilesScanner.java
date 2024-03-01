@@ -179,6 +179,9 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                " with " + StringUtil.trimStart(oldTask.myIndexingReason, "Merged ");
     }
     LOG.debug("Merged " + this + " task");
+
+    oldTask.myFutureScanningRequestToken.markSuccessful();
+    myFutureScanningRequestToken.markSuccessful();
     return new UnindexedFilesScanner(
       myProject,
       myStartSuspended,
@@ -428,6 +431,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
                                                  @NotNull List<IndexableFilesIterator> providers,
                                                  @NotNull ProjectScanningHistoryImpl projectScanningHistory) {
     if (providers.isEmpty()) {
+      myFutureScanningRequestToken.markSuccessful();
       return;
     }
     ProjectIndexingDependenciesService projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService.class);

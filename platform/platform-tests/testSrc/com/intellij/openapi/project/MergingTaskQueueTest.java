@@ -237,7 +237,7 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
 
     runAllTasks();
     Assert.assertEquals("The last child task should run, but were: " + childLog, Collections.singletonList("0 1 2"), childLog);
-    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 3, disposeLog.size());
+    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, List.of("0", "1", "0 1", "2", "0 1 2"), disposeLog);
   }
 
   public void testCancelledTask() {
