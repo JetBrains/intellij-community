@@ -464,8 +464,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         }
 
         private static @Nullable PluginNode toPluginNode(@NotNull IdeaPluginDescriptor descriptor, @NotNull ProgressIndicator indicator) {
-          if (descriptor instanceof PluginNode) {
-            PluginNode pluginNode = (PluginNode)descriptor;
+          if (descriptor instanceof PluginNode pluginNode) {
             return pluginNode.detailsLoaded() ?
                    pluginNode :
                    MarketplaceRequests.getInstance().loadPluginDetails(pluginNode, indicator);
@@ -950,9 +949,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     enableRows(descriptors, action);
     updateAfterEnableDisable();
     runInvalidFixCallback();
-    if (myPluginUpdatesService != null) {
-      myPluginUpdatesService.reapplyFilter();
-    }
+    PluginUpdatesService.reapplyFilter();
     return true;
   }
 
@@ -1146,7 +1143,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     if (PluginManagerCore.isUpdatedBundledPlugin(descriptor)) {
       return true;
     }
-    if (PluginEnabler.HEADLESS.isDisabled(descriptor.getPluginId())) {
+    if (HEADLESS.isDisabled(descriptor.getPluginId())) {
       Path path = descriptor.getPluginPath();
       if (path == null) {
         return false;
@@ -1164,7 +1161,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     boolean needRestartForUninstall = true;
     try {
       if (!isBundledUpdate(descriptorImpl)) {
-        PluginEnabler enabler = PluginEnabler.HEADLESS;
+        PluginEnabler enabler = HEADLESS;
         if (enabler.isDisabled(descriptorImpl.getPluginId())) {
           enabler.enable(Collections.singletonList(descriptorImpl));
         }
