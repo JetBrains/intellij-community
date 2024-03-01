@@ -265,9 +265,31 @@ def py_start_callback(code, instruction_offset):
                 global_cache_skips[frame_cache_key] = 1
                 return monitoring.DISABLE
 
-        breakpoints_for_file = py_db.breakpoints.get(filename)
+        breakpoints_for_file = (py_db.breakpoints.get(filename)
+                                or py_db.has_plugin_line_breaks)
         if not breakpoints_for_file and not is_stepping:
             return monitoring.DISABLE
+
+        if py_db.plugin and py_db.has_plugin_line_breaks:
+            info = _get_additional_info(thread)
+            args = (py_db, filename, info)
+            result = py_db.plugin.get_breakpoint(py_db, frame, 'call', args)
+            if result:
+                flag, breakpoint, new_frame, bp_type = result
+                if flag:
+                    print(result)
+                    result = py_db.plugin.suspend(py_db, thread, frame, bp_type)
+                    if result:
+                        frame = result
+                        py_db.set_suspend(
+                            thread,
+                            CMD_SET_BREAK,
+                            suspend_other_threads=(
+                                breakpoint and breakpoint.suspend_policy == "ALL"
+                            ),
+                        )
+                        py_db.do_wait_suspend(thread, frame, 'line', None)
+                        return
 
         if is_stepping:
             if (pydev_step_cmd == CMD_STEP_OVER
@@ -375,11 +397,11 @@ def py_line_callback(code, line_number):
                     if (py_db.is_filter_enabled
                             and py_db.is_ignored_by_filters(filename)):
                         # ignore files matching stepping filters
-                        return
+                        return monitoring.DISABLE
                     if (py_db.is_filter_libraries
                             and not py_db.in_project_scope(filename)):
                         # ignore library files while stepping
-                        return
+                        return monitoring.DISABLE
 
             if stop:
                 py_db.set_suspend(
