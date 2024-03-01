@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 
 import com.sun.jdi.*
@@ -15,11 +15,11 @@ sealed class MethodEvaluator<T>(val method: Method?) {
                   } else
                       values.toList()
                   @Suppress("UNCHECKED_CAST")
-                  context.invokeMethod(method.declaringType() as ClassType, method, args) as T?
+                  context.evaluationContext.computeAndKeep { context.invokeMethod(method.declaringType() as ClassType, method, args) } as T?
               }
               value != null ->
                   @Suppress("UNCHECKED_CAST")
-                  context.invokeMethod(value, method, values.toList()) as T?
+                  context.evaluationContext.computeAndKeep { context.invokeMethod(value, method, values.toList()) } as T?
               else -> throw IllegalArgumentException("Exception while calling method " + method.signature() + " with an empty value.")
             }
         }
