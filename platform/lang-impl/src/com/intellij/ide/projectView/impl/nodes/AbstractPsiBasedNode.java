@@ -242,7 +242,10 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     Icon icon = original;
 
     if (file.is(VFileProperty.SYMLINK)) {
-      icon = PredefinedIconOverlayService.getInstance().createSymlinkIcon(icon);
+      PredefinedIconOverlayService iconOverlayService = PredefinedIconOverlayService.getInstanceOrNull();
+      if (iconOverlayService != null) {
+        icon = iconOverlayService.createSymlinkIcon(icon);
+      }
     }
 
     Icon bookmarkIcon = getBookmarkIcon(project, file);
