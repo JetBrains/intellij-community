@@ -61,10 +61,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         if (targetFqn.isRoot) return docElement
         val replacedDocReference = modifyPsiWithOptimizedImports(docElement.containingKtFile) {
             val newDocReference = KDocElementFactory(targetElement.project).createNameFromText(targetFqn.asString())
-            docReference.expression.replaced(newDocReference)
+            docElement.replaced(newDocReference)
         }
         return if (shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING) {
-            shortenReferences(replacedDocReference) ?: docElement
+            shortenReferences(replacedDocReference) ?: replacedDocReference
         } else replacedDocReference
     }
 
@@ -101,9 +101,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 } ?: return@modifyPsiWithOptimizedImports null
             } ?: return expression
             val shouldShorten = shorteningMode != KtSimpleNameReference.ShorteningMode.NO_SHORTENING && result.canBeShortened
-            if (shouldShorten) {
-                shortenReferences(result.replacedElement) ?: expression
+            val shortenResult = if (shouldShorten) {
+                shortenReferences(result.replacedElement) ?: result.replacedElement
             } else result.replacedElement
+            shortenResult
         }
     }
 
