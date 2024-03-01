@@ -1,15 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.impl.DebuggerUtilsImpl.logError
 import com.sun.jdi.ObjectReference
-import com.sun.jdi.VMDisconnectedException
 import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.FieldVariable
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfBaseContinuationImpl
 
 class ContinuationHolder private constructor(val context: DefaultExecutionContext) {
     private val debugMetadata: DebugMetadata? = DebugMetadata.instance(context)
@@ -22,9 +24,8 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
             val continuationStackFrames = continuationStack.mapNotNull { it.toCoroutineStackFrameItem(context, locationCache) }
             val lastRestoredFrame = continuationStack.lastOrNull()
             return findCoroutineInformation(lastRestoredFrame?.baseContinuationImpl?.coroutineOwner, continuationStackFrames)
-        } catch (_: VMDisconnectedException) {
         } catch (e: Exception) {
-            log.error("Error while looking for stack frame", e)
+            logError("Error while looking for stack frame", e)
         }
         return null
     }
@@ -55,8 +56,6 @@ class ContinuationHolder private constructor(val context: DefaultExecutionContex
     }
 
     companion object {
-        val log by logger
-
         fun instance(context: DefaultExecutionContext) =
             ContinuationHolder(context)
     }
