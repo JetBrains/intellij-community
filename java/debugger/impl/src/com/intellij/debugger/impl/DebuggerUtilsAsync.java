@@ -503,10 +503,10 @@ public final class DebuggerUtilsAsync {
     return throwable instanceof CompletionException || throwable instanceof ExecutionException ? throwable.getCause() : throwable;
   }
 
-  public static <T> T logError(@Nullable Throwable throwable) {
+  public static <T> T logError(@NotNull Throwable throwable) {
     Throwable e = unwrap(throwable);
     if (!(e instanceof CancellationException)) {
-      DebuggerUtilsImpl.logError(e, true); // wrap to keep the exact catch position
+      DebuggerUtilsImpl.logError(e.getMessage(), e, true); // wrap to keep the exact catch position
     }
     return null;
   }

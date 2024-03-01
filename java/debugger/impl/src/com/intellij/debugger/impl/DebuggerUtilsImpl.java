@@ -228,15 +228,19 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
     return Boolean.TRUE.equals(debugProcess.getUserData(BatchEvaluator.REMOTE_SESSION_KEY));
   }
 
-  public static void logError(Throwable e) {
-    logError(e, false);
+  public static void logError(@NotNull Throwable e) {
+    logError(e.getMessage(), e, false);
   }
 
-  static void logError(Throwable e, boolean wrapIntoThrowable) {
+  public static void logError(String message, Throwable e) {
+    logError(message, e, false);
+  }
+
+  static void logError(String message, Throwable e, boolean wrapIntoThrowable) {
     if (e instanceof VMDisconnectedException || e instanceof ProcessCanceledException) {
       throw (RuntimeException)e;
     }
-    LOG.error(wrapIntoThrowable ? new Throwable(e) : e);
+    LOG.error(message, wrapIntoThrowable ? new Throwable(e) : e);
   }
 
   public static <T, E extends Exception> T suppressExceptions(ThrowableComputable<? extends T, ? extends E> supplier,
