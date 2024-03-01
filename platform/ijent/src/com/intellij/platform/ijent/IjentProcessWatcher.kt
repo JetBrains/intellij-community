@@ -15,7 +15,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -160,7 +159,7 @@ private suspend fun ijentProcessExitCodeAwaiter(
   }
 
   if (isExitExpected) {
-    coroutineContext.cancel(CancellationException("The process expectedly exited with code $exitCode"))
+    ijentCoroutineScope.cancel(CancellationException("The process expectedly exited with code $exitCode"))
   }
   else {
     val message = "The process suddenly exited with the code $exitCode"
@@ -179,7 +178,7 @@ private suspend fun ijentProcessExitCodeAwaiter(
         LOG.error(RuntimeExceptionWithAttachments(message, Attachment("stderr", stderr.toString())))
       }
     }
-    coroutineContext.cancel(CancellationException(message))
+    ijentCoroutineScope.cancel(CancellationException(message))
   }
 }
 
