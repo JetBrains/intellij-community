@@ -330,6 +330,11 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
         public void testUnQualified() throws Exception {
             runTest("../../idea/tests/testData/refactoring/bindToElement/extensionVariableAccessCall/UnQualified.kt");
         }
+
+        @TestMetadata("UnQualifiedWithoutExplicitType.kt")
+        public void testUnQualifiedWithoutExplicitType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/extensionVariableAccessCall/UnQualifiedWithoutExplicitType.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

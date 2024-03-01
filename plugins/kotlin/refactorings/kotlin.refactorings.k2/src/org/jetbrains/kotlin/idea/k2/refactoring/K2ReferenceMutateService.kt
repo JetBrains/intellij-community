@@ -127,7 +127,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private fun PsiElement.isCallableAsExtensionFunction(): Boolean {
         return if (this is KtProperty) {
-            analyze(this) { (typeReference?.getKtType() as? KtFunctionalType)?.receiverType != null }
+            analyze(this) {
+                val returnType = getReturnKtType()
+                returnType is KtFunctionalType && returnType.receiverType != null
+            }
         } else isExtensionDeclaration()
     }
 
