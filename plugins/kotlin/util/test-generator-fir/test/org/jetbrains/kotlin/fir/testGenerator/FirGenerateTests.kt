@@ -14,11 +14,7 @@ import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractLocalSe
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.idea.fir.codeInsight.AbstractK2MultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.fir.completion.*
-import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeywordCompletionHandlerTest
-import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
-import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJavaCompletionHandlerTest
-import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionCharFilterTest
-import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionIncrementalResolveTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.*
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCopyPasteTest
@@ -451,6 +447,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirKeywordCompletionHandlerTest> {
             model("handlers/keywords", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+        }
+
+        testClass<AbstractFirDumbCompletionTest> {
+            model("dumb")
         }
 
         testClass<AbstractHighLevelWeigherTest> {

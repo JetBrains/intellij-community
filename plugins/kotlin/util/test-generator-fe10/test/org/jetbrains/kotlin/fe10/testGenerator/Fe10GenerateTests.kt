@@ -1174,6 +1174,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("smart")
         }
 
+        testClass<AbstractDumbCompletionTest> {
+            model("dumb")
+        }
+
         testClass<AbstractKeywordCompletionTest> {
             model("keywords", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
         }

@@ -225,6 +225,18 @@
             description="Insert constructor parenthesis on class autocompletion"
             defaultValue="false"
             restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.dumb.mode.use.psi.completion"
+            description="Use PSI based completion when indexing"
+            defaultValue="true"
+            restartRequired="false"/>
+    <completion.contributor
+            language="kotlin"
+            id="KotlinDumbCompletionContributor"
+            order="first, after KotlinCompletionContributor"
+            implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinDumbCompletionContributor"/>
+    <codeInsight.wordCompletionFilter language="kotlin"
+                                      implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinWordCompletionFilter"/>
 
     <registryKey key="kotlin.create.sealed.templates.enabled"
                  defaultValue="false"
