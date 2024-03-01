@@ -9,7 +9,8 @@ class ScanningTracker : ActivityTracker {
   override val presentableName: String = "scanning"
 
   override suspend fun isInProgress(project: Project): Boolean {
-    return project.serviceAsync<UnindexedFilesScannerExecutor>().isRunning.value
+    return project.serviceAsync<UnindexedFilesScannerExecutor>().isRunning.value ||
+           !project.serviceAsync<UnindexedFilesScannerExecutor>().taskQueue.isEmpty
   }
 
   override suspend fun awaitConfiguration(project: Project) {
