@@ -187,8 +187,8 @@ private fun vfsRecoveryDraft(queryContext: VfsLogQueryContext,
     "file: name=${getName()} parent=$parentId id=$fileId ts=$timestamp len=$length flags=$flags contentId=$contentRecordId attrId=$attributesRecordId"
 
   fun buildDiff(textBefore: String, textAfter: String): Diff {
-    val linesBefore = textBefore.strip().split("\n").toMutableList()
-    val linesAfter = textAfter.strip().split("\n").toMutableList()
+    val linesBefore = textBefore.trim().split("\n").toMutableList()
+    val linesAfter = textAfter.trim().split("\n").toMutableList()
     while (linesBefore.isNotEmpty() && linesAfter.isNotEmpty() && linesBefore[0] == linesAfter[0]) {
       linesBefore.removeAt(0)
       linesAfter.removeAt(0)
