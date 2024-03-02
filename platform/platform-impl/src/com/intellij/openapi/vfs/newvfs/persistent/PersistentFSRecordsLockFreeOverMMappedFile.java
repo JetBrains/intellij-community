@@ -102,6 +102,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   //cached for faster access:
   private final transient int pageSize;
   private final transient int recordsPerPage;
+  private final transient int recordsOnHeaderPage;
 
   private final transient HeaderAccessor headerAccessor = new HeaderAccessor(this);
 
@@ -129,6 +130,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
     this.pageSize = pageSize;
     recordsPerPage = pageSize / RecordLayout.RECORD_SIZE_IN_BYTES;
+    recordsOnHeaderPage = (pageSize - HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
 
     headerPage = this.storage.pageByOffset(0);
 
@@ -688,7 +690,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     //recordId is 1-based, convert to 0-based recordNo:
     final int recordNo = recordId - 1;
 
-    final int recordsOnHeaderPage = (pageSize - HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
     if (recordNo < recordsOnHeaderPage) {
       return HEADER_SIZE + recordNo * (long)RecordLayout.RECORD_SIZE_IN_BYTES;
     }
