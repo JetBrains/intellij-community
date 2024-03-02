@@ -61,15 +61,13 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
   private val context: DiffContext = model.context
   private val settings = DiffSettings.getSettings(context.getUserData(DiffUserDataKeys.PLACE))
 
-  private val combinedToolOrder = arrayListOf<CombinedDiffTool>()
-
   private val popupActionGroup = DefaultActionGroup()
   private val touchbarActionGroup = DefaultActionGroup()
   private val mainPanel = MyMainPanel()
 
   private val contentPanel = Wrapper()
 
-  private val diffToolChooser: MyDiffToolChooser = MyDiffToolChooser()
+  private val diffToolChooser: MyDiffToolChooser = MyDiffToolChooser(context, model, settings)
 
   private val combinedDiffUIState = CombinedDiffUIState()
 
@@ -103,7 +101,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     }
 
     Touchbar.setActions(mainPanel, touchbarActionGroup)
-    updateAvailableDiffTools()
 
     val bottomContentSplitter = JBSplitter(true, "CombinedDiff.BottomComponentSplitter", 0.8f)
     bottomContentSplitter.firstComponent = contentPanel
@@ -192,27 +189,6 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     ActionUtil.clearActions(mainPanel)
   }
 
-  private fun moveToolOnTop(tool: CombinedDiffTool) {
-    if (combinedToolOrder.remove(tool)) {
-      combinedToolOrder.add(0, tool)
-      updateToolOrderSettings(combinedToolOrder)
-    }
-  }
-
-  private fun updateToolOrderSettings(toolOrder: List<DiffTool>) {
-    val savedOrder = arrayListOf<String>()
-    for (tool in toolOrder) {
-      savedOrder.add(tool.javaClass.canonicalName)
-    }
-    settings.diffToolsOrder = savedOrder
-  }
-
-  private fun updateAvailableDiffTools() {
-    combinedToolOrder.clear()
-    val availableCombinedDiffTools = DiffManagerEx.getInstance().diffTools.filterIsInstance<CombinedDiffTool>()
-    combinedToolOrder.addAll(getToolOrderFromSettings(settings, availableCombinedDiffTools).filterIsInstance<CombinedDiffTool>())
-  }
-
   override fun dispose() {
     if (ourDisposable.isDisposed) return
     UIUtil.invokeLaterIfNeeded {
@@ -221,12 +197,44 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, private val goToC
     }
   }
 
-  private inner class MyDiffToolChooser : DiffToolChooser(context.project) {
+  private class MyDiffToolChooser(
+    val context: DiffContext,
+    val model: CombinedDiffModel,
+    val settings: DiffSettings,
+  ) : DiffToolChooser(context.project) {
     private val availableTools = arrayListOf<CombinedDiffTool>().apply {
       addAll(DiffManagerEx.getInstance().diffTools.filterIsInstance<CombinedDiffTool>())
     }
 
-    private var activeTool: CombinedDiffTool = combinedToolOrder.firstOrNull() ?: availableTools.first()
+    private val combinedToolOrder = arrayListOf<CombinedDiffTool>()
+
+    private var activeTool: CombinedDiffTool
+
+    init {
+      updateAvailableDiffTools()
+      activeTool = combinedToolOrder.firstOrNull() ?: availableTools.first()
+    }
+
+    private fun updateAvailableDiffTools() {
+      combinedToolOrder.clear()
+      val availableCombinedDiffTools = DiffManagerEx.getInstance().diffTools.filterIsInstance<CombinedDiffTool>()
+      combinedToolOrder.addAll(getToolOrderFromSettings(settings, availableCombinedDiffTools).filterIsInstance<CombinedDiffTool>())
+    }
+
+    private fun moveToolOnTop(tool: CombinedDiffTool) {
+      if (combinedToolOrder.remove(tool)) {
+        combinedToolOrder.add(0, tool)
+        updateToolOrderSettings(combinedToolOrder)
+      }
+    }
+
+    private fun updateToolOrderSettings(toolOrder: List<DiffTool>) {
+      val savedOrder = arrayListOf<String>()
+      for (tool in toolOrder) {
+        savedOrder.add(tool.javaClass.canonicalName)
+      }
+      settings.diffToolsOrder = savedOrder
+    }
 
     override fun onSelected(project: Project, diffTool: DiffTool) {
       val combinedDiffTool = diffTool as? CombinedDiffTool ?: return
