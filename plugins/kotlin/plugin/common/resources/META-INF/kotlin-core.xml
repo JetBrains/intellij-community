@@ -422,6 +422,10 @@
     <registryKey key="kotlin.multiline.function.parameters.info"
                  description="Activates the mode of line-by-line display of the function parameters info, if there are more than three of them"
                  defaultValue="false" />
+
+    <registryKey key="kotlin.copy.paste.allow.import.of.nested.declarations"
+                 description="Allows the copy-paste processor to import nested declarations (enum values, static Java members, etc.) if they were imported in the original source."
+                 defaultValue="true" />
   </extensions>
 
   <!-- Tips and Tricks -->
