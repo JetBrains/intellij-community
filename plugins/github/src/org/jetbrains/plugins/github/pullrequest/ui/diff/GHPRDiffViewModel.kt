@@ -71,7 +71,7 @@ internal class GHPRDiffViewModelImpl(
   private val changesFetchFlow = dataProvider.changesData.fetchedChangesFlow().shareIn(cs, SharingStarted.Lazily, 1)
   private val helper =
     CodeReviewDiffViewModelComputer(changesFetchFlow) { changesBundle, change ->
-      val changeContext: Map<Key<*>, Any> = buildChangeContext(change)
+      val changeContext: Map<Key<*>, Any> = change.buildChangeContext()
       val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)
                                ?: error("Could not create diff producer from $change")
       CodeReviewDiffRequestProducer(project, change, changeDiffProducer, changesBundle.patchesByChange[change]?.getDiffComputer())
