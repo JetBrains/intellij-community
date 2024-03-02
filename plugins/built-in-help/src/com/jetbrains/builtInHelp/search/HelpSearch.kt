@@ -119,10 +119,8 @@ data class HelpSearchResult(
   val breadcrumbs: String,
   val mainTitle: String,
   val objectID: String,
-  @JsonProperty("_snippetResult")
-  val snippetResult: Snippet,
-  @JsonProperty("_highlightResult")
-  val highlightResult: Highlights
+  @param:JsonProperty("_snippetResult") @get:JsonProperty("_snippetResult") val snippetResult: Snippet,
+  @param:JsonProperty("_highlightResult") @get:JsonProperty("_highlightResult") val highlightResult: Highlights
 ) {
   data class Snippet(val content: Content) {
     data class Content(
