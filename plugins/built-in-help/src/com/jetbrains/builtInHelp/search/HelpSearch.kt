@@ -2,7 +2,8 @@
 package com.jetbrains.builtInHelp.search
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ResourceUtil
 import com.jetbrains.builtInHelp.search.HelpSearchResult.Details
@@ -25,6 +26,10 @@ import java.util.*
 class HelpSearch {
   companion object {
     private val resources = arrayOf("_0.cfe", "_0.cfs", "_0.si", "segments_1")
+
+    private val jsonMapper = ObjectMapper().apply {
+      configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    }
 
     @NonNls
     private const val NOT_FOUND = "[]"
@@ -93,7 +98,7 @@ class HelpSearch {
               )
             }
             val searchResults = HelpSearchResults(results)
-            if (searchResults.hits.isNotEmpty()) return jacksonObjectMapper().writeValueAsString(searchResults)
+            if (searchResults.hits.isNotEmpty()) return jsonMapper.writeValueAsString(searchResults)
           }
           catch (e: Throwable) {
             Logger.getInstance(HelpSearch::class.java).info("Error searching help for $query", e)
