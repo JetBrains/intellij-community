@@ -53,7 +53,7 @@ private fun K2MoveDescriptor.Members.createCopyTarget(): Pair<KtFile, Map<PsiEle
     fun KtFile.collectOldToNewUsageInfos(oldToNewMap: Map<PsiElement, PsiElement>): List<Pair<K2MoveRenameUsageInfo, K2MoveRenameUsageInfo>> {
         return collectDescendantsOfType<KtSimpleNameExpression>().mapNotNull { refExpr ->
             val usageInfo = refExpr.internalUsageInfo
-            val referencedElement = (usageInfo as? MoveRenameUsageInfo)?.referencedElement ?: return@mapNotNull null
+            val referencedElement = (usageInfo as? K2MoveRenameUsageInfo.Source)?.referencedElement ?: return@mapNotNull null
             val newReferencedElement = oldToNewMap[referencedElement] ?: referencedElement
             if (!newReferencedElement.isValid || newReferencedElement !is PsiNamedElement) return@mapNotNull null
             usageInfo to usageInfo.refresh(refExpr, newReferencedElement)
