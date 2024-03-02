@@ -162,7 +162,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         getProjectDataFunction(resolverContext, projectResolverChain, false));
 
       // auto-discover buildSrc projects of the main and included builds
-      if (GradleVersionUtil.isGradleOlderThan(resolverContext.getProjectGradleVersion(), "8.0")) {
+      String gradleVersion = resolverContext.getProjectGradleVersion();
+      if (gradleVersion != null && GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.0")) {
         File gradleUserHome = resolverContext.getUserData(GRADLE_HOME_DIR);
         new GradleBuildSrcProjectsResolver(this, resolverContext, gradleUserHome, settings, listener, syncTaskId, projectResolverChain)
           .discoverAndAppendTo(projectDataNode);
@@ -206,9 +207,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     if (buildEnvironment != null) {
       resolverCtx.setBuildEnvironment(buildEnvironment);
     }
-    final GradleVersion gradleVersion = ObjectUtils.doIfNotNull(buildEnvironment, it ->
-      GradleVersion.version(it.getGradle().getGradleVersion())
-    );
 
     boolean useCustomSerialization = Registry.is("gradle.tooling.custom.serializer", true);
     var buildAction = useCustomSerialization
@@ -221,7 +219,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
     }
 
-    configureExecutionArgumentsAndVmOptions(executionSettings, resolverCtx, gradleVersion, isBuildSrcProject);
+    configureExecutionArgumentsAndVmOptions(executionSettings, resolverCtx, isBuildSrcProject);
     final Set<Class<?>> toolingExtensionClasses = new HashSet<>();
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
@@ -289,6 +287,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
       var buildActionRunner = new GradleBuildActionRunner(resolverCtx, buildAction, executionSettings, myHelper, buildActionListeners);
       buildActionRunner.runBuildAction();
+      var gradleVersion = ObjectUtils.doIfNotNull(resolverCtx.getProjectGradleVersion(), it -> GradleVersion.version(it));
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
         resolverCtx.report(MessageEvent.Kind.WARNING, new DeprecatedGradleVersionIssue(gradleVersion, resolverCtx.getProjectPath()));
       }
@@ -323,7 +322,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       .spanBuilder("GradleProjectResolverDataProcessing")
       .startSpan();
     try (Scope ignore = projectResolversSpan.makeCurrent()) {
-      return convertData(executionSettings, resolverCtx, gradleVersion, projectResolverChain, isBuildSrcProject, useCustomSerialization);
+      return convertData(executionSettings, resolverCtx, projectResolverChain, isBuildSrcProject, useCustomSerialization);
     }
     catch (Throwable t) {
       projectResolversErrorsCount += 1;
@@ -344,7 +343,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private @NotNull DataNode<ProjectData> convertData(
     @NotNull GradleExecutionSettings executionSettings,
     @NotNull DefaultProjectResolverContext resolverCtx,
-    @Nullable GradleVersion gradleVersion,
     @NotNull GradleProjectResolverExtension tracedResolverChain,
     boolean isBuildSrcProject,
     boolean useCustomSerialization
@@ -471,7 +469,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     mergeSourceSetContentRoots(moduleMap, resolverCtx);
     if (resolverCtx.isResolveModulePerSourceSet()) {
-      mergeLibraryAndModuleDependencyData(resolverCtx, projectDataNode, resolverCtx.getGradleUserHome(), gradleHomeDir, gradleVersion);
+      mergeLibraryAndModuleDependencyData(resolverCtx, projectDataNode, resolverCtx.getGradleUserHome(), gradleHomeDir);
     }
 
     processBuildSrcModules(resolverCtx, projectDataNode);
@@ -583,17 +581,18 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  private static void configureExecutionArgumentsAndVmOptions(@NotNull GradleExecutionSettings executionSettings,
-                                                              @NotNull DefaultProjectResolverContext resolverCtx,
-                                                              @Nullable GradleVersion gradleVersion,
-                                                              boolean isBuildSrcProject) {
+  private static void configureExecutionArgumentsAndVmOptions(
+    @NotNull GradleExecutionSettings executionSettings,
+    @NotNull DefaultProjectResolverContext resolverCtx,
+    boolean isBuildSrcProject
+  ) {
     executionSettings.withArgument("-Didea.gradle.download.sources=" + executionSettings.isDownloadSources());
     executionSettings.withArgument("-Didea.sync.active=true");
     if (resolverCtx.isResolveModulePerSourceSet()) {
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
     }
-    GradleVersion usedGradleVersion = Objects.requireNonNullElseGet(gradleVersion, GradleVersion::current);
-    if (executionSettings.isParallelModelFetch() && GradleVersionUtil.isGradleAtLeast(usedGradleVersion, "7.4")) {
+    String gradleVersion = resolverCtx.getProjectGradleVersion();
+    if (executionSettings.isParallelModelFetch() && gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.4")) {
       executionSettings.withArgument("-Didea.parallelModelFetch.enabled=true");
     }
     if (!isBuildSrcProject) {
@@ -658,11 +657,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return gradleIncludedModules;
   }
 
-  private static void mergeLibraryAndModuleDependencyData(@NotNull ProjectResolverContext context,
-                                                          @NotNull DataNode<ProjectData> projectDataNode,
-                                                          @NotNull File gradleUserHomeDir,
-                                                          @Nullable File gradleHomeDir,
-                                                          @Nullable GradleVersion gradleVersion) {
+  private static void mergeLibraryAndModuleDependencyData(
+    @NotNull ProjectResolverContext context,
+    @NotNull DataNode<ProjectData> projectDataNode,
+    @NotNull File gradleUserHomeDir,
+    @Nullable File gradleHomeDir
+  ) {
     final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap =
       projectDataNode.getUserData(RESOLVED_SOURCE_SETS);
     assert sourceSetMap != null;
@@ -678,7 +678,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       findAllRecursively(projectDataNode, ProjectKeys.LIBRARY_DEPENDENCY);
 
     LibraryDataNodeSubstitutor librarySubstitutor = new LibraryDataNodeSubstitutor(
-      context, gradleUserHomeDir, gradleHomeDir, gradleVersion, sourceSetMap, moduleOutputsMap, artifactsMap);
+      context, gradleUserHomeDir, gradleHomeDir, sourceSetMap, moduleOutputsMap, artifactsMap);
     for (DataNode<LibraryDependencyData> libraryDependencyDataNode : libraryDependencies) {
       librarySubstitutor.run(libraryDependencyDataNode);
     }

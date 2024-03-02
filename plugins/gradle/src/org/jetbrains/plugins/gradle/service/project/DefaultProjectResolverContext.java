@@ -39,7 +39,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
   @NotNull private final CancellationTokenSource myCancellationTokenSource;
   private ProjectConnection myConnection;
-  private GradleIdeaModelHolder myModels;
+  @Nullable private GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
   @Nullable private String myBuildSrcGroup;
@@ -132,6 +132,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   }
 
   public @NotNull GradleIdeaModelHolder getModels() {
+    assert myModels != null;
     return myModels;
   }
 
@@ -141,37 +142,37 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @Override
   public @NotNull Build getRootBuild() {
-    return myModels.getRootBuild();
+    return getModels().getRootBuild();
   }
 
   @Override
   public @NotNull Collection<? extends Build> getNestedBuilds() {
-    return myModels.getNestedBuilds();
+    return getModels().getNestedBuilds();
   }
 
   @Override
   public @NotNull Collection<? extends Build> getAllBuilds() {
-    return myModels.getAllBuilds();
+    return getModels().getAllBuilds();
   }
 
   @Override
   public <T> @Nullable T getRootModel(@NotNull Class<T> modelClass) {
-    return myModels.getRootModel(modelClass);
+    return getModels().getRootModel(modelClass);
   }
 
   @Override
   public <T> @Nullable T getBuildModel(@NotNull BuildModel buildModel, @NotNull Class<T> modelClass) {
-    return myModels.getBuildModel(buildModel, modelClass);
+    return getModels().getBuildModel(buildModel, modelClass);
   }
 
   @Override
   public <T> @Nullable T getProjectModel(@NotNull ProjectModel projectModel, @NotNull Class<T> modelClass) {
-    return myModels.getProjectModel(projectModel, modelClass);
+    return getModels().getProjectModel(projectModel, modelClass);
   }
 
   @Override
   public boolean hasModulesWithModel(@NotNull Class<?> modelClass) {
-    return myModels.hasModulesWithModel(modelClass);
+    return getModels().hasModulesWithModel(modelClass);
   }
 
   @Override
@@ -228,7 +229,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
 
   @Override
   public @Nullable BuildEnvironment getBuildEnvironment() {
-    if (myBuildEnvironment == null) {
+    if (myBuildEnvironment == null && myModels != null) {
       myBuildEnvironment = myModels.getBuildEnvironment();
     }
     return myBuildEnvironment;

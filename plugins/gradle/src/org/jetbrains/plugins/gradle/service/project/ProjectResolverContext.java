@@ -98,6 +98,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
 
   void checkCancelled() throws ProcessCanceledException;
 
+  @Nullable
   String getProjectGradleVersion();
 
   @Nullable

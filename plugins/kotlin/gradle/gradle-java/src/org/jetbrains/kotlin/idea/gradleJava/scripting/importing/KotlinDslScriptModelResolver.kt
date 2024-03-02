@@ -39,7 +39,8 @@ class KotlinDslScriptModelContributor : ProjectModelContributor {
             for (projectModel in buildModel.projects) {
                 val projectIdentifier = projectModel.projectIdentifier.projectPath
                 if (projectIdentifier == ":") {
-                    if (kotlinDslScriptsModelImportSupported(resolverCtx.projectGradleVersion)) {
+                    val gradleVersion = resolverCtx.projectGradleVersion
+                    if (gradleVersion != null && kotlinDslScriptsModelImportSupported(gradleVersion)) {
                         val model = resolverCtx.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
                         if (model != null) {
                             if (!processScriptModel(resolverCtx, model, projectIdentifier)) {
