@@ -12,6 +12,9 @@ import org.jetbrains.annotations.NotNull
 @JacksonXmlRootElement(localName = "map")
 class HelpMap {
 
+  @JacksonXmlProperty(localName = "version", isAttribute = true)
+  var version: String = "2.0"
+
   @JacksonXmlProperty(localName = "mapID")
   @JacksonXmlElementWrapper(useWrapping = false)
   var mappings: List<HelpMapId> = mutableListOf()

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.builtInHelp
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.util.text.StringUtil
@@ -20,7 +21,14 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
     "searchAlgoliaIndexName", "versionsService"
   )
 
-  private val xmlMapper = XmlMapper()
+  private val xmlMapper = XmlMapper().apply {
+    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+  }
+
+  private val jsonMapper = jacksonObjectMapper().apply {
+    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+  }
+
   override fun process(
     urlDecoder: QueryStringDecoder,
     request: FullHttpRequest,
@@ -57,7 +65,7 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
           "topics", "config.json"
         )
 
-        @Suppress("UNCHECKED_CAST") val configJson: LinkedHashMap<String, Any> = jacksonObjectMapper().readValue(
+        @Suppress("UNCHECKED_CAST") val configJson: LinkedHashMap<String, Any> = jsonMapper.readValue(
           configStream,
           LinkedHashMap::class.java
         ) as LinkedHashMap<String, Any>
@@ -75,8 +83,9 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
             )
           }
         }
+
         sendData(
-          jacksonObjectMapper().writeValueAsBytes(configJson),
+          jsonMapper.writeValueAsBytes(configJson),
           "config.json",
           request,
           context.channel(),
