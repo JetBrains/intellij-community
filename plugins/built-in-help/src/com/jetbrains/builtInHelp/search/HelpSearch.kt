@@ -16,7 +16,6 @@ import org.apache.lucene.search.highlight.Highlighter
 import org.apache.lucene.search.highlight.QueryScorer
 import org.apache.lucene.search.highlight.Scorer
 import org.apache.lucene.store.FSDirectory
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import java.nio.file.Files
 import java.nio.file.Path
@@ -31,13 +30,11 @@ class HelpSearch {
       configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
 
-    @NonNls
-    private const val NOT_FOUND = "[]"
-
     private val analyzer = StandardAnalyzer()
 
     @NotNull
     fun search(query: String?, maxHits: Int): String {
+      val results = mutableListOf<HelpSearchResult>()
 
       if (query != null) {
         val indexDir: Path? = Files.createTempDirectory("search-index")
@@ -66,7 +63,6 @@ class HelpSearch {
             val scorer: Scorer = QueryScorer(q)
             val highlighter = Highlighter(scorer)
 
-            val results = mutableListOf<HelpSearchResult>()
             for (i in hits.indices) {
               val doc = searcher.storedFields().document(hits[i].doc)
               val contentValue = buildString {
@@ -97,8 +93,6 @@ class HelpSearch {
                 )
               )
             }
-            val searchResults = HelpSearchResults(results)
-            if (searchResults.hits.isNotEmpty()) return jsonMapper.writeValueAsString(searchResults)
           }
           catch (e: Throwable) {
             Logger.getInstance(HelpSearch::class.java).info("Error searching help for $query", e)
@@ -114,7 +108,7 @@ class HelpSearch {
               }
           }
       }
-      return NOT_FOUND
+      return jsonMapper.writeValueAsString(HelpSearchResults(results))
     }
   }
 }
