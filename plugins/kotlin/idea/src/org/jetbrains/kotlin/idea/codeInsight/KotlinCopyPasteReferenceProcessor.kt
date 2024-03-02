@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -787,13 +788,16 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
             )
         }
 
-        // We adjust the generated shortening requests so that references are shortened exactly how they appear in the original code.
-        // The references to be shortened by the copy-paste processor are already bound in the same way as in the original code, so
-        // we can apply the most aggressive shortening settings.
-        file.project.modifyExistingShorteningRequests {
-            ShorteningRequest(it.pointer, it.options.enforceImportOfNestedDeclarations())
+        var defaultOptions = Options.DEFAULT
+        if (Registry.`is`("kotlin.copy.paste.allow.import.of.nested.declarations")) {
+            // We adjust the generated shortening requests so that references are shortened exactly how they appear in the original code.
+            // The references to be shortened by the copy-paste processor are already bound in the same way as in the original code, so
+            // we can apply the most aggressive shortening settings.
+            file.project.modifyExistingShorteningRequests {
+                ShorteningRequest(it.pointer, it.options.enforceImportOfNestedDeclarations())
+            }
+            defaultOptions = defaultOptions.enforceImportOfNestedDeclarations()
         }
-        val defaultOptions = Options.DEFAULT.enforceImportOfNestedDeclarations()
         performDelayedRefactoringRequests(file.project, defaultOptions)
     }
 
