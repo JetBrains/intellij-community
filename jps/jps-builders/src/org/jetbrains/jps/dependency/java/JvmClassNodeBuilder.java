@@ -499,7 +499,6 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   public void visit(int version, int access, String name, String sig, String superName, String[] interfaces) {
     myAccess = access;
     myName = name;
-    myUsages.add(new ImportPackageOnDemandUsage(JvmClass.getPackageName(name))); // implicit 'import' of the package to which the node belongs to
     myVersion = String.valueOf(version);
     mySignature = sig;
     mySuperClass = superName;

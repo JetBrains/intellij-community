@@ -2,6 +2,7 @@
 package org.jetbrains.jps.dependency.kotlin;
 
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.SmartHashSet;
 import kotlinx.metadata.*;
 import kotlinx.metadata.jvm.JvmExtensionsKt;
 import kotlinx.metadata.jvm.JvmMethodSignature;
@@ -13,6 +14,7 @@ import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.*;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
@@ -27,30 +29,10 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       affectNodeSources(context, superClass.getReferenceID(), "Subclass of a sealed class was added, affecting ");
     }
 
-    if (!addedClass.isPrivate() && addedClass.getOuterFqName().isEmpty()) { // is a top-level non-private class
-      String packageName = addedClass.getPackageName();
-      String matchName = addedClass.getShortName();
-      debug("Affecting classes within a package '", packageName, "' (or those on-demand importing the package) that have usages of methods or class constructors named '", matchName, "' or with name starting with '", matchName, "$'");
-      context.affectUsage(new ImportPackageOnDemandUsage(packageName), n -> {
-        KmDeclarationContainer container = getDeclarationContainer(n);
-        if (container == null) {
-          return false; // not a Kotlin-compiled node
-        }
-        for (KmTypeAlias alias : container.getTypeAliases()) {
-          if (matchName.equals(alias.getName())) {
-            return true; // todo: perhaps, we can make this check more precise
-          }
-        }
-        return find(unique(map(n.getUsages(), u -> {
-          if (u instanceof MethodUsage) {
-            return ((MethodUsage)u).getName();
-          }
-          if (u instanceof ClassNewUsage) {
-            return JvmClass.getShortName(((ClassNewUsage)u).getClassName());
-          }
-          return "";
-        })), name -> name.equals(matchName) || (name.length() > matchName.length() + 1 && name.startsWith(matchName) && name.charAt(matchName.length()) == '$')) != null;
-      });
+    if (!addedClass.isPrivate()) {
+      // calls to newly added class' constructors may shadow calls to functions named similarly
+      String ktName = getKotlinName(addedClass);
+      affectLookupUsages(context, asIterable(new JvmNodeReferenceID(addedClass.getPackageName())), ktName != null? JvmClass.getShortName(ktName) : addedClass.getShortName(), future, null);
     }
 
     return super.processAddedClass(context, addedClass, future, present);
@@ -117,9 +99,8 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       // should affect lambda instantiations on overloads, because some calls may have become ambiguous
       TypeRepr.ClassType samType = new TypeRepr.ClassType(changedClass.getName());
       for (JvmClass depClass : flat(map(context.getGraph().getDependingNodes(changedClass.getReferenceID()), dep -> present.getNodes(dep, JvmClass.class)))) {
-        JvmMethod methodWithSAMType = find(depClass.getMethods(), m -> contains(m.getArgTypes(), samType));
-        if (methodWithSAMType != null) {
-          affectConflictingExtensionMethods(context, depClass, methodWithSAMType, future);
+        for (JvmMethod methodWithSAMType : filter(depClass.getMethods(), m -> contains(m.getArgTypes(), samType))) {
+          affectConflictingCallExpressions(context, depClass, methodWithSAMType, present, null);
         }
       }
     }
@@ -168,11 +149,13 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
 
   @Override
   public boolean processAddedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmMethod addedMethod, Utils future, Utils present) {
+    JvmClass changedClass = change.getNow();
 
     // any added method may conflict with an extension method to this class, defined elsewhere
-    affectConflictingExtensionMethods(context, change.getPast(), addedMethod, future);
+    MethodUsage addedMethodUsage = addedMethod.createUsage(changedClass.getReferenceID());
+    // Do not affect nodes that already use this method. Since the method is just added, already existing usage in some node means the node has been already compiled against the most recent version of this class
+    affectConflictingCallExpressions(context, changedClass, addedMethod, future, n -> !contains(n.getUsages(), addedMethodUsage));
 
-    JvmClass changedClass = change.getNow();
     if (!changedClass.isPrivate() && "invoke".equals(addedMethod.getName())) {
       KmFunction kmFunction = getKmFunction(changedClass, addedMethod);
       if (kmFunction != null && Attributes.isOperator(kmFunction)) {
@@ -194,32 +177,21 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       KmFunction kmFunction = getKmFunction(changedClass, changedMethod);
       if (kmFunction != null) {
         debug("Method was inlineable, or has become inlineable or a body of inline method has changed; affecting method usages ", changedMethod);
-        affectLookupUsages(context, flat(asIterable(clsId), future.collectSubclassesWithoutMethod(clsId, changedMethod)), kmFunction.getName(), future);
+        affectLookupUsages(context, flat(asIterable(clsId), future.collectSubclassesWithoutMethod(clsId, changedMethod)), kmFunction.getName(), future, null);
       }
     }
     return true;
   }
 
-  private static void affectConflictingExtensionMethods(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, Utils utils) {
-    if (clsMethod.isPrivate() || clsMethod.isConstructor()) {
+  private void affectConflictingCallExpressions(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, Utils utils, @Nullable Predicate<Node<?, ?>> constraint) {
+    if (clsMethod.isPrivate()) {
       return;
     }
-    // the first arg is always the class being extended
     Set<JvmNodeReferenceID> targets = collect(
-      flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), new HashSet<>()
+      flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), new SmartHashSet<>()
     );
     targets.add(cls.getReferenceID());
-    String matchName = clsMethod.getName();
-    context.affectUsage(targets, n -> {
-      KmDeclarationContainer container = getDeclarationContainer(n);
-      if (container == null) {
-        return false; // not a Kotlin-compiled node
-      }
-      if (find(container.getTypeAliases(), alias -> matchName.equals(alias.getName())) != null) {
-        return true;
-      }
-      return find(n.getUsages(), u -> u instanceof MethodUsage && !targets.contains(u.getElementOwner()) && Objects.equals(((MethodUsage)u).getName(), matchName)) != null;
-    });
+    affectLookupUsages(context, targets, getMethodKotlinName(cls, clsMethod), utils, constraint);
   }
 
   private static final class PropertyDescriptor{
@@ -293,11 +265,11 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     return !iterator.hasNext();
   }
 
-  private void affectLookupUsages(DifferentiateContext context, Iterable<JvmNodeReferenceID> symbolOwners, String symbolName, Utils utils) {
-    affectUsages(context, "lookup usage", symbolOwners, id -> {
+  private void affectLookupUsages(DifferentiateContext context, Iterable<JvmNodeReferenceID> symbolOwners, String symbolName, Utils utils, @Nullable Predicate<Node<?, ?>> constraint) {
+    affectUsages(context, "lookup '" + symbolName + "'" , symbolOwners, id -> {
       String kotlinName = getKotlinName(id, utils);
       return new LookupNameUsage(kotlinName != null ? new JvmNodeReferenceID(kotlinName) : id, symbolName);
-    }, null);
+    }, constraint);
   }
 
   private static KmFunction getKmFunction(JvmClass cls, JvmMethod method) {
@@ -329,6 +301,11 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       return ((KmClass)container).getName();
     }
     return null;
+  }
+
+  private static String getMethodKotlinName(JvmClass cls, JvmMethod method) {
+    KmFunction kmFunction = getKmFunction(cls, method);
+    return kmFunction != null? kmFunction.getName() : method.getName();
   }
 
   private static KmDeclarationContainer getDeclarationContainer(Node<?, ?> node) {
