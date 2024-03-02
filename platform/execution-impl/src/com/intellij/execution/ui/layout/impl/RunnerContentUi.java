@@ -47,11 +47,9 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.docking.DragSession;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.ui.tabs.JBTabs;
-import com.intellij.ui.tabs.JBTabsEx;
-import com.intellij.ui.tabs.TabInfo;
-import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -77,6 +75,7 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class RunnerContentUi implements ContentUI, Disposable, CellTransform.Facade, ViewContextEx, PropertyChangeListener,
@@ -102,7 +101,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private final Wrapper myToolbar = new Wrapper();
   final MyDragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
 
-  JBRunnerTabsBase myTabs;
+  JBRunnerTabs myTabs;
   private final Comparator<TabInfo> myTabsComparator = (o1, o2) -> {
     TabImpl tab1 = getTabFor(o1);
     TabImpl tab2 = getTabFor(o2);
@@ -1077,11 +1076,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
           (!myTopLeftActionsBefore && leftPlaceHolder.getTargetComponent() == leftPlaceHolder)) {
         if (myTopLeftActionsBefore) {
           leftPlaceHolder.setContent(null);
-          setActions(forePlaceHolder, myTopLeftActionsPlace, leftGroupToBuild);
+          setActions(forePlaceHolder, myTopLeftActionsPlace, leftGroupToBuild, false);
+          setForeToolbarBorder(forePlaceHolder.getTargetComponent());
         }
         else {
           forePlaceHolder.setContent(null);
-          setActions(leftPlaceHolder, myTopLeftActionsPlace, leftGroupToBuild);
+          setActions(leftPlaceHolder, myTopLeftActionsPlace, leftGroupToBuild, true);
         }
       }
 
@@ -1090,7 +1090,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       final AnAction[] middleActions = middleGroupToBuild.getChildren(null);
 
       if (topToolbarContextActions == null || !Arrays.equals(middleActions, topToolbarContextActions.middle)) {
-        setActions(middlePlaceHolder, myTopMiddleActionsPlace, middleGroupToBuild);
+        setActions(middlePlaceHolder, myTopMiddleActionsPlace, middleGroupToBuild, true);
       }
 
       DefaultActionGroup rightGroupToBuild = new DefaultActionGroup();
@@ -1098,7 +1098,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       final AnAction[] rightActions = rightGroupToBuild.getChildren(null);
 
       if (topToolbarContextActions == null || !Arrays.equals(rightActions, topToolbarContextActions.right)) {
-        setActions(rightPlaceHolder, myTopRightActionsPlace, rightGroupToBuild);
+        setActions(rightPlaceHolder, myTopRightActionsPlace, rightGroupToBuild, true);
       }
 
       myContextActions.put(entry.getKey(), new TopToolbarContextActions(leftActions, middleActions, rightActions));
@@ -1111,14 +1111,39 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return hasToolbarContent;
   }
 
-  private void setActions(@NotNull Wrapper placeHolder, @NotNull String place, @NotNull DefaultActionGroup group) {
+  private void setActions(@NotNull Wrapper placeHolder, @NotNull String place, @NotNull DefaultActionGroup group, boolean noBorder) {
     ActionToolbar tb = myActionManager.createActionToolbar(place, group, true);
     tb.setReservePlaceAutoPopupIcon(false);
     tb.setTargetComponent(myComponent);
-    tb.getComponent().setBorder(null);
+    if (noBorder) {
+      tb.getComponent().setBorder(null);
+    }
     tb.getComponent().setOpaque(false);
 
     placeHolder.setContent(tb.getComponent());
+  }
+
+  private void setForeToolbarBorder(@NotNull JComponent component) {
+    int left = 0;
+    int right = 0;
+    Border border = component.getBorder();
+    if (border != null) {
+      Insets insets = border.getBorderInsets(component);
+      left = insets.left;
+      right = insets.right;
+    }
+    UiDecorator.UiDecoration decoration = myTabs.getDecoration();
+    if (decoration != null) {
+      Insets labelInsets = decoration.getLabelInsets();
+      Function<TabLabel.ActionsPosition, Insets> supplier = decoration.getContentInsetsSupplier();
+      if (labelInsets != null && supplier != null) {
+        int tabLeftInsect = labelInsets.left + supplier.apply(TabLabel.ActionsPosition.RIGHT).left;
+        if (tabLeftInsect > right) {
+          right = tabLeftInsect;
+        }
+      }
+    }
+    component.setBorder(JBUI.Borders.empty(0, left, 0, right));
   }
 
   private boolean rebuildMinimizedActions() {

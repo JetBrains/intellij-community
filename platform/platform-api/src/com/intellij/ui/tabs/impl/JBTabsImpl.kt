@@ -3079,6 +3079,8 @@ open class JBTabsImpl(private var project: Project?,
   val tabHGap: Int
     get() = -myBorder.thickness
 
+  fun getDecoration(): UiDecoration? = uiDecorator?.getDecoration() ?: defaultDecorator.getDecoration()
+
   override fun toString(): String = "JBTabs visible=$visibleInfos selected=$mySelectedInfo"
 
   override fun getAccessibleContext(): AccessibleContext {
