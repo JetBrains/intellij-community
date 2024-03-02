@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.notebook.editor.BackFileViewProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -135,6 +136,11 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     }
     while (!myPendingUpdates.isEmpty()) {
       VirtualFile file = myPendingUpdates.poll();
+
+      if (file.getUserData(BackFileViewProvider.FRONT_FILE_KEY) != null) {
+        file = file.getUserData(BackFileViewProvider.FRONT_FILE_KEY);
+      }
+
       if (file.isDirectory()) continue;
       if (!file.isValid()) {
         // file is deleted or changed externally
