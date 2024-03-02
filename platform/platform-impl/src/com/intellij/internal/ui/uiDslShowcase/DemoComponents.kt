@@ -54,7 +54,9 @@ fun demoComponents(): DialogPanel {
     }
 
     row("segmentedButton:") {
-      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) { text = it }
+      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) { text = it }.apply {
+        selectedItem = "Button 2"
+      }
     }
 
     row("tabbedPaneHeader:") {
