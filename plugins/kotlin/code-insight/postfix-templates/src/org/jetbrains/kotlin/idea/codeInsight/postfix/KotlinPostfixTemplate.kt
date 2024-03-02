@@ -30,6 +30,7 @@ fun allExpressions(vararg filters: (KtExpression) -> Boolean): PostfixTemplateEx
             if (isUnitTestMode()) {
                 val expressionTexts = expressions.toList().map { it.text }
                 if (expressionTexts.size > 1) {
+                    @Suppress("TestOnlyProblems")
                     with(KotlinPostfixTemplateInfo) { file.suggestedExpressions = expressionTexts }
                 }
             }

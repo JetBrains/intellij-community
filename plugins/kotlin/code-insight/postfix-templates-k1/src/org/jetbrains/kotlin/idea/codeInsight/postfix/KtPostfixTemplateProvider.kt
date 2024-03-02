@@ -199,6 +199,7 @@ private class KtExpressionPostfixTemplateSelector(
         val result = filteredByOffset.filter(this::filterElement)
 
         if (isUnitTestMode() && result.size > 1) {
+            @Suppress("TestOnlyProblems")
             with(KotlinPostfixTemplateInfo) {
                 originalFile.suggestedExpressions = result.map { it.text }
             }

@@ -1,8 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.Disposer
+import com.intellij.psi.impl.cache.CacheManager
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.UsageSearchContext
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
@@ -38,10 +49,41 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
             val fileText = file.text
             val template = InTextDirectivesUtils.findStringWithPrefixes(fileText, TEMPLATE_DIRECTIVE)
 
-            if (template != null) {
-                myFixture.type(template.replace("\\t", "\t"))
+            val postfixTemplate =
+                LanguagePostfixTemplate.LANG_EP.forLanguage(KotlinLanguage.INSTANCE)
+                    .templates.firstOrNull { it.key == ".$templateName" }
+            val dumbMode = postfixTemplate is DumbAware
+
+            val task = {
+                if (template != null) {
+                    myFixture.type(template.replace("\\t", "\t"))
+                } else {
+                    myFixture.type("\t")
+                }
+            }
+
+            //to initialize caches
+            if (!dumbMode && !DumbService.isDumb(project)) {
+                CacheManager.getInstance(project).getFilesWithWord(
+                    "XXX",
+                    UsageSearchContext.IN_COMMENTS,
+                    GlobalSearchScope.allScope(project),
+                    true,
+                )
+            }
+
+            if (dumbMode) {
+                val disposable = Disposer.newCheckedDisposable("mustWaitForSmartMode")
+                try {
+                    (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, disposable)
+                    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+                        task()
+                    }
+                } finally {
+                    Disposer.dispose(disposable)
+                }
             } else {
-                myFixture.type("\t")
+                task()
             }
 
             val allowMultipleExpressions = InTextDirectivesUtils.isDirectiveDefined(fileText, ALLOW_MULTIPLE_EXPRESSIONS)
