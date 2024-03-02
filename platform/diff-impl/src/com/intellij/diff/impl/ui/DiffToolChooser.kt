@@ -6,17 +6,20 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.ui.JBColor
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
+import com.intellij.ui.dsl.builder.SegmentedButton
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
+import javax.swing.Icon
 import javax.swing.JComponent
 
 @Suppress("DialogTitleCapitalization")
 abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(), CustomComponentAction {
+  private val segmentedButton = SegmentedButtonComponent { diffTool: DiffTool ->
+    DiffToolItemPresentation(diffTool)
+  }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -51,22 +54,18 @@ abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(
   abstract fun getActiveTool(): DiffTool
   abstract fun getForcedDiffTool(): DiffTool?
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
-    panel {
-      row {
-        segmentedButton(getTools()) { text = it.getName() }.apply {
-          selectedItem = getActiveTool()
-          whenItemSelected { if (project != null) onSelected(project, it) }
-        }.customize(UnscaledGaps.EMPTY)
-      }
-    }.apply {
-      // todo: fix segmented button
-      UIUtil.forEachComponentInHierarchy(this) {
-        if (it is ActionButtonWithText) {
-          it.background = JBColor.lazy {
-            UIUtil.getComboBoxDisabledBackground()
-          }
-        }
-      }
-    }
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    segmentedButton.items = getTools()
+    segmentedButton.spacing = IntelliJSpacingConfiguration()
+    segmentedButton.selectedItem = getActiveTool()
+    segmentedButton.whenItemSelected { if (project != null) onSelected(project, it) }
+    return segmentedButton
+  }
+}
+
+private class DiffToolItemPresentation(diffTool: DiffTool) : SegmentedButton.ItemPresentation {
+  override var text: String? = diffTool.name
+  override var toolTipText: String? = null
+  override var icon: Icon? = null
+  override var enabled: Boolean = true
 }
