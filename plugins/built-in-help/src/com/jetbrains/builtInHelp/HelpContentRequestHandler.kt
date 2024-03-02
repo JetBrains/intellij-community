@@ -2,8 +2,8 @@
 package com.jetbrains.builtInHelp
 
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ResourceUtil
 import com.jetbrains.builtInHelp.mapping.HelpMap
@@ -25,7 +25,7 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
     configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   }
 
-  private val jsonMapper = jacksonObjectMapper().apply {
+  private val jsonMapper = ObjectMapper().apply {
     configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   }
 
