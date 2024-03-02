@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.intellij.notebook.editor.BackFileViewProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -38,6 +39,10 @@ public abstract class StubProcessingHelperBase {
                                                              @NotNull Class<Psi> requiredClass,
                                                              @NotNull Computable<String> debugOperationName) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    if (psiFile != null && psiFile.getViewProvider() instanceof BackFileViewProvider) {
+      psiFile = ((BackFileViewProvider)psiFile.getViewProvider()).getFrontPsiFile();
+    }
+
     if (psiFile == null) {
       LOG.error("Stub index points to a file without PSI: " +
                 getFileTypeInfo(file, project) + ", " +
