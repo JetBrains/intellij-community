@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -168,6 +169,7 @@ sealed class K2MoveModel {
             }
 
             val inSourceRoot = inSourceRoot()
+            val targetFile = targetContainer?.containingFile
             return when {
                 targetContainer is PsiDirectory || (elements.all { it is KtFile } && elements.size > 1) -> {
                     val source = K2MoveSourceModel.FileSource(elements.filterIsInstance<KtFile>().toSet())
@@ -182,7 +184,7 @@ sealed class K2MoveModel {
                     }
                     Files(project, source, target, inSourceRoot)
                 }
-                targetContainer is KtFile || elements.all { it is KtNamedDeclaration } || elements.singleOrNull() is KtFile -> {
+                targetFile is KtFile || elements.all { it is KtDeclarationContainer } -> {
                     val elementsFromFiles = elements.flatMap { elem ->
                         when (elem) {
                             is KtFile -> elem.declarations.filterIsInstance<KtNamedDeclaration>()
@@ -191,8 +193,8 @@ sealed class K2MoveModel {
                         }
                     }.toSet()
                     val source = K2MoveSourceModel.ElementSource(elementsFromFiles)
-                    val target = if (targetContainer is KtFile) {
-                        K2MoveTargetModel.File(targetContainer)
+                    val target = if (targetFile is KtFile) {
+                        K2MoveTargetModel.File(targetFile)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
                         val firstElem = elements.firstOrNull()
                         val fileName = when (firstElem) {

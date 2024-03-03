@@ -32,6 +32,23 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assert(moveMembersModel.target.fileName == "Bar.kt")
     }
 
+    fun `test file from source directory to class move`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        val fooFile = myFixture.addFileToProject("Foo.kt", """
+            class Foo { }
+        """.trimIndent()) as KtFile
+        val barClass = (myFixture.addFileToProject("Bar.kt", """
+            class Bar { }
+        """.trimIndent()) as KtFile).declarations.firstOrNull()
+        val moveModel = K2MoveModel.create(arrayOf(fooFile), barClass)
+        assertInstanceOf<K2MoveModel.Members>(moveModel)
+        val moveMembersModel = moveModel as K2MoveModel.Members
+        assertSize(1, moveMembersModel.source.elements)
+        val sourceElement = moveMembersModel.source.elements.firstOrNull()
+        assert(sourceElement is KtClass && sourceElement.name == "Foo")
+        assert(moveMembersModel.target.fileName == "Bar.kt")
+    }
+
     fun `test file from source directory to source directory move`() {
         PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """
