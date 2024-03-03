@@ -32,25 +32,25 @@ public final class ThreadingAssertions {
 
   @Internal
   @VisibleForTesting
-  public static final String MUST_EXECUTE_INSIDE_READ_ACTION =
+  public static final String MUST_EXECUTE_IN_READ_ACTION =
     "Read access is allowed from inside read-action only (see Application.runReadAction())";
   @Internal
   @VisibleForTesting
-  public static final String MUST_NOT_EXECUTE_INSIDE_READ_ACTION =
+  public static final String MUST_NOT_EXECUTE_IN_READ_ACTION =
     "Must not execute inside read action";
   private static final String MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION =
     "Access is allowed from write thread only";
   @Internal
   @VisibleForTesting
-  public static final String MUST_EXECUTE_INSIDE_WRITE_ACTION =
+  public static final String MUST_EXECUTE_IN_WRITE_ACTION =
     "Write access is allowed inside write-action only (see Application.runWriteAction())";
   @Internal
   @VisibleForTesting
-  public static final String MUST_EXECUTE_UNDER_EDT =
+  public static final String MUST_EXECUTE_IN_EDT =
     "Access is allowed from Event Dispatch Thread (EDT) only";
   @Internal
   @VisibleForTesting
-  public static final String MUST_NOT_EXECUTE_UNDER_EDT =
+  public static final String MUST_NOT_EXECUTE_IN_EDT =
     "Access from Event Dispatch Thread (EDT) is not allowed";
 
   private static final String DOCUMENTATION_URL = "https://jb.gg/ij-platform-threading";
@@ -62,7 +62,19 @@ public final class ThreadingAssertions {
    */
   public static void assertEventDispatchThread() {
     if (!EDT.isCurrentThreadEdt()) {
-      throwThreadAccessException(MUST_EXECUTE_UNDER_EDT);
+      throwThreadAccessException(MUST_EXECUTE_IN_EDT);
+    }
+  }
+
+  /**
+   * Asserts that the current thread is the event dispatch thread <b>without throwing</b> an exception.
+   *
+   * @see com.intellij.util.concurrency.annotations.RequiresEdt
+   */
+  @Obsolete
+  public static void softAssertEventDispatchThread() {
+    if (!EDT.isCurrentThreadEdt()) {
+      getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_EDT));
     }
   }
 
@@ -73,7 +85,19 @@ public final class ThreadingAssertions {
    */
   public static void assertBackgroundThread() {
     if (EDT.isCurrentThreadEdt()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_UNDER_EDT);
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_EDT);
+    }
+  }
+
+  /**
+   * Asserts that the current thread is <b>not</b> the event dispatch thread <b>without throwing</b> an exception.
+   *
+   * @see com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+   */
+  @Obsolete
+  public static void softAssertBackgroundThread() {
+    if (EDT.isCurrentThreadEdt()) {
+      getLogger().error(createThreadAccessException(MUST_NOT_EXECUTE_IN_EDT));
     }
   }
 
@@ -87,12 +111,12 @@ public final class ThreadingAssertions {
    */
   public static void assertReadAccess() {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
-      throwThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION);
+      throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION);
     }
   }
 
   /**
-   * Asserts that the current thread has read access <b>without throwing</b>.
+   * Asserts that the current thread has read access <b>without throwing</b> an exception.
    * <p/>
    * Historically, it was not possible to throw everywhere,
    * so this function logs an error without throwing, but then proceeds normally.
@@ -104,7 +128,7 @@ public final class ThreadingAssertions {
   @Obsolete
   public static void softAssertReadAccess() {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
-      getLogger().error(createThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION));
+      getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_READ_ACTION));
     }
   }
 
@@ -115,7 +139,7 @@ public final class ThreadingAssertions {
    */
   public static void assertNoReadAccess() {
     if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_INSIDE_READ_ACTION);
+      throwThreadAccessException(MUST_NOT_EXECUTE_IN_READ_ACTION);
     }
   }
 
@@ -142,7 +166,7 @@ public final class ThreadingAssertions {
    */
   public static void assertWriteAccess() {
     if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      throwThreadAccessException(MUST_EXECUTE_INSIDE_WRITE_ACTION);
+      throwThreadAccessException(MUST_EXECUTE_IN_WRITE_ACTION);
     }
   }
 
