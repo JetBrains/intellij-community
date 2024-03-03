@@ -98,7 +98,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             val result = modifyPsiWithOptimizedImports(expression.containingKtFile) {
                 when (elementToReplace) {
                     is KtUserType -> elementToReplace.replaceWith(writableFqn, targetElement)
-                    is KtDotQualifiedExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
+                    is KtQualifiedExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
                     is KtCallExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
                     is KtCallableReferenceExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
                     is KtSimpleNameExpression -> elementToReplace.replaceWith(writableFqn, targetElement)
@@ -141,7 +141,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         } else false
     }
 
-    private fun KtDotQualifiedExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
+    private fun KtQualifiedExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         val isPartOfImport = parentOfType<KtImportDirective>(withSelf = false) != null
         val selectorExpression = selectorExpression ?: return null
         val newSelectorExpression = when (selectorExpression) {

@@ -331,6 +331,11 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
             runTest("../../idea/tests/testData/refactoring/bindToElement/extensionProperty/RootPkg.kt");
         }
 
+        @TestMetadata("SafeAccess.kt")
+        public void testSafeAccess() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/extensionProperty/SafeAccess.kt");
+        }
+
         @TestMetadata("UnQualified.kt")
         public void testUnQualified() throws Exception {
             runTest("../../idea/tests/testData/refactoring/bindToElement/extensionProperty/UnQualified.kt");
