@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
+import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceEntityPsiElement.Companion.HUGGING_FACE_ENTITY_NAME_KEY
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceImportedLibrariesManagerService
 import com.jetbrains.python.psi.PyStringLiteralExpression
 
