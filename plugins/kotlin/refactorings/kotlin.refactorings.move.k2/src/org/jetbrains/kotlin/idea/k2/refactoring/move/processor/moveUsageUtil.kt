@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 
 /**
- * Retrieves all declarations that might need there references to be updated. This excludes for example instance and local methods and
- * properties.
+ * Retrieves all declarations that might need their references to be updated.
+ * This excludes, for example, instance and local functions and properties.
  *
  * Example:
  * ```
