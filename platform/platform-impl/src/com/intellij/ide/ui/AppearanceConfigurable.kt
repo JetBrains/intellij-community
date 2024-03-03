@@ -139,7 +139,6 @@ private val cdDifferentiateProjects
 internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   return sequenceOf(
     cdShowToolWindowBars,
-    cdShowToolWindowNames,
     cdShowToolWindowNumbers,
     cdEnableMenuMnemonics,
     cdEnableControlsMnemonics,
