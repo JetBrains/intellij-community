@@ -37,6 +37,10 @@ import java.io.IOException;
 import java.lang.ref.Reference;
 import java.util.*;
 
+/**
+ * Refactoring processor for moving files or sets of files.
+ * Uses {@link MoveFileHandler} to run language-specific logic.
+ */
 public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(MoveFilesOrDirectoriesProcessor.class);
 
