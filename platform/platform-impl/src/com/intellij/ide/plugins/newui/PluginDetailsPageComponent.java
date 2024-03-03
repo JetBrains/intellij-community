@@ -1026,7 +1026,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myPlugin = pluginDescriptor;
     PluginManagementPolicy policy = PluginManagementPolicy.getInstance();
     myUpdateDescriptor = updateDescriptor != null && policy.canEnablePlugin(updateDescriptor) ? updateDescriptor : null;
-    myIsPluginCompatible = PluginManagerCore.INSTANCE.getIncompatiblePlatform(pluginDescriptor) == null;
+    myIsPluginCompatible = PluginManagerCore.INSTANCE.getIncompatibleOs(pluginDescriptor) == null;
     myIsPluginAvailable = myIsPluginCompatible && policy.canEnablePlugin(updateDescriptor);
     if (myMarketplace && myMultiTabs) {
       myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());

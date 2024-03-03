@@ -13,34 +13,34 @@ private const val osModuleIdPrefix = "com.intellij.modules.os."
 @ApiStatus.Experimental
 enum class IdeaPluginOsRequirement {
   Unknown {
-    override fun isHostPlatform(): Boolean = false
+    override fun isHostOs(): Boolean = false
   },
   Windows {
-    override fun isHostPlatform(): Boolean = SystemInfoRt.isWindows
+    override fun isHostOs(): Boolean = SystemInfoRt.isWindows
   },
   Mac {
-    override fun isHostPlatform(): Boolean = SystemInfoRt.isMac
+    override fun isHostOs(): Boolean = SystemInfoRt.isMac
     override fun toString(): String = "macOS"
   },
   Linux {
-    override fun isHostPlatform(): Boolean = SystemInfoRt.isLinux
+    override fun isHostOs(): Boolean = SystemInfoRt.isLinux
   },
   FreeBSD {
-    override fun isHostPlatform(): Boolean = SystemInfoRt.isFreeBSD
+    override fun isHostOs(): Boolean = SystemInfoRt.isFreeBSD
   },
   Solaris {
-    override fun isHostPlatform(): Boolean = SystemInfoRt.isSolaris
+    override fun isHostOs(): Boolean = SystemInfoRt.isSolaris
   },
   Unix {
-    override fun isHostPlatform(): Boolean = SystemInfoRt.isUnix
+    override fun isHostOs(): Boolean = SystemInfoRt.isUnix
   },
   XWindow {
-    override fun isHostPlatform(): Boolean = SystemInfoRt.isXWindow
+    override fun isHostOs(): Boolean = SystemInfoRt.isXWindow
   };
 
   val moduleId: PluginId = PluginId.getId(osModuleIdPrefix + name.lowercase())
 
-  abstract fun isHostPlatform(): Boolean
+  abstract fun isHostOs(): Boolean
 
   companion object {
     private val directory = HashMap<PluginId, IdeaPluginOsRequirement>().let { map ->
@@ -48,7 +48,7 @@ enum class IdeaPluginOsRequirement {
       Java11Shim.INSTANCE.copyOf(map)
     }
 
-    fun getHostPlatformModuleIds(): List<PluginId> = entries.mapNotNull { it.takeIf { it.isHostPlatform() }?.moduleId }
+    fun getHostOsModuleIds(): List<PluginId> = entries.mapNotNull { it.takeIf { it.isHostOs() }?.moduleId }
 
     fun fromModuleId(moduleId: PluginId): IdeaPluginOsRequirement? {
       return directory.get(moduleId) ?: Unknown.takeIf { looksLikeOsModuleId(moduleId.idString) }

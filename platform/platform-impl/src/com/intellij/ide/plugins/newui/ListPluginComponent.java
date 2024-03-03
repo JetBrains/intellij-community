@@ -105,7 +105,7 @@ public final class ListPluginComponent extends JPanel {
     myMarketplace = marketplace;
     boolean compatible = plugin instanceof PluginNode // FIXME: dependencies not available here, hard coded for now
                          ? !"com.intellij.kmm".equals(plugin.getPluginId().getIdString()) || SystemInfoRt.isMac
-                         : PluginManagerCore.INSTANCE.getIncompatiblePlatform(plugin) == null;
+                         : PluginManagerCore.INSTANCE.getIncompatibleOs(plugin) == null;
     myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagementPolicy.getInstance().canEnablePlugin(plugin);
     pluginModel.addComponent(this);
 
