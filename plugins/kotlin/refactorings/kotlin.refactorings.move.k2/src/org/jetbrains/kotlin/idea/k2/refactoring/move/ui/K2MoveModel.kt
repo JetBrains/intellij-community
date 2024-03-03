@@ -110,9 +110,9 @@ sealed class K2MoveModel {
     }
 
     /**
-     * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor.Members
+     * @see org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor.Declarations
      */
-    class Members(
+    class Declarations(
         override val project: Project,
         override val source: K2MoveSourceModel.ElementSource,
         override val target: K2MoveTargetModel.File,
@@ -122,7 +122,7 @@ sealed class K2MoveModel {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
             val searchReferences = if (inSourceRoot) searchReferences.state else false
-            return K2MoveDescriptor.Members(
+            return K2MoveDescriptor.Declarations(
                 project,
                 srcDescr,
                 targetDescr,
@@ -206,7 +206,7 @@ sealed class K2MoveModel {
                         val psiDirectory = containingFile.containingDirectory ?: error("No directory found")
                         K2MoveTargetModel.File(fileName, containingFile.packageFqName, psiDirectory)
                     }
-                    Members(project, source, target, inSourceRoot)
+                    Declarations(project, source, target, inSourceRoot)
                 }
                 else -> error("Can't mix file and element source")
             }

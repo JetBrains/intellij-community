@@ -18,7 +18,13 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.psi.KtFile
 
-class K2MoveMembersRefactoringProcessor(val descriptor: K2MoveDescriptor.Members) : BaseRefactoringProcessor(descriptor.project) {
+/**
+ * K2 move refactoring processor that moves declarations inside a new target according to the passed [descriptor]. The main difference
+ * between this refactoring processor and [K2MoveFilesOrDirectoriesRefactoringProcessor] is that this processor moves declarations
+ * individually and regenerates the imports that are required for the move. While in [K2MoveFilesOrDirectoriesRefactoringProcessor] the
+ * whole file, including imports is moved, then imports are adjusted when necessary.
+ */
+class K2MoveDeclarationsRefactoringProcessor(val descriptor: K2MoveDescriptor.Declarations) : BaseRefactoringProcessor(descriptor.project) {
     override fun getCommandName(): String = KotlinBundle.message("command.move.declarations")
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
@@ -48,14 +54,10 @@ class K2MoveMembersRefactoringProcessor(val descriptor: K2MoveDescriptor.Members
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
       val targetFile = descriptor.target.getOrCreateTarget()
-
       val sourceFiles = descriptor.source.elements.map { it.containingKtFile }.distinct()
-
       val oldToNewMap = descriptor.source.moveInto(targetFile).toMutableMap()
       descriptor.source.elements.forEach(PsiElement::deleteSingle)
-
       retargetUsagesAfterMove(usages.toList(), oldToNewMap)
-
       for (sourceFile in sourceFiles) {
         if (sourceFile.declarations.isEmpty()) sourceFile.delete()
       }
