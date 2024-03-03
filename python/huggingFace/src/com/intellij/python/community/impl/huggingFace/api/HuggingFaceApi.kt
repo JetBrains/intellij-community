@@ -27,20 +27,14 @@ object HuggingFaceApi {
     }
   }
 
-  //suspend fun parseDetailedModelData(modelId: String): String? {
-  //  val modelApiLink = HuggingFaceURLProvider.getModelApiLink(modelId).toString()
-  //  val response = HuggingFaceHttpClient.downloadContentAndHeaders(modelApiLink)
-  //  return response.content
-  //}
-
   suspend fun performSearch(query: String, tags: String?): Map<String, HuggingFaceEntityBasicApiData> {
     val queryUrl = HuggingFaceURLProvider.getModelSearchQuery(query, tags)
     val executor = HuggingFaceSafeExecutor.instance
 
     return executor.asyncSuspend("SearchHuggingFace") {
       // todo: add pagination - but only if needed (user scrolls down)
-      var nextPageUrl: String? = queryUrl.toString()
-      val response = HuggingFaceHttpClient.downloadContentAndHeaders(nextPageUrl!!)
+      val nextPageUrl: String = queryUrl.toString()
+      val response = HuggingFaceHttpClient.downloadContentAndHeaders(nextPageUrl)
       response.content?.let {
         val dataMap = parseBasicEntityData(HuggingFaceEntityKind.MODEL, it)
         dataMap
@@ -63,30 +57,29 @@ object HuggingFaceApi {
 
     jsonArray.forEach { element ->
       val jsonObject: JsonNode = element
-      jsonObject.get("id")?.asText()?.let { id ->
-        if (id.isNotEmpty()) {
-          @NlsSafe val nlsSafeId = id
-          @NlsSafe val pipelineTag = jsonObject.get("pipeline_tag")?.asText() ?: "unknown"
-          val gated = jsonObject.get("gated")?.asText() ?: "true"
-          val downloads = jsonObject.get("downloads")?.asInt() ?: -1
-          val likes = jsonObject.get("likes")?.asInt() ?: -1
-          val lastModified = jsonObject.get("lastModified")?.asText() ?: "1000-01-01T01:01:01.000Z"
-          val libraryName = jsonObject.get("library_name")?.asText() ?: "unknown"
+      val id = jsonObject.get("id")?.asText()?.takeIf { it.isNotEmpty() } ?: return@forEach
 
-          val modelData = HuggingFaceEntityBasicApiData(
-            endpointKind,
-            nlsSafeId,
-            gated,
-            downloads,
-            likes,
-            lastModified,
-            libraryName,
-            pipelineTag,
-          )
-          modelDataMap[nlsSafeId] = modelData
-        }
-      }
+      @NlsSafe val nlsSafeId = id
+      @NlsSafe val pipelineTag = jsonObject.get("pipeline_tag")?.asText() ?: "unknown"
+      val gated = jsonObject.get("gated")?.asText() ?: "true"
+      val downloads = jsonObject.get("downloads")?.asInt() ?: -1
+      val likes = jsonObject.get("likes")?.asInt() ?: -1
+      val lastModified = jsonObject.get("lastModified")?.asText() ?: "1000-01-01T01:01:01.000Z"
+      val libraryName = jsonObject.get("library_name")?.asText() ?: "unknown"
+
+      val modelData = HuggingFaceEntityBasicApiData(
+        endpointKind,
+        nlsSafeId,
+        gated,
+        downloads,
+        likes,
+        lastModified,
+        libraryName,
+        pipelineTag,
+      )
+      modelDataMap[nlsSafeId] = modelData
     }
+
     return modelDataMap
   }
 }

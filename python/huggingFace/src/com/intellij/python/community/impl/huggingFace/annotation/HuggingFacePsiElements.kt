@@ -2,15 +2,13 @@
 package com.intellij.python.community.impl.huggingFace.annotation
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.FakePsiElement
-import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Key
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
+import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector
-
-val HUGGING_FACE_ENTITY_NAME_KEY = Key.create<Boolean>("HUGGING_FACE_ENTITY_NAME_KEY")
 
 
 abstract class HuggingFaceEntityPsiElement(
@@ -25,6 +23,10 @@ abstract class HuggingFaceEntityPsiElement(
 
   @NlsSafe
   fun stringValue(): String = entityName
+
+  companion object {
+    val HUGGING_FACE_ENTITY_NAME_KEY = Key.create<Boolean>("HUGGING_FACE_ENTITY_NAME_KEY")
+  }
 }
 
 class HuggingFaceModelPsiElement(parent: PsiElement, private val modelName: String
