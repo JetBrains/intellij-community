@@ -24,7 +24,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_UNDER_EDT;
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_EDT;
 
 public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
 
@@ -43,7 +43,7 @@ public abstract class TMHInstrumenterTestBase extends UsefulTestCase {
   final void doEdtTest() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     invokeMethod(testClass.aClass);
-    assertThrows(Throwable.class, MUST_EXECUTE_UNDER_EDT, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
+    assertThrows(Throwable.class, MUST_EXECUTE_IN_EDT, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
   }
 
   final @NotNull TestClass getInstrumentedTestClass() throws IOException {

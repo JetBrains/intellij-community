@@ -51,7 +51,7 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testEdtActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_UNDER_EDT, ()-> throwExecutionExceptionCauseFromBackground(
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_EDT, ()-> throwExecutionExceptionCauseFromBackground(
       () -> runEdtAction()));
   }
 
@@ -73,7 +73,7 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testReadActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_INSIDE_READ_ACTION, () -> throwExecutionExceptionCauseFromBackground(
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_READ_ACTION, () -> throwExecutionExceptionCauseFromBackground(
       () -> runReadAction()));
   }
 
@@ -82,16 +82,16 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testWriteActionOnEdt() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_INSIDE_WRITE_ACTION, () -> runWriteAction());
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_WRITE_ACTION, () -> runWriteAction());
   }
 
   public void testWriteActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_INSIDE_WRITE_ACTION, () -> throwExecutionExceptionCauseFromBackground(
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_WRITE_ACTION, () -> throwExecutionExceptionCauseFromBackground(
       () -> runWriteAction()));
   }
 
   public void testNonReadActionOnEdt() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_INSIDE_READ_ACTION, () -> runNonReadAction());
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_IN_READ_ACTION, () -> runNonReadAction());
   }
 
   public void testNonReadActionInBackground() throws Throwable {
@@ -99,12 +99,12 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testNonReadActionInBackgroundWithReadLock() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_INSIDE_READ_ACTION,
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_IN_READ_ACTION,
                  () -> throwExecutionExceptionCauseFromBackground(() -> ReadAction.run(() -> runNonReadAction())));
   }
 
   public void testNonReadActionInBackgroundWithWriteLock() {
-    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_UNDER_EDT,
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_IN_EDT,
                  () -> throwExecutionExceptionCauseFromBackground(() -> WriteAction.run(() -> runNonReadAction())));
   }
 
