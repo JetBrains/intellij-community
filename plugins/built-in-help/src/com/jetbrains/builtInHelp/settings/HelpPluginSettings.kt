@@ -8,7 +8,7 @@ import com.jetbrains.builtInHelp.BuiltInHelpBundle
 import org.jetbrains.annotations.NonNls
 
 @Service(Service.Level.APP)
-@State( name = "HelpPluginSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "HelpPluginSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 const val defaultBaseUrl = "https://www.jetbrains.com/"
 
 class HelpPluginSettings : PersistentStateComponent<HelpPluginSettings> {
