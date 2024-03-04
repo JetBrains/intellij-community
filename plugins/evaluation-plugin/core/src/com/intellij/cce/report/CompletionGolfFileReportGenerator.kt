@@ -44,7 +44,9 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
-  override fun getBackgroundClass(lookup: Lookup, expectedText: String): String = ""
+  override fun getFilterCheckClass(lookup: Lookup, expectedText: String): String = ""
+
+  override fun getSkippedByModelClass(lookup: Lookup, expectedText: String): String = ""
 
   override fun getThresholds(): List<BaseThreshold> = Threshold.values().toList()
 

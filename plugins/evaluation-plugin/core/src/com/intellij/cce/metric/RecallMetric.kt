@@ -5,10 +5,8 @@ import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-open class RecallMetric : Metric {
-  protected val sample = Sample()
-  override val name = NAME
-  override val description: String = "Ratio of successful invocations"
+abstract class RecallMetricBase : Metric {
+  private val sample = Sample()
   override val showByDefault: Boolean = true
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
@@ -20,7 +18,7 @@ open class RecallMetric : Metric {
     val fileSample = Sample()
     lookups
       .forEach { lookup ->
-        val value = if (suggestionRelevant(lookup)) 1.0 else 0.0
+        val value = if (hasRelevant(lookup)) 1.0 else 0.0
         fileSample.add(value)
         sample.add(value)
       }
@@ -28,35 +26,33 @@ open class RecallMetric : Metric {
     return fileSample.mean()
   }
 
-  protected open fun suggestionRelevant(lookup: Lookup): Boolean {
-    return lookup.suggestions.any { it.isRelevant }
-  }
+  abstract fun hasRelevant(lookup: Lookup): Boolean
+}
 
-  companion object {
-    const val NAME = "Recall"
+class RecallMetric : RecallMetricBase() {
+  override val name = "Recall"
+  override val description = "Ratio of successful invocations"
+
+  override fun hasRelevant(lookup: Lookup): Boolean {
+    return lookup.suggestions.any { it.isRelevant }
   }
 }
 
-class RecallAtMetric(override val showByDefault: Boolean, private val n: Int) : RecallMetric() {
-  override val name = NAME_PREFIX + n
+class RecallAtMetric(override val showByDefault: Boolean, private val n: Int) : RecallMetricBase() {
+  override val name = "RecallAt$n"
   override val description: String = "Ratio of invocations with matching proposal in top-$n"
-  override val valueType = MetricValueType.DOUBLE
 
-  override fun suggestionRelevant(lookup: Lookup): Boolean {
+  override fun hasRelevant(lookup: Lookup): Boolean {
     val indexOfRelevantSuggestion = lookup.suggestions.indexOfFirst { it.isRelevant }
     return indexOfRelevantSuggestion in 0 until n
   }
-
-  companion object {
-    const val NAME_PREFIX = "RecallAt"
-  }
 }
 
-class RecallWithRelevanceMetric(override val showByDefault: Boolean, private val relevance: String) : RecallMetric() {
+class RecallWithRelevanceMetric(override val showByDefault: Boolean, private val relevance: String) : RecallMetricBase() {
   override val name = "Recall With ${relevance.capitalize()} Model"
   override val description: String = "Ratio of invocations with matching proposal taking $relevance model into account"
 
-  override fun suggestionRelevant(lookup: Lookup): Boolean {
+  override fun hasRelevant(lookup: Lookup): Boolean {
     return lookup.additionalInfo["${relevance}_decision"] != "SKIP" && lookup.suggestions.any { it.isRelevant }
   }
 }

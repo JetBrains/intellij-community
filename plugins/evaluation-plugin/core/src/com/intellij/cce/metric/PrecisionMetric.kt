@@ -6,10 +6,8 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.Sample
 
-open class PrecisionMetric : Metric {
+abstract class PrecisionMetricBase : Metric {
   private val sample = mutableListOf<Double>()
-  override val name = "Precision"
-  override val description: String = "Ratio of selected proposals by all proposals"
   override val showByDefault: Boolean = true
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
@@ -30,16 +28,23 @@ open class PrecisionMetric : Metric {
     return fileSample.mean()
   }
 
-  protected open fun getLookups(sessions: List<Session>): List<Lookup> {
+  abstract fun getLookups(sessions: List<Session>): List<Lookup>
+}
+
+class PrecisionMetric : PrecisionMetricBase() {
+  override val name = "Precision"
+  override val description: String = "Ratio of selected proposals by all proposals"
+
+  override fun getLookups(sessions: List<Session>): List<Lookup> {
     return sessions.flatMap { session -> session.lookups }
   }
 }
 
-class PrecisionWithRelevanceMetric(override val showByDefault: Boolean, private val relevance: String) : PrecisionMetric() {
+class PrecisionWithRelevanceMetric(override val showByDefault: Boolean, private val relevance: String) : PrecisionMetricBase() {
   override val name = "Precision With ${relevance.capitalize()} Model"
   override val description: String = "Ratio of selected proposals by all proposals taking $relevance model into account"
 
   override fun getLookups(sessions: List<Session>): List<Lookup> {
-    return super.getLookups(sessions).filter { it.additionalInfo["${relevance}_decision"] != "SKIP" }
+    return sessions.flatMap { session -> session.lookups }.filter { it.additionalInfo["${relevance}_decision"] != "SKIP" }
   }
 }

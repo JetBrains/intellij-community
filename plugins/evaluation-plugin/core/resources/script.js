@@ -35,31 +35,30 @@ document.addEventListener("click", function (e) {
   }
 })
 
-const FilterClasses = {
-  Raw: "bg-raw-filter",
-  Analyzed: "bg-analyzed-filter",
+function updateBackgrounds(e, elementClasses, bgClass) {
+  let selected = e.target.selectedOptions[0].value
+  for (const clazz of elementClasses.filter(val => val !== selected)) {
+    removeClassForElements(clazz, bgClass, false)
+  }
+  addClassForElements(selected, bgClass, true)
 }
 
-function updateFilters(e) {
-  let selectedValue = e.target.selectedOptions[0].value
-  if (selectedValue === "no") {
-    changeBGColor(FilterClasses.Analyzed, "transparent")
-    changeBGColor(FilterClasses.Raw, "transparent")
-  } else if (selectedValue === "raw") {
-    changeBGColor(FilterClasses.Analyzed, "transparent")
-    changeBGColor(FilterClasses.Raw, "#FF3B305B")
-  } else if (selectedValue === "analyzed") {
-    changeBGColor(FilterClasses.Raw, "transparent")
-    changeBGColor(FilterClasses.Analyzed, "#FF3B305B")
+document.getElementById("wrong-filters").onchange = (e) => updateBackgrounds(e,
+  ["raw-filter", "analyzed-filter"], "bg-filters-skipped")
+document.getElementById("model-skipped").onchange = (e) => updateBackgrounds(e,
+  ["trigger-skipped", "filter-skipped"], "bg-model-skipped")
+
+function removeClassForElements(elementsClassName, classToAdd) {
+  let tokens = document.getElementsByClassName(elementsClassName)
+  for (const token of tokens) {
+    token.classList.remove(classToAdd)
   }
 }
 
-document.getElementById("wrong-filters").onchange = updateFilters;
-
-function changeBGColor(className, color) {
-  let tokens = document.getElementsByClassName(className);
-  for(i = 0; i < tokens.length; i++) {
-    tokens[i].style.backgroundColor = color;
+function addClassForElements(elementClass, classToAdd) {
+  let tokens = document.getElementsByClassName(elementClass)
+  for (const token of tokens) {
+    token.classList.add(classToAdd)
   }
 }
 

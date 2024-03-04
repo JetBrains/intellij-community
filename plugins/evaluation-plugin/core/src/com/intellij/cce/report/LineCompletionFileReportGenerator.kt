@@ -34,12 +34,6 @@ class LineCompletionFileReportGenerator(
   }
 
   override fun getKindClass(lookup: Lookup, expectedText: String): String {
-    if (lookup.additionalInfo["trigger_decision"] == "SKIP") {
-      return "cg-trigger-skipped"
-    }
-    if (lookup.additionalInfo["filter_decision"] == "SKIP") {
-      return "cg-filter-skipped"
-    }
     if (lookup.suggestions.isEmpty()) {
       return "cg-empty"
     }
@@ -52,12 +46,22 @@ class LineCompletionFileReportGenerator(
     }
   }
 
-  override fun getBackgroundClass(lookup: Lookup, expectedText: String): String {
+  override fun getFilterCheckClass(lookup: Lookup, expectedText: String): String {
     if (lookup.additionalInfo["wrong_raw_filters"] == true) {
-      return "bg-raw-filter"
+      return "raw-filter"
     }
     if (lookup.additionalInfo["wrong_analyzed_filters"] == true) {
-      return "bg-analyzed-filter"
+      return "analyzed-filter"
+    }
+    return ""
+  }
+
+  override fun getSkippedByModelClass(lookup: Lookup, expectedText: String): String {
+    if (lookup.additionalInfo["trigger_decision"] == "SKIP") {
+      return "trigger-skipped"
+    }
+    if (lookup.additionalInfo["filter_decision"] == "SKIP") {
+      return "filter-skipped"
     }
     return ""
   }
