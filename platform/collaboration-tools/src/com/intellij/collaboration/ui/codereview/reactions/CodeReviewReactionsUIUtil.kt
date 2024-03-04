@@ -98,11 +98,7 @@ private class UnicodeEmojiIcon(text: String, private val size: Int) : Icon {
       g2d.font = paintData.font
       val frc = g2d.fontMetrics.fontRenderContext
       val layout = TextLayout(text, g2d.font, frc)
-      // Use getPixelBounds instead of getBounds because visual bounds can be empty on Linux.
-      // This seems to be because sun.font.FreetypeFontScaler.getGlyphOutlineBoundsNative outputs `null`.
-      // getPixelBounds measures the area in which a glyph image is drawn.
-      // java.awt.font.TextLine.isSimple is true, so no double rendering should occur.
-      val textBounds = layout.getPixelBounds(null, 0f, 0f).bounds2D
+      val textBounds = layout.bounds
       val offsetX = (paintData.size - textBounds.width).coerceAtLeast(0.0) / 2
       val offsetY = (paintData.size - textBounds.height).coerceAtLeast(0.0) / 2
       val baseline = Point2D.Double(offsetX - textBounds.x, offsetY - textBounds.y)
