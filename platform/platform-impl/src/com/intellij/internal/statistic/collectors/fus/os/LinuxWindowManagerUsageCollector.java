@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.os;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -18,11 +18,14 @@ import java.util.*;
  * @author Konstantin Bulenkov
  */
 public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 3);
+  private static final EventLogGroup GROUP = new EventLogGroup("os.linux.wm", 4);
 
   private static final Map<String, String> GNOME_WINDOW_MANAGERS = new LinkedHashMap<>();
   private static final Map<String, String> WINDOW_MANAGERS = new LinkedHashMap<>();
   private static final List<String> ALL_NAMES = new ArrayList<>();
+
+  private static final Map<String, String> SESSION_TYPES = new LinkedHashMap<>();
+  private static final List<String> ALL_SESSION_NAMES = new ArrayList<>();
 
   static {
     GNOME_WINDOW_MANAGERS.put("shell", "Gnome Shell");
@@ -59,10 +62,21 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
 
     ALL_NAMES.addAll(GNOME_WINDOW_MANAGERS.values());
     ALL_NAMES.addAll(WINDOW_MANAGERS.values());
+
+    SESSION_TYPES.put("tty", "Terminal");
+    SESSION_TYPES.put("x11", "X11");
+    SESSION_TYPES.put("wayland", "Wayland");
+
+    ALL_SESSION_NAMES.addAll(SESSION_TYPES.values());
+    ALL_SESSION_NAMES.add("empty");
+    ALL_SESSION_NAMES.add("Unknown");
   }
 
   private static final EventId1<String> CURRENT_DESKTOP =
     GROUP.registerEvent("xdg.current.desktop", EventFields.String("value", ALL_NAMES));
+
+  private static final EventId1<String> SESSION_TYPE =
+    GROUP.registerEvent("xdg.session.type", EventFields.String("value", ALL_SESSION_NAMES));
 
   @Override
   public EventLogGroup getGroup() {
@@ -74,9 +88,19 @@ public final class LinuxWindowManagerUsageCollector extends ApplicationUsagesCol
     if (SystemInfo.isLinux) {
       Set<MetricEvent> result = new HashSet<>();
       result.add(CURRENT_DESKTOP.metric(toReportedName(System.getenv("XDG_CURRENT_DESKTOP"))));
+      result.add(SESSION_TYPE.metric(toReportedSessionName(System.getenv("XDG_SESSION_TYPE"))));
       return result;
     }
     return Collections.emptySet();
+  }
+
+  @VisibleForTesting
+  public static @NotNull String toReportedSessionName(@Nullable String sessionType) {
+    if (sessionType == null) {
+      return "empty";
+    }
+
+    return SESSION_TYPES.getOrDefault(sessionType, "Unknown");
   }
 
   @VisibleForTesting
