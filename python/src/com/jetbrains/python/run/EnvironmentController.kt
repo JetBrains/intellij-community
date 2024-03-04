@@ -53,6 +53,13 @@ interface EnvironmentController {
   fun appendTargetPathToPathsValue(name: String, localPath: String)
 
   /**
+   * Adds the provided path entries to `PYTHONPATH` environment variable. The path entries **must** be located within PyCharm helpers.
+   *
+   * @throws IllegalStateException if some of the provided path are located outside PyCharm helpers
+   */
+  fun addHelperEntriesToPythonPath(pythonPathEntries: List<String>)
+
+  /**
    * Returns whether the value of the environment variable with the provided
    * [name] is set or not.
    */
@@ -83,6 +90,13 @@ class PlainEnvironmentController(private val envs: MutableMap<String, String>) :
 
   override fun appendTargetPathToPathsValue(name: String, localPath: String) {
     envs.merge(name, localPath) { originalValue, additionalPath ->
+      listOf(originalValue, additionalPath).joinToString(separator = File.pathSeparator)
+    }
+  }
+
+  override fun addHelperEntriesToPythonPath(pythonPathEntries: List<String>) {
+    val helperPackagePath = pythonPathEntries.joinToString(separator = File.pathSeparator)
+    envs.merge("PYTHONPATH", helperPackagePath) { originalValue, additionalPath ->
       listOf(originalValue, additionalPath).joinToString(separator = File.pathSeparator)
     }
   }
@@ -128,6 +142,17 @@ class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnv
     envs.merge(name, targetValue) { originalValue, additionalValue ->
       listOf(originalValue, additionalValue).joinToPathValue(targetPlatform)
     }
+  }
+
+  /**
+   * This implementation effectively assures that PyCharm helpers are uploaded to the target using
+   * [HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers].
+   *
+   * @see com.jetbrains.python.run.addHelperEntriesToPythonPath
+   * @see HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers
+   */
+  override fun addHelperEntriesToPythonPath(pythonPathEntries: List<String>) {
+    addHelperEntriesToPythonPath(envs, pythonPathEntries, request)
   }
 
   override fun isEnvSet(name: String): Boolean {

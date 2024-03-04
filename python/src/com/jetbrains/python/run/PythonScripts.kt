@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.PlatformUtils
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.debugger.PyDebugRunner
@@ -34,6 +35,7 @@ import com.jetbrains.python.sdk.flavors.conda.fixCondaPathEnvIfNeeded
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
@@ -128,22 +130,49 @@ fun PythonExecution.applyHelperPackageToPythonPath(helperPackage: HelperPackage,
 
 fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<String>,
                                                    helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
-  val localHelpersRootPath = PythonHelpersLocator.getHelpersRoot().absolutePath
+  return addHelperEntriesToPythonPath(envs, pythonPathEntries, helpersAwareTargetRequest)
+}
+
+/**
+ * @param envs the environment variables to be modified
+ * @param pythonPathEntries the paths located either in PyCharm Community or in PyCharm Professional helpers directories
+ * @param helpersAwareTargetRequest the request
+ *
+ * **Note.** This method assumes that PyCharm Community and PyCharm Professional helpers are uploaded to the same root path on the target.
+ * This assumption comes from [HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers] method that returns the single path value.
+ */
+fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
+                                 pythonPathEntries: List<String>,
+                                 helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
+  val localHelpersRoots = getPythonHelpersRoots()
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
   val targetUploadPath = helpersAwareTargetRequest.preparePyCharmHelpers()
   val targetPathSeparator = targetPlatform.platform.pathSeparator
-  val uploads = pythonPathEntries.map {
-    // TODO [Targets API] Simplify the paths resolution
-    val relativePath = FileUtil.getRelativePath(localHelpersRootPath, it, Platform.current().fileSeparator)
-                       ?: throw IllegalStateException("Helpers PYTHONPATH entry '$it' cannot be resolved" +
-                                                      " against the root path of PyCharm helpers '$localHelpersRootPath'")
-    Upload(it, targetUploadPath.getRelativeTargetPath(relativePath))
-  }
+  val uploads = pythonPathEntries
+    .map { pythonPathEntry ->
+      val relativePath =
+        localHelpersRoots
+          .filter { FileUtil.isAncestor(it, pythonPathEntry, false) }
+          .firstNotNullOfOrNull { FileUtil.getRelativePath(it, pythonPathEntry, Platform.current().fileSeparator) }
+        ?: error("Helpers PYTHONPATH entry '$pythonPathEntry' cannot be resolved against the root paths of PyCharm helpers: " +
+                 localHelpersRoots.joinToString { "'$it'" })
+      Upload(pythonPathEntry, targetUploadPath.getRelativeTargetPath(relativePath))
+    }
   val pythonPathEntriesOnTarget = uploads.map { it.targetPath }
   val pythonPathValue = pythonPathEntriesOnTarget.joinToStringFunction(separator = targetPathSeparator.toString())
-  appendToPythonPath(pythonPathValue, targetPlatform)
+  appendToPythonPath(envs, pythonPathValue, targetPlatform)
   return uploads
 }
+
+private fun getPythonHelpersRoots(): List<String> =
+  buildList {
+    // helpers included in the PyCharm and the Python plugin both Community and Professional versions
+    add(PythonHelpersLocator.getHelpersRoot().absolutePath)
+    if (PlatformUtils.isCommercialEdition()) {
+      // helpers included only in the PyCharm Professional and the Python plugin for IDEA Ultimate
+      add(PythonHelpersLocator.getHelpersProRoot().absolutePathString())
+    }
+  }
 
 /**
  * Suits for coverage and profiler scripts.
