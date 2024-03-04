@@ -1,11 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.file.PsiDirectoryFactory;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import org.jetbrains.annotations.NotNull;
-
 
 public final class UsageViewLongNameLocation extends ElementDescriptionLocation {
   private UsageViewLongNameLocation() {
@@ -23,8 +21,8 @@ public final class UsageViewLongNameLocation extends ElementDescriptionLocation 
     @Override
     public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
       if (location instanceof UsageViewLongNameLocation) {
-        if (element instanceof PsiDirectory) {
-          return PsiDirectoryFactory.getInstance(element.getProject()).getQualifiedName((PsiDirectory)element, true);
+        if (element instanceof PsiDirectory directory) {
+          return SymbolPresentationUtil.getFilePathPresentation(directory);
         }
         if (element instanceof PsiQualifiedNamedElement) {
           return ((PsiQualifiedNamedElement)element).getQualifiedName();
