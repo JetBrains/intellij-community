@@ -234,6 +234,9 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     public boolean argsBecameNotNull() {
       var nowIt = now.getValueParameters().iterator();
       for (KmValueParameter pastParam : past.getValueParameters()) {
+        if (!nowIt.hasNext()) {
+          break;
+        }
         KmValueParameter nowParam = nowIt.next();
         if (Attributes.isNullable(pastParam.getType()) && !Attributes.isNullable(nowParam.getType())) {
           return true;
