@@ -124,8 +124,8 @@ private fun createPositionParameters(position: GitLabDiffPositionInput): Map<Str
     "position[position_type]" to "text",
   ).toMap()
 
-private fun createPositionParameters(position: GitLabMergeRequestDraftNoteRestDTO.Position): Map<String, String> =
-  listOfNotNull(
+private fun createPositionParameters(position: GitLabMergeRequestDraftNoteRestDTO.Position): Map<String, String> {
+  val result = listOfNotNull(
     position.baseSha?.let { "position[base_sha]" to it },
     position.headSha?.let { "position[head_sha]" to it },
     position.startSha?.let { "position[start_sha]" to it },
@@ -133,5 +133,9 @@ private fun createPositionParameters(position: GitLabMergeRequestDraftNoteRestDT
     position.oldPath?.let { "position[old_path]" to it },
     position.oldLine?.let { "position[old_line]" to it.toString() },
     position.newLine?.let { "position[new_line]" to it.toString() },
-    "position[position_type]" to "text",
+    "position[position_type]" to position.positionType,
   ).toMap()
+
+  // If there's no position info (just position type), don't pass it to GitLab.
+  return if (result.size == 1) mapOf() else result
+}
