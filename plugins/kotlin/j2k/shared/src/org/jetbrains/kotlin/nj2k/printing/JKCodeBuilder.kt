@@ -176,12 +176,8 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitClassAccessExpression(classAccessExpression: JKClassAccessExpression) {
             printLeftNonCodeElements(classAccessExpression)
-            visitClassAccessExpressionRaw(classAccessExpression)
-            printRightNonCodeElements(classAccessExpression)
-        }
-
-        private fun visitClassAccessExpressionRaw(classAccessExpression: JKClassAccessExpression) {
             printer.renderSymbol(classAccessExpression.identifier, classAccessExpression)
+            printRightNonCodeElements(classAccessExpression)
         }
 
         override fun visitMethodAccessExpression(methodAccessExpression: JKMethodAccessExpression) {
@@ -607,7 +603,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
                 if (argument is JKNamedArgument) {
                     visitNamedArgumentRaw(argument)
                 } else {
-                    visitArgumentRaw(argument)
+                    argument.value.accept(this)
                 }
                 if (i < argumentList.arguments.lastIndex || argumentList.hasTrailingComma) {
                     printer.print(", ")
@@ -618,18 +614,14 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitArgument(argument: JKArgument) {
             printLeftNonCodeElements(argument)
-            visitArgumentRaw(argument)
+            argument.value.accept(this)
             printRightNonCodeElements(argument)
         }
 
         override fun visitArgumentImpl(argumentImpl: JKArgumentImpl) {
             printLeftNonCodeElements(argumentImpl)
-            visitArgumentRaw(argumentImpl)
+            argumentImpl.value.accept(this)
             printRightNonCodeElements(argumentImpl)
-        }
-
-        private fun visitArgumentRaw(argument: JKArgument) {
-            argument.value.accept(this)
         }
 
         override fun visitNamedArgument(namedArgument: JKNamedArgument) {
@@ -1114,18 +1106,14 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitAnnotationParameter(annotationParameter: JKAnnotationParameter) {
             printLeftNonCodeElements(annotationParameter)
-            visitAnnotationParameterRaw(annotationParameter)
+            annotationParameter.value.accept(this)
             printRightNonCodeElements(annotationParameter)
         }
 
         override fun visitAnnotationParameterImpl(annotationParameterImpl: JKAnnotationParameterImpl) {
             printLeftNonCodeElements(annotationParameterImpl)
-            visitAnnotationParameterRaw(annotationParameterImpl)
+            annotationParameterImpl.value.accept(this)
             printRightNonCodeElements(annotationParameterImpl)
-        }
-
-        private fun visitAnnotationParameterRaw(annotationParameter: JKAnnotationParameter) {
-            annotationParameter.value.accept(this)
         }
 
         override fun visitClassLiteralExpression(classLiteralExpression: JKClassLiteralExpression) {
