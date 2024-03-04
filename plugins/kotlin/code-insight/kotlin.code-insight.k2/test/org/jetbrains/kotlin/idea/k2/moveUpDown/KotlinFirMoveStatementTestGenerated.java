@@ -1200,6 +1200,21 @@ public abstract class KotlinFirMoveStatementTestGenerated extends AbstractKotlin
             runTest("../../idea/tests/testData/codeInsight/moveUpDown/expressions/semicolon2.kt");
         }
 
+        @TestMetadata("skipNestedClosureForFunction.kt")
+        public void testSkipNestedClosureForFunction() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/moveUpDown/expressions/skipNestedClosureForFunction.kt");
+        }
+
+        @TestMetadata("skipNestedClosureForFunction1.kt")
+        public void testSkipNestedClosureForFunction1() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/moveUpDown/expressions/skipNestedClosureForFunction1.kt");
+        }
+
+        @TestMetadata("skipNestedClosureForProperty.kt")
+        public void testSkipNestedClosureForProperty() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/moveUpDown/expressions/skipNestedClosureForProperty.kt");
+        }
+
         @TestMetadata("when1.kt")
         public void testWhen1() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/moveUpDown/expressions/when1.kt");
