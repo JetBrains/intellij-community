@@ -9,6 +9,7 @@ import com.intellij.vcs.log.graph.utils.impl.CompressedIntList
 import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.*
 
 class PermanentCommitsInfoImpl<CommitId : Any> private constructor(val timestampGetter: TimestampGetter,
@@ -50,6 +51,10 @@ class PermanentCommitsInfoImpl<CommitId : Any> private constructor(val timestamp
   }
 
   override fun convertToNodeIds(commitIds: Collection<CommitId>): Set<Int> {
+    return convertToNodeIds(commitIds, false)
+  }
+
+  internal fun convertToNodeIds(commitIds: Collection<CommitId>, skipNotLoadedCommits: Boolean): IntSet {
     val result = IntOpenHashSet()
     for (i in commitIdIndexes.indices) {
       val commitId = commitIdIndexes[i]
@@ -57,9 +62,11 @@ class PermanentCommitsInfoImpl<CommitId : Any> private constructor(val timestamp
         result.add(i)
       }
     }
-    for (entry in notLoadedCommits.int2ObjectEntrySet()) {
-      if (commitIds.contains(entry.value)) {
-        result.add(entry.intKey)
+    if (!skipNotLoadedCommits) {
+      for (entry in notLoadedCommits.int2ObjectEntrySet()) {
+        if (commitIds.contains(entry.value)) {
+          result.add(entry.intKey)
+        }
       }
     }
     return result

@@ -106,4 +106,8 @@ public final class CompressedRefs {
     myTags.keySet().intStream().forEach(result::add);
     return result;
   }
+
+  @NotNull Int2ObjectMap<List<VcsRef>> getBranches() {
+    return myBranches;
+  }
 }

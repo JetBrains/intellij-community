@@ -16,34 +16,46 @@ object GraphLayoutBuilder {
 
   @JvmStatic
   fun build(graph: LinearGraph, comparator: IntComparator): GraphLayoutImpl {
-    val heads = getSortedHeads(graph, comparator)
-
-    val layoutIndex = IntArray(graph.nodesCount())
-    val startLayoutIndexForHead = IntArray(heads.size)
-    var currentLayoutIndex = 1
-    for (i in heads.indices) {
-      startLayoutIndexForHead[i] = currentLayoutIndex
-      currentLayoutIndex = dfs(graph, heads.getInt(i), currentLayoutIndex, layoutIndex)
-    }
-    return GraphLayoutImpl(layoutIndex, heads, startLayoutIndexForHead)
+    return build(graph, emptySet(), comparator)
   }
 
-  private fun getSortedHeads(graph: LinearGraph, comparator: IntComparator): IntList {
-    val heads: IntList = IntArrayList()
-    for (i in 0 until graph.nodesCount()) {
-      if (LinearGraphUtils.getUpNodes(graph, i).isEmpty()) {
-        heads.add(i)
-      }
+  @JvmStatic
+  fun build(graph: LinearGraph, branches: Set<Int>, comparator: IntComparator): GraphLayoutImpl {
+    val allHeads = branches + graph.getHeads()
+    val sortedHeads = IntArrayList(allHeads).sortCatching(comparator)
+
+    val layoutIndex = IntArray(graph.nodesCount())
+    val startLayoutIndexForHead = IntArray(sortedHeads.size)
+    var currentLayoutIndex = 1
+    for (i in sortedHeads.indices) {
+      startLayoutIndexForHead[i] = currentLayoutIndex
+      currentLayoutIndex = dfs(graph, sortedHeads.getInt(i), currentLayoutIndex, layoutIndex)
     }
+    return GraphLayoutImpl(layoutIndex, sortedHeads, startLayoutIndexForHead)
+  }
+
+  /**
+   * Performs sorting, while catching exceptions from the comparator.
+   */
+  private fun IntList.sortCatching(comparator: IntComparator): IntList {
     try {
-      heads.sort(comparator)
+      sort(comparator)
     }
     catch (pce: ProcessCanceledException) {
       throw pce
     }
     catch (e: Exception) {
-      // protection against possible comparator flaws
       LOG.error(e)
+    }
+    return this
+  }
+
+  private fun LinearGraph.getHeads(): IntList {
+    val heads = IntArrayList()
+    for (i in 0 until nodesCount()) {
+      if (LinearGraphUtils.getUpNodes(this, i).isEmpty()) {
+        heads.add(i)
+      }
     }
     return heads
   }

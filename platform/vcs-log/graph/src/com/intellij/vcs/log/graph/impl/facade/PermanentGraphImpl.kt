@@ -163,8 +163,8 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
       val idsGenerator = NotLoadedCommitsIdsGenerator<CommitId>()
       val linearGraph = PermanentLinearGraphBuilder.newInstance(graphCommits).build(idsGenerator)
       val permanentCommitsInfo = PermanentCommitsInfoImpl.newInstance(graphCommits, idsGenerator.notLoadedCommits)
-
-      val permanentGraphLayout = GraphLayoutBuilder.build(linearGraph) { nodeIndex1: Int, nodeIndex2: Int ->
+      val branchIndexes = permanentCommitsInfo.convertToNodeIds(branchesCommitId, true)
+      val permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, branchIndexes) { nodeIndex1: Int, nodeIndex2: Int ->
         val commitId1 = permanentCommitsInfo.getCommitId(nodeIndex1)
         val commitId2 = permanentCommitsInfo.getCommitId(nodeIndex2)
         headCommitsComparator.compare(commitId1, commitId2)

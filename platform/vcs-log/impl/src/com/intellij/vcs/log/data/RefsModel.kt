@@ -10,6 +10,8 @@ import com.intellij.vcs.log.VcsLogRefs
 import com.intellij.vcs.log.VcsRef
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import java.util.function.IntConsumer
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
@@ -65,7 +67,14 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
                providers: Map<VirtualFile, VcsLogProvider>): RefsModel {
       val refsModel = RefsModel(refs, storage, providers)
 
-      storage.getCommitIds(heads).forEach { (head, commitId) -> refsModel.updateCacheForHead(head, commitId.root) }
+      val remainingHeads = IntOpenHashSet(heads)
+      refs.forEach { (root, refsForRoot) ->
+        refsForRoot.branches.keys.forEach(IntConsumer { commit ->
+          refsModel.updateCacheForHead(commit, root)
+          remainingHeads.remove(commit)
+        })
+      }
+      storage.getCommitIds(remainingHeads).forEach { (head, commitId) -> refsModel.updateCacheForHead(head, commitId.root) }
 
       return refsModel
     }
