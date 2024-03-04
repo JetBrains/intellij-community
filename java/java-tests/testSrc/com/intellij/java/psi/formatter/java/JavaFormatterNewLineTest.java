@@ -262,4 +262,94 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                   public void foo() { int x = 1; }
                   """);
   }
+
+
+
+  public void testMoveSimpleCodeBlockOnNewLineWhenPresent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    doMethodTest("""
+                   Integer x = 1;
+                   switch (x) {
+                      case 1 -> {return;}
+                      default -> {return;}
+                   }
+                   if (x == 1) {return;}
+                   while (true) {return;}
+                   for (;;) {return;}
+                   """,
+                 """
+                   Integer x = 1;
+                   switch (x) {
+                       case 1 -> {
+                           return;
+                       }
+                       default -> {
+                           return;
+                       }
+                   }
+                   if (x == 1) {
+                       return;
+                   }
+                   while (true) {
+                       return;
+                   }
+                   for (; ; ) {
+                       return;
+                   }
+                   """);
+  }
+
+  public void testDoNotMoveSimpleCodeBlockOnNewLineWhenAbsent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doMethodTest("""
+                   Integer x = 1;
+                   switch (x) {
+                      case 1 -> {}
+                      default -> {}
+                   }
+                   if (x == 1) {}
+                   while (true) {}
+                   for (;;) {}
+                   """,
+                 """
+                   Integer x = 1;
+                   switch (x) {
+                       case 1 -> { }
+                       default -> { }
+                   }
+                   if (x == 1) { }
+                   while (true) { }
+                   for (; ; ) { }
+                   """);
+  }
+
+  public void testDoNotMoveSimpleCodeBlockOnNewLineWhenPresentAndSettingsDisabled() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doMethodTest("""
+                   Integer x = 1;
+                   switch (x) {
+                      case 1 -> {return;}
+                      default -> {return;}
+                   }
+                   if (x == 1) {return;}
+                   while (true) {return;}
+                   for (;;) {return;}
+                   """,
+                 """
+                   Integer x = 1;
+                   switch (x) {
+                       case 1 -> { return; }
+                       default -> { return; }
+                   }
+                   if (x == 1) { return; }
+                   while (true) { return; }
+                   for (; ; ) { return; }
+                   """);
+  }
+
 }
