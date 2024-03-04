@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.vfs
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -216,7 +217,7 @@ fun <T : Any> VirtualFile.getCachedValue(key: Key<VirtualFileCachedValue<T>>,
                                          useSoftCache: Boolean = false,
                                          canCache: ((VirtualFile) -> Boolean)? = null,
                                          provider: (VirtualFile, CharSequence?) -> T,): T {
-  if (!isValid()) {
+  if (!isValid() && ApplicationManager.getApplication().isReadAccessAllowed) {
     thisLogger().error(InvalidVirtualFileAccessException(this))
     return provider(this, null)
   }
