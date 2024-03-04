@@ -24,71 +24,19 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
         visitTreeElementRaw(variable)
         printRightNonCodeElements(variable)
     }
-    override fun visitMethod(method: JKMethod) {
-        printLeftNonCodeElements(method)
-        visitMethodRaw(method)
-        printRightNonCodeElements(method)
-    }
-    abstract fun visitMethodRaw(method: JKMethod)
-    override fun visitMethodImpl(methodImpl: JKMethodImpl) {
-        printLeftNonCodeElements(methodImpl)
-        visitMethodRaw(methodImpl)
-        printRightNonCodeElements(methodImpl)
-    }
-    override fun visitConstructor(constructor: JKConstructor) {
-        printLeftNonCodeElements(constructor)
-        visitConstructorRaw(constructor)
-        printRightNonCodeElements(constructor)
-    }
-    abstract fun visitConstructorRaw(constructor: JKConstructor)
-    override fun visitConstructorImpl(constructorImpl: JKConstructorImpl) {
-        printLeftNonCodeElements(constructorImpl)
-        visitConstructorRaw(constructorImpl)
-        printRightNonCodeElements(constructorImpl)
-    }
+
     override fun visitJavaStaticInitDeclaration(javaStaticInitDeclaration: JKJavaStaticInitDeclaration) {
         printLeftNonCodeElements(javaStaticInitDeclaration)
         visitTreeElementRaw(javaStaticInitDeclaration)
         printRightNonCodeElements(javaStaticInitDeclaration)
     }
-    override fun visitBlock(block: JKBlock) {
-        printLeftNonCodeElements(block)
-        visitBlockRaw(block)
-        printRightNonCodeElements(block)
-    }
-    abstract fun visitBlockRaw(block: JKBlock)
+
     override fun visitLabel(label: JKLabel) {
         printLeftNonCodeElements(label)
         visitTreeElementRaw(label)
         printRightNonCodeElements(label)
     }
-    override fun visitAnnotationParameter(annotationParameter: JKAnnotationParameter) {
-        printLeftNonCodeElements(annotationParameter)
-        visitAnnotationParameterRaw(annotationParameter)
-        printRightNonCodeElements(annotationParameter)
-    }
-    abstract fun visitAnnotationParameterRaw(annotationParameter: JKAnnotationParameter)
-    override fun visitAnnotationParameterImpl(annotationParameterImpl: JKAnnotationParameterImpl) {
-        printLeftNonCodeElements(annotationParameterImpl)
-        visitAnnotationParameterRaw(annotationParameterImpl)
-        printRightNonCodeElements(annotationParameterImpl)
-    }
-    override fun visitArgument(argument: JKArgument) {
-        printLeftNonCodeElements(argument)
-        visitArgumentRaw(argument)
-        printRightNonCodeElements(argument)
-    }
-    abstract fun visitArgumentRaw(argument: JKArgument)
-    override fun visitArgumentImpl(argumentImpl: JKArgumentImpl) {
-        printLeftNonCodeElements(argumentImpl)
-        visitArgumentRaw(argumentImpl)
-        printRightNonCodeElements(argumentImpl)
-    }
-    override fun visitBlockImpl(blockImpl: JKBlockImpl) {
-        printLeftNonCodeElements(blockImpl)
-        visitBlockRaw(blockImpl)
-        printRightNonCodeElements(blockImpl)
-    }
+    
     override fun visitKtWhenLabel(ktWhenLabel: JKKtWhenLabel) {
         printLeftNonCodeElements(ktWhenLabel)
         visitTreeElementRaw(ktWhenLabel)
@@ -129,17 +77,7 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
         visitTreeElementRaw(unaryExpression)
         printRightNonCodeElements(unaryExpression)
     }
-    override fun visitCallExpression(callExpression: JKCallExpression) {
-        printLeftNonCodeElements(callExpression)
-        visitCallExpressionRaw(callExpression)
-        printRightNonCodeElements(callExpression)
-    }
-    abstract fun visitCallExpressionRaw(callExpression: JKCallExpression)
-    override fun visitCallExpressionImpl(callExpressionImpl: JKCallExpressionImpl) {
-        printLeftNonCodeElements(callExpressionImpl)
-        visitCallExpressionRaw(callExpressionImpl)
-        printRightNonCodeElements(callExpressionImpl)
-    }
+
     override fun visitMethodAccessExpression(methodAccessExpression: JKMethodAccessExpression) {
         printLeftNonCodeElements(methodAccessExpression)
         visitTreeElementRaw(methodAccessExpression)
@@ -165,32 +103,7 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
         visitTreeElementRaw(javaAssignmentExpression)
         printRightNonCodeElements(javaAssignmentExpression)
     }
-    override fun visitModifierElement(modifierElement: JKModifierElement) {
-        printLeftNonCodeElements(modifierElement)
-        visitModifierElementRaw(modifierElement)
-        printRightNonCodeElements(modifierElement)
-    }
-    abstract fun visitModifierElementRaw(modifierElement: JKModifierElement)
-    override fun visitMutabilityModifierElement(mutabilityModifierElement: JKMutabilityModifierElement) {
-        printLeftNonCodeElements(mutabilityModifierElement)
-        visitModifierElementRaw(mutabilityModifierElement)
-        printRightNonCodeElements(mutabilityModifierElement)
-    }
-    override fun visitModalityModifierElement(modalityModifierElement: JKModalityModifierElement) {
-        printLeftNonCodeElements(modalityModifierElement)
-        visitModifierElementRaw(modalityModifierElement)
-        printRightNonCodeElements(modalityModifierElement)
-    }
-    override fun visitVisibilityModifierElement(visibilityModifierElement: JKVisibilityModifierElement) {
-        printLeftNonCodeElements(visibilityModifierElement)
-        visitModifierElementRaw(visibilityModifierElement)
-        printRightNonCodeElements(visibilityModifierElement)
-    }
-    override fun visitOtherModifierElement(otherModifierElement: JKOtherModifierElement) {
-        printLeftNonCodeElements(otherModifierElement)
-        visitModifierElementRaw(otherModifierElement)
-        printRightNonCodeElements(otherModifierElement)
-    }
+
     override fun visitStatement(statement: JKStatement) {
         printLeftNonCodeElements(statement)
         visitTreeElementRaw(statement)
@@ -235,10 +148,5 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
         printLeftNonCodeElements(javaForLoopStatement)
         visitTreeElementRaw(javaForLoopStatement)
         printRightNonCodeElements(javaForLoopStatement)
-    }
-    override fun visitJavaAnnotationMethod(javaAnnotationMethod: JKJavaAnnotationMethod) {
-        printLeftNonCodeElements(javaAnnotationMethod)
-        visitMethodRaw(javaAnnotationMethod)
-        printRightNonCodeElements(javaAnnotationMethod)
     }
 }

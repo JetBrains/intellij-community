@@ -77,7 +77,37 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.print("/* !!! Hit visitElement for element type: ${treeElement::class} !!! */")
         }
 
-        override fun visitModifierElementRaw(modifierElement: JKModifierElement) {
+        override fun visitModifierElement(modifierElement: JKModifierElement) {
+            printLeftNonCodeElements(modifierElement)
+            visitModifierElementRaw(modifierElement)
+            printRightNonCodeElements(modifierElement)
+        }
+
+        override fun visitMutabilityModifierElement(mutabilityModifierElement: JKMutabilityModifierElement) {
+            printLeftNonCodeElements(mutabilityModifierElement)
+            visitModifierElementRaw(mutabilityModifierElement)
+            printRightNonCodeElements(mutabilityModifierElement)
+        }
+
+        override fun visitModalityModifierElement(modalityModifierElement: JKModalityModifierElement) {
+            printLeftNonCodeElements(modalityModifierElement)
+            visitModifierElementRaw(modalityModifierElement)
+            printRightNonCodeElements(modalityModifierElement)
+        }
+
+        override fun visitVisibilityModifierElement(visibilityModifierElement: JKVisibilityModifierElement) {
+            printLeftNonCodeElements(visibilityModifierElement)
+            visitModifierElementRaw(visibilityModifierElement)
+            printRightNonCodeElements(visibilityModifierElement)
+        }
+
+        override fun visitOtherModifierElement(otherModifierElement: JKOtherModifierElement) {
+            printLeftNonCodeElements(otherModifierElement)
+            visitModifierElementRaw(otherModifierElement)
+            printRightNonCodeElements(otherModifierElement)
+        }
+
+        private fun visitModifierElementRaw(modifierElement: JKModifierElement) {
             if (modifierElement.modifier != FINAL) {
                 printer.print(modifierElement.modifier.text)
             }
@@ -373,7 +403,25 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printRightNonCodeElements(forLoopVariable)
         }
 
-        override fun visitMethodRaw(method: JKMethod) {
+        override fun visitMethod(method: JKMethod) {
+            printLeftNonCodeElements(method)
+            visitMethodRaw(method)
+            printRightNonCodeElements(method)
+        }
+
+        override fun visitMethodImpl(methodImpl: JKMethodImpl) {
+            printLeftNonCodeElements(methodImpl)
+            visitMethodRaw(methodImpl)
+            printRightNonCodeElements(methodImpl)
+        }
+
+        override fun visitJavaAnnotationMethod(javaAnnotationMethod: JKJavaAnnotationMethod) {
+            printLeftNonCodeElements(javaAnnotationMethod)
+            visitMethodRaw(javaAnnotationMethod)
+            printRightNonCodeElements(javaAnnotationMethod)
+        }
+
+        private fun visitMethodRaw(method: JKMethod) {
             method.annotationList.accept(this)
             renderModifiersList(method)
             printer.printWithSurroundingSpaces("fun")
@@ -568,7 +616,19 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        override fun visitArgumentRaw(argument: JKArgument) {
+        override fun visitArgument(argument: JKArgument) {
+            printLeftNonCodeElements(argument)
+            visitArgumentRaw(argument)
+            printRightNonCodeElements(argument)
+        }
+
+        override fun visitArgumentImpl(argumentImpl: JKArgumentImpl) {
+            printLeftNonCodeElements(argumentImpl)
+            visitArgumentRaw(argumentImpl)
+            printRightNonCodeElements(argumentImpl)
+        }
+
+        private fun visitArgumentRaw(argument: JKArgument) {
             argument.value.accept(this)
         }
 
@@ -584,7 +644,19 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             namedArgument.value.accept(this)
         }
 
-        override fun visitCallExpressionRaw(callExpression: JKCallExpression) {
+        override fun visitCallExpression(callExpression: JKCallExpression) {
+            printLeftNonCodeElements(callExpression)
+            visitCallExpressionRaw(callExpression)
+            printRightNonCodeElements(callExpression)
+        }
+
+        override fun visitCallExpressionImpl(callExpressionImpl: JKCallExpressionImpl) {
+            printLeftNonCodeElements(callExpressionImpl)
+            visitCallExpressionRaw(callExpressionImpl)
+            printRightNonCodeElements(callExpressionImpl)
+        }
+
+        private fun visitCallExpressionRaw(callExpression: JKCallExpression) {
             printer.renderSymbol(callExpression.identifier, callExpression)
             if (callExpression.identifier.isAnnotationMethod()) return
             callExpression.typeArgumentList.accept(this)
@@ -769,7 +841,19 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printRightNonCodeElements(typeElement)
         }
 
-        override fun visitBlockRaw(block: JKBlock) {
+        override fun visitBlock(block: JKBlock) {
+            printLeftNonCodeElements(block)
+            visitBlockRaw(block)
+            printRightNonCodeElements(block)
+        }
+
+        override fun visitBlockImpl(blockImpl: JKBlockImpl) {
+            printLeftNonCodeElements(blockImpl)
+            visitBlockRaw(blockImpl)
+            printRightNonCodeElements(blockImpl)
+        }
+
+        private fun visitBlockRaw(block: JKBlock) {
             printer.print(" ")
             renderTokenElement(block.leftBrace)
             if (block.statements.isNotEmpty()) {
@@ -856,7 +940,19 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             renderTokenElement(method.rightParen)
         }
 
-        override fun visitConstructorRaw(constructor: JKConstructor) {
+        override fun visitConstructor(constructor: JKConstructor) {
+            printLeftNonCodeElements(constructor)
+            visitConstructorRaw(constructor)
+            printRightNonCodeElements(constructor)
+        }
+
+        override fun visitConstructorImpl(constructorImpl: JKConstructorImpl) {
+            printLeftNonCodeElements(constructorImpl)
+            visitConstructorRaw(constructorImpl)
+            printRightNonCodeElements(constructorImpl)
+        }
+
+        private fun visitConstructorRaw(constructor: JKConstructor) {
             constructor.annotationList.accept(this)
             if (constructor.hasAnnotations) ensureLineBreak()
             renderModifiersList(constructor)
@@ -1016,7 +1112,19 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printRightNonCodeElements(annotationNameParameter)
         }
 
-        override fun visitAnnotationParameterRaw(annotationParameter: JKAnnotationParameter) {
+        override fun visitAnnotationParameter(annotationParameter: JKAnnotationParameter) {
+            printLeftNonCodeElements(annotationParameter)
+            visitAnnotationParameterRaw(annotationParameter)
+            printRightNonCodeElements(annotationParameter)
+        }
+
+        override fun visitAnnotationParameterImpl(annotationParameterImpl: JKAnnotationParameterImpl) {
+            printLeftNonCodeElements(annotationParameterImpl)
+            visitAnnotationParameterRaw(annotationParameterImpl)
+            printRightNonCodeElements(annotationParameterImpl)
+        }
+
+        private fun visitAnnotationParameterRaw(annotationParameter: JKAnnotationParameter) {
             annotationParameter.value.accept(this)
         }
 
