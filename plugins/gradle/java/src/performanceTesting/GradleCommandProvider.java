@@ -15,6 +15,7 @@ final class GradleCommandProvider implements CommandProvider {
                   LinkGradleProjectCommand.PREFIX, LinkGradleProjectCommand::new,
                   UnlinkGradleProjectCommand.PREFIX, UnlinkGradleProjectCommand::new,
                   SetGradleJdkCommand.PREFIX, SetGradleJdkCommand::new,
-                  DownloadGradleSourcesCommand.PREFIX, DownloadGradleSourcesCommand::new);
+                  DownloadGradleSourcesCommand.PREFIX, DownloadGradleSourcesCommand::new,
+                  SetGradleDelegatedBuildCommand.PREFIX, SetGradleDelegatedBuildCommand::new);
   }
 }

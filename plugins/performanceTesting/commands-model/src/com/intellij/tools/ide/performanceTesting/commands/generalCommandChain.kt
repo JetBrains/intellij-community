@@ -1,6 +1,7 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.tools.ide.performanceTesting.commands.dto.GradleTestRunner
 import com.intellij.tools.ide.performanceTesting.commands.dto.MavenArchetypeInfo
 import com.intellij.tools.ide.performanceTesting.commands.dto.MavenGoalConfigurationDto
 import com.intellij.tools.ide.performanceTesting.commands.dto.NewMavenProjectDto
@@ -576,6 +577,11 @@ fun <T : CommandChain> T.linkMavenProject(projectPath: Path): T = apply {
 
 fun <T : CommandChain> T.linkGradleProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}linkGradleProject ${projectPath}")
+}
+
+fun <T : CommandChain> T.setGradleDelegatedBuildCommand(delegatedBuild: Boolean = true,
+                                                        gradleTestRunner: GradleTestRunner = GradleTestRunner.GRADLE): T = apply {
+  addCommand("${CMD_PREFIX}setGradleDelegatedBuildCommand $delegatedBuild $gradleTestRunner")
 }
 
 fun <T : CommandChain> T.unlinkGradleProject(projectPath: Path): T = apply {
