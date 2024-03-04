@@ -11,11 +11,11 @@ class BookmarksGridLayoutUiComponent(data: ComponentData) : UiComponent(data) {
   val textField
     get() = x("//div[@class='JBTextField']")
 
-  private fun findButton(text: String) = x("//div[@class='JButton' and @text='$text']", JButtonUIComponent::class.java)
+  fun findButton(text: String) = x("//div[@class='JButton' and @text='$text']", JButtonUIComponent::class.java)
 
   fun clickButton(text: String) = findButton(text).click()
 
   fun doubleClickButton(text: String) = findButton(text).doubleClick()
 
-  private class JButtonUIComponent(data: ComponentData) : UiComponent(data)
+  class JButtonUIComponent(data: ComponentData) : UiComponent(data)
 }
