@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.ui.layout
 
 import com.intellij.BundleBase
@@ -219,13 +221,13 @@ fun <T : JComponent> CellBuilder<T>.applyToComponent(task: T.() -> Unit): CellBu
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 fun <T : JTextComponent> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
   return withBindingInt(JTextComponent::getText, JTextComponent::setText, modelBinding)
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
 fun <T : AbstractButton> CellBuilder<T>.withSelectedBinding(modelBinding: PropertyBinding<Boolean>): CellBuilder<T> {
   return withBindingInt(AbstractButton::isSelected, AbstractButton::setSelected, modelBinding)
 }
@@ -357,7 +359,7 @@ abstract class Cell : BaseBuilder {
                        modelBinding: PropertyBinding<Boolean>,
                        @DetailedDescription comment: String?): CellBuilder<JBCheckBox> {
     val component = JBCheckBox(text, modelBinding.get())
-    return component(comment = comment).withSelectedBinding(modelBinding)
+    return component(comment = comment).withBindingInt(AbstractButton::isSelected, AbstractButton::setSelected, modelBinding)
   }
 
   @ApiStatus.ScheduledForRemoval
@@ -429,7 +431,7 @@ abstract class Cell : BaseBuilder {
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun textField(binding: PropertyBinding<String>, columns: Int? = null): CellBuilder<JBTextField> {
     return component(JBTextField(binding.get(), columns ?: 0))
-      .withTextBinding(binding)
+      .withBindingInt(JTextComponent::getText, JTextComponent::setText, binding)
   }
 
   @ApiStatus.ScheduledForRemoval
