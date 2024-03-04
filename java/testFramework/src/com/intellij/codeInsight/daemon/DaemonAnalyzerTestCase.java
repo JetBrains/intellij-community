@@ -391,7 +391,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
   @NotNull
   public PsiClass createClass(@NotNull @Language("JAVA") String text) throws IOException {
-    return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+    VirtualFile classVFile = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
       final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
       final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, text);
       final String qname = javaFile.getClasses()[0].getQualifiedName();
@@ -412,9 +412,13 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
       assertNotNull(vFile);
       VfsUtil.saveText(vFile, text);
-      PsiJavaFile psiFile = (PsiJavaFile)myPsiManager.findFile(vFile);
-      assertNotNull(psiFile);
-      return psiFile.getClasses()[0];
+      return vFile;
     });
+
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    PsiJavaFile psiFile = (PsiJavaFile)myPsiManager.findFile(classVFile);
+    assertNotNull(psiFile);
+
+    return psiFile.getClasses()[0];
   }
 }
