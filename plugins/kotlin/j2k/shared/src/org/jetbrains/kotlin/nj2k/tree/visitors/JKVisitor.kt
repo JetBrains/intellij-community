@@ -21,11 +21,7 @@ abstract class JKVisitor {
 
     abstract fun visitMethod(method: JKMethod)
 
-    abstract fun visitMethodImpl(methodImpl: JKMethodImpl)
-
     abstract fun visitConstructor(constructor: JKConstructor)
-
-    abstract fun visitConstructorImpl(constructorImpl: JKConstructorImpl)
 
     abstract fun visitKtPrimaryConstructor(ktPrimaryConstructor: JKKtPrimaryConstructor)
 
@@ -55,15 +51,11 @@ abstract class JKVisitor {
 
     abstract fun visitAnnotationParameter(annotationParameter: JKAnnotationParameter)
 
-    abstract fun visitAnnotationParameterImpl(annotationParameterImpl: JKAnnotationParameterImpl)
-
     abstract fun visitAnnotationNameParameter(annotationNameParameter: JKAnnotationNameParameter)
 
     abstract fun visitArgument(argument: JKArgument)
 
     abstract fun visitNamedArgument(namedArgument: JKNamedArgument)
-
-    abstract fun visitArgumentImpl(argumentImpl: JKArgumentImpl)
 
     abstract fun visitArgumentList(argumentList: JKArgumentList)
 
@@ -76,8 +68,6 @@ abstract class JKVisitor {
     abstract fun visitTypeArgumentList(typeArgumentList: JKTypeArgumentList)
 
     abstract fun visitNameIdentifier(nameIdentifier: JKNameIdentifier)
-
-    abstract fun visitBlockImpl(blockImpl: JKBlockImpl)
 
     abstract fun visitKtWhenCase(ktWhenCase: JKKtWhenCase)
 
@@ -113,9 +103,7 @@ abstract class JKVisitor {
 
     abstract fun visitDelegationConstructorCall(delegationConstructorCall: JKDelegationConstructorCall)
 
-    abstract fun visitCallExpression(callExpression: JKCallExpression)
-
-    abstract fun visitCallExpressionImpl(callExpressionImpl: JKCallExpressionImpl)
+    abstract fun visitCallExpression(callExpressionImpl: JKCallExpressionImpl)
 
     abstract fun visitNewExpression(newExpression: JKNewExpression)
 
@@ -146,8 +134,6 @@ abstract class JKVisitor {
     abstract fun visitKtItExpression(ktItExpression: JKKtItExpression)
 
     abstract fun visitKtAnnotationArrayInitializerExpression(ktAnnotationArrayInitializerExpression: JKKtAnnotationArrayInitializerExpression)
-
-    abstract fun visitKtWhenBlock(ktWhenBlock: JKKtWhenBlock)
 
     abstract fun visitKtWhenExpression(ktWhenExpression: JKKtWhenExpression)
 

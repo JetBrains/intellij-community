@@ -203,7 +203,7 @@ class JKCallExpressionImpl(
 ) : JKCallExpression() {
     override var typeArgumentList by child(typeArgumentList)
     override var arguments by child(arguments)
-    override fun accept(visitor: JKVisitor) = visitor.visitCallExpressionImpl(this)
+    override fun accept(visitor: JKVisitor) = visitor.visitCallExpression(this)
 }
 
 class JKNewExpression(

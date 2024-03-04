@@ -405,12 +405,6 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printRightNonCodeElements(method)
         }
 
-        override fun visitMethodImpl(methodImpl: JKMethodImpl) {
-            printLeftNonCodeElements(methodImpl)
-            visitMethodRaw(methodImpl)
-            printRightNonCodeElements(methodImpl)
-        }
-
         private fun visitMethodRaw(method: JKMethod) {
             method.annotationList.accept(this)
             renderModifiersList(method)
@@ -612,12 +606,6 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printRightNonCodeElements(argument)
         }
 
-        override fun visitArgumentImpl(argumentImpl: JKArgumentImpl) {
-            printLeftNonCodeElements(argumentImpl)
-            argumentImpl.value.accept(this)
-            printRightNonCodeElements(argumentImpl)
-        }
-
         override fun visitNamedArgument(namedArgument: JKNamedArgument) {
             printLeftNonCodeElements(namedArgument)
             visitNamedArgumentRaw(namedArgument)
@@ -630,25 +618,15 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             namedArgument.value.accept(this)
         }
 
-        override fun visitCallExpression(callExpression: JKCallExpression) {
-            printLeftNonCodeElements(callExpression)
-            visitCallExpressionRaw(callExpression)
-            printRightNonCodeElements(callExpression)
-        }
-
-        override fun visitCallExpressionImpl(callExpressionImpl: JKCallExpressionImpl) {
+        override fun visitCallExpression(callExpressionImpl: JKCallExpressionImpl) {
             printLeftNonCodeElements(callExpressionImpl)
-            visitCallExpressionRaw(callExpressionImpl)
-            printRightNonCodeElements(callExpressionImpl)
-        }
-
-        private fun visitCallExpressionRaw(callExpression: JKCallExpression) {
-            printer.renderSymbol(callExpression.identifier, callExpression)
-            if (callExpression.identifier.isAnnotationMethod()) return
-            callExpression.typeArgumentList.accept(this)
+            printer.renderSymbol(callExpressionImpl.identifier, callExpressionImpl)
+            if (callExpressionImpl.identifier.isAnnotationMethod()) return
+            callExpressionImpl.typeArgumentList.accept(this)
             printer.par {
-                callExpression.arguments.accept(this)
+                callExpressionImpl.arguments.accept(this)
             }
+            printRightNonCodeElements(callExpressionImpl)
         }
 
         override fun visitTypeArgumentList(typeArgumentList: JKTypeArgumentList) {
@@ -833,12 +811,6 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printRightNonCodeElements(block)
         }
 
-        override fun visitBlockImpl(blockImpl: JKBlockImpl) {
-            printLeftNonCodeElements(blockImpl)
-            visitBlockRaw(blockImpl)
-            printRightNonCodeElements(blockImpl)
-        }
-
         private fun visitBlockRaw(block: JKBlock) {
             printer.print(" ")
             renderTokenElement(block.leftBrace)
@@ -930,12 +902,6 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printLeftNonCodeElements(constructor)
             visitConstructorRaw(constructor)
             printRightNonCodeElements(constructor)
-        }
-
-        override fun visitConstructorImpl(constructorImpl: JKConstructorImpl) {
-            printLeftNonCodeElements(constructorImpl)
-            visitConstructorRaw(constructorImpl)
-            printRightNonCodeElements(constructorImpl)
         }
 
         private fun visitConstructorRaw(constructor: JKConstructor) {
@@ -1041,12 +1007,6 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printRightNonCodeElements(assignmentChainLetLink)
         }
 
-        override fun visitKtWhenBlock(ktWhenBlock: JKKtWhenBlock) {
-            printLeftNonCodeElements(ktWhenBlock)
-            visitKtWhenBlockRaw(ktWhenBlock)
-            printRightNonCodeElements(ktWhenBlock)
-        }
-
         private fun visitKtWhenBlockRaw(ktWhenBlock: JKKtWhenBlock) {
             printer.print("when (")
             ktWhenBlock.expression.accept(this)
@@ -1102,12 +1062,6 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printLeftNonCodeElements(annotationParameter)
             annotationParameter.value.accept(this)
             printRightNonCodeElements(annotationParameter)
-        }
-
-        override fun visitAnnotationParameterImpl(annotationParameterImpl: JKAnnotationParameterImpl) {
-            printLeftNonCodeElements(annotationParameterImpl)
-            annotationParameterImpl.value.accept(this)
-            printRightNonCodeElements(annotationParameterImpl)
         }
 
         override fun visitClassLiteralExpression(classLiteralExpression: JKClassLiteralExpression) {
