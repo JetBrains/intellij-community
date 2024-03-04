@@ -15,7 +15,7 @@ import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.*
 
 internal class XmlSerializerMapTest {
@@ -118,10 +118,21 @@ internal class XmlSerializerMapTest {
           <map>
             <entry key="a" value="b" />
           </map>
-        </bean>""", bean = bean)
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "map": {
+            "a": "b"
+          }
+        }
+      """,
+      bean = bean,
+    )
   }
 
-  @Test fun notSurroundingKeyAndValue() {
+  @Test
+  fun notSurroundingKeyAndValue() {
     @Suppress("PropertyName")
     @Tag("bean")
     class Bean {
@@ -135,41 +146,81 @@ internal class XmlSerializerMapTest {
     bean.MAP.put(BeanWithPublicFields(3, "c"), BeanWithTextAnnotation(4, "d"))
     bean.MAP.put(BeanWithPublicFields(5, "e"), BeanWithTextAnnotation(6, "f"))
 
-    testSerializer("""
-    <bean>
-      <map>
-        <entry>
-          <BeanWithPublicFields>
-            <option name="INT_V" value="1" />
-            <option name="STRING_V" value="a" />
-          </BeanWithPublicFields>
-          <BeanWithTextAnnotation>
-            <option name="INT_V" value="2" />
-            b
-          </BeanWithTextAnnotation>
-        </entry>
-        <entry>
-          <BeanWithPublicFields>
-            <option name="INT_V" value="3" />
-            <option name="STRING_V" value="c" />
-          </BeanWithPublicFields>
-          <BeanWithTextAnnotation>
-            <option name="INT_V" value="4" />
-            d
-          </BeanWithTextAnnotation>
-        </entry>
-        <entry>
-          <BeanWithPublicFields>
-            <option name="INT_V" value="5" />
-            <option name="STRING_V" value="e" />
-          </BeanWithPublicFields>
-          <BeanWithTextAnnotation>
-            <option name="INT_V" value="6" />
-            f
-          </BeanWithTextAnnotation>
-        </entry>
-      </map>
-    </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <map>
+            <entry>
+              <BeanWithPublicFields>
+                <option name="INT_V" value="1" />
+                <option name="STRING_V" value="a" />
+              </BeanWithPublicFields>
+              <BeanWithTextAnnotation>
+                <option name="INT_V" value="2" />
+                b
+              </BeanWithTextAnnotation>
+            </entry>
+            <entry>
+              <BeanWithPublicFields>
+                <option name="INT_V" value="3" />
+                <option name="STRING_V" value="c" />
+              </BeanWithPublicFields>
+              <BeanWithTextAnnotation>
+                <option name="INT_V" value="4" />
+                d
+              </BeanWithTextAnnotation>
+            </entry>
+            <entry>
+              <BeanWithPublicFields>
+                <option name="INT_V" value="5" />
+                <option name="STRING_V" value="e" />
+              </BeanWithPublicFields>
+              <BeanWithTextAnnotation>
+                <option name="INT_V" value="6" />
+                f
+              </BeanWithTextAnnotation>
+            </entry>
+          </map>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "map": [
+            {
+              "key": {
+                "int_v": 1,
+                "string_v": "a"
+              },
+              "value": {
+                "int_v": 2,
+                "string_v": "b"
+              }
+            },
+            {
+              "key": {
+                "int_v": 3,
+                "string_v": "c"
+              },
+              "value": {
+                "int_v": 4,
+                "string_v": "d"
+              }
+            },
+            {
+              "key": {
+                "int_v": 5,
+                "string_v": "e"
+              },
+              "value": {
+                "int_v": 6,
+                "string_v": "f"
+              }
+            }
+          ]
+        }
+      """,
+      bean = bean,
+    )
   }
 
   @Test fun serialization() {
@@ -187,34 +238,61 @@ internal class XmlSerializerMapTest {
 
     val bean = BeanWithMap()
 
-    testSerializer("""
-    <bean>
-      <option name="VALUES">
-        <map>
-          <entry key="a" value="1" />
-          <entry key="b" value="2" />
-          <entry key="c" value="3" />
-        </map>
-      </option>
-    </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="VALUES">
+            <map>
+              <entry key="a" value="1" />
+              <entry key="b" value="2" />
+              <entry key="c" value="3" />
+            </map>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": {
+            "a": "1",
+            "b": "2",
+            "c": "3"
+          }
+        }
+      """,
+      bean = bean,
+    )
     bean.VALUES.clear()
     bean.VALUES.put("1", "a")
     bean.VALUES.put("2", "b")
     bean.VALUES.put("3", "c")
 
-    testSerializer("""
-    <bean>
-    <option name="VALUES">
-      <map>
-        <entry key="1" value="a" />
-        <entry key="2" value="b" />
-        <entry key="3" value="c" />
-      </map>
-    </option>
-  </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="VALUES">
+            <map>
+              <entry key="1" value="a" />
+              <entry key="2" value="b" />
+              <entry key="3" value="c" />
+            </map>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": {
+            "1": "a",
+            "2": "b",
+            "3": "c"
+          }
+        }
+      """,
+      bean = bean,
+    )
   }
 
-  @Test fun withBeanValue() {
+  @Test
+  fun withBeanValue() {
     @Suppress("PropertyName")
     class BeanWithMapWithBeanValue {
       var VALUES: MutableMap<String, BeanWithProperty> = LinkedHashMap()
@@ -226,37 +304,57 @@ internal class XmlSerializerMapTest {
     bean.VALUES.put("b", BeanWithProperty("Bond"))
     bean.VALUES.put("c", BeanWithProperty("Bill"))
 
-    testSerializer("""
-    <BeanWithMapWithBeanValue>
-      <option name="VALUES">
-        <map>
-          <entry key="a">
-            <value>
-              <BeanWithProperty>
-                <option name="name" value="James" />
-              </BeanWithProperty>
-            </value>
-          </entry>
-          <entry key="b">
-            <value>
-              <BeanWithProperty>
-                <option name="name" value="Bond" />
-              </BeanWithProperty>
-            </value>
-          </entry>
-          <entry key="c">
-            <value>
-              <BeanWithProperty>
-                <option name="name" value="Bill" />
-              </BeanWithProperty>
-            </value>
-          </entry>
-        </map>
-      </option>
-    </BeanWithMapWithBeanValue>""", bean)
+    testSerializer(
+      expectedXml = """
+        <BeanWithMapWithBeanValue>
+          <option name="VALUES">
+            <map>
+              <entry key="a">
+                <value>
+                  <BeanWithProperty>
+                    <option name="name" value="James" />
+                  </BeanWithProperty>
+                </value>
+              </entry>
+              <entry key="b">
+                <value>
+                  <BeanWithProperty>
+                    <option name="name" value="Bond" />
+                  </BeanWithProperty>
+                </value>
+              </entry>
+              <entry key="c">
+                <value>
+                  <BeanWithProperty>
+                    <option name="name" value="Bill" />
+                  </BeanWithProperty>
+                </value>
+              </entry>
+            </map>
+          </option>
+        </BeanWithMapWithBeanValue>
+      """,
+      expectedJson = """
+       {
+         "values": {
+           "a": {
+             "name": "James"
+           },
+           "b": {
+             "name": "Bond"
+           },
+           "c": {
+             "name": "Bill"
+           }
+         }
+       }
+      """,
+      bean = bean,
+    )
   }
 
-  @Test fun setKeysInMap() {
+  @Test
+  fun setKeysInMap() {
     @Tag("bean")
     class BeanWithSetKeysInMap {
       var myMap = LinkedHashMap<Collection<String>, String>()
@@ -266,31 +364,57 @@ internal class XmlSerializerMapTest {
     bean.myMap.put(LinkedHashSet(listOf("a", "b", "c")), "letters")
     bean.myMap.put(LinkedHashSet(listOf("1", "2", "3")), "numbers")
 
-    val bb = testSerializer("""
-      <bean>
-      <option name="myMap">
-        <map>
-          <entry value="letters">
-            <key>
-              <set>
-                <option value="a" />
-                <option value="b" />
-                <option value="c" />
-              </set>
-            </key>
-          </entry>
-          <entry value="numbers">
-            <key>
-              <set>
-                <option value="1" />
-                <option value="2" />
-                <option value="3" />
-              </set>
-            </key>
-          </entry>
-        </map>
-      </option>
-    </bean>""", bean)
+    val bb = testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="myMap">
+            <map>
+              <entry value="letters">
+                <key>
+                  <set>
+                    <option value="a" />
+                    <option value="b" />
+                    <option value="c" />
+                  </set>
+                </key>
+              </entry>
+              <entry value="numbers">
+                <key>
+                  <set>
+                    <option value="1" />
+                    <option value="2" />
+                    <option value="3" />
+                  </set>
+                </key>
+              </entry>
+            </map>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "myMap": [
+            {
+              "key": [
+                "a",
+                "b",
+                "c"
+              ],
+              "value": "letters"
+            },
+            {
+              "key": [
+                "1",
+                "2",
+                "3"
+              ],
+              "value": "numbers"
+            }
+          ]
+        }
+      """,
+      bean = bean,
+    )
 
     for (collection in bb.myMap.keys) {
       assertThat(collection).isInstanceOf(Set::class.java)
@@ -308,31 +432,43 @@ internal class XmlSerializerMapTest {
 
     val bean = MapMap()
     bean.foo.put("bar", TreeMap(mapOf(12L to "22")))
-    testSerializer("""
-    <bean>
-      <option name="foo">
-        <map>
-          <entry key="bar">
-            <value>
-              <map>
-                <entry key="12" value="22" />
-              </map>
-            </value>
-          </entry>
-        </map>
-      </option>
-    </bean>
-    """, bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="foo">
+            <map>
+              <entry key="bar">
+                <value>
+                  <map>
+                    <entry key="12" value="22" />
+                  </map>
+                </value>
+              </entry>
+            </map>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "foo": {
+            "bar": {
+              "12": "22"
+            }
+          }
+        }
+      """,
+      bean = bean,
+    )
   }
 
   @Test
   fun `no nullize of empty data`() {
     val element = JDOMUtil.load("""
-        <state>
-<![CDATA[{
-}]]>
-        </state>
-      """.trimIndent())
+      <state>
+        <![CDATA[{
+        }]]>
+      </state>
+    """.trimIndent())
     val result = element.deserialize(PluginFeatureMap::class.java)
     assertThat(result.featureMap).isNotNull()
   }
@@ -343,42 +479,62 @@ internal class XmlSerializerMapTest {
     val extensions = PluginFeatureMap(mapOf("foo" to PluginDataSet(setOf(pluginData))))
 
     testSerializer(
-      """
-<state><![CDATA[{
-  "featureMap": {
-    "foo": {
-      "dataSet": [
+      expectedXml = """
+        <state><![CDATA[{
+          "featureMap": {
+            "foo": {
+              "dataSet": [
+                {
+                  "pluginIdString": "foo",
+                  "nullablePluginName": "Foo"
+                }
+              ]
+            }
+          }
+        }]]></state>
+      """,
+      expectedJson = """
         {
-          "pluginIdString": "foo",
-          "nullablePluginName": "Foo"
+          "featureMap": {
+            "foo": {
+              "dataSet": [
+                {
+                  "pluginIdString": "foo",
+                  "nullablePluginName": "Foo"
+                }
+              ]
+            }
+          }
         }
-      ]
-    }
-  }
-}]]></state>
-      """.trimIndent(),
-      extensions,
+      """,
+      bean = extensions,
     )
   }
 
   @Test
   fun `featurePluginData serialization`() {
-    val pluginData = FeaturePluginData(
-      "foo",
-      PluginData("foo", "Foo"),
-    )
+    val pluginData = FeaturePluginData(displayName = "foo", pluginData = PluginData("foo", "Foo"))
 
     testSerializer(
-      """
-<state><![CDATA[{
-  "displayName": "foo",
-  "pluginData": {
-    "pluginIdString": "foo",
-    "nullablePluginName": "Foo"
-  }
-}]]></state>
-      """.trimIndent(),
-      pluginData,
+      expectedXml = """
+        <state><![CDATA[{
+          "displayName": "foo",
+          "pluginData": {
+            "pluginIdString": "foo",
+            "nullablePluginName": "Foo"
+          }
+        }]]></state>
+      """,
+      expectedJson = """
+        {
+          "displayName": "foo",
+          "pluginData": {
+            "pluginIdString": "foo",
+            "nullablePluginName": "Foo"
+          }
+        }
+      """,
+      bean = pluginData,
     )
   }
 
@@ -392,11 +548,22 @@ internal class XmlSerializerMapTest {
 
     val bean = Bean()
     bean.map.put("a", 1)
-    testSerializer("""
-    <bean>
-      <map>
-        <entry key="a" value="1" />
-      </map>
-    </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <map>
+            <entry key="a" value="1" />
+          </map>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "map": {
+            "a": 1
+          }
+        }
+      """,
+      bean = bean,
+    )
   }
 }

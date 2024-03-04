@@ -18,11 +18,7 @@ import com.intellij.platform.settings.RawSettingSerializerDescriptor
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingTag
 import com.intellij.serialization.SerializationException
-import com.intellij.serialization.xml.KotlinxSerializationBinding
-import com.intellij.util.xmlb.BeanBinding
-import com.intellij.util.xmlb.Binding
-import com.intellij.util.xmlb.XmlSerializationException
-import com.intellij.util.xmlb.deserializeBeanBindingInto
+import com.intellij.util.xmlb.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.jdom.Element
 import java.lang.invoke.MethodHandles
@@ -126,7 +122,7 @@ internal class StateStorageBackedByController(
           result = beanBinding.newInstance() as T
         }
 
-        deserializeBeanBindingInto(result = result, element = element, binding = binding)
+        deserializeNestedBindingInto(result = result, element = element, binding = binding)
       }
     }
     return result

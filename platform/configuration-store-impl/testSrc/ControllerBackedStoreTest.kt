@@ -25,6 +25,7 @@ import com.intellij.util.xmlb.jdomToJson
 import com.intellij.util.xmlb.jsonDomToXml
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import org.intellij.lang.annotations.Language
@@ -120,7 +121,7 @@ class ControllerBackedStoreTest {
         if (value != null) {
           saved = value as JsonObject
         }
-        return SetResult.INAPPLICABLE
+        return SetResult.inapplicable()
       }
   })
 
@@ -317,6 +318,50 @@ class ControllerBackedStoreTest {
     assertThat(component.state.bean.foo).isEqualTo("test")
   }
 
+  @Suppress("unused")
+  @Test
+  fun kotlinx_serialization() = runBlocking<Unit>(Dispatchers.Default) {
+    @Serializable
+    class TestState(var foo: String = "", var bar: String = "")
+
+    var saved: JsonElement? = null
+
+    val store = createStore(object : DelegatedSettingsController {
+      override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
+        @Suppress("UNCHECKED_CAST")
+        return when (key.key) {
+          "TestState" -> {
+            GetResult.resolved(Json.encodeToJsonElement<TestState>(TestState(foo = "hello", bar = "test2")))
+          }
+          else -> GetResult.inapplicable()
+        } as GetResult<T>
+      }
+
+      override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult {
+        if (key.key == "TestState") {
+          saved = value as JsonElement
+        }
+        return SetResult.inapplicable()
+      }
+    })
+
+    @State(name = "TestState", storages = [Storage(value = TEST_COMPONENT_FILE_NAME)], allowLoadInTests = true)
+    class TestComponent : SerializablePersistentStateComponent<TestState>(TestState()) {
+      override fun noStateLoaded() {
+        loadState(TestState())
+      }
+    }
+
+    val component = TestComponent()
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+
+    assertThat(component.state.foo).isEqualTo("hello")
+
+    component.state.foo = "newValue"
+    store.save(forceSavingAllSettings = true)
+    assertThat(Json.encodeToString(saved)).isEqualTo("""{"foo":"newValue","bar":"test2"}""")
+  }
+
   @Suppress("SameParameterValue")
   private fun writeConfig(fileName: String, @Language("XML") data: String): Path {
     val file = appConfig.resolve(fileName)
@@ -341,7 +386,7 @@ class ControllerBackedStoreTest {
         return supplier(key as SettingDescriptor<JsonElement>) as GetResult<T>
       }
 
-      override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.INAPPLICABLE
+      override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.inapplicable()
     })
   }
 }

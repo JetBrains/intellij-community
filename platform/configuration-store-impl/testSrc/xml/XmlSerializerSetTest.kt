@@ -4,7 +4,7 @@ package com.intellij.configurationStore.xml
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class XmlSerializerSetTest {
   @Test
@@ -151,27 +151,52 @@ class XmlSerializerSetTest {
   }
 
   private fun <T : Any> assertSet(bean: T, setter: (values: LinkedHashSet<String>) -> Unit) {
-    testSerializer("""
-      <bean>
-        <option name="values">
-          <set>
-            <option value="a" />
-            <option value="b" />
-            <option value="w" />
-          </set>
-        </option>
-      </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="values">
+            <set>
+              <option value="a" />
+              <option value="b" />
+              <option value="w" />
+            </set>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": [
+            "a",
+            "b",
+            "w"
+          ]
+        }
+      """,
+      bean = bean,
+    )
     setter(linkedSetOf("1", "2", "3"))
 
-    testSerializer("""
-      <bean>
-        <option name="values">
-          <set>
-            <option value="1" />
-            <option value="2" />
-            <option value="3" />
-          </set>
-        </option>
-      </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="values">
+            <set>
+              <option value="1" />
+              <option value="2" />
+              <option value="3" />
+            </set>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": [
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      """,
+      bean = bean)
   }
 }

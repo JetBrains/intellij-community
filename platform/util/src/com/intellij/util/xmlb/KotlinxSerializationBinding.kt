@@ -1,13 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.serialization.xml
+package com.intellij.util.xmlb
 
-import com.intellij.openapi.diagnostic.debug
-import com.intellij.serialization.LOG
 import com.intellij.util.xml.dom.XmlElement
-import com.intellij.util.xmlb.Binding
-import com.intellij.util.xmlb.DomAdapter
-import com.intellij.util.xmlb.RootBinding
-import com.intellij.util.xmlb.SerializationFilter
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
@@ -77,20 +71,12 @@ class KotlinxSerializationBinding(aClass: Class<*>) : Binding, RootBinding {
   }
 
   override fun deserializeToJson(element: Element): JsonElement {
-    val cdata = (element.content.firstOrNull() as? Text)?.value
-    if (cdata == null) {
-      LOG.debug { "incorrect data (old format?) for $serializer" }
-      return JsonObject(Collections.emptyMap())
-    }
+    val cdata = (element.content.firstOrNull() as? Text)?.value ?: return JsonObject(Collections.emptyMap())
     return json.parseToJsonElement(cdata)
   }
 
   override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {
-    val cdata = if (element is Element) (element.content.firstOrNull() as? Text)?.text else (element as XmlElement).content
-    if (cdata == null) {
-      LOG.debug { "incorrect data (old format?) for $serializer" }
-      return json.decodeFromString(serializer, "{}")
-    }
+    val cdata = (if (element is Element) (element.content.firstOrNull() as? Text)?.text else (element as XmlElement).content) ?: return json.decodeFromString(serializer, "{}")
     return decodeFromJson(cdata)
   }
 }

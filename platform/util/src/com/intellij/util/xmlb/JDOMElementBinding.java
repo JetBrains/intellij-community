@@ -6,17 +6,13 @@ import com.intellij.util.xmlb.annotations.Tag;
 import kotlinx.serialization.json.JsonArray;
 import kotlinx.serialization.json.JsonElement;
 import kotlinx.serialization.json.JsonObject;
-import kotlinx.serialization.json.JsonPrimitive;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.xml.stream.XMLStreamException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.openapi.util.SafeStAXStreamBuilderKt.buildNsUnawareJdom;
 import static com.intellij.util.xmlb.JsonDomKt.jdomToJson;
 import static com.intellij.util.xmlb.JsonDomKt.jsonDomToXml;
 
@@ -33,8 +29,8 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable JsonElement deserializeToJson(@NotNull Element element) {
-    throw new IllegalStateException("Must not be called");
+  public @NotNull JsonElement deserializeToJson(@NotNull Element element) {
+    return jdomToJson(element);
   }
 
   @Override
@@ -50,14 +46,24 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding {
     }
 
     if (value instanceof Element) {
-      return jdomToJson((Element)value);
+      Element element = (Element)value;
+      if (!element.getName().equals(tagName)) {
+        element = ((Element)value).clone().setName(tagName);
+      }
+      return jdomToJson(element);
     }
     if (value instanceof Element[]) {
-      List<JsonElement> result = new ArrayList<>();
-      for (Element element : ((Element[])value)) {
-        result.add(jdomToJson(element));
+      Element[] elements = (Element[])value;
+      if (elements.length == 0) {
+        return null;
       }
-      return new JsonArray(result);
+      else {
+        List<JsonElement> result = new ArrayList<>();
+        for (Element element : elements) {
+          result.add(jdomToJson(element.getName().equals(tagName) ? element : element.clone().setName(tagName)));
+        }
+        return new JsonArray(result);
+      }
     }
     else {
       return null;
@@ -66,17 +72,13 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding {
 
   @Override
   public void setFromJson(@NotNull Object bean, @NotNull JsonElement element) {
-    if (element instanceof JsonPrimitive) {
-      try {
-        accessor.set(bean, buildNsUnawareJdom(new StringReader(((JsonPrimitive)element).getContent())));
-      }
-      catch (XMLStreamException e) {
-        throw new RuntimeException(e);
-      }
+    if (element instanceof JsonObject) {
+      accessor.set(bean, jsonDomToXml((JsonObject)element));
     }
     else if (element instanceof JsonArray) {
-      List<Element> result = new ArrayList<>();
-      for (JsonElement o : ((JsonArray)element)) {
+      JsonArray jsonArray = (JsonArray)element;
+      List<Element> result = new ArrayList<>(jsonArray.getSize());
+      for (JsonElement o : jsonArray) {
         result.add(jsonDomToXml((JsonObject)o));
       }
       accessor.set(bean, result.toArray(new Element[0]));
@@ -91,18 +93,17 @@ final class JDOMElementBinding implements MultiNodeBinding, NestedBinding {
     }
 
     if (value instanceof Element) {
-      Element targetElement = ((Element)value).clone();
-      assert targetElement != null;
-      targetElement.setName(tagName);
-      parent.addContent(targetElement);
+      parent.addContent(((Element)value).clone().setName(tagName));
     }
     else if (value instanceof Element[]) {
       Element[] elements = (Element[])value;
-      List<Element> result = new ArrayList<>(elements.length);
-      for (Element element : elements) {
-        result.add(element.clone().setName(tagName));
+      if (elements.length != 0) {
+        List<Element> result = new ArrayList<>(elements.length);
+        for (Element element : elements) {
+          result.add(element.clone().setName(tagName));
+        }
+        parent.addContent(result);
       }
-      parent.addContent(result);
     }
     else {
       throw new XmlSerializationException("org.jdom.Element expected but " + value + " found");
