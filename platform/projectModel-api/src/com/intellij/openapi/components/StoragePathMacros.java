@@ -1,17 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
- * We have a framework for persisting component states (see {@link State} {@link Storage}).
- * It allows specifying which file should hold persisting data.
- * There are a number of standard file system anchors like 'workspace file', 'project config dir' which
- * can be used for defining a storage file's path.
- * Hence, IJ provides special support for such anchors in the form of macros,
+ * The IntelliJ Platform allows for persisting component states (see {@link State} and {@link Storage}).
+ * It is possible to specify which file should hold persisting data.
+ * There are a number of standard file system anchors like 'workspace file',
+ * 'project config dir', which can be used for defining a storage file's path.
+ * <p>
+ * The platform provides special support for such anchors in the form of macros,
  * i.e., special markers that are mapped to the current file system environment at runtime.
- * <p/>
+ * <p>
  * This class holds those markers and utility method for working with them.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html">Persisting State of Components (IntelliJ Platform Docs)</a>
  */
 public final class StoragePathMacros {
   /**
