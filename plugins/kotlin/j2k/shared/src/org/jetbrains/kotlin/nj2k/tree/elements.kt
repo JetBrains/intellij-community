@@ -240,7 +240,7 @@ class JKJavaTryCatchSection(
 ) : JKStatement() {
     var parameter: JKParameter by child(parameter)
     var block: JKBlock by child(block)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaTryCatchSection(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 sealed class JKJavaSwitchCase : JKTreeElement() {
@@ -251,13 +251,13 @@ sealed class JKJavaSwitchCase : JKTreeElement() {
 class JKJavaDefaultSwitchCase(statements: List<JKStatement>) : JKJavaSwitchCase(), PsiOwner by PsiOwnerImpl() {
     override var statements: List<JKStatement> by children(statements)
     override fun isDefault(): Boolean = true
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaDefaultSwitchCase(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 sealed class JKJavaLabelSwitchCase : JKJavaSwitchCase() {
     abstract val labels: List<JKExpression>
     final override fun isDefault(): Boolean = false
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaLabelSwitchCase(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKJavaClassicLabelSwitchCase(
@@ -266,7 +266,7 @@ class JKJavaClassicLabelSwitchCase(
 ) : JKJavaLabelSwitchCase(), PsiOwner by PsiOwnerImpl() {
     override var statements: List<JKStatement> by children(statements)
     override var labels: List<JKExpression> by children(labels)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaClassicLabelSwitchCase(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKJavaArrowSwitchLabelCase(
@@ -275,7 +275,7 @@ class JKJavaArrowSwitchLabelCase(
 ) : JKJavaLabelSwitchCase(), PsiOwner by PsiOwnerImpl() {
     override var statements: List<JKStatement> by children(statements)
     override var labels: List<JKExpression> by children(labels)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaArrowLabelSwitchCase(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKKtTryCatchSection(

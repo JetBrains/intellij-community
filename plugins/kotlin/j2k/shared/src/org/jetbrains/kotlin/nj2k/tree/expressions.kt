@@ -367,7 +367,7 @@ class JKJavaNewEmptyArray(
 ) : JKExpression() {
     val type by child(type)
     var initializer by children(initializer)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaNewEmptyArray(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 /**
@@ -381,7 +381,7 @@ class JKJavaNewArray(
 ) : JKExpression() {
     val type by child(type)
     var initializer by children(initializer)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaNewArray(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKJavaAssignmentExpression(
@@ -392,7 +392,7 @@ class JKJavaAssignmentExpression(
 ) : JKExpression() {
     var field by child(field)
     var expression by child(expression)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaAssignmentExpression(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKJavaSwitchExpression(
@@ -402,7 +402,7 @@ class JKJavaSwitchExpression(
 ) : JKExpression(), JKJavaSwitchBlock {
     override var expression: JKExpression by child(expression)
     override var cases: List<JKJavaSwitchCase> by children(cases)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaSwitchExpression(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 
     override fun calculateType(typeFactory: JKTypeFactory): JKType? {
         val psiType = (psi as? PsiSwitchExpression)?.type ?: return null

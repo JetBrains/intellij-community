@@ -411,12 +411,6 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printRightNonCodeElements(methodImpl)
         }
 
-        override fun visitJavaAnnotationMethod(javaAnnotationMethod: JKJavaAnnotationMethod) {
-            printLeftNonCodeElements(javaAnnotationMethod)
-            visitMethodRaw(javaAnnotationMethod)
-            printRightNonCodeElements(javaAnnotationMethod)
-        }
-
         private fun visitMethodRaw(method: JKMethod) {
             method.annotationList.accept(this)
             renderModifiersList(method)

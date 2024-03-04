@@ -281,5 +281,5 @@ class JKKtInitDeclaration(block: JKBlock) : JKInitDeclaration(block) {
 
 class JKJavaStaticInitDeclaration(block: JKBlock) : JKInitDeclaration(block) {
     override val isStatic: Boolean get() = true
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaStaticInitDeclaration(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit JKJavaStaticInitDeclaration during the printing phase")
 }

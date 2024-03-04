@@ -48,7 +48,7 @@ class JKBreakStatement(label: JKLabel) : JKStatement() {
 
 class JKJavaYieldStatement(expression: JKExpression) : JKStatement() {
     val expression: JKExpression by child(expression)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaYieldStatement(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKContinueStatement(label: JKLabel) : JKStatement() {
@@ -120,7 +120,7 @@ class JKJavaSwitchStatement(
 ) : JKStatement(), JKJavaSwitchBlock {
     override var expression: JKExpression by child(expression)
     override var cases: List<JKJavaSwitchCase> by children(cases)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaSwitchStatement(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKJavaTryStatement(
@@ -133,7 +133,7 @@ class JKJavaTryStatement(
     var tryBlock: JKBlock by child(tryBlock)
     var finallyBlock: JKBlock by child(finallyBlock)
     var catchSections: List<JKJavaTryCatchSection> by children(catchSections)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaTryStatement(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 
     val isTryWithResources get() = resourceDeclarations.isNotEmpty()
 }
@@ -144,13 +144,13 @@ class JKJavaSynchronizedStatement(
 ) : JKStatement() {
     val lockExpression: JKExpression by child(lockExpression)
     val body: JKBlock by child(body)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaSynchronizedStatement(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKJavaAssertStatement(condition: JKExpression, description: JKExpression) : JKStatement() {
     val description by child(description)
     val condition by child(condition)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaAssertStatement(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKJavaForLoopStatement(
@@ -164,7 +164,7 @@ class JKJavaForLoopStatement(
     var condition by child(condition)
     var initializers by children(initializers)
 
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaForLoopStatement(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKJavaAnnotationMethod(
@@ -186,7 +186,7 @@ class JKJavaAnnotationMethod(
     override var otherModifierElements by children(otherModifierElements)
     override var visibilityElement by child(visibilityElement)
     override var modalityElement by child(modalityElement)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaAnnotationMethod(this)
+    override fun accept(visitor: JKVisitor) = error("We shouldn't hit ${javaClass::getName} during the printing phase")
 }
 
 class JKErrorStatement(override var psi: PsiElement?, override val reason: String? = null) : JKStatement(), JKErrorElement {
