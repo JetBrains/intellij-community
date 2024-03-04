@@ -6,6 +6,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.refactoring.suggested.createSmartPointer
@@ -52,21 +53,23 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement> : Abstrac
         if (!isApplicable) return null
 
         val elementPointer = element.createSmartPointer()
-        val inspectionClass = javaClass
 
-        val quickFix = object : AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT>() {
+        val quickFix = object : AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT>(),
+                                ReportingClassSubstitutor {
+
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspection.getActionFamilyName()
 
             override fun applyFix(
                 project: Project,
                 element: ELEMENT,
-                updater: ModPsiUpdater
+                updater: ModPsiUpdater,
             ) {
                 apply(element, project, updater)
             }
 
             override fun getName(): String = runReadAction { elementPointer.element?.let { getActionName(it) } } ?: familyName
-            override fun getSubstitutedClass(): Class<*> = inspectionClass
+
+            override fun getSubstitutedClass(): Class<*> = this@AbstractKotlinApplicableInspection.javaClass
         }
 
         val description = getProblemDescription(element)

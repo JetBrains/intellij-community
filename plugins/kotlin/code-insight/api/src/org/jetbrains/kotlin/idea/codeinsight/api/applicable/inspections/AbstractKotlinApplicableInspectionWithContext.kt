@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
@@ -42,21 +43,23 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {
         val context = prepareContextWithAnalyze(element) ?: return null
         val name = getActionName(element, context)
-        val inspectionWithContextClass = javaClass
-        val quickFix = object : AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT>() {
+
+        val quickFix = object : AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT>(),
+                                ReportingClassSubstitutor {
 
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspectionWithContext.getActionFamilyName()
 
             override fun applyFix(
                 project: Project,
                 element: ELEMENT,
-                updater: ModPsiUpdater
+                updater: ModPsiUpdater,
             ) {
                 apply(element, context, element.project, updater)
             }
 
             override fun getName(): String = name
-            override fun getSubstitutedClass(): Class<*> = inspectionWithContextClass
+
+            override fun getSubstitutedClass(): Class<*> = this@AbstractKotlinApplicableInspectionWithContext.javaClass
         }
 
         val description = getProblemDescription(element, context)

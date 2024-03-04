@@ -95,8 +95,8 @@ internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtE
     final override fun getElementToMakeWritable(currentFile: PsiFile) = currentFile
 }
 
-internal abstract class AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT : KtElement> : PsiUpdateModCommandQuickFix(),
-                                                                                                    ReportingClassSubstitutor {
+abstract class AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT : KtElement> : PsiUpdateModCommandQuickFix() {
+
     abstract override fun getName(): String
 
     abstract override fun getFamilyName(): @IntentionFamilyName String
@@ -104,7 +104,7 @@ internal abstract class AbstractKotlinModCommandApplicableInspectionQuickFix<ELE
     final override fun applyFix(
         project: Project,
         element: PsiElement,
-        updater: ModPsiUpdater
+        updater: ModPsiUpdater,
     ) {
         @Suppress("UNCHECKED_CAST")
         val e = element as ELEMENT
@@ -114,6 +114,6 @@ internal abstract class AbstractKotlinModCommandApplicableInspectionQuickFix<ELE
     abstract fun applyFix(
         project: Project,
         element: ELEMENT,
-        updater: ModPsiUpdater
+        updater: ModPsiUpdater,
     )
 }
