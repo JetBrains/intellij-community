@@ -11,7 +11,9 @@ import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
 import com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER
 import com.intellij.diff.util.DiffUtil
+import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
@@ -42,6 +44,7 @@ import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.treeStructure.treetable.DefaultTreeTableExpander
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
@@ -103,6 +106,13 @@ open class MultipleFileMergeDialog(
     table.setTreeCellRenderer(virtualFileRenderer)
     table.rowHeight = virtualFileRenderer.preferredSize.height
     table.preferredScrollableViewportSize = JBUI.size(600, 300)
+
+    DataManager.registerDataProvider(table) { dataId ->
+      when {
+        PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> DefaultTreeTableExpander(table)
+        else -> null
+      }
+    }
 
     @Suppress("LeakingThis")
     init()
