@@ -1288,6 +1288,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/expressionBody/WithComment.kt");
         }
 
+        @TestMetadata("WithCommentBeforeThisCall.kt")
+        public void testWithCommentBeforeThisCall() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/namedFunction/expressionBody/WithCommentBeforeThisCall.kt");
+        }
+
         @TestMetadata("WithReference.kt")
         public void testWithReference() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/namedFunction/expressionBody/WithReference.kt");
