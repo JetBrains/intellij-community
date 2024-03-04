@@ -39,7 +39,7 @@ final class AttributeBinding implements NestedBinding {
   }
 
   @Override
-  public @Nullable JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
+  public @NotNull JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
     return JsonHelperKt.toJson(bean, accessor, converter);
   }
 

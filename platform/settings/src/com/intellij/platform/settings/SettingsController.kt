@@ -2,7 +2,6 @@
 package com.intellij.platform.settings
 
 import com.intellij.openapi.components.ComponentManager
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus.*
 import java.nio.file.Path
@@ -22,27 +21,21 @@ interface SettingsController {
   fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?)
 
   @Internal
-  @IntellijInternalApi
   fun createStateStorage(collapsedPath: String, file: Path): Any?
 
   @Internal
-  @IntellijInternalApi
   fun createChild(container: ComponentManager): SettingsController?
 
   @Internal
-  @IntellijInternalApi
   fun release()
 
   @Internal
-  @IntellijInternalApi
   fun <T : Any> doGetItem(key: SettingDescriptor<T>): GetResult<T?>
 
   @Internal
-  @IntellijInternalApi
   fun <T : Any> doSetItem(key: SettingDescriptor<T>, value: T?): SetResult
 
   @Internal
-  @IntellijInternalApi
   fun isPersistenceStateComponentProxy(): Boolean
 }
 
@@ -50,7 +43,6 @@ interface SettingsController {
 @JvmInline
 value class GetResult<out T : Any?> @PublishedApi internal constructor(@PublishedApi internal val value: Any?) {
   companion object {
-    @Suppress("INAPPLICABLE_JVM_NAME")
     fun <T : Any> resolved(value: T?): GetResult<T?> = GetResult(value)
 
     fun <T> inapplicable(): GetResult<T> = GetResult(Inapplicable)
@@ -60,22 +52,28 @@ value class GetResult<out T : Any?> @PublishedApi internal constructor(@Publishe
     get() = value !is Inapplicable
 
   @Suppress("UNCHECKED_CAST")
-  fun get(): T? {
-    return when (value) {
-      is Inapplicable -> null
-      is Partial -> value.value as T
-      else -> value as T
-    }
-  }
+  fun get(): T? = if (value is Inapplicable) null else value as T
 
-  override fun toString(): String = if (value is Inapplicable) "Inapplicable" else "Applicable($value)"
+  override fun toString(): String = "GetResult($value)"
 
   private object Inapplicable
-  private class Partial(@JvmField val value: Any)
 }
 
 @Internal
-enum class SetResult {
+@JvmInline
+value class SetResult @PublishedApi internal constructor(@PublishedApi internal val value: Any?) {
+  companion object {
+    fun inapplicable(): SetResult = SetResult(SetResultResolution.INAPPLICABLE)
+
+    fun forbid(): SetResult = SetResult(SetResultResolution.FORBID)
+
+    fun done(): SetResult = SetResult(SetResultResolution.DONE)
+  }
+
+  override fun toString(): String = "SetResult($value)"
+}
+
+private enum class SetResultResolution {
   /**
    * Indicates that the controller can't be used to set this particular setting.
    */

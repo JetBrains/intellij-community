@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.configurationStore
 
@@ -23,18 +23,17 @@ import com.intellij.util.LineSeparator
 import org.jdom.Element
 import java.io.IOException
 import java.nio.file.*
+import java.util.*
 
 open class DirectoryBasedStorage(
   private val dir: Path,
   @Suppress("DEPRECATION", "removal") private val splitter: com.intellij.openapi.components.StateSplitter,
-  private val pathMacroSubstitutor: PathMacroSubstitutor? = null
+  private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
+  override val controller: SettingsController? = null,
 ) : StateStorageBase<StateMap>() {
   private var componentName: String? = null
   @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator?> = java.util.Map.of()
   @Volatile private var cachedVirtualFile: VirtualFile? = null
-
-  override val controller: SettingsController?
-    get() = null
 
   override val roamingType: RoamingType?
     get() = null
@@ -109,7 +108,7 @@ open class DirectoryBasedStorage(
     }
   }
 
-  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap[name] ?: LineSeparator.getSystemLineSeparator()
+  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap.get(name) ?: LineSeparator.getSystemLineSeparator()
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
@@ -186,7 +185,7 @@ open class DirectoryBasedStorage(
     override fun setSerializedState(componentName: String, element: Element?) {
       storage.componentName = componentName
 
-      @Suppress("removal") val stateAndFileNameList = if (JDOMUtil.isEmpty(element)) emptyList() else storage.splitter.splitState(element!!)
+      @Suppress("removal") val stateAndFileNameList = if (JDOMUtil.isEmpty(element)) Collections.emptyList() else storage.splitter.splitState(element!!)
       if (stateAndFileNameList.isEmpty()) {
         if (copiedStorageData != null) {
           copiedStorageData!!.clear()

@@ -55,9 +55,9 @@ private class LocalSettingsController : DelegatedSettingsController {
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult {
     operate(key, internalOperation = { map, _ ->
       map.setValue(key = getEffectiveKey(key), value = value, serializer = key.serializer, pluginId = key.pluginId)
-      return SetResult.DONE
+      return SetResult.done()
     })
-    return SetResult.INAPPLICABLE
+    return SetResult.inapplicable()
   }
 
   override fun close() {

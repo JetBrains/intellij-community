@@ -37,8 +37,7 @@ data object JdomAdapter : DomAdapter<Element> {
   override fun getChild(element: Element, name: String): Element? = element.getChild(name)
 }
 
-@Internal
-data object XmlDomAdapter : DomAdapter<XmlElement> {
+internal data object XmlDomAdapter : DomAdapter<XmlElement> {
   override fun getName(element: XmlElement): String = element.name
 
   override fun getTextValue(element: XmlElement, defaultText: String): String = element.content ?: defaultText

@@ -270,7 +270,8 @@ internal class XmlSerializerCollectionTest {
   }
 
   @Test fun arrayAnnotationWithElementTag() {
-    @Tag("bean") class Bean {
+    @Tag("bean")
+    class Bean {
       @Suppress("DEPRECATION")
       @com.intellij.util.xmlb.annotations.AbstractCollection(elementTag = "vValue", elementValueAttribute = "v")
       var v = arrayOf("a", "b")
@@ -278,15 +279,26 @@ internal class XmlSerializerCollectionTest {
 
     val bean = Bean()
 
-    testSerializer("""
-    <bean>
-      <option name="v">
-        <array>
-          <vValue v="a" />
-          <vValue v="b" />
-        </array>
-      </option>
-    </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="v">
+            <array>
+              <vValue v="a" />
+              <vValue v="b" />
+            </array>
+          </option>
+        </bean>""",
+      expectedJson = """
+        {
+          "v": [
+            "a",
+            "b"
+          ]
+        }
+      """,
+      bean = bean,
+    )
 
     bean.v = arrayOf("1", "2", "3")
 
@@ -326,26 +338,53 @@ internal class XmlSerializerCollectionTest {
 
     val bean = Bean()
 
-    testSerializer("""
-    <bean>
-      <option name="INT_V" value="1" />
-      <option name="v">
-        <vValue v="a" />
-        <vValue v="b" />
-      </option>
-    </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="INT_V" value="1" />
+          <option name="v">
+            <vValue v="a" />
+            <vValue v="b" />
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "int_v": 1,
+          "v": [
+            "a",
+            "b"
+          ]
+        }
+      """,
+      bean = bean,
+    )
 
     bean.v = arrayOf("1", "2", "3")
 
-    testSerializer("""
-    <bean>
-      <option name="INT_V" value="1" />
-      <option name="v">
-        <vValue v="1" />
-        <vValue v="2" />
-        <vValue v="3" />
-      </option>
-    </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="INT_V" value="1" />
+          <option name="v">
+            <vValue v="1" />
+            <vValue v="2" />
+            <vValue v="3" />
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "int_v": 1,
+          "v": [
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      """,
+      bean = bean,
+    )
   }
 
   @Suppress("PropertyName")

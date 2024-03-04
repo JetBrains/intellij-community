@@ -215,10 +215,14 @@ open class StateStorageManagerImpl(
     val filePath = expandMacro(collapsedPath)
     @Suppress("DEPRECATION", "removal")
     if (stateSplitter != StateSplitter::class.java && stateSplitter != StateSplitterEx::class.java) {
-      val storage = createDirectoryBasedStorage(filePath, collapsedPath, ReflectionUtil.newInstance(stateSplitter))
-      if (storage is StorageVirtualFileTracker.TrackedStorage && virtualFileTracker != null) {
-        virtualFileTracker.put(filePath.invariantSeparatorsPathString, storage)
-      }
+      val storage = TrackedDirectoryStorage(
+        storageManager = this,
+        dir = filePath,
+        splitter = ReflectionUtil.newInstance(stateSplitter),
+        macroSubstitutor = macroSubstitutor,
+        controller = controller,
+      )
+      virtualFileTracker?.put(filePath.invariantSeparatorsPathString, storage)
       return storage
     }
 
@@ -242,14 +246,6 @@ open class StateStorageManagerImpl(
 
   internal open val isUseVfsForWrite: Boolean
     get() = false
-
-  protected open fun createDirectoryBasedStorage(
-    dir: Path,
-    collapsedPath: String,
-    @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
-  ): StateStorage {
-    return TrackedDirectoryStorage(storageManager = this, dir = dir, splitter = splitter, macroSubstitutor = macroSubstitutor)
-  }
 
   protected open fun createFileBasedStorage(
     file: Path,
@@ -277,17 +273,6 @@ open class StateStorageManagerImpl(
       controller = controller,
     )
   }
-
-  private class TrackedDirectoryStorage(
-    override val storageManager: StateStorageManagerImpl,
-    dir: Path,
-    @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
-    macroSubstitutor: PathMacroSubstitutor?
-  ) : DirectoryBasedStorage(
-    dir = dir,
-    splitter = splitter,
-    pathMacroSubstitutor = macroSubstitutor,
-  ), StorageVirtualFileTracker.TrackedStorage
 
   internal class TrackedFileStorage(
     override val storageManager: StateStorageManagerImpl,
@@ -399,5 +384,18 @@ open class StateStorageManagerImpl(
     controller?.release()
   }
 }
+
+private class TrackedDirectoryStorage(
+  override val storageManager: StateStorageManagerImpl,
+  dir: Path,
+  @Suppress("DEPRECATION", "removal") splitter: StateSplitter,
+  macroSubstitutor: PathMacroSubstitutor?,
+  controller: SettingsController?,
+) : DirectoryBasedStorage(
+  dir = dir,
+  splitter = splitter,
+  pathMacroSubstitutor = macroSubstitutor,
+  controller = controller,
+), StorageVirtualFileTracker.TrackedStorage
 
 internal data class Macro(@JvmField val key: String, @JvmField var value: Path)

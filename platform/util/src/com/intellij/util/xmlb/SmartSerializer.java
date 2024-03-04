@@ -51,7 +51,7 @@ public final class SmartSerializer {
 
     BeanBinding beanBinding = getBinding(bean);
     assert beanBinding.bindings != null;
-    BeanBindingKt.deserializeBeanInto(bean, element, beanBinding.bindings, serializedAccessorNameTracker);
+    BeanBindingKt.deserializeJdomIntoBean(bean, element, beanBinding.bindings, serializedAccessorNameTracker);
 
     if (serializedAccessorNameTracker != null) {
       orderedBindings = beanBinding.computeBindingWeights$intellij_platform_util(serializedAccessorNameTracker);

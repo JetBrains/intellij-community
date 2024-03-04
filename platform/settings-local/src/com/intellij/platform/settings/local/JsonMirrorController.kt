@@ -19,7 +19,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration
@@ -43,7 +42,7 @@ private class JsonMirrorController @JvmOverloads constructor(private val isProje
       for (tag in key.tags) {
         if (tag is OldLocalValueSupplierTag) {
           // Element - save it to storage
-          tag.value?.jsonObject?.let {
+          tag.value?.let {
             service.setItem(key, it)
           }
         }
@@ -58,7 +57,7 @@ private class JsonMirrorController @JvmOverloads constructor(private val isProje
       service.setItem(key, value)
       //println(value.toString())
     }
-    return SetResult.INAPPLICABLE
+    return SetResult.inapplicable()
   }
 
   override fun createChild(container: ComponentManager): DelegatedSettingsController {
