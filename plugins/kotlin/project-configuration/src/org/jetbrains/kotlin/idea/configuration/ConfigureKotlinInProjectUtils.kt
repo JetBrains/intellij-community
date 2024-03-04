@@ -154,7 +154,7 @@ suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets:
     // TODO (IDEA-347619): workaround for the fact that smartReadAction doesn't wait for scanning
     if (application.isUnitTestMode) {
         Class.forName("com.intellij.testFramework.IndexingTestUtil")
-            .getMethod("waitUntilIndexesAreReady", Project::class.java)
+            .getMethod("workaroundForEverSmartIdeInUnitTestsIDEA347619", Project::class.java)
             .invoke(null, project)
     }
 

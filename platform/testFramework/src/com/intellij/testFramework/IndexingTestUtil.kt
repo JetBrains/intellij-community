@@ -161,6 +161,15 @@ class IndexingTestUtil(private val project: Project) {
       IndexingTestUtil(project).waitUntilFinished()
     }
 
+    @Suppress("unused") // invoked from prod code via reflection
+    @JvmStatic
+    fun workaroundForEverSmartIdeInUnitTestsIDEA347619(project: Project) {
+      // we don't need this workaround when SynchronousTaskQueue is not enabled
+      if (DumbServiceImpl.useSynchronousTaskQueue) {
+        IndexingTestUtil(project).waitUntilFinished()
+      }
+    }
+
     suspend fun suspendUntilIndexesAreReady(project: Project) {
       IndexingTestUtil(project).suspendUntilIndexesAreReady()
     }

@@ -712,7 +712,8 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       }
     }
 
-    private val useSynchronousTaskQueue: Boolean
+    val useSynchronousTaskQueue: Boolean
+      @VisibleForTesting
       get() = isSynchronousTaskExecution
 
     @JvmStatic
