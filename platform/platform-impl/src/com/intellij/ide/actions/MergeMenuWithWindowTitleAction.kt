@@ -26,11 +26,7 @@ class MergeMenuWithWindowTitleAction : ToggleAction(), DumbAware {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val restartDialog = RestartDialog().apply {
-      showCancelButton = true
-      launchRestart = false
-    }
-    val result = restartDialog.show()
+    val result = RestartDialog.showRestartRequired(showCancelButton = true, launchRestart = false)
     if (result == MessageConstants.CANCEL) {
       return
     }
