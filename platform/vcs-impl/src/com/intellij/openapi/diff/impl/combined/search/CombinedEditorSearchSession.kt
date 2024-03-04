@@ -44,7 +44,7 @@ internal class CombinedEditorSearchSession(private val project: Project,
   private var currentSessionIndex: Int = 0
   private var currentSessionPosition: Position = Position.FIRST
   private var holders: List<EditorSearchSessionHolder> = emptyList()
-  private lateinit var currentSession: EditorSearchSession
+  private var currentSession: EditorSearchSession = EditorSearchSessionEx(currentEditor, project, findModel, ::close)
 
   private val listeners = EventDispatcher.create(CombinedEditorSearchSessionListener::class.java)
 
