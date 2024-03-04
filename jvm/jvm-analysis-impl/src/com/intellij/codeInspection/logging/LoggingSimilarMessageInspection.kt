@@ -343,6 +343,12 @@ private fun similar(first: List<LoggingStringPartEvaluator.PartHolder>?,
   val secondFirstIsText = firstIsText(second)
   val secondLastIsText = lastIsText(second)
 
+  if (first.size == 1 && second.size == 1 &&
+      firstFirstIsText && secondFirstIsText &&
+      first[0].text != second[0].text) {
+    return false
+  }
+
   if (firstFirstIsText != secondFirstIsText) return false
   if (firstLastIsText != secondLastIsText) return false
 

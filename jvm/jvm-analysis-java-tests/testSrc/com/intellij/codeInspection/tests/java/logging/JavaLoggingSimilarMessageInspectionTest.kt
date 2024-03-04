@@ -597,5 +597,22 @@ class JavaLoggingSimilarMessageInspectionTest : LoggingSimilarMessageInspectionT
      }
     """.trimIndent())
   }
+
+  fun `test non-distinguished`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+     import org.apache.logging.log4j.*;
+     class Logging {
+        private static final Logger LOG = LogManager.getLogger();
+        
+        public static void m() {
+            LOG.info("Hello World");
+        }
+        
+        public static void m1() {
+            LOG.info("Hello World: test new");
+        }
+     }
+    """.trimIndent())
+  }
 }
 
