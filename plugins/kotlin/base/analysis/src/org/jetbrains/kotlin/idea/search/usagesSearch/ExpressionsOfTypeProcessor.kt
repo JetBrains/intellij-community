@@ -20,7 +20,6 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.diagnostics.PsiDiagnosticUtils
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -47,7 +46,7 @@ import java.util.*
 
 class ExpressionsOfTypeProcessor(
     private val containsTypeOrDerivedInside: (KtDeclaration) -> Boolean,
-    private val classToSearch: PsiClass?,
+    private val classToSearch: PsiElement?,
     private val searchScope: SearchScope,
     private val project: Project,
     private val possibleMatchHandler: (KtExpression) -> Unit,
@@ -156,7 +155,7 @@ class ExpressionsOfTypeProcessor(
         }
     }
 
-    private fun isInProjectScope(classToSearch: PsiClass): Boolean {
+    private fun isInProjectScope(classToSearch: PsiElement): Boolean {
         return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = false).matches(classToSearch)
     }
 
@@ -331,11 +330,7 @@ class ExpressionsOfTypeProcessor(
         val declarationName = runReadAction { psiMember.name } ?: return
         if (declarationName.isEmpty()) return
 
-        data class ProcessStaticCallableUsagesTask(
-            val member: PsiMember,
-            val memberScope: SearchScope,
-            val taskProcessor: ReferenceProcessor
-        ) : Task {
+        class ProcessStaticCallableUsagesTask : Task {
             override fun perform() {
                 // This class will look through the whole hierarchy anyway, so shouldn't be a big overhead here
                 val inheritanceClasses = ClassInheritorsSearch.search(
@@ -347,16 +342,16 @@ class ExpressionsOfTypeProcessor(
                 val classes = (inheritanceClasses + declarationClass).filter { it !is KtLightClass }
 
                 val searchRequestCollector = SearchRequestCollector(SearchSession())
-                val resultProcessor = StaticMemberRequestResultProcessor(member, classes)
+                val resultProcessor = StaticMemberRequestResultProcessor(psiMember, classes)
 
-                val memberName = runReadAction { member.name }
+                val memberName = runReadAction { psiMember.name }
                 for (klass in classes) {
                     val request = runReadAction { klass.name } + "." + declarationName
 
                     testLog { "Searched references to static $memberName in non-Java files by request $request" }
                     searchRequestCollector.searchWord(
                         request,
-                        classUseScope(klass).intersectWith(memberScope), UsageSearchContext.IN_CODE, true, member, resultProcessor
+                        classUseScope(klass).intersectWith(scope), UsageSearchContext.IN_CODE, true, psiMember, resultProcessor
                     )
 
                     val qualifiedName = runReadAction { klass.qualifiedName }
@@ -366,7 +361,7 @@ class ExpressionsOfTypeProcessor(
                         testLog { "Searched references to static $memberName in non-Java files by request $importAllUnderRequest" }
                         searchRequestCollector.searchWord(
                             importAllUnderRequest,
-                            classUseScope(klass).intersectWith(memberScope), UsageSearchContext.IN_CODE, true, member, resultProcessor
+                            classUseScope(klass).intersectWith(scope), UsageSearchContext.IN_CODE, true, psiMember, resultProcessor
                         )
                     }
                 }
@@ -375,11 +370,11 @@ class ExpressionsOfTypeProcessor(
                     if (reference.element.parents.any { it is KtImportDirective }) {
                         // Found declaration in import - process all file with an ordinal reference search
                         val containingFile = reference.element.containingFile
-                        addCallableDeclarationToProcess(member, LocalSearchScope(containingFile), taskProcessor)
+                        addCallableDeclarationToProcess(psiMember, LocalSearchScope(containingFile), processor)
 
                         true
                     } else {
-                        val processed = taskProcessor.handler(this@ExpressionsOfTypeProcessor, reference)
+                        val processed = processor.handler(this@ExpressionsOfTypeProcessor, reference)
                         if (!processed) { // we don't know how to handle this reference and down-shift to plain search
                             downShiftToPlainSearch(reference)
                         }
@@ -390,7 +385,7 @@ class ExpressionsOfTypeProcessor(
             }
         }
 
-        addTask(ProcessStaticCallableUsagesTask(psiMember, scope, processor))
+        addTask(ProcessStaticCallableUsagesTask())
         return
     }
 
@@ -402,11 +397,7 @@ class ExpressionsOfTypeProcessor(
             return
         }
 
-        data class ProcessCallableUsagesTask(
-            val declaration: PsiElement,
-            val processor: ReferenceProcessor,
-            val scope: SearchScope
-        ) : Task {
+        class ProcessCallableUsagesTask : Task {
             override fun perform() {
                 if (scope is LocalSearchScope) {
                     testLog { runReadAction { "Searched imported static member $declaration in ${scope.scope.toList()}" } }
@@ -426,7 +417,7 @@ class ExpressionsOfTypeProcessor(
                 }
             }
         }
-        addTask(ProcessCallableUsagesTask(declaration, processor, scope))
+        addTask(ProcessCallableUsagesTask())
     }
 
     private fun addPsiMemberTask(member: PsiMember) {
