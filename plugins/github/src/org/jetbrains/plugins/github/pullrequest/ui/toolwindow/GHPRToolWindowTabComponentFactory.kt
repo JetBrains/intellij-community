@@ -81,7 +81,7 @@ internal class GHPRToolWindowTabComponentFactory(
       }
 
       override fun removeListDataListener(l: ListDataListener) {
-        delegate.addListDataListener(l)
+        delegate.removeListDataListener(l)
         listeners.remove(l)
       }
     }
