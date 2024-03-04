@@ -70,7 +70,7 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     get() = gutter.getIconAreaOffset()
 
   fun getIcon(line: Int) =
-    icons.first { it.line == line - 1 }.mark.getIcon().toString().substringAfterLast("/")
+    icons.firstOrNull { it.line == line - 1 }?.mark?.getIcon().toString().substringAfterLast("/")
 
   inner class GutterIcon(private val data: GutterIconWithLocation) {
     val line: Int

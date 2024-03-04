@@ -20,7 +20,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   protected val fixture by lazy { driver.new(JTreeFixtureRef::class, robotService.robot, component) }
 
   private fun clickRow(row: Int) = fixture.clickRow(row)
-  private fun rightClickRow(row: Int) = fixture.rightClickRow(row)
+  fun rightClickRow(row: Int) = fixture.rightClickRow(row)
   private fun doubleClickRow(row: Int) = fixture.doubleClickRow(row)
   fun clickPath(vararg path: String, fullMatch: Boolean = true) {
     expandPath(*path, fullMatch = fullMatch)
