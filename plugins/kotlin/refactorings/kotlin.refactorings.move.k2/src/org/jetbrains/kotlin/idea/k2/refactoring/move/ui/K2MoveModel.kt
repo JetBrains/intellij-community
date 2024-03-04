@@ -168,6 +168,12 @@ sealed class K2MoveModel {
                 return null
             }
 
+            if (elements.map { it.containingKtFile }.size > 1 && targetContainer != null && targetContainer !is PsiDirectory) {
+                val message = RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.file.no.support.for.file.target"))
+                CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
+                return null
+            }
+
             val inSourceRoot = inSourceRoot()
             val targetFile = targetContainer?.containingFile
             return when {

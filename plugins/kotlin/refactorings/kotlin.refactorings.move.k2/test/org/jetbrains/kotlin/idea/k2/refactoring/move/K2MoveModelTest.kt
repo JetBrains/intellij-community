@@ -202,4 +202,20 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             K2MoveModel.create(arrayOf(companionObjectMethod), null)
         }
     }
+
+    fun `test move multiple files to non directory should fail`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        val fooFile = myFixture.addFileToProject("Foo.kt", """
+            class Foo { }
+        """.trimIndent()) as KtFile
+        val barFile = myFixture.addFileToProject("Bar.kt", """
+            class Bar { }
+        """.trimIndent()) as KtFile
+        val fooBarFile = myFixture.addFileToProject("FooBar.kt", """
+            class FooBar { }
+        """.trimIndent()) as KtFile
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(fooFile, barFile), fooBarFile)
+        }
+    }
 }
