@@ -2,20 +2,25 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 
-class ProjectGradleSettingsListener(val project: Project) : GradleSettingsListener {
+class ProjectGradleSettingsListener(val project: Project, private val cs: CoroutineScope) : GradleSettingsListener {
 
     private val buildRootsManager = GradleBuildRootsManager.getInstanceSafe(project)
 
 
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
-            buildRootsManager.add(buildRootsManager.loadLinkedRoot(it))
+            cs.launch(Dispatchers.IO) {
+                buildRootsManager.add(buildRootsManager.loadLinkedRoot(it))
+            }
         }
     }
 
