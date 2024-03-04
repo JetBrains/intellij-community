@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.postfix.templates.*
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil.findElementOfClassAtRange
@@ -84,7 +83,7 @@ private class KtNotPostfixTemplate(provider: PostfixTemplateProvider) : NotPostf
 private class KtIntroduceVariablePostfixTemplate(
     val kind: String,
     provider: PostfixTemplateProvider
-) : PostfixTemplateWithExpressionSelector(kind, kind, "$kind name = expression", createExpressionSelector(), provider), DumbAware {
+) : PostfixTemplateWithExpressionSelector(kind, kind, "$kind name = expression", createExpressionSelector(), provider) {
     override fun expandForChooseExpression(expression: PsiElement, editor: Editor) {
         K1IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
             expression.project, editor, expression as KtExpression,

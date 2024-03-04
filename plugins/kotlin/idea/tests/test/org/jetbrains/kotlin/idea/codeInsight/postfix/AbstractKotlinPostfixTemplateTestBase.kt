@@ -5,8 +5,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
@@ -48,9 +50,13 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
             val fileText = file.text
             val template = InTextDirectivesUtils.findStringWithPrefixes(fileText, TEMPLATE_DIRECTIVE)
 
-            val postfixTemplate =
+            val templateKey = templateName ?: run {
+                val text = this.editor.getDocument().getText(TextRange(0, this.editor.getCaretModel().getOffset()))
+                text.substringAfterLast(".")
+            }
+            val postfixTemplate: PostfixTemplate =
                 LanguagePostfixTemplate.LANG_EP.forLanguage(KotlinLanguage.INSTANCE)
-                    .templates.firstOrNull { it.key == ".$templateName" }
+                    .templates.firstOrNull { it.key == ".$templateKey" } ?: error("Unable to find PostfixTemplate for `$templateKey`")
             val dumbMode = DumbService.isDumbAware(postfixTemplate)
 
             val task = {

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
 import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTemplateBase
-import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.KotlinWhenSurrounder
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.KotlinWithIfExpressionSurrounder
@@ -49,7 +48,7 @@ internal class KtIsNullPostfixTemplate(provider: PostfixTemplateProvider) : Surr
 internal class KtWhenExpressionPostfixTemplate(provider: PostfixTemplateProvider) : SurroundPostfixTemplateBase(
     "when", "when (expr)",
     KtPostfixTemplatePsiInfo, createExpressionSelector(), provider
-), DumbAware {
+) {
     override fun getSurrounder(): KotlinWhenSurrounder = KotlinWhenSurrounder()
 }
 
@@ -62,6 +61,6 @@ internal class KtTryPostfixTemplate(provider: PostfixTemplateProvider) : Surroun
         statementsOnly = true
     ),
     provider
-), DumbAware {
+) {
     override fun getSurrounder(): KotlinTryCatchSurrounder = KotlinTryCatchSurrounder()
 }
