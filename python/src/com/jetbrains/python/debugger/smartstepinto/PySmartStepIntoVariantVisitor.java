@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,10 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     PsiElement ref = callee.getReference() != null ? callee.getReference().resolve() : null;
     if (ref != null && isBuiltIn(ref)) return;
 
-    if (ref instanceof PyFunction && ((((PyFunction)ref).isAsync()) || ((PyFunction)ref).isGenerator())) return;
+    if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON312)
+        && ref instanceof PyFunction && ((((PyFunction)ref).isAsync()) || ((PyFunction)ref).isGenerator())) {
+      return;
+    }
 
     if (isAlreadyCalled()) return;
 
