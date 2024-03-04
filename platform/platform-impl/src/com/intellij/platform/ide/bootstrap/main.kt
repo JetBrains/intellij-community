@@ -30,7 +30,6 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.*
-import com.intellij.util.containers.SLRUMap
 import com.intellij.util.io.*
 import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
@@ -326,18 +325,6 @@ private fun CoroutineScope.scheduleSvgIconCacheInitAndPreloadPhm(logDeferred: De
   launch {
     // PHM wants logger
     logDeferred.join()
-
-    span("PHM classes preloading", Dispatchers.IO) {
-      val classLoader = AppStarter::class.java.classLoader
-      Class.forName(PersistentMapBuilder::class.java.name, true, classLoader)
-      Class.forName(PersistentMapImpl::class.java.name, true, classLoader)
-      Class.forName(PersistentEnumerator::class.java.name, true, classLoader)
-      Class.forName(ResizeableMappedFile::class.java.name, true, classLoader)
-      Class.forName(PagedFileStorage::class.java.name, true, classLoader)
-      Class.forName(PageCacheUtils::class.java.name, true, classLoader)
-      Class.forName(PersistentHashMapValueStorage::class.java.name, true, classLoader)
-      Class.forName(SLRUMap::class.java.name, true, classLoader)
-    }
 
     if (!isHeadless) {
       span("SvgCache creation") {
