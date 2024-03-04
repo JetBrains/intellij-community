@@ -1390,6 +1390,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   @TestOnly
   public void clearResults() {
+    // do not activate preview in tests
+    myUsagePreviewPanel = null;
     myListModel.clear();
     mySearchField.setText("");
   }
