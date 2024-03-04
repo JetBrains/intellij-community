@@ -72,7 +72,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module-library">
-      <library name="completion-ranking-sh-exp" type="repository">
+      <library name="completion-ranking-sh" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-sh:0.0.2">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0.0.2/completion-ranking-sh-0.0.2.jar">
