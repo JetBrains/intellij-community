@@ -109,12 +109,22 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       KotlinMeta.Diff metaDiff = metaChange.getDiff();
 
       for (Difference.Change<KmFunction, KotlinMeta.KmFunctionsDiff> funChange : metaDiff.functions().changed()) {
-        JvmMethod changedMethod = getJvmMethod(changedClass, JvmExtensionsKt.getSignature(funChange.getPast()));
-        if (changedMethod != null && !changedMethod.getFlags().isPrivate()) {
-          KotlinMeta.KmFunctionsDiff funDiff = funChange.getDiff();
-          if (funDiff.becameNullable() || funDiff.argsBecameNotNull()) {
-             debug("One of method's parameters or method's return value has become non-nullable; affecting method usages ", changedMethod);
-             affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), changedMethod));
+        KmFunction changedKmFunction = funChange.getPast();
+        Visibility visibility = Attributes.getVisibility(changedKmFunction);
+        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS) {
+          continue;
+        }
+        KotlinMeta.KmFunctionsDiff funDiff = funChange.getDiff();
+        if (funDiff.becameNullable() || funDiff.argsBecameNotNull() || funDiff.receiverParameterChanged()) {
+          JvmMethod jvmMethod = getJvmMethod(changedClass, JvmExtensionsKt.getSignature(changedKmFunction));
+          if (!isDeclaresDefaultValue(changedKmFunction) && jvmMethod != null) {
+            debug("One of method's parameters or method's return value has become non-nullable; or function's receiver parameter changed: affecting method usages ", changedKmFunction.getName());
+            affectMemberUsages(context, changedClass.getReferenceID(), jvmMethod, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), jvmMethod));
+          }
+          else {
+            // functions with default parameters produce several methods in bytecode, so need to affect by lookup usage
+            debug("One of method's parameters or method's return value has become non-nullable; or function's receiver parameter changed: ", changedKmFunction.getName());
+            affectLookupUsages(context, filter(map(future.withAllSubclasses(changedClass.getReferenceID()), id -> id instanceof JvmNodeReferenceID? ((JvmNodeReferenceID)id) : null), Objects::nonNull), changedKmFunction.getName(), future, null);
           }
         }
       }
@@ -306,6 +316,10 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   private static String getMethodKotlinName(JvmClass cls, JvmMethod method) {
     KmFunction kmFunction = getKmFunction(cls, method);
     return kmFunction != null? kmFunction.getName() : method.getName();
+  }
+
+  private static boolean isDeclaresDefaultValue(KmFunction f) {
+    return find(f.getValueParameters(), Attributes::getDeclaresDefaultValue) != null;
   }
 
   private static KmDeclarationContainer getDeclarationContainer(Node<?, ?> node) {

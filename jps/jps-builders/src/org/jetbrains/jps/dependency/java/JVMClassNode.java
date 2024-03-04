@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Difference> extends Proto implements Node<T, D> {
   private final JvmNodeReferenceID myId;
@@ -111,9 +112,12 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
   }
 
   public class Diff extends Proto.Diff<T> {
+    private final Map<Class<? extends JvmMetadata<?, ?>>, Specifier<?, ?>> myMetadataDiffCache = new HashMap<>();
+    private final Supplier<Specifier<Usage, ?>> myUsagesDiff;
 
     public Diff(T past) {
       super(past);
+      myUsagesDiff = Utils.lazyValue(() -> Difference.diff(myPast.getUsages(), getUsages()));
     }
 
     @Override
@@ -122,7 +126,7 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     }
 
     public Specifier<Usage, ?> usages() {
-      return Difference.diff(myPast.getUsages(), getUsages());
+      return myUsagesDiff.get();
     }
 
     public boolean metadataChanged() {
@@ -133,7 +137,8 @@ public abstract class JVMClassNode<T extends JVMClassNode<T, D>, D extends Diffe
     }
 
     public <MT extends JvmMetadata<MT, MD>, MD extends Difference> Specifier<MT, MD> metadata(Class<MT> metaClass) {
-      return Difference.deepDiff(myPast.getMetadata(metaClass), getMetadata(metaClass));
+      //noinspection unchecked
+      return (Specifier<MT, MD>)myMetadataDiffCache.computeIfAbsent(metaClass, k -> Difference.deepDiff(myPast.getMetadata(metaClass), getMetadata(metaClass)));
     }
   }
 

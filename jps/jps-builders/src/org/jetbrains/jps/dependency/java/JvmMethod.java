@@ -15,6 +15,7 @@ import org.jetbrains.org.objectweb.asm.Type;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMethod, JvmMethod.Diff> {
   private final Iterable<TypeRepr> myArgTypes;
@@ -107,9 +108,13 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
   }
 
   public final class Diff extends ProtoMember.Diff<JvmMethod> {
+    private final Supplier<Specifier<ParamAnnotation, ParamAnnotation.Diff>> myParamAnnotationsDiff;
+    private final Supplier<Specifier<TypeRepr.ClassType, ?>> myExceptionsDiff;
 
     public Diff(JvmMethod past) {
       super(past);
+      myParamAnnotationsDiff = Utils.lazyValue(() -> Difference.deepDiff(myPast.getParamAnnotations(), getParamAnnotations()));
+      myExceptionsDiff = Utils.lazyValue(() -> Difference.diff(myPast.getExceptions(), getExceptions()));
     }
 
     @Override
@@ -118,11 +123,11 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
     }
 
     public Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotations() {
-      return Difference.deepDiff(myPast.getParamAnnotations(), getParamAnnotations());
+      return myParamAnnotationsDiff.get();
     }
 
     public Specifier<TypeRepr.ClassType, ?> exceptions() {
-      return Difference.diff(myPast.getExceptions(), getExceptions());
+      return myExceptionsDiff.get();
     }
   }
 
