@@ -3,6 +3,7 @@ package com.intellij.ui.logging
 
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
+import com.intellij.lang.LangBundle
 import com.intellij.lang.logging.JvmLogger
 import com.intellij.lang.logging.JvmLoggerFieldDelegate
 import com.intellij.lang.logging.UnspecifiedLogger
@@ -33,24 +34,23 @@ class JvmLoggingConfigurable(private val project: Project) : DslConfigurableBase
     val loggers = JvmLogger.getAllLoggers(settings.loggerId == UnspecifiedLogger.UNSPECIFIED_LOGGER_ID)
     val panel = panel {
       group(JavaBundle.message("jvm.logging.configurable.java.group.display.name")) {
-        row {
-          label(JavaBundle.message("label.configurable.logger.generation.name"))
+        row(JavaBundle.message("label.configurable.logger.generation.variable.name")) {
           loggerName = textField()
             .bindText(settings::loggerName.toNonNullableProperty(JvmLoggerFieldDelegate.LOGGER_IDENTIFIER))
-            .cellValidation {
-              addInputRule(JavaBundle.message("jvm.logging.configurable.invalid.identifier.error")) {
-                !PsiNameHelper.getInstance(project).isIdentifier(it.text)
+            .validationOnInput {
+              if (PsiNameHelper.getInstance(project).isIdentifier(it.text)) {
+                return@validationOnInput null
               }
+              error(LangBundle.message("dialog.message.valid.identifier", it.text))
             }
-            .align(AlignX.FILL)
+            .widthGroup(JavaBundle.message("jvm.logging.configurable.java.group.display.name"))
         }
-        row {
-          label(JavaBundle.message("label.configurable.logger.type"))
+        row(JavaBundle.message("label.configurable.logger.type")) {
           comboBox(loggers)
             .bindItem({ JvmLogger.getLoggerById(settings.loggerId) },
                       { settings.loggerId = it?.id })
             .onChanged { updateWarningRow(it.item) }
-            .align(AlignX.FILL)
+            .widthGroup(JavaBundle.message("jvm.logging.configurable.java.group.display.name"))
         }
         warningRow = row {
           icon(AllIcons.General.Warning).align(AlignY.TOP).gap(rightGap = RightGap.SMALL)
