@@ -2,7 +2,7 @@
 from collections import namedtuple
 
 # A truncated version of the named tuple from the CPython `dis` module that contains
-# only fields necessary for the extraction of stepping variants.
+# only the fields necessary for the extraction of stepping variants.
 Instruction = namedtuple(
     "_Instruction",
     [
