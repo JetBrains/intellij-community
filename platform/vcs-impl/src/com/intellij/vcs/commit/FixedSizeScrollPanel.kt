@@ -14,6 +14,7 @@ class FixedSizeScrollPanel(view: Component, private val fixedSize: Dimension) : 
     horizontalScrollBar.isOpaque = false
     verticalScrollBar.isOpaque = false
     viewport.isOpaque = false
+    isOverlappingScrollBar = true
   }
 
   override fun getPreferredSize(): Dimension {
