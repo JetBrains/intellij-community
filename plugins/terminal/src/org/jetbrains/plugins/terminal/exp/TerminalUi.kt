@@ -26,10 +26,6 @@ object TerminalUi {
 
   const val searchComponentWidth = 500
 
-  // todo: create color keys
-  val commandForeground: Color
-    get() = JBColor(0x000000, 0xFFFFFF)
-
   val searchEntryBackground: Color
     get() = JBColor(0xFFEA00, 0xFFEA00)
   val searchEntryForeground: Color

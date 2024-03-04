@@ -185,6 +185,9 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
                                BlockTerminalColors.CYAN_BRIGHT),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.whiteBright"),
                                BlockTerminalColors.WHITE_BRIGHT),
+
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.command"),
+                               BlockTerminalColors.COMMAND)
     };
   }
 

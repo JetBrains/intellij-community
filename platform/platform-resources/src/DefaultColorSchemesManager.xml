@@ -1191,6 +1191,12 @@
             <option name="BACKGROUND" value="CFEFC6" />
           </value>
         </option>
+        <option name="BLOCK_TERMINAL_COMMAND">
+          <value>
+            <option name="FOREGROUND" value="000000" />
+            <option name="FONT_TYPE" value="1"/>
+          </value>
+        </option>
         <option name="BLOCK_TERMINAL_BLACK">
           <value>
             <option name="FOREGROUND" value="0" />
@@ -1760,6 +1766,12 @@
       <option name="TERMINAL_COMMAND_TO_RUN_USING_IDE">
         <value>
           <option name="BACKGROUND" value="40503C" />
+        </value>
+      </option>
+      <option name="BLOCK_TERMINAL_COMMAND">
+        <value>
+          <option name="FOREGROUND" value="FFFFFF" />
+          <option name="FONT_TYPE" value="1"/>
         </value>
       </option>
       <option name="BLOCK_TERMINAL_BLACK">

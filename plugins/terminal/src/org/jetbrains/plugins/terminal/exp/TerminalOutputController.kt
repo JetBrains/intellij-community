@@ -8,17 +8,16 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.exp.hyperlinks.TerminalHyperlinkHighlighter
-import java.awt.Font
 
 class TerminalOutputController(
   project: Project,
@@ -276,11 +275,8 @@ class TerminalOutputController(
 
   /** It is implied that [CommandBlock.command] is not null */
   private fun createCommandHighlighting(block: CommandBlock): HighlightingInfo {
-    return HighlightingInfo(block.commandStartOffset, block.commandStartOffset + block.command!!.length, object: TextAttributesProvider {
-      override fun getTextAttributes(): TextAttributes {
-        return TextAttributes(TerminalUi.commandForeground, null, null, null, Font.BOLD)
-      }
-    })
+    return HighlightingInfo(block.commandStartOffset, block.commandStartOffset + block.command!!.length,
+                            TextAttributesKeyAdapter(editor, BlockTerminalColors.COMMAND))
   }
 
   private fun adjustHighlightings(highlightings: List<HighlightingInfo>, baseOffset: Int): List<HighlightingInfo> {
