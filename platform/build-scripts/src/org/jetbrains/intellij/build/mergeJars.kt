@@ -375,8 +375,8 @@ private fun getIgnoredNames(): Set<String> {
       set.add("META-INF/$name.md")
     }
   }
-  set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
-  set.add("kotlin/coroutines/jvm/internal/DebugProbesKt.class")
+  //set.add("kotlinx/coroutines/debug/internal/ByteBuddyDynamicAttach.class")
+  //set.add("kotlin/coroutines/jvm/internal/DebugProbesKt.class")
   return java.util.Set.copyOf(set)
 }
 
@@ -429,7 +429,7 @@ private fun checkNameForZipSource(name: String, excludes: List<Regex>, includeMa
          !name.startsWith("META-INF/versions/10/org/bouncycastle/") &&
          !name.startsWith("META-INF/versions/15/org/bouncycastle/") &&
 
-         !name.startsWith("kotlinx/coroutines/repackaged/") &&
+         //!name.startsWith("kotlinx/coroutines/repackaged/") &&
 
          !name.startsWith("native/") &&
          !name.startsWith("licenses/") &&

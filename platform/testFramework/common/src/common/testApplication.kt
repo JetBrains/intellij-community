@@ -75,7 +75,6 @@ import org.jetbrains.annotations.TestOnly
 import sun.awt.AWTAutoShutdown
 import java.time.Duration
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.jvm.internal.CoroutineDumpState
 
 private var appInitResult: Result<Unit>? = null
 const val LEAKED_PROJECTS: String = "leakedProjects"
@@ -116,9 +115,7 @@ fun loadApp(setupEventQueue: Runnable) {
   System.setProperty("idea.diagnostic.opentelemetry.file",
                      PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString())
 
-  // if BB in classpath
   enableCoroutineDump()
-  CoroutineDumpState.install()
   JBR.getJstack()?.includeInfoFrom {
     """
     $COROUTINE_DUMP_HEADER

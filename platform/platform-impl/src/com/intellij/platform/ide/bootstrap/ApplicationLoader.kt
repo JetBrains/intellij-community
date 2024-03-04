@@ -7,6 +7,7 @@ package com.intellij.platform.ide.bootstrap
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
@@ -56,6 +57,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.system.CpuArch
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -66,7 +68,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.function.BiFunction
-import kotlin.coroutines.jvm.internal.CoroutineDumpState
 import kotlin.system.exitProcess
 
 @Suppress("SSBasedInspection")
@@ -203,7 +204,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
     appRegisteredJob.join()
     initConfigurationStoreJob.join()
 
-    launch {
+    val appInitializedListenerJob = launch {
       val appInitializedListeners = appInitListeners.await()
       span("app initialized callback") {
         // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
@@ -225,6 +226,8 @@ internal suspend fun loadApp(app: ApplicationImpl,
 
       addActivateAndWindowsCliListeners()
     }
+
+    appInitializedListenerJob.join()
 
     applicationStarter.await()
   }
@@ -274,15 +277,25 @@ private suspend fun preloadNonHeadlessServices(
 }
 
 private suspend fun enableCoroutineDumpAndJstack() {
-  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+  if (!System.getProperty("idea.enable.coroutine.dump", "true").toBoolean() || (SystemInfoRt.isWindows && CpuArch.isArm64())) {
     return
   }
 
   var isInstalled = false
   span("coroutine debug probes init") {
     try {
-      CoroutineDumpState.install()
-      isInstalled = true
+      enableCoroutineDump()
+        .onFailure { e ->
+          if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+            LOG.warn("Cannot enable coroutine debug dump", e)
+          }
+          else {
+            LOG.error("Cannot enable coroutine debug dump", e)
+          }
+        }
+        .onSuccess {
+          isInstalled = true
+        }
     }
     catch (e: Throwable) {
       LOG.error("Cannot enable coroutine debug dump", e)
