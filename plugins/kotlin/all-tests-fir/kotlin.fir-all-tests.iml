@@ -55,5 +55,6 @@
     <orderEntry type="module" module-name="kotlin.highlighting.shared.tests" />
     <orderEntry type="module" module-name="kotlin.j2k.k2.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.k2" />
   </component>
 </module>

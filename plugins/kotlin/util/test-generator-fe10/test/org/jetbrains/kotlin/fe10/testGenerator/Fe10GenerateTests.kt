@@ -1105,7 +1105,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("gradle/gradle-java/tests", testDataPath = "../../../idea/tests/testData") {
+    testGroup("gradle/gradle-java/tests.k1", testDataPath = "../../../idea/tests/testData") {
         testClass<AbstractGradleConfigureProjectByChangingFileTest> {
             model("configuration/gradle", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
             model("configuration/gsk", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
