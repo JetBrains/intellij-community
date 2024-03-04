@@ -154,19 +154,34 @@
     {
       "id": "java",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 8, 22, 24, 28 ],
+      "includeGroups": [
+        8,
+        22,
+        31,
+        28
+      ],
       "shouldLogElementFeatures": false
     },
     {
       "id": "python",
       "experimentBucketsCount": 4,
-      "includeGroups": [15, 24, 22, 30],
+      "includeGroups": [
+        15,
+        31,
+        22,
+        28
+      ],
       "shouldLogElementFeatures": true
     },
     {
       "id": "kotlin",
-      "experimentBucketsCount": 2,
-      "includeGroups": [ 8, 22 ],
+      "experimentBucketsCount": 4,
+      "includeGroups": [
+        8,
+        22,
+        31,
+        28
+      ],
       "shouldLogElementFeatures": true
     },
     {
@@ -178,25 +193,43 @@
     {
       "id": "php",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 8, 22, 24, 28 ],
+      "includeGroups": [
+        8,
+        22,
+        31,
+        28
+      ],
       "shouldLogElementFeatures": false
     },
     {
       "id": "javascript",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 8, 22, 28, 24 ],
+      "includeGroups": [
+        8,
+        22,
+        28,
+        31
+      ],
       "shouldLogElementFeatures": true
     },
     {
       "id": "ruby",
-      "experimentBucketsCount": 1,
-      "includeGroups": [ 22 ],
+      "experimentBucketsCount": 2,
+      "includeGroups": [
+        22,
+        28
+      ],
       "shouldLogElementFeatures": true
     },
     {
       "id": "go",
-      "experimentBucketsCount": 2,
-      "includeGroups": [ 8, 22 ],
+      "experimentBucketsCount": 4,
+      "includeGroups": [
+        8,
+        22,
+        31,
+        28
+      ],
       "shouldLogElementFeatures": true
     },
     {
@@ -238,7 +271,12 @@
     {
       "id": "css",
       "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 22, 28, 24 ],
+      "includeGroups": [
+        7,
+        22,
+        28,
+        31
+      ],
       "shouldLogElementFeatures": true
     },
     {
