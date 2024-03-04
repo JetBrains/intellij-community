@@ -18,9 +18,9 @@ import org.jetbrains.annotations.ApiStatus
   """
     Old format for ML model and analytical features.
     Please make sure the feature you have added is also present in
-    org.jetbrains.completion.full.line.mlApi.description.InlineContextFeatures
+    org.jetbrains.completion.full.line.mlApi.description.ContextFeatures
     """,
-  replaceWith = ReplaceWith("org.jetbrains.completion.full.line.platform.mlApi.description.InlineContextFeatures")
+  replaceWith = ReplaceWith("org.jetbrains.completion.full.line.platform.mlApi.description.ContextFeatures")
 )
 object InlineContextFeatures {
 
