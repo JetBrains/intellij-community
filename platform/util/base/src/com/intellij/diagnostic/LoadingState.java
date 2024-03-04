@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -15,9 +15,7 @@ public enum LoadingState {
   COMPONENTS_REGISTERED("app component registered"),
   CONFIGURATION_STORE_INITIALIZED("app store initialized"),
   COMPONENTS_LOADED("app component loaded"),
-  /**
-   * Application and LaF are ready, but it's too early for the post-startup activities, yet.
-   */
+  /** Application and LaF are ready, but it's too early for the post-startup activities, still. */
   APP_READY("app ready"),
   APP_STARTED("app started"),
   PROJECT_OPENED("project opened");
@@ -85,7 +83,6 @@ public enum LoadingState {
       if (this == obj) {
         return true;
       }
-
       if (obj instanceof ThrowableWrapper) {
         Throwable throwable = ((ThrowableWrapper)obj).throwable;
         return this.throwable == throwable || fingerprint(this.throwable).equals(fingerprint(throwable));
