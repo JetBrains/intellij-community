@@ -353,11 +353,7 @@ public final class TypeConstraints {
 
     @Override
     public @NotNull Exact convert(TypeConstraintFactory factory) {
-      String qualifiedName = classDef.getQualifiedName();
-      if (qualifiedName != null) {
-        return factory.create(qualifiedName);
-      }
-      return unresolved(classDef.toString());
+      return factory.create(classDef);
     }
 
     @Override
@@ -661,6 +657,15 @@ public final class TypeConstraints {
 
   @FunctionalInterface
   public interface TypeConstraintFactory {
+    @NotNull
+    default Exact create(@NotNull ClassDef def) {
+      String qualifiedName = def.getQualifiedName();
+      if (qualifiedName != null) {
+        return create(qualifiedName);
+      }
+      return unresolved(def.toString());
+    }
+    
     @NotNull Exact create(@NotNull String fqn);
   }
 
