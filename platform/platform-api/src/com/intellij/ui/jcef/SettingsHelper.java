@@ -207,6 +207,10 @@ final class SettingsHelper {
 
     args = ArrayUtil.mergeArrays(args, "--autoplay-policy=no-user-gesture-required");
 
+    if (isOffScreenRenderingModeEnabled()) {
+      args = ArrayUtil.mergeArrays(args, "--disable-gpu-compositing");
+    }
+
     return args;
   }
 
