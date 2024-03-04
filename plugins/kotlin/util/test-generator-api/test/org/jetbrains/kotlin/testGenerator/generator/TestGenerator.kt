@@ -52,7 +52,8 @@ object TestGenerator {
             if (singleModel != null) {
                 append(SuiteElement.create(group, suite, singleModel, rootModelName, isNested = false))
             } else {
-                appendAnnotation(TAnnotation<RunWith>(JUnit3RunnerWithInners::class.java))
+                val runWithClass = suite.models.map { it.runWithClass }.distinct().single()
+                appendAnnotation(TAnnotation<RunWith>(runWithClass))
                 appendBlock("public abstract class $rootModelName extends ${suite.abstractTestClass.simpleName}") {
                     val children = suite.models
                         .map { SuiteElement.create(group, suite, it, it.testClassName, isNested = true) }
@@ -68,11 +69,11 @@ object TestGenerator {
     }
 }
 
-internal fun getImports(suite: TSuite, group: TGroup): List<String> {
-    val imports = mutableListOf<String>()
+internal fun getImports(suite: TSuite, group: TGroup): Collection<String> {
+    val imports = mutableSetOf<String>()
 
     imports += TestDataPath::class.java.canonicalName
-    imports += JUnit3RunnerWithInners::class.java.canonicalName
+    suite.models.forEach { imports += it.runWithClass.canonicalName }
 
     if (suite.models.any { it.passTestDataPath }) {
         imports += KotlinTestUtils::class.java.canonicalName
@@ -115,7 +116,7 @@ internal fun postProcessContent(text: String): String {
         .joinToString(System.getProperty("line.separator"))
 }
 
-internal fun Code.appendImports(imports: List<String>) {
+internal fun Code.appendImports(imports: Collection<String>) {
     if (imports.isNotEmpty()) {
         imports.forEach { appendLine("import $it;") }
         newLine()

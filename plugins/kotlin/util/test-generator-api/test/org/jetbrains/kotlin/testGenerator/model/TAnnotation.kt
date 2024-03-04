@@ -28,7 +28,7 @@ sealed class TAnnotationValue {
     }
 }
 
-class TAnnotation(className: String, val args: List<TAnnotationValue>) {
+class TAnnotation(val className: String, val args: List<TAnnotationValue>) {
     val simpleName = className.substringAfterLast('.')
 }
 
