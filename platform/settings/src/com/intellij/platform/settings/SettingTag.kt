@@ -2,9 +2,9 @@
 @file:Suppress("ConvertObjectToDataObject")
 package com.intellij.platform.settings
 
-import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.serialization.json.JsonElement
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.function.Supplier
 
 /**
  * See [SettingDescriptor.tags].
@@ -49,9 +49,9 @@ class PersistenceStateComponentPropertyTag(val componentName: String) : SettingT
  * As it stands, it is only supported for Bean/Collection/Element bindings.
  */
 @Internal
-class OldLocalValueSupplierTag(private val supplier: SynchronizedClearableLazy<JsonElement?>) : SettingTag {
+class OldLocalValueSupplierTag(private val supplier: Supplier<JsonElement?>) : SettingTag {
   val value: JsonElement?
-    get() = supplier.value
+    get() = supplier.get()
 
   override fun toString(): String = "OldLocalValueSupplierTag"
 }

@@ -270,12 +270,3 @@ internal fun addContent(targetElement: Element, node: Any) {
     else -> throw IllegalArgumentException("Wrong node: $node")
   }
 }
-
-internal fun <T : Any> deserializeList(binding: Binding, currentValue: Any?, nodes: List<T>, adapter: DomAdapter<T>): Any? {
-  return when {
-    binding is MultiNodeBinding -> binding.deserializeList(currentValue = currentValue, elements = nodes, adapter = adapter)
-    nodes.size == 1 -> binding.deserialize(context = currentValue, element = nodes.get(0), adapter = adapter)
-    nodes.isEmpty() -> null
-    else -> throw AssertionError("Duplicate data for $binding will be ignored")
-  }
-}

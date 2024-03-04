@@ -9,6 +9,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.XMap
+import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap
 import kotlinx.serialization.json.*
 import org.jdom.Element
 import java.lang.reflect.ParameterizedType
@@ -27,6 +28,8 @@ internal class MapBinding(
   private var keyBinding: Binding? = null
   private var valueBinding: Binding? = null
 
+  private val isSurroundKey = annotation == null && (oldAnnotation == null || oldAnnotation.surroundKeyWithTag)
+
   override fun init(originalType: Type, serializer: Serializer) {
     val type = originalType as ParameterizedType
     val typeArguments = type.actualTypeArguments
@@ -36,19 +39,16 @@ internal class MapBinding(
     if (typeArguments.size == 1) {
       val typeName = type.rawType.typeName
       if (typeName == "it.unimi.dsi.fastutil.objects.Object2IntMap" || typeName == "it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap") {
-        valueClass = Int::class.java
+        valueType = Int::class.java
       }
       else {
-        throw UnsupportedOperationException("Value class is unknown for " + type.typeName)
+        throw UnsupportedOperationException("Value class is unknown for ${type.typeName}")
       }
-
-      valueType = Int::class.java
     }
     else {
       valueType = typeArguments[1]
-      valueClass = ClassUtil.typeToClass(valueType)
     }
-
+    valueClass = ClassUtil.typeToClass(valueType)
     keyBinding = serializer.getBinding(aClass = keyClass!!, type = typeArguments[0])
     valueBinding = serializer.getBinding(aClass = valueClass!!, type = valueType)
   }
@@ -64,26 +64,35 @@ internal class MapBinding(
     return oldAnnotation == null || oldAnnotation.sortBeforeSave
   }
 
-  override fun toJson(bean: Any, filter: SerializationFilter?): JsonObject {
+  override fun toJson(bean: Any, filter: SerializationFilter?): JsonElement {
     val map = bean as Map<*, *>
 
     if (map.isEmpty()) {
       return JsonObject(emptyMap())
     }
 
-    val keys = ArrayUtil.toObjectArray(map.keys)
+    val dataKeys = ArrayUtil.toObjectArray(map.keys)
     if (isSortMap(map)) {
-      Arrays.sort(keys, KEY_COMPARATOR)
+      Arrays.sort(dataKeys, KEY_COMPARATOR)
     }
 
-    val content = LinkedHashMap<String, JsonElement>()
-    for (k in keys) {
-      val kJ = keyOrValueToJson(value = k, binding = keyBinding, filter = filter)
-      val vJ = keyOrValueToJson(value = map.get(k), binding = valueBinding, filter = filter)
-      // todo non-primitive keys
-      content.put((kJ as JsonPrimitive).content, vJ ?: JsonNull)
+    val keys = arrayOfNulls<Any>(dataKeys.size)
+    val values = arrayOfNulls<JsonElement>(keys.size)
+    var size = 0
+    var hasComplexKey = false
+    for (dataKey in dataKeys) {
+      val serializedKey = keyOrValueToJson(value = dataKey, binding = keyBinding, filter = filter)
+      val serializedValue = keyOrValueToJson(value = map.get(dataKey), binding = valueBinding, filter = filter)
+      if (!hasComplexKey) {
+        hasComplexKey = serializedKey !is JsonPrimitive
+      }
+
+      keys[size] = serializedKey
+      values[size] = serializedValue ?: JsonNull
+      size++
     }
-    return JsonObject(content)
+
+    return createMapElement(hasComplexKey = hasComplexKey, keys = keys, values = values, size = size)
   }
 
   override fun fromJson(currentValue: Any?, element: JsonElement): Any? {
@@ -91,44 +100,55 @@ internal class MapBinding(
       return null
     }
 
-    if (element !is JsonObject) {
-      LOG.warn("Expected JsonObject but got $element")
+    if (element !is JsonObject && element !is JsonArray) {
+      LOG.warn("Expected JsonObject or JsonArray but got $element")
       return currentValue
     }
 
     // if accessor is null, it is a sub-map, and we must not use context
-    var mutableMap: MutableMap<String, Any?>? = null
+    var map: MutableMap<Any?, Any?>? = null
     if (currentValue != null) {
-      if (element.isEmpty()) {
+      if ((element is JsonObject && element.isEmpty()) || (element is JsonArray && element.isEmpty())) {
         return currentValue
       }
       else if (ClassUtil.isMutableMap(currentValue as Map<*, *>)) {
         @Suppress("UNCHECKED_CAST")
-        mutableMap = currentValue as MutableMap<String, Any?>
-        mutableMap.clear()
+        map = currentValue as MutableMap<Any?, Any?>
+        map.clear()
       }
     }
 
-    for ((key, value) in element) {
-      if (mutableMap == null) {
-        if (mapClass === MutableMap::class.java) {
-          mutableMap = HashMap<String, Any?>()
+    if (map == null) {
+      if (mapClass === java.util.Map::class.java) {
+        map = HashMap<Any?, Any?>()
+      }
+      else {
+        try {
+          @Suppress("UNCHECKED_CAST")
+          map = ReflectionUtil.newInstance(mapClass) as MutableMap<Any?, Any?>?
         }
-        else {
-          try {
-            @Suppress("UNCHECKED_CAST")
-            mutableMap = ReflectionUtil.newInstance(mapClass) as MutableMap<String, Any?>?
-          }
-          catch (e: Exception) {
-            LOG.warn(e)
-            mutableMap = HashMap<String, Any?>()
-          }
+        catch (e: Exception) {
+          LOG.warn(e)
+          map = HashMap<Any?, Any?>()
         }
       }
-
-      mutableMap!!.put(key, keyOrValueFromJson(value, valueBinding))
     }
-    return mutableMap
+
+    if (element is JsonObject) {
+      for ((key, value) in element) {
+        val deserializedKey = XmlSerializerImpl.convert(key, keyClass!!)
+        val deserializedValue = keyOrValueFromJson(element = value, binding = valueBinding, valueClass = valueClass!!)
+        map!!.put(deserializedKey, deserializedValue)
+      }
+    }
+    else {
+      for (entry in (element as JsonArray)) {
+        entry as JsonObject
+        map!!.put(keyOrValueFromJson(element = entry.get("key")!!, binding = keyBinding, valueClass = keyClass!!),
+                  keyOrValueFromJson(element = entry.get("value")!!, binding = valueBinding, valueClass = valueClass!!))
+      }
+    }
+    return map
   }
 
   override fun serialize(bean: Any, filter: SerializationFilter?): Element? {
@@ -169,20 +189,10 @@ internal class MapBinding(
     }
 
   private val keyAttributeName: String
-    get() {
-      if (annotation != null) {
-        return annotation.keyAttributeName
-      }
-      return oldAnnotation?.keyAttributeName ?: Constants.KEY
-    }
+    get() = annotation?.keyAttributeName ?: oldAnnotation?.keyAttributeName ?: Constants.KEY
 
   private val valueAttributeName: String
-    get() {
-      if (annotation != null) {
-        return annotation.valueAttributeName
-      }
-      return oldAnnotation?.valueAttributeName ?: Constants.VALUE
-    }
+    get() = annotation?.valueAttributeName ?: oldAnnotation?.valueAttributeName ?: Constants.VALUE
 
   override fun <T : Any> deserializeList(currentValue: Any?, elements: List<T>, adapter: DomAdapter<T>): Any? {
     return deserializeMap(currentValue = currentValue, childNodes = if (isSurroundWithTag) adapter.getChildren(elements.single()) else elements, adapter = adapter)
@@ -247,21 +257,26 @@ internal class MapBinding(
   }
 
   override fun doDeserializeListToJson(elements: List<Element>): JsonElement {
-    val adapter: DomAdapter<Element> = JdomAdapter
-    val map = LinkedHashMap<String, JsonElement>()
+    val keys = arrayOfNulls<Any>(elements.size)
+    val values = arrayOfNulls<JsonElement>(keys.size)
+    var i = 0
+    var hasComplexKey = false
     for (childNode in elements) {
-      if (adapter.getName(childNode) != entryElementName) {
+      if (childNode.name != entryElementName) {
         LOG.warn("unexpected entry for serialized Map will be skipped: $childNode")
         continue
       }
 
-      val key = deserializeKeyOrValueToJson(entry = childNode, attributeName = keyAttributeName, binding = keyBinding, valueClass = keyClass!!)!!
-      map.put(
-        key.jsonPrimitive.content,
-        deserializeKeyOrValueToJson(entry = childNode, attributeName = valueAttributeName, binding = valueBinding, valueClass = valueClass!!) ?: JsonNull,
-      )
+      val serializedKey = deserializeKeyOrValueToJson(entry = childNode, attributeName = keyAttributeName, binding = keyBinding, valueClass = keyClass!!)
+      keys[i] = serializedKey
+      values[i] = deserializeKeyOrValueToJson(entry = childNode, attributeName = valueAttributeName, binding = valueBinding, valueClass = valueClass!!)
+      i++
+
+      if (!hasComplexKey) {
+        hasComplexKey = serializedKey !is JsonPrimitive
+      }
     }
-    return JsonObject(map)
+    return createMapElement(hasComplexKey = hasComplexKey, keys = keys, values = values, size = i)
   }
 
   private fun deserializeKeyOrValueToJson(entry: Element, attributeName: String, binding: Binding?, valueClass: Class<*>): JsonElement? {
@@ -276,25 +291,19 @@ internal class MapBinding(
           return (binding as RootBinding).deserializeToJson(element)
         }
       }
+      LOG.warn("Cannot find binding for ${JDOMUtil.write(entry)}")
+      return null
     }
     else {
       val entryChild = entry.getChild(attributeName)
-      val children = if (entryChild == null) emptyList() else entryChild.children
-      if (children.isEmpty()) {
-        return JsonNull
-      }
-      else if (binding is MultiNodeBinding) {
-        (binding as RootBinding).deserializeToJson(entryChild!!)
-      }
-      else if (children.size == 1) {
-        checkNotNull(binding)
-        (binding as RootBinding).deserializeToJson(children[0])
-      }
-      else {
-        throw UnsupportedOperationException("Unsupported binding: $binding")
+      val elements = entryChild?.children ?: Collections.emptyList()
+      return when {
+        elements.isEmpty() -> JsonNull
+        binding is MultiNodeBinding -> binding.deserializeListToJson(elements)
+        elements.size == 1 -> (binding as RootBinding).deserializeToJson(elements.get(0))
+        else -> throw UnsupportedOperationException("Unsupported binding: $binding")
       }
     }
-    return null
   }
 
   private fun serializeKeyOrValue(entry: Element, attributeName: String, value: Any?, binding: Binding?, filter: SerializationFilter?) {
@@ -333,20 +342,16 @@ internal class MapBinding(
     }
     else {
       val entryChild = adapter.getChild(entry, attributeName)
-      val children = if (entryChild == null) emptyList() else adapter.getChildren(entryChild)
+      val children = if (entryChild == null) Collections.emptyList() else adapter.getChildren(entryChild)
       if (children.isEmpty()) {
         return null
       }
       else {
-        checkNotNull(binding)
-        return deserializeList(binding = binding, currentValue = null, nodes = children, adapter = adapter)
+        return deserializeList(binding = binding!!, currentValue = null, elements = children, adapter = adapter)
       }
     }
     return null
   }
-
-  private val isSurroundKey: Boolean
-    get() = if (annotation != null) false else oldAnnotation == null || oldAnnotation.surroundKeyWithTag
 
   fun isBoundToWithoutProperty(elementName: String): Boolean {
     return when {
@@ -388,11 +393,35 @@ private fun keyOrValueToJson(value: Any?, binding: Binding?, filter: Serializati
   }
 }
 
-private fun keyOrValueFromJson(element: JsonElement, binding: Binding?): Any? {
-  return if (binding == null) {
-    fromJsonPrimitive(element)
+private fun keyOrValueFromJson(element: JsonElement, binding: Binding?, valueClass: Class<*>): Any? {
+  if (binding == null) {
+    return fromJsonPrimitive(data = element, valueClass = valueClass)
   }
   else {
-    (binding as RootBinding).fromJson(null, element)
+    return (binding as RootBinding).fromJson(currentValue = null, element = element)
+  }
+}
+
+private fun createMapElement(hasComplexKey: Boolean, keys: Array<Any?>, values: Array<JsonElement?>, size: Int): JsonElement {
+  if (hasComplexKey) {
+    return JsonArray(Array(keys.size) { index ->
+      // don't use here Map.of - map must be ordered
+      JsonObject(Object2ObjectArrayMap(arrayOf("key", "value"), arrayOf(keys[index] as JsonElement, values[index]!!)))
+    }.asList())
+  }
+  else {
+    for (i in 0 until size) {
+      keys[i] = (keys[i] as JsonPrimitive).content
+    }
+    return JsonObject(Object2ObjectArrayMap(keys, values, size))
+  }
+}
+
+internal fun <T : Any> deserializeList(binding: Binding, currentValue: Any?, elements: List<T>, adapter: DomAdapter<T>): Any? {
+  return when {
+    binding is MultiNodeBinding -> binding.deserializeList(currentValue = currentValue, elements = elements, adapter = adapter)
+    elements.size == 1 -> binding.deserialize(context = currentValue, element = elements.get(0), adapter = adapter)
+    elements.isEmpty() -> null
+    else -> throw AssertionError("Duplicate data for $binding will be ignored")
   }
 }

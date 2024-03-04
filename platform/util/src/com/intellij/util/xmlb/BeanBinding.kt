@@ -96,67 +96,12 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
     }
   }
 
-  override fun deserializeToJson(element: Element): JsonElement? {
-    return deserializeToJson(element, includeClassDiscriminator = false)
+  override fun deserializeToJson(element: Element): JsonElement {
+    return deserializeBeanXmlToJson(element = element, bindings = bindings!!, jsonDiscriminator = tagName, includeClassDiscriminator = false)
   }
 
-  internal fun deserializeToJson(element: Element, includeClassDiscriminator: Boolean): JsonElement {
-    val map = LinkedHashMap<String, JsonElement>()
-    if (includeClassDiscriminator) {
-      map.put(JSON_CLASS_DISCRIMINATOR_KEY, JsonPrimitive(tagName))
-    }
-
-    val bindings = bindings!!
-
-    nextAttribute@ for (attribute in element.attributes) {
-      if (attribute.namespaceURI.isNullOrEmpty()) {
-        for (binding in bindings) {
-          if (binding is AttributeBinding && binding.name == attribute.name) {
-            map.put(normalizePropertyNameForKotlinx(binding), valueToJson(attribute.value, binding.valueClass) ?: JsonNull)
-            continue@nextAttribute
-          }
-        }
-      }
-    }
-
-    var data: LinkedHashMap<NestedBinding, MutableList<Element>>? = null
-    nextNode@ for (content in element.content) {
-      for (binding in bindings) {
-        if (content is Text) {
-          if (binding is TextBinding) {
-            map.put(normalizePropertyNameForKotlinx(binding), JsonPrimitive(content.getValue()))
-          }
-          continue
-        }
-
-        val child = content as Element
-        if (binding.isBoundTo(child, JdomAdapter)) {
-          if (binding is MultiNodeBinding && binding.isMulti) {
-            if (data == null) {
-              data = LinkedHashMap()
-            }
-            data.computeIfAbsent(binding) { ArrayList() }.add(child)
-          }
-          else {
-            map.put(normalizePropertyNameForKotlinx(binding), binding.deserializeToJson(child) ?: JsonNull)
-          }
-          continue@nextNode
-        }
-      }
-    }
-
-    for (binding in bindings) {
-      if (binding is AccessorBindingWrapper && binding.isFlat) {
-        map.put(normalizePropertyNameForKotlinx(binding), binding.deserializeToJson(element) ?: JsonNull)
-      }
-    }
-
-    if (data != null) {
-      for ((binding, list) in data) {
-        map.put(normalizePropertyNameForKotlinx(binding), (binding as MultiNodeBinding).deserializeListToJson(list))
-      }
-    }
-    return JsonObject(map)
+  fun deserializeToJson(element: Element, includeClassDiscriminator: Boolean): JsonElement {
+    return deserializeBeanXmlToJson(element = element, bindings = bindings!!, jsonDiscriminator = tagName, includeClassDiscriminator = includeClassDiscriminator)
   }
 
   private fun serializeToJsonImpl(bean: Any, filter: SerializationFilter?, includeClassDiscriminator: Boolean): Map<String, JsonElement>? {
@@ -246,15 +191,19 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
 
   override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {
     val instance = newInstance()
-    when (adapter) {
-      JdomAdapter -> deserializeInto(bean = instance, element = element as Element)
-      XmlDomAdapter -> deserializeInto(bean = instance, element = element as XmlElement)
-    }
+    deserializeInto(bean = instance, element = element, adapter = adapter)
     return instance
   }
 
   fun deserializeInto(bean: Any, element: Element) {
-    deserializeBeanInto(result = bean, element = element, accessorNameTracker = null, bindings = bindings!!)
+    deserializeJdomIntoBean(result = bean, element = element, accessorNameTracker = null, bindings = bindings!!)
+  }
+
+  fun <T : Any> deserializeInto(bean: Any, element: T, adapter: DomAdapter<T>) {
+    when (adapter) {
+      JdomAdapter -> deserializeJdomIntoBean(result = bean, element = element as Element, accessorNameTracker = null, bindings = bindings!!)
+      XmlDomAdapter -> deserializeBeanInto(result = bean, element = element as XmlElement, bindings = bindings!!)
+    }
   }
 
   fun deserializeInto(bean: Any, element: XmlElement) {
@@ -329,7 +278,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
 }
 
 // binding value will be not set if no data
-fun deserializeBeanInto(result: Any, element: XmlElement, bindings: Array<NestedBinding>) {
+private fun deserializeBeanInto(result: Any, element: XmlElement, bindings: Array<NestedBinding>) {
   var attributeBindingCount = 0
   for (binding in bindings) {
     if (binding is AttributeBinding) {
@@ -380,13 +329,81 @@ fun deserializeBeanInto(result: Any, element: XmlElement, bindings: Array<Nested
   }
 }
 
-internal fun deserializeBeanInto(result: Any, element: Element, bindings: Array<NestedBinding>, accessorNameTracker: MutableSet<String>? = null) {
-  nextAttribute@ for (attribute in element.attributes) {
+private fun deserializeBeanXmlToJson(element: Element, bindings: Array<NestedBinding>, jsonDiscriminator: String, includeClassDiscriminator: Boolean): JsonElement {
+  val extraSize = if (includeClassDiscriminator) 1 else 0
+  val keys = arrayOfNulls<String>(bindings.size + extraSize)
+  val values = arrayOfNulls<JsonElement>(bindings.size + extraSize)
+  var i = 0
+  fun put(key: String, value: JsonElement) {
+    keys[i] = key
+    values[i] = value
+    i++
+  }
+
+  if (includeClassDiscriminator) {
+    put(JSON_CLASS_DISCRIMINATOR_KEY, JsonPrimitive(jsonDiscriminator))
+  }
+
+  if (element.hasAttributes()) {
+    nextAttribute@ for (attribute in element.attributes) {
+      for (binding in bindings) {
+        if (binding is AttributeBinding && binding.name == attribute.name) {
+          put(normalizePropertyNameForKotlinx(binding), valueToJson(attribute.value, binding.valueClass) ?: JsonNull)
+          continue@nextAttribute
+        }
+      }
+    }
+  }
+
+  var data: LinkedHashMap<NestedBinding, MutableList<Element>>? = null
+  nextNode@ for (content in element.content) {
     for (binding in bindings) {
-      if (binding is AttributeBinding && binding.name == attribute.name) {
-        accessorNameTracker?.add(binding.accessor.name)
-        binding.setValue(result, attribute.value)
-        continue@nextAttribute
+      if (content is Text) {
+        if (binding is TextBinding) {
+          put(normalizePropertyNameForKotlinx(binding), JsonPrimitive(content.getValue()))
+        }
+        continue
+      }
+
+      val child = content as Element
+      if (binding.isBoundTo(child, JdomAdapter)) {
+        if (binding is MultiNodeBinding && binding.isMulti) {
+          if (data == null) {
+            data = LinkedHashMap()
+          }
+          data.computeIfAbsent(binding) { ArrayList() }.add(child)
+        }
+        else {
+          put(normalizePropertyNameForKotlinx(binding), binding.deserializeToJson(child) ?: JsonNull)
+        }
+        continue@nextNode
+      }
+    }
+  }
+
+  for (binding in bindings) {
+    if (binding is AccessorBindingWrapper && binding.isFlat) {
+      put(normalizePropertyNameForKotlinx(binding), binding.deserializeToJson(element) ?: JsonNull)
+    }
+  }
+
+  if (data != null) {
+    for ((binding, list) in data) {
+      put(normalizePropertyNameForKotlinx(binding), (binding as MultiNodeBinding).deserializeListToJson(list))
+    }
+  }
+  return JsonObject(Object2ObjectArrayMap(keys, values, i))
+}
+
+internal fun deserializeJdomIntoBean(result: Any, element: Element, bindings: Array<NestedBinding>, accessorNameTracker: MutableSet<String>? = null) {
+  if (element.hasAttributes()) {
+    nextAttribute@ for (attribute in element.attributes) {
+      for (binding in bindings) {
+        if (binding is AttributeBinding && binding.name == attribute.name) {
+          accessorNameTracker?.add(binding.accessor.name)
+          binding.setValue(result, attribute.value)
+          continue@nextAttribute
+        }
       }
     }
   }
@@ -432,7 +449,7 @@ internal fun deserializeBeanInto(result: Any, element: Element, bindings: Array<
   }
 }
 
-fun deserializeBeanBindingInto(result: Any, element: Element, binding: NestedBinding) {
+fun deserializeNestedBindingInto(result: Any, element: Element, binding: NestedBinding) {
   for (attribute in element.attributes) {
     if (binding is AttributeBinding && binding.name == attribute.name) {
       binding.setValue(result, attribute.value)
@@ -474,7 +491,7 @@ fun deserializeBeanBindingInto(result: Any, element: Element, binding: NestedBin
 }
 
 @Suppress("DuplicatedCode")
-fun deserializeBindingToJson(element: Element, binding: NestedBinding): JsonElement? {
+fun deserializeNestedBindingToJson(element: Element, binding: NestedBinding): JsonElement? {
   for (attribute in element.attributes) {
     if (binding is AttributeBinding && binding.name == attribute.name) {
       return JsonPrimitive(attribute.value)
@@ -513,7 +530,8 @@ fun deserializeBindingToJson(element: Element, binding: NestedBinding): JsonElem
 }
 
 // must be static class and not anonymous
-private class MyPropertyCollectorConfiguration : PropertyCollector.Configuration(true, false, false) {
+private class MyPropertyCollectorConfiguration
+  : PropertyCollector.Configuration(/* collectAccessors = */ true, /* collectPrivateFields = */ false, /* collectFinalFields = */ false) {
   override fun isAnnotatedAsTransient(element: AnnotatedElement): Boolean = element.isAnnotationPresent(Transient::class.java)
 
   override fun hasStoreAnnotations(element: AccessibleObject): Boolean {

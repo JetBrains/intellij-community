@@ -50,13 +50,13 @@ class SettingsControllerMediator(
 
   @IntellijInternalApi
   override fun <T : Any> doSetItem(key: SettingDescriptor<T>, value: T?): SetResult {
-    var totalResult = SetResult.INAPPLICABLE
+    var totalResult = SetResult.inapplicable()
     for (controller in controllers) {
       val result = controller.setItem(key = key, value = value)
-      if (result == SetResult.FORBID) {
+      if (result == SetResult.forbid()) {
         return result
       }
-      else if (result == SetResult.DONE) {
+      else if (result == SetResult.done()) {
         totalResult = result
       }
     }

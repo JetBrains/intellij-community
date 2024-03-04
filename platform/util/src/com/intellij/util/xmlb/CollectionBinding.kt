@@ -154,13 +154,13 @@ internal class CollectionBinding(
     when (size) {
       0 -> {
         for (itemElement in element) {
-          collection.add(fromJsonPrimitive(itemElement))
+          collection.add(fromJsonPrimitive(data = itemElement, valueClass = itemType)?.takeIf { it != Unit })
         }
       }
       1 -> {
         val binding = itemBindings[0]
         for (itemElement in element) {
-          val o = (binding as RootBinding).fromJson(null, itemElement)
+          val o = (binding as RootBinding).fromJson(currentValue = null, element = itemElement)
           assert(o !== Unit)
           collection.add(o)
         }
@@ -172,7 +172,7 @@ internal class CollectionBinding(
             LOG.warn("Cannot find binding for $itemElement")
           }
           else {
-            val o = (b as BeanBinding).fromJson(null, itemElement)
+            val o = (b as BeanBinding).fromJson(currentValue = null, element = itemElement)
             assert(o !== Unit)
             collection.add(o)
           }
@@ -231,7 +231,7 @@ internal class CollectionBinding(
           jsonElements.add(valueToJson(value, itemType) ?: JsonNull)
         }
         is BeanBinding -> {
-          jsonElements.add(binding.deserializeToJson(child, includeClassDiscriminator = itemBindings!!.size > 1))
+          jsonElements.add(binding.deserializeToJson(element = child, includeClassDiscriminator = itemBindings!!.size > 1))
         }
         else -> {
           jsonElements.add((binding as RootBinding).deserializeToJson(child) ?: JsonNull)
@@ -270,7 +270,7 @@ internal class CollectionBinding(
       return
     }
 
-    val binding = getItemBinding(value.javaClass, serializer)
+    val binding = getItemBinding(aClass = value.javaClass, serializer = serializer)
     if (binding == null) {
       val elementName = elementName
       if (elementName.isEmpty()) {
@@ -340,7 +340,7 @@ private data object CollectionStrategyImpl : CollectionStrategy {
     }
 
     for (node in elements) {
-      result.add(binding.deserializeItem(node, adapter, currentValue))
+      result.add(binding.deserializeItem(node = node, adapter = adapter, bean = currentValue))
     }
 
     return result
@@ -388,7 +388,7 @@ private data object ArrayStrategy : CollectionStrategy {
   override fun getCollection(bean: Any, binding: CollectionBinding): Collection<Any?> {
     @Suppress("UNCHECKED_CAST")
     val list = bean as Array<Any>
-    return if (list.isEmpty()) emptyList<Any>() else list.asList()
+    return if (list.isEmpty()) Collections.emptyList<Any>() else list.asList()
   }
 
   override fun transformJsonValue(value: Collection<Any?>, itemType: Class<*>): Any {
