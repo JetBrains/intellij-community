@@ -24,7 +24,7 @@ import org.jetbrains.annotations.ApiStatus
  *  3. Record all state collectors with "Record State Collectors to Event Log" action.<br></br>
  * [com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction]
  *
- * For more information see *fus-collectors.md*
+ * For more information see *Fus-Collectors.md*
  *
  * @see ProjectUsagesCollector
  * @see CounterUsagesCollector
