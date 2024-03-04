@@ -34,9 +34,11 @@ fun getOtlpEndPoint(): String? {
 internal class OtlpService private constructor() {
   private val spans = Channel<ActivityImpl?>(capacity = Channel.UNLIMITED)
 
-  internal val utc = ((ZonedDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli() / 1000) - 1672531200).toInt()
+  @JvmField
+  internal val utc: Int = ((ZonedDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli() / 1000) - 1672531200).toInt()
 
-  internal val traceIdSalt = System.identityHashCode(spans).toLong() shl 32 or (System.identityHashCode(this).toLong() and 0xffffffffL)
+  @JvmField
+  internal val traceIdSalt: Long = System.identityHashCode(spans).toLong() shl 32 or (System.identityHashCode(this).toLong() and 0xffffffffL)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   fun process(coroutineScope: CoroutineScope,
