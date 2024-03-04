@@ -137,10 +137,10 @@ class AutoLayoutStrategy(private val myForceShowFirstComponent: Boolean, private
         val eachBound = Rectangle(getChildPreferredSize(component, i))
         if (!full) {
           val outside = if (i < componentCount - 1) {
-            eachY + eachBound.height + autoButtonSize.height < heightToFit
+            eachY + eachBound.height + autoButtonSize.height <= heightToFit
           }
           else {
-            eachY + eachBound.height < heightToFit
+            eachY + eachBound.height <= heightToFit
           }
           if (outside) {
             eachBound.x = insets.left
