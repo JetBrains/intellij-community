@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
 import com.intellij.openapi.editor.highlighter.HighlighterClient
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
@@ -30,6 +32,10 @@ object EmptyTextAttributesProvider : TextAttributesProvider {
 class TextStyleAdapter(private val style: TextStyle,
                        private val colorPalette: TerminalColorPalette): TextAttributesProvider {
   override fun getTextAttributes(): TextAttributes = style.toTextAttributes(colorPalette)
+}
+
+class TextAttributesKeyAdapter(private val editor: Editor, private val textAttributesKey: TextAttributesKey) : TextAttributesProvider {
+  override fun getTextAttributes(): TextAttributes = editor.colorsScheme.getAttributes(textAttributesKey)
 }
 
 class TerminalTextHighlighter private constructor(
