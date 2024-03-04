@@ -2,8 +2,8 @@
 package com.intellij.platform.ml.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.ml.*
+import com.intellij.platform.ml.ScopeEnvironment.Companion.restrictedBy
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
 import com.intellij.platform.ml.impl.session.AdditionalTierScheme
@@ -38,6 +38,11 @@ abstract class MLTask<T : Any> protected constructor(
   val predictionClass: Class<T>
 ) {
   init {
+    require(levels.isNotEmpty()) {
+      """
+        Task $this should contain at least one level
+      """.trimIndent()
+    }
     require(callParameters.size == levels.size) {
       """
         Task $this has ${levels.size} levels, but in call parameters there are ${callParameters.size} levels.
@@ -51,10 +56,10 @@ abstract class MLTask<T : Any> protected constructor(
  * A method of approaching an ML task.
  * Usually, it is inferencing an ML model and collecting logs.
  *
- * Each [MLTaskApproach] is initialized once by the corresponding [MLTaskApproachInitializer],
+ * Each [MLTaskApproach] is initialized once by the corresponding [MLTaskApproachBuilder],
  * then the [apiPlatform] is fixed.
  *
- * @see [com.intellij.platform.ml.impl.approach.LogDrivenModelInference] for currently used approach.
+ * @see [com.intellij.platform.ml.impl.LogDrivenModelInference] for currently used approach.
  */
 @ApiStatus.Internal
 interface MLTaskApproach<P : Any> {
@@ -65,14 +70,9 @@ interface MLTaskApproach<P : Any> {
   val task: MLTask<P>
 
   /**
-   * The platform, this approach is called within, that was provided by [MLTaskApproachInitializer]
+   * The platform, this approach is called within, that was provided by [MLTaskApproachBuilder]
    */
   val apiPlatform: MLApiPlatform
-
-  /**
-   * A static declaration of the features, used in the approach.
-   */
-  val approachDeclaration: Declaration
 
   /**
    * Acquire the ML model and start the session.
@@ -87,31 +87,54 @@ interface MLTaskApproach<P : Any> {
    */
   suspend fun startSession(callParameters: Environment, permanentSessionEnvironment: Environment): Session.StartOutcome<P>
 
-  data class Declaration(
+  data class SessionDeclaration(
     val sessionFeatures: Map<String, Set<FeatureDeclaration<*>>>,
     val levelsScheme: List<LevelScheme>
   )
 
   companion object {
-    fun <P : Any> findMlApproach(task: MLTask<P>, apiPlatform: MLApiPlatform = ReplaceableIJPlatform): MLTaskApproach<P> {
-      return apiPlatform.accessApproachFor(task)
+    fun <P : Any> findMlTaskApproach(task: MLTask<P>, apiPlatform: MLApiPlatform): MLTaskApproachBuilder<P> {
+      val taskApproachBuilder = requireNotNull(apiPlatform.taskApproaches.find { it.task == task }) {
+        """
+        No approach for task $task was registered in $apiPlatform.
+        Available approaches: ${apiPlatform.taskApproaches}
+        """.trimIndent()
+      }
+      @Suppress("UNCHECKED_CAST")
+      return taskApproachBuilder as MLTaskApproachBuilder<P>
     }
 
     suspend fun <P : Any> startMLSession(task: MLTask<P>,
                                          apiPlatform: MLApiPlatform,
                                          callParameters: Environment,
                                          permanentSessionEnvironment: Environment): Session.StartOutcome<P> {
-      val approach = findMlApproach(task, apiPlatform)
-      return approach.startSession(callParameters, permanentSessionEnvironment)
+      validateEnvironment(callParameters, task.callParameters.first(), permanentSessionEnvironment, task.levels.first())
+      val approach = findMlTaskApproach(task, apiPlatform).buildApproach(apiPlatform)
+      val safelyAccessibleCallParameters = callParameters.restrictedBy(task.callParameters.first())
+      return approach.startSession(safelyAccessibleCallParameters, permanentSessionEnvironment)
     }
 
     suspend fun <P : Any> MLTask<P>.startMLSession(callParameters: Environment, permanentSessionEnvironment: Environment, apiPlatform: MLApiPlatform = ReplaceableIJPlatform): Session.StartOutcome<P> {
       return startMLSession(this@startMLSession, apiPlatform, callParameters, permanentSessionEnvironment)
     }
 
-    fun <P : Any> MLTask<P>.startCoroutineAndMLSession(callParameters: Environment, permanentSessionEnvironment: Environment, apiPlatform: MLApiPlatform = ReplaceableIJPlatform): Session.StartOutcome<P> {
-      return runBlockingCancellable {
-        startMLSession(callParameters, permanentSessionEnvironment, apiPlatform)
+    private fun validateEnvironment(callParameters: Environment,
+                                    expectedCallParameters: Set<Tier<*>>,
+                                    permanentSessionEnvironment: Environment,
+                                    expectedPermanentTiers: Set<Tier<*>>) {
+      require(callParameters.tiers == expectedCallParameters) {
+        """
+        Invalid call parameters passed.
+          Missing: ${expectedCallParameters - callParameters.tiers}
+          Redundant: ${callParameters.tiers - expectedCallParameters}
+        """.trimIndent()
+      }
+      require(permanentSessionEnvironment.tiers == expectedPermanentTiers) {
+        """
+        Invalid main environment passed.
+          Missing: ${expectedCallParameters - callParameters.tiers}
+          Redundant: ${callParameters.tiers - expectedCallParameters}
+        """.trimIndent()
       }
     }
   }
@@ -121,7 +144,7 @@ interface MLTaskApproach<P : Any> {
  * Initializes an [MLTaskApproach]
  */
 @ApiStatus.Internal
-interface MLTaskApproachInitializer<P : Any> {
+interface MLTaskApproachBuilder<P : Any> {
   /**
    * The task, that the created [MLTaskApproach] is dedicated to solve.
    */
@@ -129,22 +152,25 @@ interface MLTaskApproachInitializer<P : Any> {
 
   /**
    * Initializes the approach.
-   * It is called only once during the application's runtime.
-   * So it is crucial that this function will accept the [MLApiPlatform] you want it to.
+   * It is called each time, when another ml session is started.
    *
-   * To access the API to build event validator statically,
-   * FUS uses the actual [com.intellij.platform.ml.impl.apiPlatform.IJPlatform], which could be problematic if you
-   * want to test FUS logs.
-   * So make sure that you will replace it with your test platform in
-   * time via [com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform.replacingWith].
+   * @param apiPlatform The platform, that is used to initialize approach's components.
+   * All [TierDescriptor]s, [EnvironmentExtender]s should be already final when this method is called.
    */
-  fun initializeApproachWithin(apiPlatform: MLApiPlatform): MLTaskApproach<P>
+  fun buildApproach(apiPlatform: MLApiPlatform): MLTaskApproach<P>
+
+  /**
+   * Builds a scheme for the finished event.
+   * Such events are registered with [com.intellij.platform.ml.impl.logs.events.MLSessionFinishedLogger]
+   */
+  fun buildApproachSessionDeclaration(apiPlatform: MLApiPlatform): MLTaskApproach.SessionDeclaration
 
   companion object {
-    val EP_NAME = ExtensionPointName<MLTaskApproachInitializer<*>>("com.intellij.platform.ml.impl.approach")
+    val EP_NAME = ExtensionPointName<MLTaskApproachBuilder<*>>("com.intellij.platform.ml.impl.approach")
   }
 }
 
+@ApiStatus.Internal
 data class LevelSignature<M, A>(
   val main: M,
   val additional: A

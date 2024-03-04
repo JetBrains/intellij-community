@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ml.impl.logger
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ml.impl.logs
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
@@ -20,13 +20,13 @@ import org.jetbrains.annotations.ApiStatus
 class InplaceFeaturesScheme<P : Any, F> internal constructor(
   private val predictionField: EventField<F>,
   private val predictionTransformer: (P?) -> F?,
-  private val approachDeclaration: MLTaskApproach.Declaration
-) : FusSessionEventBuilder<P> {
+  private val approachDeclaration: MLTaskApproach.SessionDeclaration
+) : EventSessionEventBuilder<P> {
   class FusScheme<P : Any, F>(
     private val predictionField: EventField<F>,
     private val predictionTransformer: (P?) -> F?,
-  ) : FusSessionEventBuilder.FusScheme<P> {
-    override fun createEventBuilder(approachDeclaration: MLTaskApproach.Declaration): FusSessionEventBuilder<P> = InplaceFeaturesScheme(
+  ) : EventSessionEventBuilder.EventScheme<P> {
+    override fun createEventBuilder(approachDeclaration: MLTaskApproach.SessionDeclaration): EventSessionEventBuilder<P> = InplaceFeaturesScheme(
       predictionField,
       predictionTransformer,
       approachDeclaration
@@ -37,7 +37,7 @@ class InplaceFeaturesScheme<P : Any, F> internal constructor(
     }
   }
 
-  override fun buildFusDeclaration(): SessionFields<P> {
+  override fun buildSessionFields(): SessionFields<P> {
     require(approachDeclaration.levelsScheme.isNotEmpty())
     return if (approachDeclaration.levelsScheme.size == 1)
       PredictionSessionFields(approachDeclaration.levelsScheme.first(), predictionField, predictionTransformer,

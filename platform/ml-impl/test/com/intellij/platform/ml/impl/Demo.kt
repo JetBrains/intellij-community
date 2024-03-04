@@ -2,31 +2,34 @@
 package com.intellij.platform.ml.impl
 
 import com.intellij.internal.statistic.FUCollectorTestCase
+import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.ClassEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors.COUNTER_EP_NAME
 import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.util.Version
 import com.intellij.platform.ml.*
-import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startCoroutineAndMLSession
+import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startMLSession
 import com.intellij.platform.ml.impl.apiPlatform.CodeLikePrinter
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
-import com.intellij.platform.ml.impl.approach.*
-import com.intellij.platform.ml.impl.logger.FailedSessionLoggerRegister
-import com.intellij.platform.ml.impl.logger.FinishedSessionLoggerRegister
-import com.intellij.platform.ml.impl.logger.InplaceFeaturesScheme
-import com.intellij.platform.ml.impl.logger.MLEvent
+import com.intellij.platform.ml.impl.logs.InplaceFeaturesScheme
+import com.intellij.platform.ml.impl.logs.events.registerEventSessionFailed
+import com.intellij.platform.ml.impl.logs.events.registerEventSessionFinished
 import com.intellij.platform.ml.impl.model.MLModel
-import com.intellij.platform.ml.impl.monitoring.*
+import com.intellij.platform.ml.impl.monitoring.MLApproachInitializationListener
+import com.intellij.platform.ml.impl.monitoring.MLApproachListener
+import com.intellij.platform.ml.impl.monitoring.MLSessionListener
+import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachListeners.Companion.monitoredBy
 import com.intellij.platform.ml.impl.session.*
-import com.intellij.platform.ml.impl.session.analysis.MLModelAnalyser
-import com.intellij.platform.ml.impl.session.analysis.ShallowSessionAnalyser
-import com.intellij.platform.ml.impl.session.analysis.StructureAnalyser
-import com.intellij.platform.ml.impl.session.analysis.StructureAnalysis
+import com.intellij.platform.ml.impl.session.analysis.*
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.application
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.runBlocking
 import java.net.URI
@@ -70,15 +73,13 @@ object TierItem : Tier<LookupItem>()
 
 object TierGit : Tier<GitRepository>()
 
-class CompletionSessionFeatures1 : TierDescriptor {
+class CompletionSessionFeatures1 : TierDescriptor.Default(TierCompletionSession) {
   companion object {
     val CALL_ORDER = FeatureDeclaration.int("call_order")
     val LANGUAGE_ID = FeatureDeclaration.categorical("language_id", Language.getRegisteredLanguages().map { it.id }.toSet())
     val GIT_USER = FeatureDeclaration.boolean("git_user_is_Glebanister")
     val COMPLETION_TYPE = FeatureDeclaration.enum<CompletionType>("completion_type").nullable()
   }
-
-  override val tier: Tier<*> = TierCompletionSession
 
   override val descriptionPolicy: DescriptionPolicy = DescriptionPolicy(false, false)
 
@@ -100,13 +101,11 @@ class CompletionSessionFeatures1 : TierDescriptor {
   }
 }
 
-class ItemFeatures1 : TierDescriptor {
+class ItemFeatures1 : TierDescriptor.Default(TierItem) {
   companion object {
     val DECORATIONS = FeatureDeclaration.int("decorations")
     val LENGTH = FeatureDeclaration.int("length")
   }
-
-  override val tier: Tier<*> = TierItem
 
   override val descriptionPolicy: DescriptionPolicy = DescriptionPolicy(false, false)
 
@@ -123,13 +122,11 @@ class ItemFeatures1 : TierDescriptor {
   }
 }
 
-class GitFeatures1 : TierDescriptor {
+class GitFeatures1 : TierDescriptor.Default(TierGit) {
   companion object {
     val N_COMMITS = FeatureDeclaration.int("n_commits")
     val HAS_USER = FeatureDeclaration.boolean("has_user")
   }
-
-  override val tier: Tier<*> = TierGit
 
   override val descriptionPolicy: DescriptionPolicy = DescriptionPolicy(false, false)
 
@@ -218,11 +215,11 @@ class RandomModelSeedAnalyser : MLModelAnalyser<RandomModel, Double> {
 class RandomModel(val seed: Int) : MLModel<Double>, Versioned, LanguageSpecific {
   private val generator = Random(seed)
 
-  class Provider : MLModel.Provider<RandomModel, Double> {
+  object Provider : MLModel.Provider<RandomModel, Double> {
     private val generator = Random(1)
     override fun provideModel(callParameters: Environment, environment: Environment, sessionTiers: List<LevelTiers>): RandomModel? {
       return if (generator.nextBoolean()) {
-        if (generator.nextBoolean()) RandomModel(generator.nextInt()) else throw IllegalStateException()
+        if (generator.nextBoolean()) RandomModel(generator.nextInt()) else throw IllegalStateException("A random error was encountered")
       }
       else null
     }
@@ -246,7 +243,7 @@ class RandomModel(val seed: Int) : MLModel<Double>, Versioned, LanguageSpecific 
 
 class SomeListener(private val name: String) : MLTaskGroupListener {
   override val approachListeners = listOf(
-    MockTaskApproach::class.java monitoredBy InitializationListener()
+    MockTaskApproachBuilder::class.java monitoredBy InitializationListener()
   )
 
   private fun log(message: String) = println("[Listener $name says] $message")
@@ -260,7 +257,7 @@ class SomeListener(private val name: String) : MLTaskGroupListener {
 
   inner class ApproachListener : MLApproachListener<RandomModel, Double> {
     override fun onFailedToStartSessionWithException(exception: Throwable) {
-      log("failed to start session with exception: $exception")
+      log("failed to start session with exception: $exception, trace: ${exception.stackTraceToString()}")
     }
 
     override fun onFailedToStartSession(failure: Session.StartOutcome.Failure<Double>) {
@@ -309,6 +306,17 @@ object FailureLogger : ShallowSessionAnalyser<Session.StartOutcome.Failure<Doubl
   }
 }
 
+class MockTaskFusLogger : CounterUsagesCollector() {
+  companion object {
+    val GROUP = EventLogGroup("mock-task", 1).also {
+      it.registerEventSessionFailed<RandomModel, Double>("failed", MockTask, listOf(ExceptionLogger), listOf(FailureLogger))
+      it.registerEventSessionFinished<RandomModel, Double>("finished", MockTask, InplaceFeaturesScheme.FusScheme.DOUBLE)
+    }
+  }
+
+  override fun getGroup() = GROUP
+}
+
 object ThisTestApiPlatform : TestApiPlatform() {
   override val tierDescriptors = listOf(
     CompletionSessionFeatures1(),
@@ -321,28 +329,13 @@ object ThisTestApiPlatform : TestApiPlatform() {
   )
 
   override val taskApproaches = listOf(
-    MockTaskApproach.Initializer()
-  )
-
-
-  override val initialStartupListeners: List<MLApiStartupListener> = listOf(
-    FinishedSessionLoggerRegister<RandomModel, Double>(
-      MockTaskApproach::class.java,
-      InplaceFeaturesScheme.FusScheme.DOUBLE
-    ),
-    FailedSessionLoggerRegister<RandomModel, Double>(
-      MockTaskApproach::class.java,
-      exceptionalAnalysers = listOf(ExceptionLogger),
-      normalFailureAnalysers = listOf(FailureLogger)
-    )
+    MockTaskApproachBuilder()
   )
 
   override val initialTaskListeners: List<MLTaskGroupListener> = listOf(
     SomeListener("Nika"),
     SomeListener("Alex"),
   )
-
-  override val initialEvents: List<MLEvent> = listOf()
 
 
   override fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>) {
@@ -366,27 +359,25 @@ object MockTask : MLTask<Double>(
   )
 )
 
-class MockTaskApproach(
-  apiPlatform: MLApiPlatform,
-  task: MLTask<Double>
-) : LogDrivenModelInference<RandomModel, Double>(task, apiPlatform) {
 
+class MockTaskApproachDetails : LogDrivenModelInference.SessionDetails<RandomModel, Double> {
   override val additionallyDescribedTiers: List<Set<Tier<*>>> = listOf(
     setOf(TierGit),
     setOf(),
     setOf(),
   )
 
-  override val analysisMethod: AnalysisMethod<RandomModel, Double> = StructureAndModelAnalysis(
-    structureAnalysers = listOf(SomeStructureAnalyser()),
-    mlModelAnalysers = listOf(
+  override val mlModelAnalysers: Collection<MLModelAnalyser<RandomModel, Double>>
+    get() = listOf(
       RandomModelSeedAnalyser(),
       ModelVersionAnalyser(),
       ModelLanguageAnalyser()
     )
-  )
 
-  override val mlModelProvider = RandomModel.Provider()
+  override val structureAnalysers: Collection<StructureAnalyser<RandomModel, Double>>
+    get() = listOf(SomeStructureAnalyser())
+
+  override val mlModelProvider = RandomModel.Provider
 
   override fun getNotUsedDescription(callParameters: Environment, mlModel: RandomModel) = mapOf(
     TierCompletionSession to FeatureFilter.REJECT_ALL,
@@ -397,11 +388,14 @@ class MockTaskApproach(
 
   override val descriptionComputer: DescriptionComputer = StateFreeDescriptionComputer
 
-  class Initializer : MLTaskApproachInitializer<Double> {
-    override val task: MLTask<Double> = MockTask
-    override fun initializeApproachWithin(apiPlatform: MLApiPlatform) = MockTaskApproach(apiPlatform, task)
+  class Builder : LogDrivenModelInference.SessionDetails.Builder<RandomModel, Double> {
+    override fun build(apiPlatform: MLApiPlatform): LogDrivenModelInference.SessionDetails<RandomModel, Double> {
+      return MockTaskApproachDetails()
+    }
   }
 }
+
+class MockTaskApproachBuilder : LogDrivenModelInference.Builder<RandomModel, Double>(MockTask, MockTaskApproachDetails.Builder())
 
 class TestTask : BasePlatformTestCase() {
   fun `test demo ml task`() {
@@ -416,26 +410,30 @@ class TestTask : BasePlatformTestCase() {
     //MLEventLogger.Manager.ensureNotInitialized()
 
     ReplaceableIJPlatform.replacingWith(ThisTestApiPlatform) {
+      val logger = MockTaskFusLogger()
+      val loggerEP = CounterUsageCollectorEP()
+      application.extensionArea.getExtensionPoint(COUNTER_EP_NAME).registerExtension(loggerEP, this.testRootDisposable)
+
       FUCollectorTestCase.listenForEvents("FUS", this.testRootDisposable, collectLogs) {
 
         repeat(3) { sessionIndex ->
 
           println("Demo session #$sessionIndex has started")
 
-          val startOutcome = MockTask.startCoroutineAndMLSession(
-            callParameters = Environment.of(),
-            permanentSessionEnvironment = Environment.of(
-              TierCompletionSession with CompletionSession(
-                language = PlainTextLanguage.INSTANCE,
-                callOrder = 1,
-                completionType = CompletionType.SMART
+          runBlocking {
+
+            val startOutcome = MockTask.startMLSession(
+              callParameters = Environment.of(),
+              permanentSessionEnvironment = Environment.of(
+                TierCompletionSession with CompletionSession(
+                  language = PlainTextLanguage.INSTANCE,
+                  callOrder = 1,
+                  completionType = CompletionType.SMART
+                )
               )
             )
-          )
 
-          val completionSession = startOutcome.session ?: return@repeat
-
-          runBlocking {
+            val completionSession = startOutcome.session ?: return@runBlocking
             completionSession.withNestedSessions { lookupSessionCreator ->
 
               lookupSessionCreator.nestConsidering(Environment.of(), Environment.of(TierLookup with LookupImpl(true, 1)))

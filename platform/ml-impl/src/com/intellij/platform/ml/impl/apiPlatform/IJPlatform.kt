@@ -2,16 +2,13 @@
 package com.intellij.platform.ml.impl.apiPlatform
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.EnvironmentExtender
 import com.intellij.platform.ml.Feature
 import com.intellij.platform.ml.ObsoleteTierDescriptor
 import com.intellij.platform.ml.TierDescriptor
-import com.intellij.platform.ml.impl.MLTaskApproachInitializer
+import com.intellij.platform.ml.impl.MLTaskApproachBuilder
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform.ExtensionController
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform.replacingWith
-import com.intellij.platform.ml.impl.logger.MLEvent
-import com.intellij.platform.ml.impl.monitoring.MLApiStartupListener
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
 import com.intellij.util.application
 import com.intellij.util.messages.Topic
@@ -35,25 +32,9 @@ fun interface MessagingProvider<T> {
   }
 }
 
-fun interface MLTaskListenerProvider : MessagingProvider<MLTaskGroupListener> {
+fun interface MLTaskGroupListenerProvider : MessagingProvider<MLTaskGroupListener> {
   companion object {
-    val TOPIC = MessagingProvider.createTopic<MLTaskGroupListener, MLTaskListenerProvider>("ml.task")
-  }
-}
-
-fun interface MLEventProvider : MessagingProvider<MLEvent> {
-  companion object {
-    val TOPIC = MessagingProvider.createTopic<MLEvent, MLEventProvider>("ml.event")
-  }
-}
-
-fun interface MLApiStartupListenerProvider : MessagingProvider<MLApiStartupListener> {
-  companion object {
-    val TOPIC = MessagingProvider.createTopic<MLApiStartupListener, MLApiStartupListenerProvider>("ml.startup")
-  }
-
-  interface ThisProvider : MLApiStartupListenerProvider, MLApiStartupListener {
-    override fun provide(collector: (MLApiStartupListener) -> Unit) = collector(this)
+    val TOPIC = MessagingProvider.createTopic<MLTaskGroupListener, MLTaskGroupListenerProvider>("ml.task")
   }
 }
 
@@ -73,41 +54,22 @@ private data object IJPlatform : MLApiPlatform() {
   override val environmentExtenders: List<EnvironmentExtender<*>>
     get() = EnvironmentExtender.EP_NAME.extensionList
 
-  override val taskApproaches: List<MLTaskApproachInitializer<*>>
-    get() = MLTaskApproachInitializer.EP_NAME.extensionList
+  override val taskApproaches: List<MLTaskApproachBuilder<*>>
+    get() = MLTaskApproachBuilder.EP_NAME.extensionList
 
   override val taskListeners: List<MLTaskGroupListener>
-    get() = MessagingProvider.collect(MLTaskListenerProvider.TOPIC)
-
-  override val events: List<MLEvent>
-    get() = MessagingProvider.collect(MLEventProvider.TOPIC)
-
-  override val startupListeners: List<MLApiStartupListener>
-    get() = MessagingProvider.collect(MLApiStartupListenerProvider.TOPIC)
-
-  override fun addStartupListener(listener: MLApiStartupListener): ExtensionController {
-    val connection = application.messageBus.connect()
-    connection.subscribe(MLApiStartupListenerProvider.TOPIC, MLApiStartupListenerProvider { collector -> collector(listener) })
-    return ExtensionController { connection.disconnect() }
-  }
+    get() = MessagingProvider.collect(MLTaskGroupListenerProvider.TOPIC)
 
   override fun addTaskListener(taskListener: MLTaskGroupListener): ExtensionController {
     val connection = application.messageBus.connect()
-    connection.subscribe(MLTaskListenerProvider.TOPIC, MLTaskListenerProvider { it(taskListener) })
-    return ExtensionController { connection.disconnect() }
-  }
-
-  override fun addEvent(event: MLEvent): ExtensionController {
-    val connection = application.messageBus.connect()
-    connection.subscribe(MLEventProvider.TOPIC, MLEventProvider { it(event) })
+    connection.subscribe(MLTaskGroupListenerProvider.TOPIC, MLTaskGroupListenerProvider { it(taskListener) })
     return ExtensionController { connection.disconnect() }
   }
 
   override fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>) {
-    if (!Registry.`is`("ml.description.logMissing")) return
     val printer = CodeLikePrinter()
     val codeLikeMissingDeclaration = printer.printCodeLikeString(nonDeclaredFeatures.map { it.declaration })
-    thisLogger().info("${descriptor::class.java} is missing declaration: setOf($codeLikeMissingDeclaration)")
+    thisLogger().debug("${descriptor::class.java} is missing declaration: setOf($codeLikeMissingDeclaration)")
   }
 }
 
@@ -115,11 +77,11 @@ private data object IJPlatform : MLApiPlatform() {
  * Also a "real-life" [MLApiPlatform], but it can be replaced with another one any time.
  *
  * We always want to test [com.intellij.platform.ml.impl.MLTaskApproach]es.
- * But after they are initialized by [com.intellij.platform.ml.impl.MLTaskApproachInitializer],
+ * But after they are initialized by [com.intellij.platform.ml.impl.MLTaskApproachBuilder],
  * the passed [MLApiPlatform] could already spread all the way within the API.
  * But the user-defined instances of the api could be overridden for testing sake.
  *
- * To replace all [TierDescriptor], [EnvironmentExtender] and [MLTaskApproachInitializer]
+ * To replace all [TierDescriptor], [EnvironmentExtender] and [MLTaskApproachBuilder]
  * to test your code, you may call [replacingWith] and pass the desired environment,
  * that contains all the objects you need for your test.
  */
@@ -137,30 +99,15 @@ object ReplaceableIJPlatform : MLApiPlatform() {
   override val environmentExtenders: List<EnvironmentExtender<*>>
     get() = platform.environmentExtenders
 
-  override val taskApproaches: List<MLTaskApproachInitializer<*>>
+  override val taskApproaches: List<MLTaskApproachBuilder<*>>
     get() = platform.taskApproaches
 
 
   override val taskListeners: List<MLTaskGroupListener>
     get() = platform.taskListeners
 
-  override val events: List<MLEvent>
-    get() = platform.events
-
-  override val startupListeners: List<MLApiStartupListener>
-    get() = platform.startupListeners
-
-
-  override fun addStartupListener(listener: MLApiStartupListener): ExtensionController {
-    return extend(listener) { platform -> platform.addStartupListener(listener) }
-  }
-
   override fun addTaskListener(taskListener: MLTaskGroupListener): ExtensionController {
     return extend(taskListener) { platform -> platform.addTaskListener(taskListener) }
-  }
-
-  override fun addEvent(event: MLEvent): ExtensionController {
-    return extend(event) { platform -> platform.addEvent(event) }
   }
 
   override fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>) =

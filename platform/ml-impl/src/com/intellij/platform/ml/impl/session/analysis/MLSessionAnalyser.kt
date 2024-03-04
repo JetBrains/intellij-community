@@ -1,13 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ml.impl.approach
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ml.impl.session.analysis
 
 import com.intellij.platform.ml.FeatureDeclaration
 import com.intellij.platform.ml.PerTierInstance
 import com.intellij.platform.ml.impl.model.MLModel
 import com.intellij.platform.ml.impl.session.*
-import com.intellij.platform.ml.impl.session.analysis.MLModelAnalyser
-import com.intellij.platform.ml.impl.session.analysis.StructureAnalyser
-import com.intellij.platform.ml.impl.session.analysis.StructureAnalysisDeclaration
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 
@@ -20,25 +17,31 @@ import java.util.concurrent.CompletableFuture
  * @param sessionAnalysisKeyModel Key that will be used in logs, to write ML model's features into.
  */
 @ApiStatus.Internal
-class StructureAndModelAnalysis<M : MLModel<P>, P : Any>(
+class MLSessionAnalyser<M : MLModel<P>, P : Any>(
   structureAnalysers: Collection<StructureAnalyser<M, P>>,
   mlModelAnalysers: Collection<MLModelAnalyser<M, P>>,
   private val sessionAnalysisKeyModel: String = DEFAULT_SESSION_KEY_ML_MODEL
-) : AnalysisMethod<M, P> {
+) {
   private val groupedAnalyser = JoinedGroupedSessionAnalyser(structureAnalysers, mlModelAnalysers)
 
-  override val structureAnalysisDeclaration: StructureAnalysisDeclaration
-    get() = groupedAnalyser.analysisDeclaration.structureAnalysis
-
-  override val sessionAnalysisDeclaration: Map<String, Set<FeatureDeclaration<*>>> = mapOf(
-    sessionAnalysisKeyModel to groupedAnalyser.analysisDeclaration.mlModelAnalysis
-  )
-
-  override fun analyseTree(treeRoot: DescribedRootContainer<M, P>): CompletableFuture<AnalysedRootContainer<P>> {
+  fun analyseSessionStructure(treeRoot: DescribedRootContainer<M, P>): CompletableFuture<AnalysedRootContainer<P>> {
     return groupedAnalyser.analyse(treeRoot).thenApply {
       buildAnalysedSessionTree(treeRoot, it) as AnalysedRootContainer<P>
     }
   }
+
+  /**
+   * Static declaration of the features, that are used in the session tree's analysis.
+   */
+  val structureAnalysisDeclaration: StructureAnalysisDeclaration
+    get() = groupedAnalyser.analysisDeclaration.sessionStructureAnalysis
+
+  /**
+   * Static declaration of the session's entities, that are not tiers.
+   */
+  val sessionAnalysisDeclaration: Map<String, Set<FeatureDeclaration<*>>> = mapOf(
+    sessionAnalysisKeyModel to groupedAnalyser.analysisDeclaration.mlModelAnalysis
+  )
 
   private fun buildAnalysedSessionTree(tree: DescribedSessionTree<M, P>, analysis: GroupedAnalysis<M, P>): AnalysedSessionTree<P> {
     val treeAnalysisPerInstance: PerTierInstance<AnalysedTierData> = tree.levelData.mainInstances.entries

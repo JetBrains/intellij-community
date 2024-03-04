@@ -4,6 +4,8 @@ package com.intellij.platform.ml.impl.monitoring
 import com.intellij.platform.ml.Environment
 import com.intellij.platform.ml.Session
 import com.intellij.platform.ml.impl.MLTaskApproach
+import com.intellij.platform.ml.impl.MLTaskApproachBuilder
+import com.intellij.platform.ml.impl.apiPlatform.MLTaskGroupListenerProvider
 import com.intellij.platform.ml.impl.monitoring.MLApproachInitializationListener.Companion.asJoinedListener
 import com.intellij.platform.ml.impl.monitoring.MLApproachListener.Companion.asJoinedListener
 import com.intellij.platform.ml.impl.monitoring.MLSessionListener.Companion.asJoinedListener
@@ -15,8 +17,8 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Provides listeners for a set of [com.intellij.platform.ml.impl.MLTaskApproach]
  *
- * Only [com.intellij.platform.ml.impl.approach.LogDrivenModelInference] and the subclasses, that are
- * calling [com.intellij.platform.ml.impl.approach.LogDrivenModelInference.startSession] are monitored.
+ * Only [com.intellij.platform.ml.impl.LogDrivenModelInference] and the subclasses, that are
+ * calling [com.intellij.platform.ml.impl.LogDrivenModelInference.startSession] are monitored.
  */
 @ApiStatus.Internal
 interface MLTaskGroupListener {
@@ -35,27 +37,34 @@ interface MLTaskGroupListener {
    * A proper way to create it is to use [monitoredBy]
    */
   data class ApproachListeners<R, P : Any> internal constructor(
-    val taskApproach: Class<out MLTaskApproach<P>>,
+    val taskApproachBuilder: Class<out MLTaskApproachBuilder<P>>,
     val approachListener: Collection<MLApproachInitializationListener<R, P>>
   ) {
     companion object {
-      infix fun <R, P : Any> Class<out MLTaskApproach<P>>.monitoredBy(approachListener: MLApproachInitializationListener<R, P>) = ApproachListeners(
+      infix fun <R, P : Any> Class<out MLTaskApproachBuilder<P>>.monitoredBy(approachListener: MLApproachInitializationListener<R, P>) = ApproachListeners(
         this, listOf(approachListener))
 
-      infix fun <R, P : Any> Class<out MLTaskApproach<P>>.monitoredBy(approachListeners: Collection<MLApproachInitializationListener<R, P>>) = ApproachListeners(
+      infix fun <R, P : Any> Class<out MLTaskApproachBuilder<P>>.monitoredBy(approachListeners: Collection<MLApproachInitializationListener<R, P>>) = ApproachListeners(
         this, approachListeners)
     }
   }
 
-  companion object {
-    internal val MLTaskGroupListener.targetedApproaches: Set<Class<out MLTaskApproach<*>>>
-      get() = approachListeners.map { it.taskApproach }.toSet()
+  @ApiStatus.Internal
+  interface Default : MLTaskGroupListener, MLTaskGroupListenerProvider {
+    override fun provide(collector: (MLTaskGroupListener) -> Unit) {
+      return collector(this)
+    }
+  }
 
-    internal fun <P : Any, R> MLTaskGroupListener.onAttemptedToStartSession(taskApproach: MLTaskApproach<P>,
+  companion object {
+    internal val MLTaskGroupListener.targetedApproaches: Set<Class<out MLTaskApproachBuilder<*>>>
+      get() = approachListeners.map { it.taskApproachBuilder }.toSet()
+
+    internal fun <P : Any, R> MLTaskGroupListener.onAttemptedToStartSession(taskApproachBuilder: MLTaskApproachBuilder<P>,
                                                                             permanentSessionEnvironment: Environment): MLApproachListener<R, P>? {
       @Suppress("UNCHECKED_CAST")
       val approachListeners: List<MLApproachInitializationListener<R, P>> = approachListeners
-        .filter { it.taskApproach == taskApproach.javaClass }
+        .filter { it.taskApproachBuilder == taskApproachBuilder.javaClass }
         .flatMap { it.approachListener } as List<MLApproachInitializationListener<R, P>>
       return approachListeners.asJoinedListener().onAttemptedToStartSession(permanentSessionEnvironment)
     }
@@ -65,11 +74,14 @@ interface MLTaskGroupListener {
 /**
  * Listens to the attempt of starting new [Session] of the [MLTaskApproach], that this listener was put
  * into correspondence to via [com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachListeners.Companion.monitoredBy]
+ *
+ * @param R Type of the [com.intellij.platform.ml.impl.model.MLModel]
+ * @param P Prediction's type
  */
 @ApiStatus.Internal
 fun interface MLApproachInitializationListener<R, P : Any> {
   /**
-   * Called each time, when [com.intellij.platform.ml.impl.approach.LogDrivenModelInference.startSession] is invoked
+   * Called each time, when [com.intellij.platform.ml.impl.LogDrivenModelInference.startSession] is invoked
    *
    * @return A listener, that will be monitoring how successful the start was. If it is not needed, null is returned.
    */
@@ -85,25 +97,25 @@ fun interface MLApproachInitializationListener<R, P : Any> {
 }
 
 /**
- * Listens to the process of starting new [Session] of [com.intellij.platform.ml.impl.approach.LogDrivenModelInference].
+ * Listens to the process of starting new [Session] of [com.intellij.platform.ml.impl.LogDrivenModelInference].
  */
 @ApiStatus.Internal
 interface MLApproachListener<R, P : Any> {
   /**
    * Called if the session was not started,
    * on exceptionally rare occasions,
-   * when the [com.intellij.platform.ml.impl.approach.LogDrivenModelInference.startSession] failed with an exception
+   * when the [com.intellij.platform.ml.impl.LogDrivenModelInference.startSession] failed with an exception
    */
-  fun onFailedToStartSessionWithException(exception: Throwable)
+  fun onFailedToStartSessionWithException(exception: Throwable) {}
 
   /**
    * Called if the session was not started,
    * but the failure is 'ordinary'.
    */
-  fun onFailedToStartSession(failure: Session.StartOutcome.Failure<P>)
+  fun onFailedToStartSession(failure: Session.StartOutcome.Failure<P>) {}
 
   /**
-   * Called when a new [com.intellij.platform.ml.impl.approach.LogDrivenModelInference]'s session was started successfully.
+   * Called when a new [com.intellij.platform.ml.impl.LogDrivenModelInference]'s session was started successfully.
    *
    * @return A listener for tracking the session's progress, null if the session will not be tracked.
    */
@@ -131,7 +143,7 @@ interface MLApproachListener<R, P : Any> {
 }
 
 /**
- * Listens to session events of a [com.intellij.platform.ml.impl.approach.LogDrivenModelInference]
+ * Listens to session events of a [com.intellij.platform.ml.impl.LogDrivenModelInference]
  */
 @ApiStatus.Internal
 interface MLSessionListener<R, P : Any> {
@@ -139,14 +151,14 @@ interface MLSessionListener<R, P : Any> {
    * All tier instances were established (the tree will not be growing further),
    * described, and predictions in the [sessionTree] were finished.
    */
-  fun onSessionDescriptionFinished(sessionTree: DescribedRootContainer<R, P>)
+  fun onSessionDescriptionFinished(sessionTree: DescribedRootContainer<R, P>) {}
 
   /**
    * Called only after [onSessionDescriptionFinished]
    *
    * All tree nodes were analyzed.
    */
-  fun onSessionAnalysisFinished(sessionTree: AnalysedRootContainer<P>)
+  fun onSessionAnalysisFinished(sessionTree: AnalysedRootContainer<P>) {}
 
   companion object {
     fun <R, P : Any> Collection<MLSessionListener<R, P>>.asJoinedListener(): MLSessionListener<R, P> {

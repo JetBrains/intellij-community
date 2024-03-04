@@ -7,6 +7,8 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.ml.Feature
+import com.intellij.platform.ml.FeatureDeclaration
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.KeyAdapter
@@ -41,9 +43,9 @@ class TypingSpeedTracker {
     if (decayDuration == Duration.ZERO) 0F
     else 0.5.pow(duration / decayDuration.toDouble(DurationUnit.MILLISECONDS)).toFloat()
 
-  fun getTypingSpeedEventPairs(): Collection<EventPair<*>> = DECAY_DURATIONS.mapNotNull { (decayDuration, eventField) ->
+  fun getTypingSpeedEventPairs(): Collection<Pair<EventPair<*>, Feature>> = DECAY_DURATIONS.mapNotNull { (decayDuration, eventFieldAndFeature) ->
     typingSpeeds[decayDuration]?.let {
-      eventField.with(it)
+      (eventFieldAndFeature.first with it) to (eventFieldAndFeature.second with it)
     }
   }
 
@@ -71,9 +73,10 @@ class TypingSpeedTracker {
   }
 
   companion object {
-    private val DECAY_DURATIONS = listOf(1, 2, 5, 30).associate { it.seconds to EventFields.Float("typing_speed_${it}s") }
+    private val DECAY_DURATIONS = listOf(1, 2, 5, 30).associate { it.seconds to Pair(EventFields.Float("typing_speed_${it}s"), FeatureDeclaration.float("typing_speed_${it}s")) }
 
     fun getInstance(): TypingSpeedTracker = service()
-    fun getEventFields(): Array<EventField<*>> = DECAY_DURATIONS.values.toTypedArray()
+    fun getEventFields(): Array<EventField<*>> = DECAY_DURATIONS.values.map { it.first }.toTypedArray()
+    fun getFeatures(): Set<FeatureDeclaration<*>> = DECAY_DURATIONS.values.map { it.second }.toSet()
   }
 }

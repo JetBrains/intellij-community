@@ -44,7 +44,7 @@ interface TierDescriptor : TierRequester {
    * @param usefulFeaturesFilter Accepts features, that could make any difference to compute this time.
    * A feature is considered to be useful if an ML model is aware of the feature,
    * or it is explicitly said that "ML model is not aware of this feature, but it must be logged"
-   * (@see [com.intellij.platform.ml.impl.approach.LogDrivenModelInference]).
+   * (@see [com.intellij.platform.ml.impl.LogDrivenModelInference]).
    *
    * @throws IllegalArgumentException If a feature is missing: it is accepted by [usefulFeaturesFilter]
    * and it is declared, but not present in the result.
@@ -73,12 +73,22 @@ interface TierDescriptor : TierRequester {
    * @param usefulFeaturesFilter Accepts features, that make sense to calculate at the time of this invocation.
    * If the filter does not accept a feature, it means that its computation will not make any difference.
    */
-  fun couldBeUseful(usefulFeaturesFilter: FeatureFilter): Boolean {
-    return descriptionDeclaration.any { usefulFeaturesFilter.accept(it) }
-  }
+  fun couldBeUseful(usefulFeaturesFilter: FeatureFilter): Boolean
 
   companion object {
     val EP_NAME: ExtensionPointName<TierDescriptor> = ExtensionPointName.create("com.intellij.platform.ml.descriptor")
+  }
+
+  abstract class Default(final override val tier: Tier<*>) : TierDescriptor {
+    override val additionallyRequiredTiers: Set<Tier<*>>
+      get() = emptySet()
+
+    override val descriptionPolicy: DescriptionPolicy
+      get() = DescriptionPolicy(false, false)
+
+    override fun couldBeUseful(usefulFeaturesFilter: FeatureFilter): Boolean {
+      return descriptionDeclaration.any { usefulFeaturesFilter.accept(it) }
+    }
   }
 }
 
