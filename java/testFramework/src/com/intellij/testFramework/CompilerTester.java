@@ -255,6 +255,7 @@ public final class CompilerTester {
       if (extension != null) {
         for (String url : extension.getOutputRootUrls(true)) {
           VirtualFile root = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+          IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
           if (root != null) {
             UsefulTestCase.assertEmpty(
               "VFS should not be loaded for output: that increases the number of VFS events and reindexing costs",
