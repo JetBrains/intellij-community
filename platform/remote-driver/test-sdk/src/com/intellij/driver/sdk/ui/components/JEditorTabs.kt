@@ -10,9 +10,9 @@ fun Finder.editorTabs(@Language("xpath") xpath: String? = null) =
 
 class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
 
-  private val fixture by lazy { driver.cast(component, EditorTabsRef::class) }
+  private val editorTabsComponent by lazy { driver.cast(component, EditorTabsRef::class) }
 
-  fun getTabs() = fixture.getTabs().map { Tab(it) }
+  fun getTabs() = editorTabsComponent.getTabs().map { Tab(it) }
 
   inner class Tab(private val data: TabInfoRef) {
     val text: String

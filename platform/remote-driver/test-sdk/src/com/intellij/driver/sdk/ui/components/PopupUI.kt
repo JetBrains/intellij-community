@@ -33,7 +33,7 @@ interface PopupItemRef {
 
 class PopupItemUiComponent(data: ComponentData) : UiComponent(data) {
 
-  private val fixture by lazy { driver.cast(component, PopupItemRef::class) }
+  private val popupComponent by lazy { driver.cast(component, PopupItemRef::class) }
 
-  fun getText() = fixture.getText()
+  fun getText() = popupComponent.getText()
 }
