@@ -1,4 +1,5 @@
 // IGNORE_K2
+
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
@@ -13,7 +14,33 @@ public class Java8Class {
     public void foo2(Function2<Integer, Integer, String> r) {
     }
 
+    public bar(Function0<String> f) {
+        bar(f, (i) -> "default g")
+    }
+
+    public bar(Function0<String> f, Function1<Integer, String> g) {
+    }
+
+    public doNotTouch(Function0<String> f, String s) {
+    }
+
     public void helper() {
+    }
+
+    public void vararg(String key, Function0<String>... functions) {
+    }
+
+    class Base {
+        Base(String name, Function0<String> f) {
+        }
+    }
+
+    class Child extends Base {
+        Child() {
+            super("Child", () -> {
+                return "a child class";
+            })
+        }
     }
 
     public void foo() {
@@ -40,6 +67,10 @@ public class Java8Class {
             helper();
             return "42";
         });
+
+        bar(() -> "f", (i) -> "g");
+
+        vararg("first", () -> "f");
 
         Function2<Integer, Integer, String> f = (Integer i, Integer k) -> {
             helper();
@@ -86,5 +117,9 @@ public class Java8Class {
 
             return "43";
         });
+
+        doNotTouch(() -> {
+            return "first arg";
+        }, "last arg");
     }
 }

@@ -8,8 +8,25 @@ class Java8Class {
     fun foo2(r: Function2<Int?, Int?, String?>?) {
     }
 
+    fun bar(f: Function0<String?>?) {
+        bar(f) { i -> "default g" }
+    }
+
+    fun bar(f: Function0<String?>?, g: Function1<Int?, String?>?) {
+    }
+
+    fun doNotTouch(f: Function0<String?>?, s: String?) {
+    }
+
     fun helper() {
     }
+
+    fun vararg(key: String?, vararg functions: Function0<String?>?) {
+    }
+
+    internal open inner class Base(name: String?, f: Function0<String?>?)
+
+    internal inner class Child : Base("Child", { "a child class" })
 
     fun foo() {
         foo0 { "42" }
@@ -34,6 +51,10 @@ class Java8Class {
             helper()
             "42"
         }
+
+        bar({ "f" }, { i -> "g" })
+
+        vararg("first", { "f" })
 
         val f: Function2<Int, Int, String> = label@{ i: Int, k: Int? ->
             helper()
@@ -76,5 +97,7 @@ class Java8Class {
             }
             "43"
         }
+
+        doNotTouch({ "first arg" }, "last arg")
     }
 }
