@@ -108,7 +108,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       onValueChanged(newUI)
       if (suggestRestart) {
         shouldApplyOnClose = newUI
-        RestartDialog().show()
+        RestartDialog.showRestartRequired()
       }
       else {
         saveNewValue(newUI)
