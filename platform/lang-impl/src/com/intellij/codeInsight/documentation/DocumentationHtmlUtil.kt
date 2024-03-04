@@ -3,17 +3,15 @@ package com.intellij.codeInsight.documentation
 
 import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.documentation.QuickDocHighlightingHelper
-import com.intellij.lang.documentation.QuickDocHighlightingHelper.getDefaultDocCodeStyles
-import com.intellij.lang.documentation.QuickDocHighlightingHelper.getDefaultFormattingStyles
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.getDefaultDocStyles
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.module.UnknownModuleType
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.ExtendableHTMLViewFactory
-import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
@@ -34,7 +32,10 @@ object DocumentationHtmlUtil {
   val contentInnerPadding: Int get() = 2
 
   @JvmStatic
-  val contentSpacing: Int get() = 8
+  val spaceBeforeParagraph: Int get() = JBHtmlPaneStyleSheetRulesProvider.spaceBeforeParagraph
+
+  @JvmStatic
+  val spaceAfterParagraph: Int get() = JBHtmlPaneStyleSheetRulesProvider.spaceAfterParagraph
 
   @JvmStatic
   val docPopupPreferredMinWidth: Int get() = 300
@@ -58,28 +59,23 @@ object DocumentationHtmlUtil {
   val lookupDocPopupMinHeight: Int get() = 300
 
   @JvmStatic
-  fun getIconsExtension(iconResolver: Function<in String?, out Icon?>): ExtendableHTMLViewFactory.Extension {
-    return icons { key: String? ->
-      val resolved = iconResolver.apply(key)
-      if (resolved != null) {
-        return@icons resolved
-      }
-      val moduleType = ModuleTypeManager.getInstance().findByID(key)
-      if (moduleType is UnknownModuleType
-      ) null
-      else moduleType.icon
-    }
+  fun getModuleIconResolver(baseIconResolver: Function<in String?, out Icon?>): Function<in String?, out Icon?> = Function { key: String? ->
+    baseIconResolver.apply(key)
+    ?: ModuleTypeManager.getInstance().findByID(key)
+      .takeIf { it !is UnknownModuleType }
+      ?.icon
   }
 
   @JvmStatic
-  fun getDocumentationPaneDefaultCssRules(background: Color): List<String> {
+  fun getDocumentationPaneAdditionalCssRules(background: Color): List<String> {
     val linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED)
     val borderColor = ColorUtil.toHtmlColor(UIUtil.getTooltipSeparatorColor())
     val sectionColor = ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR)
 
     // When updating styles here, consider updating styles in DocRenderer#getStyleSheet
     val contentOuterPadding = scale(contentOuterPadding)
-    val contentSpacing = scale(contentSpacing)
+    val beforeSpacing = scale(spaceBeforeParagraph)
+    val afterSpacing = scale(spaceAfterParagraph)
     val contentInnerPadding = scale(contentInnerPadding)
 
     @Suppress("CssUnusedSymbol")
@@ -91,7 +87,7 @@ object DocumentationHtmlUtil {
         pre  { white-space: pre-wrap; }
         a { color: $linkColor; text-decoration: none;}
         .$CLASS_DEFINITION, .$CLASS_DEFINITION_SEPARATED {    
-          padding: 0 ${contentInnerPadding}px ${contentSpacing}px ${contentInnerPadding}px;
+          padding: ${beforeSpacing}px ${contentInnerPadding}px ${afterSpacing}px ${contentInnerPadding}px;
         }
         .$CLASS_DEFINITION pre, .$CLASS_DEFINITION_SEPARATED pre { 
           margin: 0; padding: 0;
@@ -101,11 +97,12 @@ object DocumentationHtmlUtil {
           max-width: 100%;
         }
         .$CLASS_SEPARATED, .$CLASS_DEFINITION_SEPARATED, .$CLASS_CONTENT_SEPARATED {
-          margin-bottom: ${contentSpacing}px;
+          padding-bottom: ${beforeSpacing + afterSpacing}px;
+          margin-bottom: ${afterSpacing}px;
           border-bottom: thin solid $borderColor;
         }
         .$CLASS_BOTTOM, .$CLASS_DOWNLOAD_DOCUMENTATION, .$CLASS_TOP { 
-          padding: 0 ${contentInnerPadding}px ${contentSpacing}px ${contentInnerPadding}px;
+          padding: ${beforeSpacing}px ${contentInnerPadding}px ${afterSpacing}px ${contentInnerPadding}px;
         }
         .$CLASS_GRAYED { color: #909090; display: inline;}
         
@@ -116,8 +113,7 @@ object DocumentationHtmlUtil {
 
     // Styled code
     val globalScheme = EditorColorsManager.getInstance().globalScheme
-    result.addAll(getDefaultDocCodeStyles(globalScheme, background, 0, contentSpacing))
-    result.addAll(getDefaultFormattingStyles(0, contentSpacing))
+    result.addAll(getDefaultDocStyles(globalScheme, background))
     return result
   }
 

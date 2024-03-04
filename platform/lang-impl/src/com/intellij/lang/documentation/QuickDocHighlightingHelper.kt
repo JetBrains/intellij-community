@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation
 
-import com.intellij.ide.ui.html.StyleSheetRulesProviderForCodeHighlighting
 import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
@@ -13,9 +12,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
-import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
@@ -26,11 +24,11 @@ import java.awt.Color
  */
 object QuickDocHighlightingHelper {
 
-  const val CODE_BLOCK_PREFIX = StyleSheetRulesProviderForCodeHighlighting.CODE_BLOCK_PREFIX
-  const val CODE_BLOCK_SUFFIX = StyleSheetRulesProviderForCodeHighlighting.CODE_BLOCK_SUFFIX
+  const val CODE_BLOCK_PREFIX = JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_PREFIX
+  const val CODE_BLOCK_SUFFIX = JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_SUFFIX
 
-  const val INLINE_CODE_PREFIX = StyleSheetRulesProviderForCodeHighlighting.INLINE_CODE_PREFIX
-  const val INLINE_CODE_SUFFIX = StyleSheetRulesProviderForCodeHighlighting.INLINE_CODE_SUFFIX
+  const val INLINE_CODE_PREFIX = "<code>"
+  const val INLINE_CODE_SUFFIX = "</code>"
 
   /**
    * The returned code block HTML (prefixed with [CODE_BLOCK_PREFIX] and suffixed with [CODE_BLOCK_SUFFIX])
@@ -273,39 +271,11 @@ object QuickDocHighlightingHelper {
 
   @Internal
   @JvmStatic
-  fun getDefaultFormattingStyles(spacingBefore: Int, spacingAfter: Int): List<String> {
-    val fontSize = StartupUiUtil.labelFont.size
-    val paragraphSpacing = """padding: ${spacingBefore}px 0 ${spacingAfter}px 0"""
-    return listOf(
-      "h6 { font-size: ${fontSize + 1}}",
-      "h5 { font-size: ${fontSize + 2}}",
-      "h4 { font-size: ${fontSize + 3}}",
-      "h3 { font-size: ${fontSize + 4}}",
-      "h2 { font-size: ${fontSize + 6}}",
-      "h1 { font-size: ${fontSize + 8}}",
-      "h1, h2, h3, h4, h5, h6 {margin: 0 0 0 0; ${paragraphSpacing}; }",
-      "p { margin: 0 0 0 0; ${paragraphSpacing}; line-height: 125%; }",
-      "ul { margin: 0 0 0 ${scale(10)}px; ${paragraphSpacing};}",
-      "ol { margin: 0 0 0 ${scale(20)}px; ${paragraphSpacing};}",
-      "li { padding: ${scale(1)}px 0 ${scale(2)}px 0; }",
-      "li p { padding-top: 0; padding-bottom: 0; }",
-      "th { text-align: left; }",
-      "tr, table { margin: 0 0 0 0; padding: 0 0 0 0; }",
-      "td { margin: 0 0 0 0; padding: ${spacingBefore}px ${spacingBefore + spacingAfter}px ${spacingAfter}px 0; }",
-      "td p { padding-top: 0; padding-bottom: 0; }",
-      "td pre { padding: ${scale(1)}px 0 0 0; margin: 0 0 0 0 }",
-      ".$CLASS_CENTERED { text-align: center}",
-    )
-  }
-
-  @Internal
-  @JvmStatic
-  fun getDefaultDocCodeStyles(
+  fun getDefaultDocStyles(
     colorScheme: EditorColorsScheme,
-    editorPaneBackgroundColor: Color,
-    spacingBefore: Int,
-    spacingAfter: Int,
-  ): List<String> = StyleSheetRulesProviderForCodeHighlighting.getRules(
+    editorPaneBackgroundColor: Color
+  ): List<String> = JBHtmlPaneStyleSheetRulesProvider.getRules(
+    false,
     colorScheme, editorPaneBackgroundColor,
     listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)", ".$CLASS_CONTENT div:not(.$CLASS_TOP)",
            ".$CLASS_SECTIONS"),
@@ -315,7 +285,6 @@ object QuickDocHighlightingHelper {
     && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
     DocumentationSettings.isCodeBackgroundEnabled()
     && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
-    "${spacingBefore}px 0 ${spacingAfter}px 0"
   )
 
   private fun StringBuilder.appendHighlightedCode(project: Project, language: Language?, doHighlighting: Boolean,

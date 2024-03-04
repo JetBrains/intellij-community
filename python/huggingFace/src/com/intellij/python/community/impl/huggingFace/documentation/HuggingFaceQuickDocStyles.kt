@@ -11,7 +11,7 @@ import org.intellij.lang.annotations.Language
  * While the choice of parameters may seem unusual, the quick doc render framework that we use for HF cards
  * ignores certain styles (for example, it completely ignores the width attribute in an <img> tag).
  *
- * @See com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocumentationPaneDefaultCssRules
+ * @See com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getDocumentationPaneAdditionalCssRules
  * @See com.intellij.codeInsight.documentation.render.DocRenderer
  * @See com.intellij.lang.documentation.DocumentationMarkup
  */
@@ -48,7 +48,7 @@ object HuggingFaceQuickDocStyles {  // see PY-70541
     "blockquote { border-left: ${scale(4)}px solid #cccccc; }",
 
     "blockquote p { border-left: none; }",
-    ).joinToString(separator = " ")
+  ).joinToString(separator = " ")
 
   fun styleChunk(): HtmlChunk = HtmlChunk.raw("<style>$styleContent</style>")
 }

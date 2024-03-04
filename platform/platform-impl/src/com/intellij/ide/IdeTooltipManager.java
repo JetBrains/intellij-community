@@ -2,7 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.ui.html.StyleSheetRulesProviderForCodeHighlighting;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,6 +28,7 @@ import com.intellij.openapi.util.registry.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -717,7 +717,10 @@ public class IdeTooltipManager implements Disposable {
     return initPane(new Html(text), hintHint, layeredPane, true);
   }
 
-  public static JEditorPane initPane(@Tooltip Html html, HintHint hintHint, @Nullable JLayeredPane layeredPane, boolean limitWidthToScreen) {
+  public static JEditorPane initPane(@Tooltip Html html,
+                                     HintHint hintHint,
+                                     @Nullable JLayeredPane layeredPane,
+                                     boolean limitWidthToScreen) {
     @NonNls String text = HintUtil.prepareHintText(html, hintHint);
 
     boolean[] prefSizeWasComputed = {false};
@@ -782,7 +785,8 @@ public class IdeTooltipManager implements Disposable {
             field.setAccessible(true);
             field.set(view, JBUIScale.scale(1));
           }
-          catch (Exception ignored) { }
+          catch (Exception ignored) {
+          }
         }
         return view;
       })
@@ -867,7 +871,7 @@ public class IdeTooltipManager implements Disposable {
     @NotNull JEditorPane editorPane,
     @NotNull HTMLEditorKit editorKit,
     @NotNull Ref<StyleSheet> currentDefaultStyleSheet
-    ) {
+  ) {
     StyleSheet editorStyleSheet = editorKit.getStyleSheet();
     if (currentDefaultStyleSheet.get() != null) {
       editorStyleSheet.removeStyleSheet(currentDefaultStyleSheet.get());
@@ -883,9 +887,9 @@ public class IdeTooltipManager implements Disposable {
 
   private static List<String> getHintPaneStyleSheetRules(@NotNull Color background) {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    return StyleSheetRulesProviderForCodeHighlighting.getRules(
-      globalScheme, background, Collections.singletonList(""), Collections.emptyList(),
-      true, true, "5px 0 5px 0"
+    return JBHtmlPaneStyleSheetRulesProvider.getRules(true,
+                                                      globalScheme, background, Collections.singletonList(""), Collections.emptyList(),
+                                                      true, true
     );
   }
 }

@@ -56,7 +56,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.getContentSpacing;
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.createAdditionalStylesForTips;
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.unwrapTipsText;
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
@@ -307,7 +306,8 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       text = unwrapTipsText(text);
       text = ShortcutExtension.Companion.patchShortcutTags(text, false);
       useTipsKit = true;
-    } else {
+    }
+    else {
       text = DocumentationHtmlUtil.transpileForHtmlEditorPaneInput(text);
     }
     EditorPane pane = new EditorPane(!reusable);
@@ -370,19 +370,19 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     if (linkColor == null) linkColor = getTextColor(colorsScheme);
     String checkColors = ColorUtil.toHex(backgroundColor) + ColorUtil.toHex(linkColor);
     if (useTipsKit || !Objects.equals(checkColors, ourCachedStyleSheetCheckColors)) {
-      // When updating styles here, consider updating styles in DocumentationHtmlUtil#getDocumentationPaneDefaultCssRules
-      int spacing = scale(getContentSpacing()) / 2;
+      // When updating styles here, consider updating styles in DocumentationHtmlUtil#getDocumentationPaneAdditionalCssRules
+      int beforeSpacing = scale(DocumentationHtmlUtil.getSpaceBeforeParagraph());
+      int afterSpacing = scale(DocumentationHtmlUtil.getSpaceAfterParagraph());
       @Language("CSS") String input =
         "body {overflow-wrap: anywhere; padding-top: " + scale(2) + "px }" + // supported by JetBrains Runtime
         "pre {white-space: pre-wrap}" +  // supported by JetBrains Runtime
         "a {color: #" + ColorUtil.toHex(linkColor) + "; text-decoration: none}" +
         "." + CLASS_SECTIONS + " {border-spacing: 0}" +
         "." + CLASS_SECTION + " {padding-right: " + scale(5) + "; white-space: nowrap}" +
-        "." + CLASS_CONTENT + " {padding: " + spacing + "px 2px " + spacing + "px 0}" +
+        "." + CLASS_CONTENT + " {padding: " + beforeSpacing + "px 2px " + afterSpacing + "px 0}" +
         (useTipsKit ? createAdditionalStylesForTips(editor) : "") +
-        StringUtil.join(QuickDocHighlightingHelper.getDefaultDocCodeStyles(
-          colorsScheme, colorsScheme.getDefaultBackground(), spacing, spacing), "\n") +
-        StringUtil.join(QuickDocHighlightingHelper.getDefaultFormattingStyles(spacing, spacing), "\n");
+        StringUtil.join(QuickDocHighlightingHelper.getDefaultDocStyles(
+          colorsScheme, colorsScheme.getDefaultBackground()), "\n");
       StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
       if (!useTipsKit) {
         ourCachedStyleSheet = result;

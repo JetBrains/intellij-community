@@ -80,7 +80,10 @@ internal class DocumentationUI(
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
     switcher = createSwitcher()
     switcherToolbarComponent = switcher.createToolbar().component.apply {
-      border = JBUI.Borders.empty(5, DocumentationHtmlUtil.contentOuterPadding - 4, 0, 0)
+      border = JBUI.Borders.empty(DocumentationHtmlUtil.spaceBeforeParagraph,
+                                  DocumentationHtmlUtil.contentOuterPadding - 4,
+                                  0,
+                                  DocumentationHtmlUtil.contentOuterPadding - 4)
     }
     val textTrimmer = SwingTextTrimmer.createCenterTrimmer(0.8f)
     locationLabel = object : JLabel() {
@@ -89,7 +92,8 @@ internal class DocumentationUI(
     }.apply {
       iconTextGap = 6
       border = JBUI.Borders.empty(
-        0, 2 + DocumentationHtmlUtil.contentOuterPadding + DocumentationHtmlUtil.contentInnerPadding,
+        DocumentationHtmlUtil.spaceBeforeParagraph,
+        2 + DocumentationHtmlUtil.contentOuterPadding + DocumentationHtmlUtil.contentInnerPadding,
         2 + DocumentationHtmlUtil.contentOuterPadding, DocumentationHtmlUtil.contentOuterPadding)
       putClientProperty(SwingTextTrimmer.KEY, textTrimmer)
     }
@@ -193,7 +197,7 @@ internal class DocumentationUI(
   fun updateSwitcherVisibility() {
     val visible = switcher.elements.count() > 1
     switcherToolbarComponent.isVisible = visible
-    scrollPane.border = JBUI.Borders.emptyTop(if (visible) 5 else 10)
+    scrollPane.border = JBUI.Borders.emptyTop(if (visible) 0 else DocumentationHtmlUtil.contentOuterPadding - DocumentationHtmlUtil.spaceBeforeParagraph)
   }
 
   private suspend fun handleContent(presentation: TargetPresentation, pageContent: DocumentationPageContent?) {
@@ -272,13 +276,14 @@ internal class DocumentationUI(
       locationLabel.text = ""
       locationLabel.isVisible = false
     }
-    check(myContentUpdates.tryEmit(when (newContentKind) {
-      ContentKind.InfoMessage -> ContentUpdateKind.InfoMessage
-      ContentKind.DocumentationPage -> if (oldContentKind != newContentKind)
-        ContentUpdateKind.DocumentationPageOpened
-      else
-        ContentUpdateKind.DocumentationPageNavigated
-    }))
+    check(myContentUpdates.tryEmit(
+      when (newContentKind) {
+        ContentKind.InfoMessage -> ContentUpdateKind.InfoMessage
+        ContentKind.DocumentationPage -> if (oldContentKind != newContentKind)
+          ContentUpdateKind.DocumentationPageOpened
+        else
+          ContentUpdateKind.DocumentationPageNavigated
+      }))
     return true
   }
 
