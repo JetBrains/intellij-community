@@ -16,6 +16,7 @@ class KotlinCompilerWorkspaceSettings : PersistentStateComponent<KotlinCompilerW
     var preciseIncrementalEnabled: Boolean = true
     var incrementalCompilationForJsEnabled: Boolean = true
     var enableDaemon: Boolean = true
+    var daemonVmOptions: String = ""
 
     override fun getState(): KotlinCompilerWorkspaceSettings {
         return this

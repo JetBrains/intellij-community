@@ -59,6 +59,8 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.openapi.options.Configurable.isCheckboxModified;
 import static com.intellij.openapi.options.Configurable.isFieldModified;
@@ -701,6 +703,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         if (compilerWorkspaceSettings != null) {
             compilerWorkspaceSettings.setPreciseIncrementalEnabled(enableIncrementalCompilationForJvmCheckBox.isSelected());
             compilerWorkspaceSettings.setIncrementalCompilationForJsEnabled(enableIncrementalCompilationForJsCheckBox.isSelected());
+            extractAndRegisterDaemonVmOptions();
 
             boolean oldEnableDaemon = compilerWorkspaceSettings.getEnableDaemon();
             compilerWorkspaceSettings.setEnableDaemon(keepAliveCheckBox.isSelected());
@@ -948,5 +951,27 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                     return null;
                 }).installOn(component);
         component.addActionListener(e -> ComponentValidator.getInstance(component).ifPresent(ComponentValidator::revalidate));
+    }
+
+    // Expected format is
+    // -XdaemonVmOptions=-Xmx2288m for one argument
+    // and
+    // -XdaemonVmOptions=\"-Xmx2288m -XX:HeapDumpPath=kotlin-build-process-heap-dump.hprof -XX:+HeapDumpOnOutOfMemoryError\"
+    // for multiple
+    private void extractAndRegisterDaemonVmOptions() {
+        String additionalOptions = getAdditionalArgsOptionsField().getText();
+        if (additionalOptions.contains("-XdaemonVmOptions")) {
+            Pattern pattern = Pattern.compile("-XdaemonVmOptions=(?:\"([^\"]*)\"|([^\\s]*))");
+            Matcher matcher = pattern.matcher(additionalOptions);
+
+            if (matcher.find()) {
+                String daemonArguments = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+                if (daemonArguments != null) {
+                    if (compilerWorkspaceSettings != null) {
+                        compilerWorkspaceSettings.setDaemonVmOptions(daemonArguments);
+                    }
+                }
+            }
+        }
     }
 }

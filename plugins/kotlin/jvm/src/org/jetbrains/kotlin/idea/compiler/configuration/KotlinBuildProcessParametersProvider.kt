@@ -24,6 +24,10 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
             arguments += "-Dkotlin.daemon.enabled"
         }
 
+        if (compilerWorkspaceSettings.daemonVmOptions.isNotEmpty()) {
+            arguments += compilerWorkspaceSettings.daemonVmOptions
+        }
+
         PluginStartupApplicationService.getInstance().getAliveFlagPath().let {
             if (!it.isBlank()) {
                 // TODO: consider taking the property name from compiler/daemon/common (check whether dependency will be not too heavy)
