@@ -42,13 +42,13 @@ import kotlinx.coroutines.launch
 class UnsatisfiedRequirementInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    return RequirementsUnresolvedRequirementInspectionVisitor(holder, isOnTheFly, session)
+    return UnsatisfiedRequirementInspectionVisitor(holder, isOnTheFly, session)
   }
 }
 
-private class RequirementsUnresolvedRequirementInspectionVisitor(holder: ProblemsHolder,
-                                                                 onTheFly: Boolean,
-                                                                 session: LocalInspectionToolSession) : RequirementsInspectionVisitor(
+private class UnsatisfiedRequirementInspectionVisitor(holder: ProblemsHolder,
+                                                      onTheFly: Boolean,
+                                                      session: LocalInspectionToolSession) : RequirementsInspectionVisitor(
   holder, onTheFly, session) {
   override fun visitRequirementsFile(element: RequirementsFile) {
     val module = ModuleUtilCore.findModuleForPsiElement(element)
