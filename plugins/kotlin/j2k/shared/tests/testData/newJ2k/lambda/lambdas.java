@@ -1,4 +1,5 @@
 // IGNORE_K2
+
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
@@ -13,7 +14,36 @@ public class Java8Class {
     public void foo2(Function2<Integer, Integer, String> r) {
     }
 
+    public void bar(Function0<String> f) {
+        // It seems we can't resolve overloaded methods, so this lambda stays inside the parentheses
+        bar(f, (i) -> "default g");
+    }
+
+    public void bar(Function0<String> f, Function1<Integer, String> g) {
+    }
+
+    public doNotTouch(Function0<String> f, String s) {
+    }
+
     public void helper() {
+    }
+
+    public void vararg(String key, Function0<String>... functions) {
+    }
+
+    public static void runnableFun(Runnable r) {}
+
+    class Base {
+        Base(String name, Function0<String> f) {
+        }
+    }
+
+    class Child extends Base {
+        Child() {
+            super("Child", () -> {
+                return "a child class";
+            })
+        }
     }
 
     public void foo() {
@@ -39,6 +69,21 @@ public class Java8Class {
         foo2((Integer i, Integer j) -> {
             helper();
             return "42";
+        });
+
+        bar(() -> "f", (i) -> "g");
+
+        assert "s" != null : "that's strange";
+
+        Base base = new Base("Base", () -> "base");
+
+        vararg("first", () -> "f");
+
+        runnableFun(new Runnable() {
+            @Override
+            public void run() {
+                "hello"
+            }
         });
 
         Function2<Integer, Integer, String> f = (Integer i, Integer k) -> {
@@ -86,5 +131,9 @@ public class Java8Class {
 
             return "43";
         });
+
+        doNotTouch(() -> {
+            return "first arg";
+        }, "last arg");
     }
 }
