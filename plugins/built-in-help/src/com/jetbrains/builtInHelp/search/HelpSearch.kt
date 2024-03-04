@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ResourceUtil
 import com.jetbrains.builtInHelp.search.HelpSearchResult.Details
 import org.apache.lucene.analysis.standard.StandardAnalyzer
@@ -100,12 +101,7 @@ class HelpSearch {
           finally {
             indexDirectory?.close()
             reader?.close()
-
-            Files.walk(indexDir)
-              .sorted(Comparator.reverseOrder())
-              .forEach {
-                Files.delete(it)
-              }
+            NioFiles.deleteRecursively(indexDir)
           }
       }
       return jsonMapper.writeValueAsString(HelpSearchResults(results))

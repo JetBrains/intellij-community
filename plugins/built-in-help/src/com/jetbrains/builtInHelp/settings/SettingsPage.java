@@ -5,10 +5,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.util.Pair;
 import com.jetbrains.builtInHelp.BuiltInHelpBundle;
-import com.jetbrains.builtInHelp.Utils;
-import org.jetbrains.annotations.NonNls;
+
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -19,12 +17,6 @@ import java.awt.event.ActionListener;
 
 public class SettingsPage implements Configurable {
 
-  @NonNls
-  public static final SettingKey OPEN_HELP_FROM_WEB = SettingKey.simple("bundled.help.open.web.site.when.possible");
-  @NonNls
-  public static final SettingKey USE_BROWSER = SettingKey.simple("bundled.help.use.specific.web.browser");
-  @NonNls
-  public static final SettingKey OPEN_HELP_BASE_URL = SettingKey.simple("bundled.help.open.web.site.base.url");
   private final SettingsPageUI ui = new SettingsPageUI();
 
   @Override
@@ -63,21 +55,6 @@ public class SettingsPage implements Configurable {
   @Override
   public void apply() {
     ui.apply();
-  }
-
-  public static class SettingKey extends Pair<String, Boolean> {
-
-    SettingKey(String first, Boolean second) {
-      super(first, second);
-    }
-
-    static SettingKey simple(String name) {
-      return new SettingKey(name, false);
-    }
-
-    static SettingKey secure(String name) {
-      return new SettingKey(name, true);
-    }
   }
 
   static class SettingsPageUI {
@@ -125,14 +102,21 @@ public class SettingsPage implements Configurable {
     }
 
     void apply() {
-      Utils.saveSetting(OPEN_HELP_FROM_WEB, String.valueOf(openWebSite.isSelected()));
-      Utils.saveSetting(USE_BROWSER, String.valueOf(webBrowserList.getSelectedItem()));
-      Utils.saveSetting(OPEN_HELP_BASE_URL, baseUrl.getText());
+
+      final HelpPluginSettings settings = HelpPluginSettings.Companion.getInstance();
+
+      settings.setOpenHelpBaseUrl(baseUrl.getText());
+      settings.setUseBrowser(String.valueOf(webBrowserList.getSelectedItem()));
+      settings.setOpenHelpFromWeb(openWebSite.isSelected());
+
       modified = false;
     }
 
     void reset() {
-      final String storedSelection = Utils.loadSetting(USE_BROWSER, BuiltInHelpBundle.message("use.default.browser"));
+
+      final HelpPluginSettings settings = HelpPluginSettings.Companion.getInstance();
+
+      final String storedSelection = settings.getUseBrowser();
       int totalItems = webBrowserList.getItemCount();
 
       for (int i = 0; i < totalItems; i++) {
@@ -142,8 +126,8 @@ public class SettingsPage implements Configurable {
         }
       }
 
-      openWebSite.setSelected(Boolean.parseBoolean(Utils.loadSetting(OPEN_HELP_FROM_WEB, "true")));
-      baseUrl.setText(Utils.loadSetting(OPEN_HELP_BASE_URL, Utils.BASE_HELP_URL));
+      openWebSite.setSelected(settings.getOpenHelpFromWeb());
+      baseUrl.setText(settings.getOpenHelpBaseUrl());
       modified = false;
     }
   }
