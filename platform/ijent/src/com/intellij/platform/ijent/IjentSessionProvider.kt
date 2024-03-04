@@ -226,7 +226,7 @@ private suspend fun readLineWithoutBuffering(process: Process): String =
   computeDetached {
     val buffer = StringBuilder()
     val stream = process.inputStream
-    while (process.isAlive) {
+    while (true) {
       ensureActive()
       val c = stream.read()
       if (c < 0 || c == '\n'.code) {
