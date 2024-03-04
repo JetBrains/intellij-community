@@ -140,14 +140,11 @@ fun throwsAnnotation(throws: List<JKType>, symbolProvider: JKSymbolProvider): JK
 fun JKAnnotationList.annotationByFqName(fqName: String): JKAnnotation? =
     annotations.firstOrNull { it.classSymbol.fqName == fqName }
 
-fun stringLiteral(content: String, typeFactory: JKTypeFactory): JKExpression {
-    val lines = content.split('\n')
-    return lines.mapIndexed { i, line ->
-        val newlineSeparator = if (i == lines.size - 1) "" else "\\n"
-        JKLiteralExpression("\"$line$newlineSeparator\"", JKLiteralExpression.LiteralType.STRING)
-    }.reduce { acc: JKExpression, literalExpression: JKLiteralExpression ->
-        JKBinaryExpression(acc, literalExpression, JKKtOperatorImpl(JKOperatorToken.PLUS, typeFactory.types.string))
-    }
+fun stringLiteral(content: String): JKExpression {
+    if (content.contains("\n")) return JKLiteralExpression(
+        "\n\"\"\"$content\"\"\"",
+        JKLiteralExpression.LiteralType.STRING
+    ) else return JKLiteralExpression("\"$content\"", JKLiteralExpression.LiteralType.STRING)
 }
 
 context(KtAnalysisSession)

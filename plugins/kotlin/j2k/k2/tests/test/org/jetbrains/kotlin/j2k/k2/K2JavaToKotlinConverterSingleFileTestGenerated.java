@@ -5124,9 +5124,9 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/postProcessing/CheckForInstanceOfErasedArrayType.java");
         }
 
-        @TestMetadata("ConvertConcatenationToRawString.java")
-        public void testConvertConcatenationToRawString() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/postProcessing/ConvertConcatenationToRawString.java");
+        @TestMetadata("ConvertBinaryAndRawStrings.java")
+        public void testConvertBinaryAndRawStrings() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/ConvertBinaryAndRawStrings.java");
         }
 
         @TestMetadata("ExplicitParentheses.java")

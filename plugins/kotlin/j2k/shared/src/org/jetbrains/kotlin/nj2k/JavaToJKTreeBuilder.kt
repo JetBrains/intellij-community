@@ -848,7 +848,7 @@ class JavaToJKTreeBuilder(
                 JKAnnotation(
                     symbolProvider.provideClassSymbol("kotlin.Deprecated"),
                     listOf(
-                        JKAnnotationParameterImpl(stringLiteral(tag.content(), typeFactory))
+                        JKAnnotationParameterImpl(stringLiteral(tag.content()))
                     )
                 )
             }

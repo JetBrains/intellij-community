@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.IndentRawStringIntention
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplifiedWithoutChangingSemantics
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.j2k.NamedPostProcessingGroup
 import org.jetbrains.kotlin.j2k.postProcessings.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPostProcessingGroup(
     diagnosticBasedProcessing(MissingIteratorExclExclFixFactory, Errors.ITERATOR_ON_NULLABLE),
@@ -122,9 +120,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     MayBeConstantInspectionBasedProcessing(),
     RemoveForExpressionLoopParameterTypeProcessing(),
     inspectionBasedProcessing(ReplaceGuardClauseWithFunctionCallInspection()),
-    inspectionBasedProcessing(KotlinInspectionFacade.instance.sortModifiers),
-    intentionBasedProcessing(ConvertToRawStringTemplateIntention(), additionalChecker = ::shouldConvertToRawString),
-    intentionBasedProcessing(IndentRawStringIntention()),
     intentionBasedProcessing(JoinDeclarationAndAssignmentIntention()),
     inspectionBasedProcessing(NullChecksToSafeCallInspection())
 )
@@ -186,17 +181,3 @@ internal val allProcessings: List<NamedPostProcessingGroup> = listOf(
     cleaningUpCodePostProcessingGroup,
     optimizingImportsAndFormattingCodePostProcessingGroup
 )
-
-private fun shouldConvertToRawString(element: KtBinaryExpression): Boolean {
-    fun KtStringTemplateEntry.isNewline(): Boolean =
-        this is KtEscapeStringTemplateEntry && unescapedValue == "\n"
-
-    val middleNewlinesExist = ConvertToStringTemplateIntention.Holder.buildReplacement(element)
-        .entries
-        .dropLastWhile { it.isNewline() }
-        .any { it.isNewline() }
-
-    return middleNewlinesExist && element.parents.none {
-        (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true
-    }
-}
