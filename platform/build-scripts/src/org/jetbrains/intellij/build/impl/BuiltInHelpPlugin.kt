@@ -87,7 +87,8 @@ private fun pluginXml(buildContext: BuildContext, version: String): String {
                           serviceImplementation="com.jetbrains.builtInHelp.BuiltInHelpManager" order="last"/>
       <httpRequestHandler implementation="com.jetbrains.builtInHelp.HelpSearchRequestHandler"/>
       <httpRequestHandler implementation="com.jetbrains.builtInHelp.HelpContentRequestHandler"/>
-      <applicationService serviceImplementation="com.jetbrains.builtInHelp.settings.HelpPluginSettings"/>
+      <applicationService serviceImplementation="com.jetbrains.builtInHelp.settings.HelpPluginSettings" 
+                          configurationSchemaKey="builtInHelpPlugin.settings"/>
       <applicationConfigurable instance="com.jetbrains.builtInHelp.settings.SettingsPage"
                                displayName="$productName Help" groupId="tools"/>
   </extensions>
