@@ -28,40 +28,41 @@ import org.jetbrains.kotlin.types.typeUtil.isBoolean
 
 // K1 PostfixTemplateProvider
 class KtPostfixTemplateProvider : PostfixTemplateProvider {
-    private val templatesSet by lazy {
+    private val templateSet: Set<PostfixTemplateWithExpressionSelector> by lazy {
+        @Suppress("SpellCheckingInspection")
         setOf(
-            KtNotPostfixTemplate(this), // k2
-            KtIfExpressionPostfixTemplate(this), // k2
+            KtNotPostfixTemplate(this),
+            KtIfExpressionPostfixTemplate(this),
             KtElseExpressionPostfixTemplate(this),
-            KtNotNullPostfixTemplate("notnull", this), // k2
-            KtNotNullPostfixTemplate("nn", this), // k2
+            KtNotNullPostfixTemplate("notnull", this),
+            KtNotNullPostfixTemplate("nn", this),
             KtIsNullPostfixTemplate(this),
             KtWhenExpressionPostfixTemplate(this),
-            KtTryPostfixTemplate(this), // k2
-            KtIntroduceVariablePostfixTemplate("val", this), // k2
-            KtIntroduceVariablePostfixTemplate("var", this), // k2
-            KtForEachPostfixTemplate("for", this), // k2
-            KtForEachPostfixTemplate("iter", this), // k2
-            KtForReversedPostfixTemplate("forr", this), // k2
-            KtForWithIndexPostfixTemplate("fori", this), // k2
-            KtForLoopNumbersPostfixTemplate("fori", this), // k2
+            KtTryPostfixTemplate(this),
+            KtIntroduceVariablePostfixTemplate("val", this),
+            KtIntroduceVariablePostfixTemplate("var", this),
+            KtForEachPostfixTemplate("for", this),
+            KtForEachPostfixTemplate("iter", this),
+            KtForReversedPostfixTemplate("forr", this),
+            KtForWithIndexPostfixTemplate("fori", this),
+            KtForLoopNumbersPostfixTemplate("fori", this),
             KtForLoopReverseNumbersPostfixTemplate("forr", this),
-            KtAssertPostfixTemplate(this), // k2
-            KtParenthesizedPostfixTemplate(this), // k2
-            KtSoutPostfixTemplate(this), // k2
-            KtReturnPostfixTemplate(this), // k2
-            KtWhilePostfixTemplate(this), // k2
-            KtWrapWithListOfPostfixTemplate(this), // k2
-            KtWrapWithSetOfPostfixTemplate(this), // k2
+            KtAssertPostfixTemplate(this),
+            KtParenthesizedPostfixTemplate(this),
+            KtSoutPostfixTemplate(this),
+            KtReturnPostfixTemplate(this),
+            KtWhilePostfixTemplate(this),
+            KtWrapWithListOfPostfixTemplate(this),
+            KtWrapWithSetOfPostfixTemplate(this),
             KtWrapWithArrayOfPostfixTemplate(this),
             KtWrapWithSequenceOfPostfixTemplate(this),
-            KtSpreadPostfixTemplate(this), // k2
+            KtSpreadPostfixTemplate(this),
             KtArgumentPostfixTemplate(this),
-            KtWithPostfixTemplate(this), // k2
+            KtWithPostfixTemplate(this),
         )
     }
 
-    override fun getTemplates(): Set<PostfixTemplateWithExpressionSelector> = templatesSet
+    override fun getTemplates(): Set<PostfixTemplateWithExpressionSelector> = templateSet
 
     override fun isTerminalSymbol(currentChar: Char): Boolean = currentChar == '.' || currentChar == '!'
 

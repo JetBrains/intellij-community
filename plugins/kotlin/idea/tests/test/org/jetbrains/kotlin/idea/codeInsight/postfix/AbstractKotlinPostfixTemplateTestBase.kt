@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.impl.cache.CacheManager
@@ -52,7 +51,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
             val postfixTemplate =
                 LanguagePostfixTemplate.LANG_EP.forLanguage(KotlinLanguage.INSTANCE)
                     .templates.firstOrNull { it.key == ".$templateName" }
-            val dumbMode = postfixTemplate is DumbAware
+            val dumbMode = DumbService.isDumbAware(postfixTemplate)
 
             val task = {
                 if (template != null) {
