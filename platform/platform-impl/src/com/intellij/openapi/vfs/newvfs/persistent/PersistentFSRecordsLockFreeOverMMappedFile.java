@@ -108,16 +108,16 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   /**
    * Cached value {@link #maxAllocatedID()}.
-   * Id check against {@link #maxAllocatedID()} is very frequent, so it is worth to optimize it.
+   * fileId check against {@link #maxAllocatedID()} is very frequent, so it is worth to optimize it.
    * <p>
-   * {@link #maxAllocatedID()} is always increasing, so we can cache last returned value, check against it first,
-   * and only if id>lastMaxAllocatedId -- re-check against actual {@link #maxAllocatedID()} value. This way
-   * most of checks should terminate early, on first check against simple field.
+   * {@link #maxAllocatedID()} is always increasing, so we can cache last returned value, check against
+   * it first, and only if fileId > lastMaxAllocatedId -- re-check against actual {@link #maxAllocatedID()}
+   * value. This way most of checks should terminate early, on first check against simple field.
    * <p>
-   * Thread-safety: field don't need to be volatile, since we have an invariant "if an id was valid at some point,
-   * it is always valid since then" -- which means that if [id <= lastMaxAllocatedId] => id is valid, regardless
-   * of how much outdated lastMaxAllocatedId value is. And if [id > lastMaxAllocatedId] => we'll re-check against
-   * actual value later
+   * Thread-safety: field don't need to be volatile, since we have an invariant "if an id was valid at some
+   * point, it is always valid since then" -- which means that if [id <= lastMaxAllocatedId] => id is valid,
+   * regardless of how much outdated lastMaxAllocatedId value is. And if [id > lastMaxAllocatedId] => we'll
+   * re-check against actual value anyway.
    */
   private int cachedMaxAllocatedId;
 
@@ -639,6 +639,16 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     if (fileId <= cachedMaxAllocatedID) {
       return true;
     }
+    //'slow path' is extracted into dedicated method to reduce this method (=fast path) bytecode size,
+    // and convince JIT inline it. Slow path inlining is not so important, since it is anyway slow.
+    // Actually slow path is also inlined, but only after detected to be 'hot', which takes time.
+    // So this 'optimization' mostly helps with speed on startup/warmup  -- which is important for us,
+    // and especially with transition to jdk21, there JIT seems to have longer warmup before jumping
+    // to full C2
+    return isValidFileIdStrict(fileId);
+  }
+
+  private boolean isValidFileIdStrict(int fileId) {
     int actualMaxAllocatedID = maxAllocatedID();
     this.cachedMaxAllocatedId = Math.max(cachedMaxAllocatedId, actualMaxAllocatedID);
     if (fileId <= actualMaxAllocatedID) {
