@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.openapi.project.Project
@@ -15,11 +14,11 @@ import org.jetbrains.kotlin.storage.StorageManager
 
 class PluginDeclarationProviderFactoryService : DeclarationProviderFactoryService() {
     override fun create(
-        project: Project,
-        storageManager: StorageManager,
-        syntheticFiles: Collection<KtFile>,
-        filesScope: GlobalSearchScope,
-        moduleInfo: ModuleInfo
+      project: Project,
+      storageManager: StorageManager,
+      syntheticFiles: Collection<KtFile>,
+      filesScope: GlobalSearchScope,
+      moduleInfo: ModuleInfo
     ): DeclarationProviderFactory {
         if (syntheticFiles.isEmpty() && (moduleInfo as IdeaModuleInfo).moduleOrigin != ModuleOrigin.MODULE) {
             // No actual source declarations for libraries
@@ -28,7 +27,7 @@ class PluginDeclarationProviderFactoryService : DeclarationProviderFactoryServic
             return DeclarationProviderFactory.EMPTY
         }
 
-        return PluginDeclarationProviderFactory(
+        return org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactory(
           project,
           KotlinSourceFilterScope.projectSources(filesScope, project),
           storageManager,

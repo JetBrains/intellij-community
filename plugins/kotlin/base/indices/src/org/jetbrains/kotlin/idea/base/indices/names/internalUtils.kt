@@ -25,7 +25,7 @@ private val ALLOWED_METADATA_EXTENSIONS = listOf(
     MetadataPackageFragment.DOT_METADATA_FILE_EXTENSION
 )
 
-internal fun readKotlinMetadataDefinition(fileContent: FileContent): CompatibleMetadata? {
+fun readKotlinMetadataDefinition(fileContent: FileContent): CompatibleMetadata? {
     if (fileContent.fileType != KotlinBuiltInFileType) {
         return null
     }

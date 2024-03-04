@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.openapi.application.runReadAction
@@ -11,12 +10,27 @@ import com.intellij.util.CommonProcessors
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
-import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinScriptFqnIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinStringStubIndexHelper
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelClassByPackageIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionByPackageIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyByPackageIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasByPackageIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPackageSourcesMemberNamesIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.psiUtil.safeNameForLazyResolve
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassInfoUtil
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassOrObjectInfo
@@ -27,9 +41,9 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 private val isShortNameFilteringEnabled: Boolean by lazy { Registry.`is`("kotlin.indices.short.names.filtering.enabled") }
 
 class StubBasedPackageMemberDeclarationProvider(
-    private val fqName: FqName,
-    private val project: Project,
-    private val searchScope: GlobalSearchScope
+  private val fqName: FqName,
+  private val project: Project,
+  private val searchScope: GlobalSearchScope
 ) : PackageMemberDeclarationProvider {
 
     override fun getDeclarations(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): List<KtDeclaration> {
@@ -46,16 +60,16 @@ class StubBasedPackageMemberDeclarationProvider(
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.CLASSIFIERS_MASK)) {
-            addFromIndex(KotlinTopLevelClassByPackageIndex)
-            addFromIndex(KotlinTopLevelTypeAliasByPackageIndex)
+            addFromIndex(KotlinTopLevelClassByPackageIndex.Helper)
+            addFromIndex(KotlinTopLevelTypeAliasByPackageIndex.Helper)
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.FUNCTIONS_MASK)) {
-            addFromIndex(KotlinTopLevelFunctionByPackageIndex)
+            addFromIndex(KotlinTopLevelFunctionByPackageIndex.Helper)
         }
 
         if (kindFilter.acceptsKinds(DescriptorKindFilter.VARIABLES_MASK)) {
-            addFromIndex(KotlinTopLevelPropertyByPackageIndex)
+            addFromIndex(KotlinTopLevelPropertyByPackageIndex.Helper)
         }
 
         return result
@@ -63,21 +77,21 @@ class StubBasedPackageMemberDeclarationProvider(
 
     private val _declarationNames: Set<Name> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val names = hashSetOf<Name>()
-        runReadAction {
-            FileBasedIndex.getInstance()
-                .processValues(
-                    KotlinPackageSourcesMemberNamesIndex.NAME,
-                    fqName.asString(),
-                    null,
-                    FileBasedIndex.ValueProcessor { _, values ->
-                        ProgressManager.checkCanceled()
-                        for (value in values) {
-                            names += Name.identifier(value).safeNameForLazyResolve()
-                        }
-                        true
-                    }, searchScope
-                )
-        }
+      runReadAction {
+        FileBasedIndex.getInstance()
+          .processValues(
+            KotlinPackageSourcesMemberNamesIndex.NAME,
+            fqName.asString(),
+            null,
+            FileBasedIndex.ValueProcessor { _, values ->
+              ProgressManager.checkCanceled()
+              for (value in values) {
+                names += Name.identifier(value).safeNameForLazyResolve()
+              }
+              true
+            }, searchScope
+          )
+      }
         names
     }
 
@@ -86,19 +100,21 @@ class StubBasedPackageMemberDeclarationProvider(
     override fun getClassOrObjectDeclarations(name: Name): Collection<KtClassOrObjectInfo<*>> {
         val childName = childName(name)
         if (isShortNameFilteringEnabled && !name.isSpecial) {
-            val shortNames = ShortNamesCacheService.getInstance(project).getShortNameCandidates(name.asString())
-            if (childName !in shortNames) {
-                return emptyList()
+            val shortNames = ShortNamesCacheService.getInstance(project)?.getShortNameCandidates(name.asString())
+            if (shortNames != null) {
+                if (childName !in shortNames) {
+                    return emptyList()
+                }
             }
         }
         val ktClassOrObjectInfos = runReadAction {
-            val results = arrayListOf<KtClassOrObjectInfo<*>>()
-            KotlinFullClassNameIndex.processElements(childName, project, searchScope) {
-                ProgressManager.checkCanceled()
-                results += KtClassInfoUtil.createClassOrObjectInfo(it)
-                true
-            }
-            results
+          val results = arrayListOf<KtClassOrObjectInfo<*>>()
+          KotlinFullClassNameIndex.Helper.processElements(childName, project, searchScope) {
+            ProgressManager.checkCanceled()
+            results += KtClassInfoUtil.createClassOrObjectInfo(it)
+            true
+          }
+          results
         }
         return ktClassOrObjectInfos
     }
@@ -106,20 +122,20 @@ class StubBasedPackageMemberDeclarationProvider(
     @ApiStatus.Internal
     fun checkClassOrObjectDeclarations(name: Name) {
         val childName = childName(name)
-        if (KotlinFullClassNameIndex.get(childName, project, searchScope).isEmpty()) {
+        if (KotlinFullClassNameIndex.Helper.get(childName, project, searchScope).isEmpty()) {
             val processor = object : CommonProcessors.FindFirstProcessor<String>() {
                 override fun accept(t: String?): Boolean = childName == t
             }
-            KotlinFullClassNameIndex.processAllKeys(searchScope, null, processor)
-            val everyObjects = KotlinFullClassNameIndex.get(childName, project, GlobalSearchScope.everythingScope(project))
+            KotlinFullClassNameIndex.Helper.processAllKeys(searchScope, null, processor)
+            val everyObjects = KotlinFullClassNameIndex.Helper.get(childName, project, GlobalSearchScope.everythingScope(project))
             if (processor.isFound || everyObjects.isNotEmpty()) {
                 project.messageBus.syncPublisher(KotlinCorruptedIndexListener.TOPIC).corruptionDetected()
 
                 throw IllegalStateException(
-                    """
+                  """
                      | KotlinFullClassNameIndex ${if (processor.isFound) "has" else "has not"} '$childName' key.
                      | No value for it in $searchScope.
-                     | Everything scope has ${everyObjects.size} objects${if (everyObjects.isNotEmpty())" locations: ${everyObjects.map { it.containingFile.virtualFile }}" else ""}.
+                     | Everything scope has ${everyObjects.size} objects${if (everyObjects.isNotEmpty()) " locations: ${everyObjects.map { it.containingFile.virtualFile }}" else ""}.
                      | 
                      | ${if (everyObjects.isEmpty()) "Please try File -> ${if (isApplicationInternalMode()) "Cache recovery -> " else ""}Repair IDE" else ""}
                     """.trimMargin()
@@ -129,21 +145,21 @@ class StubBasedPackageMemberDeclarationProvider(
     }
 
     override fun getScriptDeclarations(name: Name): Collection<KtScriptInfo> =
-        runReadAction {
-            KotlinScriptFqnIndex[childName(name), project, searchScope]
-                .map(::KtScriptInfo)
-        }
+      runReadAction {
+        KotlinScriptFqnIndex.Helper[childName(name), project, searchScope]
+          .map(::KtScriptInfo)
+      }
 
 
     override fun getFunctionDeclarations(name: Name): Collection<KtNamedFunction> =
-        runReadAction {
-            KotlinTopLevelFunctionFqnNameIndex[childName(name), project, searchScope]
-        }
+      runReadAction {
+        KotlinTopLevelFunctionFqnNameIndex.Helper[childName(name), project, searchScope]
+      }
 
     override fun getPropertyDeclarations(name: Name): Collection<KtProperty> =
-        runReadAction {
-            KotlinTopLevelPropertyFqnNameIndex[childName(name), project, searchScope]
-        }
+      runReadAction {
+        KotlinTopLevelPropertyFqnNameIndex.Helper[childName(name), project, searchScope]
+      }
 
     override fun getDestructuringDeclarationsEntries(name: Name): Collection<KtDestructuringDeclarationEntry> {
         return emptyList()
@@ -162,7 +178,7 @@ class StubBasedPackageMemberDeclarationProvider(
     }
 
     override fun getTypeAliasDeclarations(name: Name): Collection<KtTypeAlias> {
-        return KotlinTopLevelTypeAliasFqNameIndex[childName(name), project, searchScope]
+        return KotlinTopLevelTypeAliasFqNameIndex.Helper[childName(name), project, searchScope]
     }
 
     private fun childName(name: Name): String {

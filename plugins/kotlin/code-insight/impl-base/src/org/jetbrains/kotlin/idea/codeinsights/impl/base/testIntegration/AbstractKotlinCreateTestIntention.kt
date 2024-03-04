@@ -22,7 +22,6 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.testIntegration.createTest.CreateTestAction
 import com.intellij.testIntegration.createTest.CreateTestUtils.computeTestRoots
 import com.intellij.testIntegration.createTest.TestGenerators
-import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -31,9 +30,8 @@ import org.jetbrains.kotlin.idea.base.util.runWhenSmart
 import org.jetbrains.kotlin.idea.base.util.runWithAlternativeResolveEnabled
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.util.application.executeCommand
-import org.jetbrains.kotlin.idea.vfilefinder.KotlinShortClassNameFileIndex
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
@@ -190,18 +188,7 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
 }
 
 internal fun findKtClassOrObject(className: String, project: Project, scope: GlobalSearchScope): KtClassOrObject? {
-    val fqNames = mutableListOf<String>()
-    FileBasedIndex.getInstance().processValues(
-        KotlinShortClassNameFileIndex.NAME, className, null,
-        FileBasedIndex.ValueProcessor { _, names ->
-            fqNames += names
-            false
-        }, scope
-    )
-    return fqNames.firstOrNull()?.let { fqName ->
-        KotlinFullClassNameIndex[fqName, project, scope].firstOrNull()?.let { ktClassOrObject ->
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(ktClassOrObject)) return null
-            ktClassOrObject
-        }
+    return KotlinClassShortNameIndex[className, project, scope].firstOrNull { ktClassOrObject ->
+        FileModificationService.getInstance().preparePsiElementForWrite(ktClassOrObject)
     }
 }
