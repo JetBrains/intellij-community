@@ -3,7 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.logsUploader.LogsPacker.packLogs
+import com.intellij.ide.logsUploader.LogPacker.packLogs
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.Notification

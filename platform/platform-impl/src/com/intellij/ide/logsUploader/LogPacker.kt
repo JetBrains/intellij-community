@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.logsUploader
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -8,7 +8,6 @@ import com.google.gson.reflect.TypeToken
 import com.intellij.diagnostic.PerformanceWatcher.Companion.getInstance
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.CollectZippedLogsAction
-import com.intellij.ide.logsUploader.LogProvider.*
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector
 import com.intellij.ide.troubleshooting.collectDimensionServiceDiagnosticsData
 import com.intellij.idea.LoggerFactory
@@ -25,16 +24,14 @@ import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.troubleshooting.TroubleInfoCollector
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.io.Compressor
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.addFile
-import com.intellij.util.io.addFolder
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.nio.charset.StandardCharsets
@@ -42,14 +39,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.zip.ZipOutputStream
 import kotlin.io.path.exists
 import kotlin.io.path.fileSize
+import kotlin.io.path.forEachDirectoryEntry
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 
 @ApiStatus.Internal
-object LogsPacker {
+object LogPacker {
   private const val UPLOADS_SERVICE_URL = "https://uploads.jetbrains.com"
 
   private val gson: Gson by lazy {
@@ -62,63 +59,68 @@ object LogsPacker {
   @JvmStatic
   @RequiresBackgroundThread
   @Throws(IOException::class)
-  suspend fun packLogs(project: Project?): Path {
-    return withContext(Dispatchers.IO) {
-      getInstance().dumpThreads("", false, false)
+  suspend fun packLogs(project: Project?): Path = withContext(Dispatchers.IO) {
+    getInstance().dumpThreads("", false, false)
 
-      val productName = ApplicationNamesInfo.getInstance().productName.lowercase()
-      val date = SimpleDateFormat("yyyyMMdd-HHmmss").format(Date())
-      val archive = Files.createTempFile("$productName-logs-$date", ".zip")
-      try {
-        val additionalFiles = LogProvider.EP.extensionList.firstOrNull()?.getAdditionalLogFiles(project)
-        ZipOutputStream(FileOutputStream(archive.toFile())).use { zip ->
-          coroutineContext.ensureActive()
-          val logs = PathManager.getLogDir()
-          val caches = PathManager.getSystemDir()
-          if (Files.isSameFile(logs, caches)) {
-            throw IOException("cannot collect logs, because log directory set to be the same as the 'system' one: $logs")
-          }
-          val lf = Logger.getFactory()
-          if (lf is LoggerFactory) {
-            lf.flushHandlers()
-          }
+    val logs = PathManager.getLogDir()
+    val caches = PathManager.getSystemDir()
+    if (Files.isSameFile(logs, caches)) {
+      throw IOException("cannot collect logs, because log directory set to be the same as the 'system' one: $logs")
+    }
 
-          additionalFiles?.let { addAdditionalFilesToZip(it, zip) }
+    val productName = ApplicationNamesInfo.getInstance().productName.lowercase()
+    val date = SimpleDateFormat("yyyyMMdd-HHmmss").format(Date())
+    val archive = Files.createTempFile("${productName}-logs-${date}", ".zip")
+    try {
+      Compressor.Zip(archive).use { zip ->
+        coroutineContext.ensureActive()
+        val lf = Logger.getFactory()
+        if (lf is LoggerFactory) {
+          lf.flushHandlers()
+        }
 
-          coroutineContext.ensureActive()
-          if (project != null) {
-            val settings = StringBuilder()
-            settings.append(CompositeGeneralTroubleInfoCollector().collectInfo(project))
-            for (troubleInfoCollector in TroubleInfoCollector.EP_SETTINGS.extensions) {
-              coroutineContext.ensureActive()
-              settings.append(troubleInfoCollector.collectInfo(project)).append('\n')
-            }
-            zip.addFile("troubleshooting.txt", settings.toString().toByteArray(StandardCharsets.UTF_8))
-            zip.addFile("dimension.txt", collectDimensionServiceDiagnosticsData(project).toByteArray(StandardCharsets.UTF_8))
-          }
-          Files.newDirectoryStream(Path.of(SystemProperties.getUserHome())).use { paths ->
-            for (path in paths) {
-              coroutineContext.ensureActive()
-              val name = path.fileName.toString()
-              if ((name.startsWith("java_error_in") || name.startsWith("jbr_err_pid")) && !name.endsWith("hprof") && Files.isRegularFile(
-                  path)) {
-                zip.addFolder(name, path)
+        LogProvider.EP.extensionList.firstOrNull()?.let { logProvider ->
+          logProvider.getAdditionalLogFiles(project).forEach { entry ->
+            for (file in entry.files) {
+              if (file.exists()) {
+                val entryName = if (entry.entryName.isNotEmpty()) "${entry.entryName}/${file.name}" else ""
+                zip.addDirectory(entryName, file)
               }
             }
           }
         }
-      }
-      catch (e: IOException) {
-        try {
-          Files.delete(archive)
+
+        coroutineContext.ensureActive()
+        if (project != null) {
+          val settings = StringBuilder()
+          settings.append(CompositeGeneralTroubleInfoCollector().collectInfo(project))
+          for (troubleInfoCollector in TroubleInfoCollector.EP_SETTINGS.extensionList) {
+            coroutineContext.ensureActive()
+            settings.append(troubleInfoCollector.collectInfo(project)).append('\n')
+          }
+          zip.addFile("troubleshooting.txt", settings.toString().toByteArray(StandardCharsets.UTF_8))
+          zip.addFile("dimension.txt", collectDimensionServiceDiagnosticsData(project).toByteArray(StandardCharsets.UTF_8))
         }
-        catch (x: IOException) {
-          e.addSuppressed(x)
+
+        Path.of(SystemProperties.getUserHome()).forEachDirectoryEntry { path ->
+          coroutineContext.ensureActive()
+          val name = path.name
+          if ((name.startsWith("java_error_in") || name.startsWith("jbr_err_pid")) && !name.endsWith("hprof") && Files.isRegularFile(path)) {
+            zip.addFile(name, path)
+          }
         }
-        throw e
       }
-      archive
     }
+    catch (e: IOException) {
+      try {
+        Files.delete(archive)
+      }
+      catch (x: IOException) {
+        e.addSuppressed(x)
+      }
+      throw e
+    }
+    archive
   }
 
   @RequiresBackgroundThread
@@ -184,23 +186,4 @@ object LogsPacker {
   }
 
   fun getBrowseUrl(folderName: String): String = "$UPLOADS_SERVICE_URL/browse#$folderName"
-
-  private fun addAdditionalFilesToZip(logsEntryList: List<LogsEntry>,
-                                      zip: ZipOutputStream) {
-    for (additionalFiles in logsEntryList) {
-      for (file in additionalFiles.files) {
-        if (file.exists()) {
-          val entryName = buildEntryName(additionalFiles.entryName, file)
-          zip.addFolder(entryName, file)
-        }
-      }
-    }
-  }
-
-  /**
-   * @return entry name. Empty name is expected for platform logs
-   */
-  private fun buildEntryName(prefix: String?, file: Path): String {
-    return if (!prefix.isNullOrEmpty()) "$prefix/${file.name}" else ""
-  }
 }
