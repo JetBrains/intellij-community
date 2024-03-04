@@ -11,6 +11,7 @@ import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
 import com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER
 import com.intellij.diff.util.DiffUtil
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
@@ -38,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
+import com.intellij.ui.TableUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
@@ -105,10 +107,11 @@ open class MultipleFileMergeDialog(
     @Suppress("LeakingThis")
     init()
 
-    updateTree()
+    updateTree(SetDefaultTreeStateStrategy())
+
     table.tree.selectionModel.addTreeSelectionListener { updateButtonState() }
     updateButtonState()
-    selectFirstFile()
+
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
         if (EditSourceOnDoubleClickHandler.isToggleEvent(table.tree, event)) return false
@@ -126,15 +129,6 @@ open class MultipleFileMergeDialog(
         descriptionLabel.text = description
       }
     })
-  }
-
-  private fun selectFirstFile() {
-    if (!groupByDirectory) {
-      table.selectionModel.setSelectionInterval(0, 0)
-    }
-    else {
-      TreeUtil.promiseSelectFirstLeaf(table.tree)
-    }
   }
 
   override fun createCenterPanel(): JComponent {
@@ -222,23 +216,23 @@ open class MultipleFileMergeDialog(
   private fun toggleGroupByDirectory(state: Boolean) {
     if (groupByDirectory == state) return
     groupByDirectory = state
-    val firstSelectedFile = getSelectedFiles().firstOrNull()
-    updateTree()
-    if (firstSelectedFile != null) {
-      val node = TreeUtil.findNodeWithObject(tableModel.root as DefaultMutableTreeNode, firstSelectedFile)
-      node?.let { TreeUtil.selectNode(table.tree, node) }
-    }
+    updateTree(OnGroupingChangeTreeStateStrategy())
   }
 
-  private fun updateTree() {
+  private fun <State> updateTree(treeStateStrategy: TreeTableStateStrategy<State>) {
     val factory = when {
       project != null && groupByDirectory -> ChangesGroupingSupport.getFactory(ChangesGroupingSupport.DIRECTORY_GROUPING)
       else -> NoneChangesGroupingFactory
     }
     val model = TreeModelBuilder.buildFromVirtualFiles(project, factory, unresolvedFiles)
+
+    val savedState = treeStateStrategy.saveState(table)
     tableModel.setRoot(model.root as TreeNode)
-    TreeUtil.expandAll(table.tree)
+    treeStateStrategy.restoreState(table, savedState)
+
     (table.model as? AbstractTableModel)?.fireTableDataChanged()
+
+    TableUtil.scrollSelectionToVisible(table)
   }
 
   private fun updateButtonState() {
@@ -373,12 +367,7 @@ open class MultipleFileMergeDialog(
       doCancelAction()
     }
     else {
-      var selIndex = table.selectionModel.minSelectionIndex
-      updateTree()
-      if (selIndex >= table.rowCount) {
-        selIndex = table.rowCount - 1
-      }
-      table.selectionModel.setSelectionInterval(selIndex, selIndex)
+      updateTree(OnModelChangeTreeStateStrategy())
       table.requestFocusInWindow()
     }
   }
@@ -506,4 +495,65 @@ open class MultipleFileMergeDialog(
     val contentTitles: List<@NlsContexts.Label String?>,
     val contentTitleCustomizers: MergeDialogCustomizer.DiffEditorTitleCustomizerList
   )
+
+  /**
+   * See [ChangesTree.TreeStateStrategy] that cannot be applied to [TreeTable]
+   */
+  private interface TreeTableStateStrategy<T> {
+    fun saveState(table: TreeTable): T
+
+    fun restoreState(table: TreeTable, state: T)
+  }
+
+  private class SetDefaultTreeStateStrategy : TreeTableStateStrategy<Any?> {
+    override fun saveState(table: TreeTable): Any? = null
+
+    override fun restoreState(table: TreeTable, state: Any?) {
+      TreeUtil.expandAll(table.tree)
+      TreeUtil.promiseSelectFirstLeaf(table.tree)
+    }
+  }
+
+  private class OnGroupingChangeTreeStateStrategy : TreeTableStateStrategy<OnGroupingChangeTreeStateStrategy.SelectionState> {
+    override fun saveState(table: TreeTable): SelectionState {
+      val selectedFiles = VcsTreeModelData.selected(table.tree).userObjects(VirtualFile::class.java)
+      return SelectionState(selectedFiles)
+    }
+
+    override fun restoreState(table: TreeTable, state: SelectionState) {
+      TreeUtil.expandAll(table.tree)
+
+      val newRoot = table.tree.model.root as DefaultMutableTreeNode
+      val treePaths = state.selectedFiles
+        .mapNotNull { file -> TreeUtil.findNodeWithObject(newRoot, file) }
+        .map { node -> TreeUtil.getPath(newRoot, node) }
+      TreeUtil.selectPaths(table.tree, treePaths)
+
+      if (table.tree.selectionCount == 0) {
+        TreeUtil.promiseSelectFirstLeaf(table.tree)
+      }
+    }
+
+    private class SelectionState(val selectedFiles: List<VirtualFile>)
+  }
+
+  private class OnModelChangeTreeStateStrategy : TreeTableStateStrategy<OnModelChangeTreeStateStrategy.SelectionState> {
+    override fun saveState(table: TreeTable): SelectionState {
+      val treeState = TreeState.createOn(table.tree, true, true)
+      val firstSelectedIndex = table.selectionModel.minSelectionIndex
+      return SelectionState(treeState, firstSelectedIndex)
+    }
+
+    override fun restoreState(table: TreeTable, state: SelectionState) {
+      state.treeState.applyTo(table.tree)
+
+      if (table.tree.selectionCount == 0) {
+        val toSelect = state.firstSelectedIndex.coerceAtMost(table.rowCount - 1)
+        table.selectionModel.setSelectionInterval(toSelect, toSelect)
+      }
+    }
+
+    private class SelectionState(val treeState: TreeState,
+                                 val firstSelectedIndex: Int)
+  }
 }
