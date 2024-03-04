@@ -5,6 +5,8 @@ import com.intellij.openapi.vcs.VcsScopeKt;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.util.ObjectUtils;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
@@ -56,8 +58,9 @@ public class DataPack extends DataPackBase {
       permanentGraph = EmptyPermanentGraph.getInstance();
     }
     else {
-      Comparator<Integer> headCommitdComparator = new HeadCommitsComparator(refsModel, getRefManagerMap(providers),
-                                                                            VcsLogStorageImpl.createHashGetter(storage));
+      Comparator<Integer> headCommitdComparator = new HeadCommitsComparator(refsModel, getRefManagerMap(providers), commitIndex -> {
+        return ObjectUtils.doIfNotNull(storage.getCommitId(commitIndex), CommitId::getHash);
+      });
       Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
       permanentGraph =
