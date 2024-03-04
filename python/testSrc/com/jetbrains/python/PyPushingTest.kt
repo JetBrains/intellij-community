@@ -65,6 +65,7 @@ class PyPushingTest {
     val sdk = PythonMockSdk.create(languageLevel)
     WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable) }
     module.pythonSdk = sdk
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     val pusher = FilePropertyPusher.EP_NAME.findExtension(PythonLanguageLevelPusher::class.java)
     Assertions.assertThat(pusher).withFailMessage("Failed to find pusher").isNotNull
