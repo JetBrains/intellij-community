@@ -236,8 +236,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
     Disposer.register(this, myUIComponent)
     Disposer.register(this, myBrowser)
 
-    @Suppress("DEPRECATION")
-    myViewerStateJSQuery = JBCefJSQuery.create(myBrowser)
+    myViewerStateJSQuery = JBCefJSQuery.create(myBrowser as JBCefBrowserBase)
     myViewerStateJSQuery.addHandler { s: String ->
       val oldState = myState
       try {

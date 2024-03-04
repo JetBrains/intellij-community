@@ -88,7 +88,7 @@ public class JBCefLoadHtmlTest {
         }
       }, browser.getCefBrowser());
 
-      JBCefJSQuery jsQuery = JBCefJSQuery.create(browser);
+      JBCefJSQuery jsQuery = JBCefJSQuery.create((JBCefBrowserBase)browser);
 
       jsQuery.addHandler(result -> {
         System.out.println("JS callback result: " + result);
