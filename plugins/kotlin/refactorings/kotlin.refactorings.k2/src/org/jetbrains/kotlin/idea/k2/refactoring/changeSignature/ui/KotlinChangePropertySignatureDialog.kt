@@ -4,9 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiCodeFragment
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -22,7 +20,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinBaseChangePropertySignatureDialog
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import org.jetbrains.kotlin.types.Variance
@@ -35,7 +32,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
         model.addAll(listOf(Visibilities.Internal, Visibilities.Private, Visibilities.Protected, Visibilities.Public))
     }
 
-    override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtCodeFragment {
+    override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         val returnPresentableText =
             analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
                 m.method.getReturnKtType().render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
@@ -43,7 +40,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
         return kotlinPsiFactory.createTypeCodeFragment(returnPresentableText, m.method)
     }
 
-    override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtCodeFragment {
+    override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         val receiverPresentableType =
             analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
                 (m.method as? KtCallableDeclaration)?.receiverTypeReference?.getKtType()?.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
@@ -83,7 +80,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
         } else null
 
         if (receiver != null) {
-            receiver.setType((receiverTypeCodeFragment as KtTypeCodeFragment).getCanonicalText(false))
+            receiver.setType(receiverTypeCodeFragment.getCanonicalText(false))
         }
         return KotlinChangeInfo(
             methodDescriptor,
@@ -91,7 +88,7 @@ class KotlinChangePropertySignatureDialog(project: Project,
             if (methodDescriptor.canChangeVisibility()) visibilityCombo.selectedItem as Visibility else methodDescriptor.visibility,
             receiver,
             name,
-            KotlinTypeInfo((returnTypeCodeFragment as KtTypeCodeFragment).getCanonicalText(false), methodDescriptor.method)
+            KotlinTypeInfo(returnTypeCodeFragment.getCanonicalText(false), methodDescriptor.method)
         )
     }
 

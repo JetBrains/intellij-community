@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinBaseChangeSignatureDialog.Companion.showWarningMessage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
-import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import javax.swing.DefaultComboBoxModel
 
 class KotlinChangePropertySignatureDialog(
@@ -28,14 +28,14 @@ class KotlinChangePropertySignatureDialog(
         return v == DescriptorVisibilities.PUBLIC
     }
 
-    override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtCodeFragment {
+    override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         return kotlinPsiFactory.createTypeCodeFragment(
             m.returnTypeInfo.render(),
             m.baseDeclaration,
         )
     }
 
-    override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtCodeFragment {
+    override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
         return kotlinPsiFactory.createTypeCodeFragment(
             m.receiverTypeInfo.render(),
             m.baseDeclaration,

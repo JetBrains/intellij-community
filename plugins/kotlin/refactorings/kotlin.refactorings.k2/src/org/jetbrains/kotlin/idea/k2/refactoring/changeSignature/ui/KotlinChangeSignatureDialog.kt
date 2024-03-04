@@ -17,10 +17,12 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -85,7 +87,7 @@ internal class KotlinChangeSignatureDialog(
             val contentElement = psiFactory.createTypeCodeFragment(resultParameterInfo.typeText, typeContext).getContentElement()
             val presentableText = if (contentElement != null) {
                 analyzeInModalWindow(contentElement, KotlinBundle.message("fix.change.signature.prepare")) {
-                    contentElement.getKtType().render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                    contentElement.getKtType().getPresentableText()
                 }
             } else {
                 resultParameterInfo.typeText
@@ -175,16 +177,16 @@ internal class KotlinChangeSignatureDialog(
             parameterInfos = parametersWithReceiverInFirstPosition,
             receiver = receiverInfo,
             aNewVisibility = myVisibilityPanel.visibility ?: methodDescriptor.visibility,
-            newReturnTypeInfo = KotlinTypeInfo((myReturnTypeCodeFragment as? KtTypeCodeFragment)?.getCanonicalText(forPreview), callable)
+            newReturnTypeInfo = KotlinTypeInfo((myReturnTypeCodeFragment as KtTypeCodeFragment).getCanonicalText(forPreview), callable)
         )
     }
 
-    override fun createReturnTypeCodeFragment(): PsiCodeFragment {
+    override fun createReturnTypeCodeFragment(): KtTypeCodeFragment {
         val method = myMethod.method
         return KtPsiFactory(project).createTypeCodeFragment(
             allowAnalysisOnEdt {
                 analyze(method) {
-                    method.getReturnKtType().render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+                    method.getReturnKtType().getPresentableText()
                 }
             },
             KotlinCallableParameterTableModel.getTypeCodeFragmentContext(myMethod.baseDeclaration)
@@ -279,3 +281,6 @@ internal fun KtTypeCodeFragment.getCanonicalText(forPreview: Boolean): String {
         return text
     }
 }
+
+context(KtAnalysisSession)
+private fun KtType.getPresentableText(): String = render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
