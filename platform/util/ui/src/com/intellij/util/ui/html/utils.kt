@@ -120,7 +120,13 @@ internal fun paintControlBackgroundAndBorder(
   noBorderOnTheLeft: Boolean = false,
   noBorderOnTheRight: Boolean = false,
 ) {
+  val borderColor = borderColors?.let {
+    sequenceOf(it.top, it.left, it.bottom, it.right)
+      .reduceOrNull { c1, c2 -> if (c1 != c2) null else c1 }
+  }
   val borderWidth = borderWidths?.let { minOf(it.top, it.left, it.bottom, it.right) } ?: 0
+  if (background == null && (borderWidth <= 0 || borderColor == null))
+    return
   val leftInset: Float = if (noBorderOnTheLeft) -borderRadius else margin.left + borderWidth / 2f
   val rightInset: Float = if (noBorderOnTheRight) -borderRadius else margin.right + borderWidth / 2f
   val borderShape = RoundRectangle2D.Float(rect.x + leftInset,
@@ -131,11 +137,9 @@ internal fun paintControlBackgroundAndBorder(
   val g = graphics.create() as Graphics2D
   g.clip(rect)
   g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-  g.color = background
-  g.fill(borderShape)
-  val borderColor = borderColors?.let {
-    sequenceOf(it.top, it.left, it.bottom, it.right)
-      .reduceOrNull { c1, c2 -> if (c1 != c2) null else c1 }
+  if (background != null) {
+    g.color = background
+    g.fill(borderShape)
   }
   if (borderWidth > 0 && borderColor != null) {
     g.color = borderColor
