@@ -1,95 +1,78 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.graph.impl.permanent
 
-package com.intellij.vcs.log.graph.impl.permanent;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.utils.Dfs
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.utils.walk
+import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntComparator
+import it.unimi.dsi.fastutil.ints.IntList
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.utils.Dfs;
-import com.intellij.vcs.log.graph.utils.DfsUtilKt;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntComparator;
-import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.NotNull;
+class GraphLayoutBuilder private constructor(private val graph: LinearGraph, private val headNodeIndex: IntList) {
+  private val layoutIndex = IntArray(graph.nodesCount())
+  private val startLayoutIndexForHead = IntArray(headNodeIndex.size)
+  private var currentLayoutIndex = 1
 
-import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
-import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
+  private fun dfs(nodeIndex: Int) {
+    walk(nodeIndex) { currentNode: Int ->
+      val firstVisit = layoutIndex[currentNode] == 0
+      if (firstVisit) layoutIndex[currentNode] = currentLayoutIndex
 
-public final class GraphLayoutBuilder {
-
-  private static final Logger LOG = Logger.getInstance(GraphLayoutBuilder.class);
-
-  @NotNull
-  public static GraphLayoutImpl build(@NotNull LinearGraph graph, @NotNull IntComparator headNodeIndexComparator) {
-    IntList heads = new IntArrayList();
-    for (int i = 0; i < graph.nodesCount(); i++) {
-      if (getUpNodes(graph, i).isEmpty()) {
-        heads.add(i);
-      }
-    }
-    try {
-      heads.sort(headNodeIndexComparator);
-    }
-    catch (ProcessCanceledException pce) {
-      throw pce;
-    }
-    catch (Exception e) {
-      // protection against possible comparator flaws
-      LOG.error(e);
-    }
-    GraphLayoutBuilder builder = new GraphLayoutBuilder(graph, heads);
-    return builder.build();
-  }
-
-  @NotNull private final LinearGraph myGraph;
-  private final int @NotNull [] myLayoutIndex;
-
-  @NotNull private final IntList myHeadNodeIndex;
-  private final int @NotNull [] myStartLayoutIndexForHead;
-
-  private int currentLayoutIndex = 1;
-
-  private GraphLayoutBuilder(@NotNull LinearGraph graph, @NotNull IntList headNodeIndex) {
-    myGraph = graph;
-    myLayoutIndex = new int[graph.nodesCount()];
-
-    myHeadNodeIndex = headNodeIndex;
-    myStartLayoutIndexForHead = new int[headNodeIndex.size()];
-  }
-
-  private void dfs(int nodeIndex) {
-    DfsUtilKt.walk(nodeIndex, currentNode -> {
-      boolean firstVisit = myLayoutIndex[currentNode] == 0;
-      if (firstVisit) myLayoutIndex[currentNode] = currentLayoutIndex;
-
-      int childWithoutLayoutIndex = -1;
-      for (int childNodeIndex : getDownNodes(myGraph, currentNode)) {
-        if (myLayoutIndex[childNodeIndex] == 0) {
-          childWithoutLayoutIndex = childNodeIndex;
-          break;
+      var childWithoutLayoutIndex = -1
+      for (childNodeIndex in LinearGraphUtils.getDownNodes(graph, currentNode)) {
+        if (layoutIndex[childNodeIndex] == 0) {
+          childWithoutLayoutIndex = childNodeIndex
+          break
         }
       }
-
       if (childWithoutLayoutIndex == -1) {
-        if (firstVisit) currentLayoutIndex++;
+        if (firstVisit) currentLayoutIndex++
 
-        return Dfs.NextNode.NODE_NOT_FOUND;
+        return@walk Dfs.NextNode.NODE_NOT_FOUND
       }
       else {
-        return childWithoutLayoutIndex;
+        return@walk childWithoutLayoutIndex
       }
-    });
+    }
   }
 
-  @NotNull
-  private GraphLayoutImpl build() {
-    for (int i = 0; i < myHeadNodeIndex.size(); i++) {
-      int headNodeIndex = myHeadNodeIndex.getInt(i);
-      myStartLayoutIndexForHead[i] = currentLayoutIndex;
+  private fun build(): GraphLayoutImpl {
+    for (i in headNodeIndex.indices) {
+      val headNodeIndex = headNodeIndex.getInt(i)
+      startLayoutIndexForHead[i] = currentLayoutIndex
 
-      dfs(headNodeIndex);
+      dfs(headNodeIndex)
     }
 
-    return new GraphLayoutImpl(myLayoutIndex, myHeadNodeIndex, myStartLayoutIndexForHead);
+    return GraphLayoutImpl(layoutIndex, headNodeIndex, startLayoutIndexForHead)
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(GraphLayoutBuilder::class.java)
+
+    @JvmStatic
+    fun build(graph: LinearGraph, headNodeIndexComparator: IntComparator): GraphLayoutImpl {
+      val heads: IntList = IntArrayList()
+      for (i in 0 until graph.nodesCount()) {
+        if (LinearGraphUtils.getUpNodes(graph, i).isEmpty()) {
+          heads.add(i)
+        }
+      }
+      try {
+        heads.sort(headNodeIndexComparator)
+      }
+      catch (pce: ProcessCanceledException) {
+        throw pce
+      }
+      catch (e: Exception) {
+        // protection against possible comparator flaws
+        LOG.error(e)
+      }
+      val builder = GraphLayoutBuilder(graph, heads)
+      return builder.build()
+    }
   }
 }
