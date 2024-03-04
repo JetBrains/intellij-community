@@ -118,4 +118,13 @@ public final class TerminalUtil {
     textBuffer.addModelListener(listener);
     Disposer.register(parentDisposable, () -> textBuffer.removeModelListener(listener));
   }
+
+  /**
+   * @deprecated use org.jetbrains.plugins.terminal.TerminalUtil#hasRunningCommands(com.jediterm.terminal.TtyConnector) instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  public static boolean hasRunningCommands(@NotNull ProcessTtyConnector connector) throws IllegalStateException {
+    return hasRunningCommands((TtyConnector)connector);
+  }
 }
