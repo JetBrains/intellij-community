@@ -6,8 +6,11 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
 
 public final class ExternalSystemJavaSdkProvider implements ExternalSystemJdkProvider {
   @NotNull
@@ -27,6 +30,10 @@ public final class ExternalSystemJavaSdkProvider implements ExternalSystemJdkPro
   public Sdk createJdk(@Nullable String jdkName, @NotNull String homePath) {
     SdkType javaSdk = getJavaSdkType();
     String sdkName = jdkName != null ? jdkName : javaSdk.suggestSdkName(null, homePath);
+    // We must refresh the location of JDK in VFS before creating an IDE object for it,
+    // because the jdk may be downloaded by Gradle and be out of sync at the moment of reaching this place.
+    // https://youtrack.jetbrains.com/issue/IJPL-784/Certain-Gradle-directories-are-not-tracked-by-VFS
+    VirtualFileManager.getInstance().refreshAndFindFileByNioPath(Path.of(homePath));
     return ((JavaSdk)javaSdk).createJdk(sdkName, homePath, !JdkUtil.checkForJdk(homePath));
   }
 }
