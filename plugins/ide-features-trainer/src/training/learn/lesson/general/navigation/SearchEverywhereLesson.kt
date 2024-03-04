@@ -106,39 +106,6 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
     replaceClassWithTypes()
 
-    task(goToClassSearchQuery) {
-      text(LessonsBundle.message("search.everywhere.type.class.name", code(it)))
-      stateCheck { checkWordInSearch(it) }
-      restoreAfterStateBecomeFalse { !checkInsideSearchEverywhere() }
-      test { type(it) }
-    }
-
-    task(EverythingGlobalScope.getNameText()) {
-      text(LessonsBundle.message("search.everywhere.use.all.places",
-                                 strong(projectFilesScopeName), strong(it)))
-      triggerAndFullHighlight().component { button: ActionButtonWithText ->
-        button.accessibleContext.accessibleName.isToStringContains(projectFilesScopeName)
-      }
-      triggerUI().component { button: ActionButtonWithText ->
-        button.accessibleContext.accessibleName == it
-      }
-      showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass"))) {
-        !checkInsideSearchEverywhere() && focusOwner !is JList<*>
-      }
-      test {
-        invokeActionViaShortcut("ALT P")
-      }
-    }
-
-    if (showQuickDock) {
-      task("QuickJavaDoc") {
-        text(LessonsBundle.message("search.everywhere.quick.documentation", action(it)))
-        triggerOnQuickDocumentationPopup()
-        restoreByUi()
-        test { actions(it) }
-      }
-    }
-
     task {
       text(LessonsBundle.message("search.everywhere.close.documentation.popup", LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
       stateCheck { previous.ui?.isShowing != true }
@@ -170,6 +137,39 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   protected open fun LessonContext.replaceClassWithTypes() {
     actionTask("GotoClass") {
       LessonsBundle.message("search.everywhere.goto.class", action(it))
+    }
+
+    task(goToClassSearchQuery) {
+      text(LessonsBundle.message("search.everywhere.type.class.name", code(it)))
+      stateCheck { checkWordInSearch(it) }
+      restoreAfterStateBecomeFalse { !checkInsideSearchEverywhere() }
+      test { type(it) }
+    }
+
+    task(EverythingGlobalScope.getNameText()) {
+      text(LessonsBundle.message("search.everywhere.use.all.places",
+                                 strong(projectFilesScopeName), strong(it)))
+      triggerAndFullHighlight().component { button: ActionButtonWithText ->
+        button.accessibleContext.accessibleName.isToStringContains(projectFilesScopeName)
+      }
+      triggerUI().component { button: ActionButtonWithText ->
+        button.accessibleContext.accessibleName == it
+      }
+      showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass"))) {
+        !checkInsideSearchEverywhere() && focusOwner !is JList<*>
+      }
+      test {
+        invokeActionViaShortcut("ALT P")
+      }
+    }
+
+    if (showQuickDock) {
+      task("QuickJavaDoc") {
+        text(LessonsBundle.message("search.everywhere.quick.documentation", action(it)))
+        triggerOnQuickDocumentationPopup()
+        restoreByUi()
+        test { actions(it) }
+      }
     }
   }
 
