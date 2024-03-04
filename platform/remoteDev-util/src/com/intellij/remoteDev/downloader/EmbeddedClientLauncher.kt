@@ -24,10 +24,12 @@ import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.remoteDev.util.ProductInfo
 import com.intellij.util.JavaModuleOptions
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
@@ -38,20 +40,33 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
                                                  private val moduleRepositoryPath: Path) {
   companion object {
     private const val USE_CUSTOM_PATHS_PROPERTY = "rdct.embedded.client.use.custom.paths"
-    private val CLIENT_ROOT_MODULE = RuntimeModuleId.module("intellij.cwm.guest")
     private val LOG = logger<EmbeddedClientLauncher>()
     
     fun create(): EmbeddedClientLauncher? {
       val moduleRepository = RuntimeModuleIntrospection.moduleRepository ?: return null
       val moduleRepositoryPath = RuntimeModuleIntrospection.moduleRepositoryPath ?: return null
       try {
-        moduleRepository.getModule(CLIENT_ROOT_MODULE)
+        moduleRepository.getModule(getRootFrontendModule())
       }
       catch (e: Exception) {
         LOG.warn("Failed to load embedded client: " + e.message)
         return null
       }
       return EmbeddedClientLauncher(moduleRepository, moduleRepositoryPath)
+    }
+
+    private fun getRootFrontendModule(): RuntimeModuleId = getRootFrontendModuleForIde(PlatformUtils.getPlatformPrefix())
+
+    /**
+     * Returns root module for the frontend part of the IDE with the given [platformPrefix].
+     * This method is supposed to be used when running from sources and tests only. In production, the embedded client is started via
+     * its own launcher included in the distribution, where the correct module is set by the build scripts.
+     */
+    @VisibleForTesting
+    fun getRootFrontendModuleForIde(platformPrefix: String): RuntimeModuleId = when (platformPrefix) {
+      PlatformUtils.IDEA_PREFIX, PlatformUtils.IDEA_CE_PREFIX -> RuntimeModuleId.module("intellij.idea.frontend")
+      PlatformUtils.RIDER_PREFIX -> RuntimeModuleId.module("intellij.rider.frontend")
+      else -> RuntimeModuleId.module("intellij.cwm.guest")
     }
   }
 
@@ -202,7 +217,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Didea.initially.ask.config=never",
       "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.PerProcessPathCustomizer",
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
-      "-Dintellij.platform.root.module=${CLIENT_ROOT_MODULE.stringId}",
+      "-Dintellij.platform.root.module=${getRootFrontendModule().stringId}",
       "-Dintellij.platform.product.mode=${ProductMode.FRONTEND.id}",
       "-Dintellij.platform.full.ide.product.code=${build.productCode}",
       "-Dintellij.platform.load.app.info.from.resources=true",
