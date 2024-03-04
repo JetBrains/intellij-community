@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.execution.vmModules.VmModulesExecutor
 import com.intellij.java.JavaBundle
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
@@ -40,6 +41,8 @@ private val javaVersionPattern: Pattern by lazy { Pattern.compile("java\\d+") }
  * @see <a href="http://openjdk.org/jeps/261">JEP 261: Module System</a>
  */
 internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
+  private val vmModulesExecutor: VmModulesExecutor = VmModulesExecutor()
+
   override fun getName(): String = JavaBundle.message("java.platform.module.system.name")
 
   override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean {
@@ -50,8 +53,8 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return getProblem(targetPackageName, targetFile, place, false) { use, _, target, _, _ -> JavaModuleGraphUtil.reads(use, target) }
   }
 
-  private fun isExported(useModule: PsiJavaModule, packageName: String, targetModule: PsiJavaModule, useModuleName: String, module: Module?) : Boolean {
-    if(!targetModule.isPhysical || JavaModuleGraphUtil.exports(targetModule, packageName, useModule)) return true
+  private fun isExported(useModule: PsiJavaModule, packageName: String, targetModule: PsiJavaModule, useModuleName: String, module: Module?): Boolean {
+    if (!targetModule.isPhysical || JavaModuleGraphUtil.exports(targetModule, packageName, useModule)) return true
     if (module == null) return false
     return inAddedExports(module, targetModule.name, packageName, useModuleName)
   }
@@ -118,16 +121,12 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
         if (targetName.startsWith("java.") &&
             targetName != PsiJavaModule.JAVA_BASE &&
             !inAddedModules(module, targetName) &&
-            !hasUpgrade(module, targetName, packageName, place)) {
-          val root = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<PsiJavaModule, Throwable> {
-            JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope)
-          }
-          if (root != null && !isAccessible(root, packageName, targetModule, useName, module)) {
-            return if (quick) ERR
-            else ErrorWithFixes(
-              JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
-              listOf(AddModulesOptionFix(module, targetName).asIntention()))
-          }
+            !hasUpgrade(module, targetName, packageName, place) &&
+            !accessibleFromLoadedModules(module, targetName, place, isAccessible, packageName, targetModule, useName)) {
+          return if (quick) ERR
+          else ErrorWithFixes(
+            JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
+            listOf(AddModulesOptionFix(module, targetName).asIntention()))
         }
       }
 
@@ -173,6 +172,25 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
 
     return null
+  }
+
+  private fun accessibleFromLoadedModules(module: Module,
+                                          targetName: String,
+                                          place: PsiFileSystemItem,
+                                          isAccessible: (useModule: PsiJavaModule, packageName: String, targetModule: PsiJavaModule, useModuleName: String, module: Module?) -> Boolean,
+                                          packageName: String,
+                                          targetModule: PsiJavaModule,
+                                          useName: String): Boolean {
+    val modules = vmModulesExecutor.getOrComputeModulesForJdk(module)
+    if (!modules.isEmpty()) {
+      return modules.contains(targetName)
+    }
+    else {
+      val root = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<PsiJavaModule, Throwable> {
+        JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope)
+      }
+      return root == null || isAccessible(root, packageName, targetModule, useName, module)
+    }
   }
 
   private fun inSameMultiReleaseModule(place: PsiElement, target: PsiElement): Boolean {
