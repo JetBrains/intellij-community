@@ -83,6 +83,9 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     myApplicationComponent = DomApplicationComponent.getInstance();
 
     final PomModel pomModel = PomManager.getModel(project);
+
+    Disposable parent = project.getService(DomDisposable.class);
+
     pomModel.addModelListener(new PomModelListener() {
       @Override
       public void modelChanged(@NotNull PomModelEvent event) {
@@ -104,7 +107,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
       public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
         return aspect instanceof TreeAspect;
       }
-    }, this);
+    }, parent);
 
     VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
       @Override
@@ -132,9 +135,9 @@ public final class DomManagerImpl extends DomManager implements Disposable {
         }
         return event instanceof VFileMoveEvent || event instanceof VFileDeleteEvent;
       }
-    }, this);
+    }, parent);
 
-    project.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    project.getMessageBus().connect(parent).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         DomUtil.clearCaches();
