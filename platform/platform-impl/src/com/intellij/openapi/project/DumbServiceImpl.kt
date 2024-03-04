@@ -60,6 +60,49 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   // should only be accessed from EDT. This is to order synchronous and asynchronous publishing
   private var lastPublishedState: DumbState = myState.value
 
+  // Not thread safe. Should only be accessed from EDT. Launches myGuiDumbTaskRunner at most once.
+  // DumbService can invoke `launch` from completeJustSubmittedTasks or from queueTaskOnEdt
+  private inner class DumbTaskLauncher(private val modality: ModalityState) {
+    private var launched = false
+
+    fun cancel() {
+      // only not launched tasks can be canceled
+      if (!launched) {
+        launched = true
+        close()
+      }
+    }
+
+    private fun close() {
+      if (application.isDispatchThread) {
+        dumbTaskLaunchers.remove(this)
+        // without redispatching, because it can be invoked from completeJustSubmittedTasks
+        decrementDumbCounter()
+      }
+      else {
+        scope.launch(modality.asContextElement() + Dispatchers.EDT) {
+          blockingContext {
+            dumbTaskLaunchers.remove(this@DumbTaskLauncher)
+            decrementDumbCounter()
+          }
+        }
+      }
+    }
+
+    fun launch() {
+      if (!launched) {
+        launched = true;
+        myGuiDumbTaskRunner.startBackgroundProcess(onFinish = {
+          close()
+        })
+      }
+    }
+  }
+
+  // should only be accessed from EDT. We need to track FutureDumbTasks because completeJustSubmittedTasks should
+  // not only complete all the dumb tasks, but also should finish dumb mode.
+  private val dumbTaskLaunchers: MutableList<DumbTaskLauncher> = ArrayList()
+
   override val project: Project = myProject
   override var isAlternativeResolveEnabled: Boolean
     get() = myAlternativeResolveTracker.isAlternativeResolveEnabled
@@ -351,20 +394,16 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
     // drain the queue synchronously under modal progress
     var dumbModeCounterWillBeDecrementedFromOnFinish = false
+    val launcher = DumbTaskLauncher(modality)
+    dumbTaskLaunchers.add(launcher)
     invokeLaterOnEdtInScheduledTasksScope {
       dumbModeCounterWillBeDecrementedFromOnFinish = true
-      myGuiDumbTaskRunner.startBackgroundProcess(onFinish = {
-        scope.launch(modality.asContextElement() + Dispatchers.EDT) {
-          blockingContext {
-            decrementDumbCounter()
-          }
-        }
-      })
+      launcher.launch()
     }.invokeOnCompletion {
       if (!dumbModeCounterWillBeDecrementedFromOnFinish) {
         scope.launch(modality.asContextElement() + Dispatchers.EDT) {
           blockingContext {
-            decrementDumbCounter()
+            launcher.cancel()
           }
         }
       }
@@ -538,28 +577,35 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     LOG.assertTrue(myProject.isInitialized, "Project should have been initialized")
 
     // there is no race: myTaskQueue is only updated from EDT
-    if (myTaskQueue.isEmpty) {
-      return
-    }
-
-    incrementDumbCounter(Throwable())
-    try {
-      while (!myTaskQueue.isEmpty) {
-        val queueProcessedUnderModalProgress = processQueueUnderModalProgress()
-        if (!queueProcessedUnderModalProgress) {
-          if (application.isUnitTestMode) {
-            LOG.assertTrue(myTaskQueue.isEmpty, "This behavior is valid, but most likely not expected in tests: " +
-                                                "completeJustSubmittedTasks does nothing because the queue is already " +
-                                                "being processed in the background thread.")
+    if (!myTaskQueue.isEmpty) {
+      incrementDumbCounter(Throwable())
+      try {
+        while (!myTaskQueue.isEmpty) {
+          val queueProcessedUnderModalProgress = processQueueUnderModalProgress()
+          if (!queueProcessedUnderModalProgress) {
+            if (application.isUnitTestMode) {
+              LOG.assertTrue(myTaskQueue.isEmpty, "This behavior is valid, but most likely not expected in tests: " +
+                                                  "completeJustSubmittedTasks does nothing because the queue is already " +
+                                                  "being processed in the background thread.")
+            }
+            // processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
+            break
           }
-          // processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
-          break
         }
       }
+      finally {
+        decrementDumbCounter()
+      }
     }
-    finally {
-      decrementDumbCounter()
-    }
+
+    // there is no race: dumbTaskLaunchers is only updated from EDT
+    // the myTaskQueue is empty, we expect that DumbTaskLauncher::launch will do nothing other than finishing dumb mode
+    ArrayList(dumbTaskLaunchers).forEach(DumbTaskLauncher::launch) // we need a copy, because the task will remove itself from the list
+
+    // it is still possible that the IDE is dumb at this point. This may happen if dumb queue is actually processed
+    // in the background, and the background thread is processing the last task from the queue.
+    // This will happen, for example, in unit tests in DUMB_EMPTY_INDEX indexing mode: background thread will be processing
+    // the eternal task.
   }
 
   private fun processQueueUnderModalProgress(): Boolean {
