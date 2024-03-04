@@ -60,6 +60,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 
 /**
  * @author Vladislav.Soroka
@@ -491,6 +492,10 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     if (!error.isNull()) {
       handleImportFailure(error.get().first, error.get().second);
     }
+
+    // allow all the invokeLater to pass through the queue, before waiting for indexes to be ready
+    // (specifically, all the invokeLater that schedule indexing after language level change performed by import)
+    runInEdtAndWait(() -> PlatformTestUtil.dispatchAllEventsInIdeEventQueue());
     IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
