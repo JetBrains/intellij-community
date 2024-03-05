@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.kotlin;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.SmartHashSet;
 import kotlinx.metadata.*;
@@ -22,7 +23,7 @@ import static org.jetbrains.jps.javac.Iterators.*;
  * This strategy augments Java strategy with some Kotlin-specific rules. Should be used in projects containing both Java and Kotlin code.
  */
 public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
-
+  private static final TypeRepr.ClassType JVM_OVERLOADS_ANNOTATION = new TypeRepr.ClassType("kotlin/jvm/JvmOverloads");
   @Override
   public boolean processAddedClass(DifferentiateContext context, JvmClass addedClass, Utils future, Utils present) {
     for (JvmClass superClass : filter(future.allDirectSupertypes(addedClass), KotlinAwareJavaDifferentiateStrategy::isSealed)) {
@@ -115,17 +116,27 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
           continue;
         }
         KotlinMeta.KmFunctionsDiff funDiff = funChange.getDiff();
-        if (funDiff.becameNullable() || funDiff.argsBecameNotNull() || funDiff.receiverParameterChanged()) {
+        if (funDiff.becameNullable() || funDiff.argsBecameNotNull()) {
+          debug("One of method's parameters or method's return value has become non-nullable ", changedKmFunction.getName());
           JvmMethod jvmMethod = getJvmMethod(changedClass, JvmExtensionsKt.getSignature(changedKmFunction));
-          if (!isDeclaresDefaultValue(changedKmFunction) && jvmMethod != null) {
-            debug("One of method's parameters or method's return value has become non-nullable; or function's receiver parameter changed: affecting method usages ", changedKmFunction.getName());
-            affectMemberUsages(context, changedClass.getReferenceID(), jvmMethod, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), jvmMethod));
+          if (jvmMethod != null) {
+            // this will affect all usages from both java and kotlin code
+            for (JvmMethod method : withJvmOverloads(changedClass, jvmMethod)) {
+              for (Pair<JvmClass, JvmMethod> pair : future.getOverridingMethods(changedClass, method, method::isSameByJavaRules)) {
+                affectNodeSources(context, pair.getFirst().getReferenceID(), "Affect class where the function is overridden: ");
+              }
+              affectMemberUsages(context, changedClass.getReferenceID(), method, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), method));
+            }
           }
-          else {
-            // functions with default parameters produce several methods in bytecode, so need to affect by lookup usage
+          if (isDeclaresDefaultValue(changedKmFunction)) {
+            // additionally: functions with default parameters produce several methods in bytecode, so need to affect by lookup usage
             debug("One of method's parameters or method's return value has become non-nullable; or function's receiver parameter changed: ", changedKmFunction.getName());
-            affectLookupUsages(context, filter(map(future.withAllSubclasses(changedClass.getReferenceID()), id -> id instanceof JvmNodeReferenceID? ((JvmNodeReferenceID)id) : null), Objects::nonNull), changedKmFunction.getName(), future, null);
+            affectLookupUsages(context, changedClass, changedKmFunction, future);
           }
+        }
+        if (funDiff.receiverParameterChanged()) {
+          debug("Function's receiver parameter changed: ", changedKmFunction.getName());
+          affectLookupUsages(context, changedClass, changedKmFunction, future);
         }
       }
 
@@ -181,13 +192,12 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   public boolean processChangedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmMethod, JvmMethod.Diff> methodChange, Utils future, Utils present) {
     JvmClass changedClass = clsChange.getPast();
     JvmMethod changedMethod = methodChange.getPast();
-    JvmNodeReferenceID clsId = changedClass.getReferenceID();
 
     if (methodChange.getDiff().valueChanged()) {
       KmFunction kmFunction = getKmFunction(changedClass, changedMethod);
       if (kmFunction != null) {
-        debug("Method was inlineable, or has become inlineable or a body of inline method has changed; affecting method usages ", changedMethod);
-        affectLookupUsages(context, flat(asIterable(clsId), future.collectSubclassesWithoutMethod(clsId, changedMethod)), kmFunction.getName(), future, null);
+        debug("Function was inlineable, or has become inlineable or a body of inline method has changed; affecting method usages ", kmFunction.getName());
+        affectLookupUsages(context, changedClass, kmFunction, future);
       }
     }
     return true;
@@ -275,6 +285,10 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     return !iterator.hasNext();
   }
 
+  private void affectLookupUsages(DifferentiateContext context, JvmClass cls, KmFunction func, Utils utils) {
+    affectLookupUsages(context, filter(map(utils.withAllSubclasses(cls.getReferenceID()), id -> id instanceof JvmNodeReferenceID? ((JvmNodeReferenceID)id) : null), Objects::nonNull), func.getName(), utils, null);
+  }
+
   private void affectLookupUsages(DifferentiateContext context, Iterable<JvmNodeReferenceID> symbolOwners, String symbolName, Utils utils, @Nullable Predicate<Node<?, ?>> constraint) {
     affectUsages(context, "lookup '" + symbolName + "'" , symbolOwners, id -> {
       String kotlinName = getKotlinName(id, utils);
@@ -289,6 +303,12 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
 
   private static @Nullable JvmMethod getJvmMethod(JvmClass cls, JvmMethodSignature sig) {
     return sig != null? find(cls.getMethods(), m -> Objects.equals(m.getName(), sig.getName()) && Objects.equals(m.getDescriptor(), sig.getDescriptor())) : null;
+  }
+  private static Iterable<JvmMethod> withJvmOverloads(JvmClass cls, JvmMethod method) {
+    return unique(flat(
+      asIterable(method),
+      filter(cls.getMethods(), m -> Objects.equals(m.getName(), method.getName()) && Objects.equals(m.getType(), method.getType()) && find(m.getAnnotations(), a -> JVM_OVERLOADS_ANNOTATION.equals(a.getAnnotationClass())) != null)
+    ));
   }
 
   private static Iterable<KmFunction> allKmFunctions(Node<?, ?> node) {

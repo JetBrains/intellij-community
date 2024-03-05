@@ -937,20 +937,6 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     return true;
   }
 
-  private void affectSubclasses(DifferentiateContext context, Utils utils, ReferenceID fromClass, boolean affectUsages) {
-    debug("Affecting subclasses of class: ", fromClass, "; with usages affection: ", affectUsages);
-    for (ReferenceID cl : utils.withAllSubclasses(fromClass)) {
-      affectNodeSources(context, cl, "Affecting source file: ");
-      if (affectUsages) {
-        String nodeName = utils.getNodeName(cl);
-        if (nodeName != null) {
-          context.affectUsage(new ClassUsage(nodeName));
-          debug("Affect usage of class ", nodeName);
-        }
-      }
-    }
-  }
-
   private boolean affectOnNonIncrementalChange(DifferentiateContext context, JvmNodeReferenceID owner, Proto proto, Utils utils) {
     if (proto.isPublic()) {
       debug("Public access, switching to a non-incremental mode");
