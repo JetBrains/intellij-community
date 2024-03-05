@@ -12,8 +12,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.pty4j.windows.WinPtyProcess;
 import com.pty4j.windows.conpty.WinConPtyProcess;
+import com.pty4j.windows.winpty.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
