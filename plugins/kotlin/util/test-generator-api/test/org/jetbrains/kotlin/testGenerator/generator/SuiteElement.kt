@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.testGenerator.generator
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.methods.RunTestMethod
@@ -178,6 +179,10 @@ class SuiteElement private constructor(
 
         val testDataPath = testDataPath().toRelativeStringSystemIndependent(group.moduleRoot)
 
+        if (suite.indexingMode.isNotEmpty()) {
+            val args = suite.indexingMode
+            appendAnnotation(TAnnotation<TestIndexingMode>(*args.toTypedArray()))
+        }
         appendAnnotation(TAnnotation<RunWith>(JUnit3RunnerWithInners::class.java))
         appendAnnotation(TAnnotation<TestMetadata>(testDataPath))
         suite.annotations.forEach { appendAnnotation(it) }

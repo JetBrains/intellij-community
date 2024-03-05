@@ -3,8 +3,11 @@ package org.jetbrains.kotlin.testGenerator.generator
 
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.TestIndexingModeSupporter
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -73,6 +76,14 @@ internal fun getImports(suite: TSuite, group: TGroup): List<String> {
 
     if (suite.models.any { it.passTestDataPath }) {
         imports += KotlinTestUtils::class.java.canonicalName
+    }
+
+    if (suite.indexingMode.isNotEmpty()) {
+        imports += TestIndexingModeSupporter::class.java.canonicalName
+        imports += TestIndexingMode::class.java.canonicalName
+        suite.indexingMode.map {
+            imports += "static ${IndexingMode::class.java.canonicalName}.${it.name}"
+        }
     }
 
     imports += TestMetadata::class.java.canonicalName
