@@ -5,9 +5,7 @@ package com.intellij.openapi.progress
 
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.platform.util.progress.durationStep
-import com.intellij.platform.util.progress.forEachWithProgress
 import com.intellij.platform.util.progress.indeterminateStep
-import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.platform.util.progress.progressStep
 import com.intellij.platform.util.progress.withRawProgressReporter
 import kotlinx.coroutines.CoroutineScope
@@ -48,45 +46,6 @@ suspend fun <T> durationStep(
   action: suspend CoroutineScope.() -> T,
 ): T {
   return durationStep(duration, text, action)
-}
-
-@Deprecated(
-  "Moved to com.intellij.platform.util.progress",
-  ReplaceWith("transformWithProgress(concurrent, transform)", "com.intellij.platform.util.progress.transformWithProgress"),
-  DeprecationLevel.ERROR,
-)
-suspend fun <T, R> Collection<T>.transformWithProgress(
-  concurrent: Boolean,
-  transform: suspend (value: T, out: suspend (R) -> Unit) -> Unit,
-): List<R> {
-  return transformWithProgress(concurrent, transform)
-}
-
-@Deprecated(
-  "Moved to com.intellij.platform.util.progress",
-  ReplaceWith("mapWithProgress(concurrent, mapper)", "com.intellij.platform.util.progress.mapWithProgress"),
-  DeprecationLevel.ERROR,
-)
-suspend fun <T, R> Collection<T>.mapWithProgress(concurrent: Boolean, mapper: suspend (value: T) -> R): List<R> {
-  return mapWithProgress(concurrent, mapper)
-}
-
-@Deprecated(
-  "Moved to com.intellij.platform.util.progress",
-  ReplaceWith("filterWithProgress(concurrent, predicate)", "com.intellij.platform.util.progress.filterWithProgress"),
-  DeprecationLevel.ERROR,
-)
-suspend fun <T> Collection<T>.filterWithProgress(concurrent: Boolean, predicate: suspend (value: T) -> Boolean): List<T> {
-  return filterWithProgress(concurrent, predicate)
-}
-
-@Deprecated(
-  "Moved to com.intellij.platform.util.progress",
-  ReplaceWith("forEachWithProgress(concurrent, action)", "com.intellij.platform.util.progress.forEachWithProgress"),
-  DeprecationLevel.ERROR,
-)
-suspend fun <T> Collection<T>.forEachWithProgress(concurrent: Boolean, action: suspend (value: T) -> Unit) {
-  forEachWithProgress(concurrent, action)
 }
 
 @Deprecated(
