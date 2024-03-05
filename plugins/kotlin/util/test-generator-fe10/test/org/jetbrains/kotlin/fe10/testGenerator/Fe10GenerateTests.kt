@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fe10.testGenerator
 
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractAddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest53
@@ -1423,7 +1424,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("idea/tests",  testDataPath = "../../code-insight/postfix-templates/testData") {
-        testClass<AbstractK1PostfixTemplateTest> {
+        testClass<AbstractK1PostfixTemplateTest>(indexingMode = listOf(IndexingMode.DUMB_EMPTY_INDEX, IndexingMode.SMART)) {
             model("expansion/oldTestData", pattern = KT_WITHOUT_DOTS, passTestDataPath = false)
         }
     }

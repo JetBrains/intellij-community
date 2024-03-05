@@ -4,6 +4,10 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.postfix.test;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import com.intellij.testFramework.TestIndexingModeSupporter;
+import org.jetbrains.kotlin.idea.base.test.TestIndexingMode;
+import static com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode.DUMB_EMPTY_INDEX;
+import static com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode.SMART;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
@@ -15,9 +19,11 @@ import org.junit.runner.RunWith;
 @SuppressWarnings("all")
 @TestRoot("code-insight/postfix-templates")
 @TestDataPath("$CONTENT_ROOT")
+@TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/expansion")
 public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTemplateTest {
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/arrayOf")
     public static class ArrayOf extends AbstractK2PostfixTemplateTest {
@@ -57,6 +63,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/assert")
     public static class Assert extends AbstractK2PostfixTemplateTest {
@@ -86,6 +93,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/for")
     public static class For extends AbstractK2PostfixTemplateTest {
@@ -155,6 +163,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/fori")
     public static class Fori extends AbstractK2PostfixTemplateTest {
@@ -179,6 +188,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/forr")
     public static class Forr extends AbstractK2PostfixTemplateTest {
@@ -193,6 +203,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/if")
     public static class If extends AbstractK2PostfixTemplateTest {
@@ -227,6 +238,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/iter")
     public static class Iter extends AbstractK2PostfixTemplateTest {
@@ -236,6 +248,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/itor")
     public static class Itor extends AbstractK2PostfixTemplateTest {
@@ -245,6 +258,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/listOf")
     public static class ListOf extends AbstractK2PostfixTemplateTest {
@@ -274,6 +288,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/nn")
     public static class Nn extends AbstractK2PostfixTemplateTest {
@@ -283,6 +298,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/not")
     public static class Not extends AbstractK2PostfixTemplateTest {
@@ -317,6 +333,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/null")
     public static class Null extends AbstractK2PostfixTemplateTest {
@@ -341,9 +358,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/oldTestData")
     public abstract static class OldTestData extends AbstractK2PostfixTemplateTest {
+        @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/expansion/oldTestData")
         public static class Uncategorized extends AbstractK2PostfixTemplateTest {
@@ -618,6 +637,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             }
         }
 
+        @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/expansion/oldTestData/wrapWithCall")
         public static class WrapWithCall extends AbstractK2PostfixTemplateTest {
@@ -643,6 +663,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/par")
     public static class Par extends AbstractK2PostfixTemplateTest {
@@ -687,6 +708,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/return")
     public static class Return extends AbstractK2PostfixTemplateTest {
@@ -721,6 +743,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/sequenceOf")
     public static class SequenceOf extends AbstractK2PostfixTemplateTest {
@@ -730,6 +753,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/setOf")
     public static class SetOf extends AbstractK2PostfixTemplateTest {
@@ -739,6 +763,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/sout")
     public static class Sout extends AbstractK2PostfixTemplateTest {
@@ -768,6 +793,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/spread")
     public static class Spread extends AbstractK2PostfixTemplateTest {
@@ -792,6 +818,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/try")
     public static class Try extends AbstractK2PostfixTemplateTest {
@@ -816,6 +843,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/unless")
     public static class Unless extends AbstractK2PostfixTemplateTest {
@@ -850,6 +878,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/val")
     public static class Val extends AbstractK2PostfixTemplateTest {
@@ -859,6 +888,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/var")
     public static class Var extends AbstractK2PostfixTemplateTest {
@@ -868,6 +898,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/when")
     public static class When extends AbstractK2PostfixTemplateTest {
@@ -887,6 +918,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/while")
     public static class While extends AbstractK2PostfixTemplateTest {
@@ -921,6 +953,7 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/expansion/with")
     public static class With extends AbstractK2PostfixTemplateTest {
