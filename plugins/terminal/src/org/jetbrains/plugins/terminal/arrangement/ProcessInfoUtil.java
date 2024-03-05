@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessRunner;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -42,7 +41,7 @@ public final class ProcessInfoUtil {
   @Nullable
   private static String doGetCwd(@NotNull Process process) throws Exception {
     if (SystemInfo.isUnix) {
-      int pid = OSProcessUtil.getProcessID(process);
+      int pid = (int)process.pid();
       String result = tryGetCwdFastOnUnix(pid);
       if (result != null) {
         return result;
