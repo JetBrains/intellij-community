@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.terminal.BlockTerminalColors
 import com.intellij.ui.util.maximumWidth
 import com.intellij.ui.util.preferredWidth
 import com.intellij.util.SmartList
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.exp.TerminalSelectionModel.TerminalSelectionListener
-import java.awt.Font
 import java.awt.Point
 import java.util.regex.PatternSyntaxException
 import javax.swing.JTextArea
@@ -55,7 +55,7 @@ class BlockTerminalSearchSession(
   init {
     searchResults.matchesLimit = LivePreviewController.MATCHES_LIMIT
     livePreviewController.on()
-    livePreviewController.setLivePreview(LivePreview(searchResults, TerminalSearchPresentation()))
+    livePreviewController.setLivePreview(LivePreview(searchResults, TerminalSearchPresentation(editor)))
 
     component.addListener(this)
     searchResults.addListener(this)
@@ -255,12 +255,11 @@ class BlockTerminalSearchSession(
     return if (SearchSession.KEY.`is`(dataId)) this else null
   }
 
-  private class TerminalSearchPresentation : LivePreviewPresentation {
+  private class TerminalSearchPresentation(private val editor: Editor) : LivePreviewPresentation {
     override val defaultAttributes: TextAttributes
-      get() = TextAttributes(TerminalUi.searchEntryForeground, TerminalUi.searchEntryBackground, null, null, Font.PLAIN)
+      get() = editor.colorsScheme.getAttributes(BlockTerminalColors.SEARCH_ENTRY) ?: TextAttributes()
     override val cursorAttributes: TextAttributes
-      get() = TextAttributes(TerminalUi.currentSearchEntryForeground, TerminalUi.currentSearchEntryBackground,
-                             null, null, Font.PLAIN)
+      get() = editor.colorsScheme.getAttributes(BlockTerminalColors.CURRENT_SEARCH_ENTRY) ?: TextAttributes()
 
     override val defaultLayer: Int = HighlighterLayer.SELECTION + 1
     override val cursorLayer: Int = HighlighterLayer.SELECTION + 2

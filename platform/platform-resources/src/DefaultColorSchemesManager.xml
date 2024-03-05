@@ -1191,6 +1191,18 @@
             <option name="FONT_TYPE" value="1"/>
           </value>
         </option>
+        <option name="BLOCK_TERMINAL_SEARCH_ENTRY">
+          <value>
+            <option name="FOREGROUND" value="000000" />
+            <option name="BACKGROUND" value="FFEA00" />
+          </value>
+        </option>
+        <option name="BLOCK_TERMINAL_CURRENT_SEARCH_ENTRY">
+          <value>
+            <option name="FOREGROUND" value="000000"/>
+            <option name="BACKGROUND" value="FF941A"/>
+          </value>
+        </option>
         <option name="BLOCK_TERMINAL_BLACK">
           <value>
             <option name="FOREGROUND" value="0" />
@@ -1766,6 +1778,18 @@
         <value>
           <option name="FOREGROUND" value="FFFFFF" />
           <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="BLOCK_TERMINAL_SEARCH_ENTRY">
+        <value>
+          <option name="FOREGROUND" value="000000" />
+          <option name="BACKGROUND" value="FFEA00" />
+        </value>
+      </option>
+      <option name="BLOCK_TERMINAL_CURRENT_SEARCH_ENTRY">
+        <value>
+          <option name="FOREGROUND" value="000000"/>
+          <option name="BACKGROUND" value="FF941A"/>
         </value>
       </option>
       <option name="BLOCK_TERMINAL_BLACK">
