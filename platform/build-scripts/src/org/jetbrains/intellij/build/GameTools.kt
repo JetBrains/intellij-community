@@ -30,6 +30,7 @@ class GameTools(private val context: BuildContext, private val os: OsFamily, pri
     classPaths.addAll(listOf(
       "plugins/android/resources/*",
       "plugins/java/lib/java-api.jar",
+      "plugins/java/lib/java-frontback.jar",
       "plugins/java/lib/java-impl.jar",
       "plugins/java/lib/resources.jar",
       "plugins/java/lib/java_resources_en.jar"
@@ -50,7 +51,7 @@ class GameTools(private val context: BuildContext, private val os: OsFamily, pri
 
     args.addAll(listOf(
       "-Didea.platform.prefix=AndroidGameDevelopmentTools",
-      "-Didea.initially.ask.config=force-not"
+      "-Didea.initially.ask.config=never"
     ))
 
     return args
