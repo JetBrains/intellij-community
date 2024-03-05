@@ -202,8 +202,8 @@
     },
 
     "SegmentedButton": {
-      "selectedStartBorderColor": "Grey5",
-      "selectedEndBorderColor": "Grey5",
+      "selectedStartBorderColor": "Grey7",
+      "selectedEndBorderColor": "Grey7",
       "selectedButtonColor": "Grey3",
       "focusedSelectedButtonColor": "Blue3"
     },
