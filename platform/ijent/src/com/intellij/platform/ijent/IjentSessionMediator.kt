@@ -22,7 +22,7 @@ import kotlin.time.Duration.Companion.seconds
  * of problems in the IDE.
  */
 @ApiStatus.Internal
-class IjentProcessWatcher private constructor(internal val process: Process, private val lastStderrMessages: SharedFlow<String?>) {
+class IjentSessionMediator private constructor(internal val process: Process, private val lastStderrMessages: SharedFlow<String?>) {
   enum class ExpectedErrorCode {
     /** During initialization, even a sudden successful exit is an error. */
     NO,
@@ -77,9 +77,9 @@ class IjentProcessWatcher private constructor(internal val process: Process, pri
     }
 
   companion object {
-    /** See the docs of [IjentProcessWatcher] */
+    /** See the docs of [IjentSessionMediator] */
     @OptIn(DelicateCoroutinesApi::class)
-    fun launch(coroutineScope: CoroutineScope, process: Process, ijentId: IjentId): IjentProcessWatcher {
+    fun launch(coroutineScope: CoroutineScope, process: Process, ijentId: IjentId): IjentSessionMediator {
       val lastStderrMessages = MutableSharedFlow<String?>(
         replay = 0,
         extraBufferCapacity = 30,
@@ -93,17 +93,17 @@ class IjentProcessWatcher private constructor(internal val process: Process, pri
         ijentProcessStderrLogger(process, ijentId, lastStderrMessages)
       }
 
-      val processWatcher = IjentProcessWatcher(process, lastStderrMessages)
+      val mediator = IjentSessionMediator(process, lastStderrMessages)
 
       coroutineScope.launch(coroutineScope.coroutineNameAppended("$ijentId > exit code awaiter")) {
-        ijentProcessExitCodeAwaiter(coroutineScope, ijentId, processWatcher, lastStderrMessages)
+        ijentProcessExitCodeAwaiter(coroutineScope, ijentId, mediator, lastStderrMessages)
       }
 
       coroutineScope.launch(coroutineScope.coroutineNameAppended("$ijentId > finalizer")) {
-        ijentProcessFinalizer(ijentId, processWatcher)
+        ijentProcessFinalizer(ijentId, mediator)
       }
 
-      return processWatcher
+      return mediator
     }
 
     @VisibleForTesting
@@ -146,16 +146,16 @@ private fun logIjentStderr(ijentId: IjentId, line: String) {
 private suspend fun ijentProcessExitCodeAwaiter(
   ijentCoroutineScope: CoroutineScope,
   ijentId: IjentId,
-  processWatcher: IjentProcessWatcher,
+  mediator: IjentSessionMediator,
   lastStderrMessages: MutableSharedFlow<String?>,
 ) {
-  val exitCode = processWatcher.process.awaitExit()
+  val exitCode = mediator.process.awaitExit()
   LOG.debug { "IJent process $ijentId exited with code $exitCode" }
 
-  val isExitExpected = when (processWatcher.expectedErrorCode) {
-    IjentProcessWatcher.ExpectedErrorCode.NO -> false
-    IjentProcessWatcher.ExpectedErrorCode.ZERO -> exitCode == 0
-    IjentProcessWatcher.ExpectedErrorCode.ANY -> true
+  val isExitExpected = when (mediator.expectedErrorCode) {
+    IjentSessionMediator.ExpectedErrorCode.NO -> false
+    IjentSessionMediator.ExpectedErrorCode.ZERO -> exitCode == 0
+    IjentSessionMediator.ExpectedErrorCode.ANY -> true
   }
 
   if (isExitExpected) {
@@ -169,7 +169,7 @@ private suspend fun ijentProcessExitCodeAwaiter(
     GlobalScope.launch {
       val stderr = StringBuilder()
       try {
-        withTimeout(IjentProcessWatcher.lastStderrMessagesTimeout) {
+        withTimeout(IjentSessionMediator.lastStderrMessagesTimeout) {
           collectLines(lastStderrMessages, stderr)
         }
       }
@@ -195,7 +195,7 @@ private suspend fun collectLines(lastStderrMessages: SharedFlow<String?>, stderr
 private val spacesRegex = Regex(" +")
 
 @OptIn(DelicateCoroutinesApi::class)
-private suspend fun ijentProcessFinalizer(ijentId: IjentId, watcher: IjentProcessWatcher) {
+private suspend fun ijentProcessFinalizer(ijentId: IjentId, mediator: IjentSessionMediator) {
   try {
     awaitCancellation()
   }
@@ -204,8 +204,8 @@ private suspend fun ijentProcessFinalizer(ijentId: IjentId, watcher: IjentProces
     throw err
   }
   finally {
-    watcher.expectedErrorCode = IjentProcessWatcher.ExpectedErrorCode.ANY
-    val process = watcher.process
+    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ANY
+    val process = mediator.process
     if (process.isAlive) {
       GlobalScope.launch(Dispatchers.IO + CoroutineName("$ijentId destruction")) {
         try {
@@ -226,4 +226,4 @@ private suspend fun ijentProcessFinalizer(ijentId: IjentId, watcher: IjentProces
   }
 }
 
-private val LOG = logger<IjentProcessWatcher>()
+private val LOG = logger<IjentSessionMediator>()

@@ -42,10 +42,10 @@ interface IjentSessionProvider {
     ijentCoroutineScope: CoroutineScope,
     ijentId: IjentId,
     platform: IjentExecFileProvider.SupportedPlatform,
-    watcher: IjentProcessWatcher,
+    mediator: IjentSessionMediator,
   ): IjentApi {
-    watcher.expectedErrorCode = IjentProcessWatcher.ExpectedErrorCode.ZERO
-    return connect(ijentCoroutineScope, ijentId, platform, watcher.process.inputStream, watcher.process.outputStream)
+    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
+    return connect(ijentCoroutineScope, ijentId, platform, mediator.process.inputStream, mediator.process.outputStream)
   }
 
   companion object {
@@ -81,8 +81,8 @@ fun IjentApi.bindToScope(coroutineScope: CoroutineScope) {
  */
 suspend fun connectToRunningIjent(ijentName: String, platform: IjentExecFileProvider.SupportedPlatform, process: Process): IjentApi =
   IjentSessionRegistry.instanceAsync().register(ijentName) { ijentCoroutineScope, ijentId ->
-    val watcher = IjentProcessWatcher.launch(ijentCoroutineScope, process, ijentId)
-    IjentSessionProvider.instanceAsync().connect(ijentCoroutineScope, ijentId, platform, watcher)
+    val mediator = IjentSessionMediator.launch(ijentCoroutineScope, process, ijentId)
+    IjentSessionProvider.instanceAsync().connect(ijentCoroutineScope, ijentId, platform, mediator)
   }
 
 /**
@@ -113,12 +113,12 @@ suspend fun connectToRunningIjent(ijentName: String, platform: IjentExecFileProv
 suspend fun bootstrapOverShellSession(ijentName: String, shellProcess: Process): Pair<String, IjentApi> {
   val remoteIjentPath: String
   val ijentApi = IjentSessionRegistry.instanceAsync().register(ijentName) { ijentCoroutineScope, ijentId ->
-    val processWatcher = IjentProcessWatcher.launch(ijentCoroutineScope, shellProcess, ijentId)
+    val mediator = IjentSessionMediator.launch(ijentCoroutineScope, shellProcess, ijentId)
 
     val (path, targetPlatform) =
       try {
-        processWatcher.attachStderrOnError {
-          processWatcher.expectedErrorCode = IjentProcessWatcher.ExpectedErrorCode.ANY
+        mediator.attachStderrOnError {
+          mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ANY
           doBootstrapOverShellSession(shellProcess)
         }
       }
@@ -126,7 +126,7 @@ suspend fun bootstrapOverShellSession(ijentName: String, shellProcess: Process):
         runCatching { shellProcess.destroyForcibly() }.exceptionOrNull()?.let(err::addSuppressed)
         throw err
       }
-    processWatcher.expectedErrorCode = IjentProcessWatcher.ExpectedErrorCode.ZERO
+    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
     remoteIjentPath = path
 
     try {
