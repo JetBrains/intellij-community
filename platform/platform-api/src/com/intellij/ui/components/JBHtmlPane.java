@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.html.UtilsKt;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.Document;
+import javax.swing.text.EditorKit;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.View;
 import javax.swing.text.html.HTML;
@@ -24,34 +26,44 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.net.URL;
-import java.util.Dictionary;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
-import static com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions;
 import static com.intellij.util.ui.html.UtilsKt.getCssMargin;
 import static com.intellij.util.ui.html.UtilsKt.getCssPadding;
 
 public class JBHtmlPane extends JEditorPane implements Disposable {
 
-  private final Map<KeyStroke, ActionListener> myKeyboardActions;
-  private final Function<? super @NotNull JBHtmlPane, ? extends @Nullable Dictionary<URL, Image>> myImageResolverFactory;
-  private final Function<@NotNull Color, @NotNull List<@NotNull String>> myAdditionalCssRulesProvider;
+  public record Configuration(
+    @NotNull Map<KeyStroke, ActionListener> keyboardActions,
+    @NotNull Function<? super @NotNull JBHtmlPane, ? extends @Nullable Dictionary<URL, Image>> imageResolverFactory,
+    @NotNull Function<? super @NotNull String, ? extends @Nullable Icon> iconResolver,
+    @NotNull Function<@NotNull Color, @NotNull List<@NotNull StyleSheet>> additionalStyleSheetProvider,
+    @Nullable CSSFontResolver fontResolver,
+    @NotNull List<ExtendableHTMLViewFactory.Extension> extensions
+  ) {
+  }
+
+  public static Configuration defaultConfiguration() {
+    return new Configuration(
+      Collections.emptyMap(), pane -> null, url -> null, color -> Collections.emptyList(), null, Collections.emptyList()
+    );
+  }
+
   private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
   private StyleSheet myCurrentDefaultStyleSheet = null;
   private final MutableStateFlow<Color> editorBackgroundFlow;
 
-  protected JBHtmlPane(
-    @NotNull Map<KeyStroke, ActionListener> keyboardActions,
-    @NotNull Function<? super @NotNull JBHtmlPane, ? extends @Nullable Dictionary<URL, Image>> imageResolverFactory,
-    @NotNull Function<? super @NotNull String, ? extends @Nullable Icon> iconResolver,
-    @NotNull Function<@NotNull Color, @NotNull List<@NotNull String>> additionalCssRulesProvider,
-    @Nullable CSSFontResolver fontResolver
+  private final @NotNull JBHtmlPaneStyleSheetRulesProvider.Configuration myStylesConfiguration;
+  private final @NotNull Configuration myPaneConfiguration;
+
+  public JBHtmlPane(
+    @NotNull JBHtmlPaneStyleSheetRulesProvider.Configuration stylesConfiguration,
+    @NotNull Configuration paneConfiguration
   ) {
-    myKeyboardActions = keyboardActions;
-    myImageResolverFactory = imageResolverFactory;
-    myAdditionalCssRulesProvider = additionalCssRulesProvider;
+    myStylesConfiguration = stylesConfiguration;
+    myPaneConfiguration = paneConfiguration;
     enableEvents(AWTEvent.KEY_EVENT_MASK);
     setEditable(false);
     if (ScreenReader.isActive()) {
@@ -59,23 +71,30 @@ public class JBHtmlPane extends JEditorPane implements Disposable {
       getCaret().setVisible(true);
     }
     else {
-      putClientProperty("caretWidth", 0); // do not reserve space for caret (making content one pixel narrower than component)
+      putClientProperty("caretWidth", 0); // do not reserve space for caret (making content one pixel narrower than the component)
       UIUtil.doNotScrollToCaret(this);
     }
     editorBackgroundFlow = StateFlowKt.MutableStateFlow(getBackground());
-    HTMLEditorKitBuilder builder = new HTMLEditorKitBuilder()
-      .replaceViewFactoryExtensions(Extensions.icons(key -> iconResolver.apply(key)),
-                                    Extensions.BASE64_IMAGES,
-                                    Extensions.INLINE_VIEW_EX,
-                                    Extensions.PARAGRAPH_VIEW_EX,
-                                    Extensions.LINE_VIEW_EX,
-                                    Extensions.BLOCK_VIEW_EX,
-                                    Extensions.FIT_TO_WIDTH_IMAGES,
-                                    Extensions.WBR_SUPPORT);
-    if (fontResolver != null) {
-      builder.withFontResolver(fontResolver);
+    ArrayList<ExtendableHTMLViewFactory.Extension> extensions = new ArrayList<>(myPaneConfiguration.extensions);
+    extensions.addAll(Arrays.asList(
+      ExtendableHTMLViewFactory.Extensions.icons(key -> myPaneConfiguration.iconResolver.apply(key)),
+      ExtendableHTMLViewFactory.Extensions.BASE64_IMAGES,
+      ExtendableHTMLViewFactory.Extensions.INLINE_VIEW_EX,
+      ExtendableHTMLViewFactory.Extensions.PARAGRAPH_VIEW_EX,
+      ExtendableHTMLViewFactory.Extensions.LINE_VIEW_EX,
+      ExtendableHTMLViewFactory.Extensions.BLOCK_VIEW_EX,
+      ExtendableHTMLViewFactory.Extensions.WBR_SUPPORT
+    ));
+    if (!myPaneConfiguration.extensions.contains(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)) {
+      extensions.add(ExtendableHTMLViewFactory.Extensions.HIDPI_IMAGES);
     }
-    HTMLEditorKit editorKit = builder.build();
+
+    HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
+      .replaceViewFactoryExtensions(extensions.toArray(ExtendableHTMLViewFactory.Extension[]::new))
+      .withViewFactoryExtensions()
+      .withFontResolver(myPaneConfiguration.fontResolver != null ? myPaneConfiguration.fontResolver
+                                                                 : EditorCssFontResolver.getGlobalInstance())
+      .build();
     updateDocumentationPaneDefaultCssRules(editorKit);
 
     addPropertyChangeListener(evt -> {
@@ -86,7 +105,7 @@ public class JBHtmlPane extends JEditorPane implements Disposable {
       }
     });
 
-    setEditorKit(editorKit);
+    super.setEditorKit(editorKit);
     setBorder(JBUI.Borders.empty());
   }
 
@@ -106,6 +125,11 @@ public class JBHtmlPane extends JEditorPane implements Disposable {
     super.setText(t);
   }
 
+  @Override
+  public void setEditorKit(EditorKit kit) {
+    throw new UnsupportedOperationException("Cannot change EditorKit for JBHtmlPane");
+  }
+
   public StateFlow<Color> getEditorBackgroundFlow() {
     return editorBackgroundFlow;
   }
@@ -117,8 +141,9 @@ public class JBHtmlPane extends JEditorPane implements Disposable {
     }
     myCurrentDefaultStyleSheet = new StyleSheet();
     Color background = getBackground();
-    for (String rule : myAdditionalCssRulesProvider.apply(background)) {
-      myCurrentDefaultStyleSheet.addRule(rule);
+    myCurrentDefaultStyleSheet.addStyleSheet(JBHtmlPaneStyleSheetRulesProvider.getStyleSheet(background, myStylesConfiguration));
+    for (StyleSheet styleSheet : myPaneConfiguration.additionalStyleSheetProvider.apply(background)) {
+      myCurrentDefaultStyleSheet.addStyleSheet(styleSheet);
     }
     editorStyleSheet.addStyleSheet(myCurrentDefaultStyleSheet);
   }
@@ -126,7 +151,7 @@ public class JBHtmlPane extends JEditorPane implements Disposable {
   @Override
   protected void processKeyEvent(KeyEvent e) {
     KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
-    ActionListener listener = myKeyboardActions.get(keyStroke);
+    ActionListener listener = myPaneConfiguration.keyboardActions.get(keyStroke);
     if (listener != null) {
       listener.actionPerformed(new ActionEvent(this, 0, ""));
       e.consume();
@@ -146,7 +171,7 @@ public class JBHtmlPane extends JEditorPane implements Disposable {
     super.setDocument(doc);
     doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
     if (doc instanceof StyledDocument) {
-      doc.putProperty("imageCache", myImageResolverFactory.apply(this));
+      doc.putProperty("imageCache", myPaneConfiguration.imageResolverFactory.apply(this));
     }
   }
 

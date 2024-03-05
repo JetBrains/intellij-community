@@ -16,7 +16,6 @@ import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.Color
 
 /**
  * This class facilitates generation of highlighted text and code for Quick Documentation.
@@ -57,10 +56,6 @@ object QuickDocHighlightingHelper {
     append(CODE_BLOCK_PREFIX)
       .appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfCodeBlocksEnabled(), code, true)
       .append(CODE_BLOCK_SUFFIX)
-
-  @JvmStatic
-  fun removeSurroundingStyledCodeBlock(string: String): String =
-    string.trim().removeSurrounding(CODE_BLOCK_PREFIX, CODE_BLOCK_SUFFIX)
 
   /**
    * The returned inline code HTML (prefixed with [INLINE_CODE_PREFIX] and suffixed with [INLINE_CODE_SUFFIX])
@@ -269,23 +264,22 @@ object QuickDocHighlightingHelper {
         )
         .firstOrNull()
 
+
   @Internal
   @JvmStatic
-  fun getDefaultDocStyles(
-    colorScheme: EditorColorsScheme,
-    editorPaneBackgroundColor: Color
-  ): List<String> = JBHtmlPaneStyleSheetRulesProvider.getRules(
-    false,
-    colorScheme, editorPaneBackgroundColor,
-    listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)", ".$CLASS_CONTENT div:not(.$CLASS_TOP)",
-           ".$CLASS_SECTIONS"),
-    listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_SEPARATED code", ".$CLASS_DEFINITION_SEPARATED pre",
-           ".$CLASS_BOTTOM code", ".$CLASS_TOP code"),
-    DocumentationSettings.isCodeBackgroundEnabled()
-    && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
-    DocumentationSettings.isCodeBackgroundEnabled()
-    && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
-  )
+  fun getDefaultDocStyleOptions(colorScheme: EditorColorsScheme): JBHtmlPaneStyleSheetRulesProvider.Configuration =
+    JBHtmlPaneStyleSheetRulesProvider.Configuration(
+      colorScheme = colorScheme,
+      inlineCodeParentSelectors = listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)",
+                                         ".$CLASS_CONTENT div:not(.$CLASS_TOP)", ".$CLASS_SECTIONS"),
+      largeCodeFontSizeSelectors = listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_SEPARATED code",
+                                          ".$CLASS_DEFINITION_SEPARATED pre", ".$CLASS_BOTTOM code", ".$CLASS_TOP code"),
+      enableInlineCodeBackground = DocumentationSettings.isCodeBackgroundEnabled()
+                                   && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
+      enableCodeBlocksBackground = DocumentationSettings.isCodeBackgroundEnabled()
+                                   && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
+      useFontLigaturesInCode = false
+    )
 
   private fun StringBuilder.appendHighlightedCode(project: Project, language: Language?, doHighlighting: Boolean,
                                                   code: CharSequence, isForRenderedDoc: Boolean): StringBuilder {

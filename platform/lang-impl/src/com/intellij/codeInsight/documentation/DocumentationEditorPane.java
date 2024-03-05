@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -27,11 +28,13 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.*;
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.getDefaultDocStyleOptions;
 
 @Internal
 public abstract class DocumentationEditorPane extends JBHtmlPane implements Disposable {
@@ -58,11 +61,15 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
     @NotNull Function<? super @NotNull String, ? extends @Nullable Icon> iconResolver
   ) {
     super(
-      keyboardActions,
-      component -> new DocumentationImageProvider(component, imageResolver),
-      getModuleIconResolver(iconResolver),
-      bg -> getDocumentationPaneAdditionalCssRules(bg),
-      EditorCssFontResolver.getGlobalInstance()
+      getDefaultDocStyleOptions(EditorColorsManager.getInstance().getGlobalScheme()),
+      new Configuration(
+        keyboardActions,
+        component -> new DocumentationImageProvider(component, imageResolver),
+        getModuleIconResolver(iconResolver),
+        bg -> getDocumentationPaneAdditionalCssRules(),
+        EditorCssFontResolver.getGlobalInstance(),
+        Collections.singletonList(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
+      )
     );
     setBackground(BACKGROUND_COLOR);
   }
