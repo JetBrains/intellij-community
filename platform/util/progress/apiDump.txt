@@ -1,5 +1,4 @@
 *f:com.intellij.platform.util.progress.ContextKt
-- sf:getRawProgressReporter(kotlin.coroutines.CoroutineContext):com.intellij.platform.util.progress.RawProgressReporter
 - sf:internalCurrentStepAsRaw(kotlin.coroutines.Continuation):java.lang.Object
 - sf:internalCurrentStepAsSequential(I,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.util.progress.ProgressPipe
