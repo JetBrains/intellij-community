@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
  * Delegates some of the rendering and data retrieval functionality to [FileSearchEverywhereContributor].
  */
 @ApiStatus.Experimental
-class SemanticFileSearchEverywhereContributor(initEvent: AnActionEvent)
+open class SemanticFileSearchEverywhereContributor(initEvent: AnActionEvent)
   : FileSearchEverywhereContributor(initEvent), SemanticSearchEverywhereContributor,
     SearchEverywhereConcurrentPsiElementsFetcher, PossibleSlowContributor {
   private val project = initEvent.project ?: ProjectManager.getInstance().openProjects[0]
