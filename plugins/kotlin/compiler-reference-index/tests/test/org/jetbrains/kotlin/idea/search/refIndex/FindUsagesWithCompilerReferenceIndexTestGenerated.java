@@ -450,6 +450,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                         runTest("../../idea/tests/testData/findUsages/kotlin/conventions/invoke/invokeInObjectAsFunction.0.kt");
                     }
                 }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/invoke")
+                public static class TestSuspendInvoke extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("suspendInvoke.0.kt")
+                    public void testSuspendInvoke() throws Exception {
+                        runTest("../../idea/tests/testData/findUsages/kotlin/conventions/invoke/suspendInvoke.0.kt");
+                    }
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)

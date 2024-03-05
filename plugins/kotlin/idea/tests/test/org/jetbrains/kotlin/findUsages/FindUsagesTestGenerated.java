@@ -206,6 +206,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 public void testInvokeInObjectAsFunction() throws Exception {
                     runTest("testData/findUsages/kotlin/conventions/invoke/invokeInObjectAsFunction.0.kt");
                 }
+
+                @TestMetadata("suspendInvoke.0.kt")
+                public void testSuspendInvoke() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/invoke/suspendInvoke.0.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
