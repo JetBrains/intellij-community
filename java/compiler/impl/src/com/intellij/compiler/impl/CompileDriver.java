@@ -643,6 +643,7 @@ public final class CompileDriver {
     try {
       List<CompileTask> tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTaskList();
       if (!tasks.isEmpty()) {
+        final long startDuration = System.currentTimeMillis();
         progressIndicator.setText(
           JavaCompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks")
         );
@@ -662,6 +663,8 @@ public final class CompileDriver {
             );
           }
         }
+        final long endDuration = System.currentTimeMillis();
+        BuildUsageCollector.logPreCompileCompleted(endDuration - startDuration, beforeTasks);
       }
     }
     finally {
