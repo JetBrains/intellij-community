@@ -46,7 +46,7 @@ class IjentProcessWatcher private constructor(internal val process: Process) {
       val processWatcher = IjentProcessWatcher(process)
 
       coroutineScope.launch(coroutineScope.coroutineNameAppended("$ijentId > exit code awaiter")) {
-        ijentProcessExitCodeAwaiter(ijentId, processWatcher, lastStderrMessages)
+        ijentProcessExitCodeAwaiter(coroutineScope, ijentId, processWatcher, lastStderrMessages)
       }
 
       coroutineScope.launch(coroutineScope.coroutineNameAppended("$ijentId > finalizer")) {
@@ -94,6 +94,7 @@ private fun logIjentStderr(ijentId: IjentId, line: String) {
 
 @OptIn(DelicateCoroutinesApi::class)
 private suspend fun ijentProcessExitCodeAwaiter(
+  ijentCoroutineScope: CoroutineScope,
   ijentId: IjentId,
   processWatcher: IjentProcessWatcher,
   lastStderrMessages: ReceiveChannel<String>,
@@ -102,7 +103,7 @@ private suspend fun ijentProcessExitCodeAwaiter(
   LOG.debug { "IJent process $ijentId exited with code $exitCode" }
   when {
     processWatcher.anyExitCodeIsExpected || exitCode == 0 && processWatcher.zeroExitCodeIsExpected -> {
-      coroutineContext.cancel(CancellationException("The process expectedly exited with code $exitCode"))
+      ijentCoroutineScope.cancel(CancellationException("The process expectedly exited with code $exitCode"))
     }
     else -> {
       val message = "The process suddenly exited with the code $exitCode"
@@ -124,7 +125,7 @@ private suspend fun ijentProcessExitCodeAwaiter(
           LOG.error(RuntimeExceptionWithAttachments(message, Attachment("stderr", stderr.toString())))
         }
       }
-      coroutineContext.cancel(CancellationException(message))
+      ijentCoroutineScope.cancel(CancellationException(message))
     }
   }
 }
