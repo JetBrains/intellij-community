@@ -187,56 +187,6 @@ suspend fun <T> progressStep(
   return coroutineScope(action)
 }
 
-@Deprecated("Pass `Collection.size` as argument to `reportProgress` or `reportSequentialProgress`")
-fun Collection<*>.itemDuration(): Double = this.size.itemDuration()
-
-@Deprecated("Pass `Collection.size` as argument to `reportProgress` or `reportSequentialProgress`")
-fun Int.itemDuration(): Double = 1.0 / this
-
-@Deprecated("Use `ProgressReporter.sizedStep`")
-suspend fun <T> durationStep(duration: Double, text: ProgressText? = null, action: suspend CoroutineScope.() -> T): T {
-  return coroutineScope(action)
-}
-
-@Deprecated(
-  "Use `mapConcurrent` with `reportProgress`," +
-  " or `map` with `reportProgress` or `reportSequentialProgress`",
-)
-suspend fun <T, R> Collection<T>.mapWithProgress(concurrent: Boolean = false, mapper: suspend (value: T) -> R): List<R> {
-  return map {
-    mapper(it)
-  }
-}
-
-/**
- * ```
- * val filtered = items.filterWithProgress(predicate)
- * filtered.forEachWithProgress(action)
- * // becomes
- * items.forEachWithProgress {
- *   if (predicate(it)) {
- *     action(it)
- *   }
- * }
- * ```
- */
-@Deprecated("Inline filter step into nearby `mapWithProgress`/`forEachWithProgress`", level = DeprecationLevel.ERROR)
-suspend fun <T> Collection<T>.filterWithProgress(concurrent: Boolean = false, predicate: suspend (value: T) -> Boolean): List<T> {
-  return filter {
-    predicate(it)
-  }
-}
-
-@Deprecated(
-  "Use `forEachConcurrent` with `reportProgress`," +
-  " or `forEach` with `reportProgress` or `reportSequentialProgress`",
-)
-suspend fun <T> Collection<T>.forEachWithProgress(concurrent: Boolean = false, action: suspend (value: T) -> Unit) {
-  forEach {
-    action(it)
-  }
-}
-
 @Deprecated("Use `reportRawProgress`")
 suspend fun <X> withRawProgressReporter(action: suspend CoroutineScope.() -> X): X {
   return reportRawProgress { reporter ->
