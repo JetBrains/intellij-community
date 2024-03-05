@@ -6,15 +6,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.resolve.GradleResolverUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -23,9 +22,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 
 import java.util.*;
 
+import static com.intellij.openapi.util.text.Strings.isEmpty;
 import static com.intellij.psi.util.InheritanceUtil.isInheritor;
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT;
 import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
 
 public final class GradleGroovyRunnerUtil {
   @NotNull
@@ -138,5 +140,46 @@ public final class GradleGroovyRunnerUtil {
   @NotNull
   public static List<String> getTasksTarget(@NotNull PsiElement element) {
     return getTasksTarget(element, null);
+  }
+
+  static @Nullable String getTaskNameIfContains(PsiElement element) {
+    String taskNameCandidate = getTaskNameCandidate(element);
+    if (isEmpty(taskNameCandidate)) return null;
+
+    List<String> tasks = getTasksTarget(element);
+    if (!tasks.isEmpty() && tasks.contains(taskNameCandidate)) {
+      return taskNameCandidate;
+    }
+    return null;
+  }
+
+  private static @Nullable String getTaskNameCandidate(PsiElement element) {
+    if (!(element instanceof LeafElement leaf)
+        || element instanceof PsiWhiteSpace
+        || element instanceof PsiComment
+    ) {
+      return null;
+    }
+
+    if (parentIsReferenceInMethodCall(element)) {
+      return element.getText().trim();
+    }
+    else if (isLiteralArgumentOfMethodCall(element)
+             && (leaf.getElementType() == STRING_SQ || leaf.getElementType() == STRING_DQ)
+    ) {
+      return leaf.getText().substring(1, leaf.getText().length() - 1);
+    }
+    return null;
+  }
+
+  private static boolean parentIsReferenceInMethodCall(@NotNull PsiElement element) {
+    return element.getParent() instanceof GrReferenceExpression
+           && element.getParent().getParent() instanceof GrMethodCallExpression;
+  }
+
+  private static boolean isLiteralArgumentOfMethodCall(@NotNull PsiElement element) {
+    return element.getParent() instanceof GrLiteral literal
+           && literal.getParent() instanceof GrArgumentList argumentList
+           && argumentList.getParent() instanceof GrMethodCallExpression;
   }
 }
