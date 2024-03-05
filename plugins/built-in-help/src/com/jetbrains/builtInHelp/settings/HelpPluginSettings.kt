@@ -17,9 +17,7 @@ class HelpPluginSettings : PersistentStateComponent<HelpPluginSettings> {
   var useBrowser: @NonNls String = BuiltInHelpBundle.message("use.default.browser")
   var openHelpBaseUrl: @NonNls String = defaultBaseUrl
 
-  override
-
-  fun getState(): HelpPluginSettings {
+  override fun getState(): HelpPluginSettings {
     return this
   }
 
