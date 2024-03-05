@@ -7,6 +7,8 @@ import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
@@ -82,14 +84,16 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
           if (!configurable.isModified()) {
             return;
           }
-          try {
-            configurable.apply();
-            WelcomeScreenEventCollector.logPluginsModified();
-            InstalledPluginsState.getInstance().runShutdownCallback();
-          }
-          catch (ConfigurationException exception) {
-            Logger.getInstance(PluginsTabFactory.class).error(exception);
-          }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            try {
+              configurable.apply();
+              WelcomeScreenEventCollector.logPluginsModified();
+              InstalledPluginsState.getInstance().runShutdownCallback();
+            }
+            catch (ConfigurationException exception) {
+              Logger.getInstance(PluginsTabFactory.class).error(exception);
+            }
+          }, ModalityState.nonModal());
         }
       });
 
