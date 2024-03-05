@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.projectFilter
 
+import com.intellij.internal.statistic.DeviceIdManager
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SmartList
@@ -12,6 +15,7 @@ import java.util.concurrent.ConcurrentMap
 
 fun useCachingFilesFilter() = Registry.`is`("caching.index.files.filter.enabled")
 fun usePersistentFilesFilter() = Registry.`is`("persistent.index.files.filter.enabled")
+fun allowABTest() = Registry.`is`("persistent.index.filter.allow.ab.test")
 
 internal sealed interface ProjectIndexableFilesFilterHolder {
   fun getProjectIndexableFiles(project: Project): IdFilter?
@@ -43,6 +47,8 @@ internal sealed interface ProjectIndexableFilesFilterHolder {
   fun getHealthCheck(project: Project): ProjectIndexableFilesFilterHealthCheck?
 }
 
+private val log = logger<IncrementalProjectIndexableFilesFilterHolder>()
+
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder {
   private val myProjectFilters: ConcurrentMap<Project, Pair<ProjectIndexableFilesFilter, ProjectIndexableFilesFilterHealthCheck>> = ConcurrentHashMap()
 
@@ -53,14 +59,34 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun onProjectOpened(project: Project) {
+    val factory = chooseFactory(project.name)
+
+    val filter = factory.create(project)
+
+    val healthCheck = factory.createHealthCheck(project, filter)
+    healthCheck.setUpHealthCheck()
+    myProjectFilters[project] = Pair(filter, healthCheck)
+  }
+
+  private fun chooseFactory(projectName: String): ProjectIndexableFilesFilterFactory {
+    if (usePersistentFilesFilter() && allowABTest()) {
+        val deviceId = log.runAndLogException {
+          DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "FUS")
+        }
+        if (deviceId != null) {
+          val rawHash = deviceId.hashCode()
+          val chosenFactory = if (rawHash % 2 == 0) PersistentProjectIndexableFilesFilterFactory() else IncrementalProjectIndexableFilesFilterFactory()
+          log.info("${chosenFactory.javaClass.simpleName} is chosen as indexable files filter factory for project: $projectName. Device hash is ${rawHash} % 2 = ${rawHash % 2}")
+          return chosenFactory
+        }
+    }
+
     val factory = if (usePersistentFilesFilter()) PersistentProjectIndexableFilesFilterFactory()
     else if (useCachingFilesFilter()) CachingProjectIndexableFilesFilterFactory()
     else IncrementalProjectIndexableFilesFilterFactory()
 
-    val filter = factory.create(project)
-    val healthCheck = factory.createHealthCheck(project, filter)
-    healthCheck.setUpHealthCheck()
-    myProjectFilters[project] = Pair(filter, healthCheck)
+    log.info("${factory.javaClass.simpleName} is chosen as indexable files filter factory for project: $projectName")
+    return factory
   }
 
   override fun wasDataLoadedFromDisk(project: Project): Boolean {
