@@ -163,7 +163,7 @@ public class ContentTabLabel extends ContentLabel {
   public void update() {
     setHorizontalAlignment(SwingConstants.LEFT);
     if (myLayout.isToDrawTabs() == TabContentLayout.TabsDrawMode.HIDE) {
-      setBorder(null);
+      myBorder.setBorderInsets(0, 0, 0, 0);
     }
 
     updateTextAndIcon(myContent, isSelected(), false);

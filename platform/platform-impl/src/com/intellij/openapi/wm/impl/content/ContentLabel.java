@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class ContentLabel extends BaseLabel {
+  private static final Logger LOG = Logger.getInstance(ContentLabel.class);
   private static final int DEFAULT_HORIZONTAL_INSET = 12;
   protected static final int ICONS_GAP = 3;
 
@@ -37,6 +40,8 @@ public abstract class ContentLabel extends BaseLabel {
   protected int myIconWithInsetsWidth;
 
   private CurrentTooltip currentIconTooltip;
+
+  protected final @NotNull ContentLabelBorder myBorder = new ContentLabelBorder();
 
   private final BaseButtonBehavior behavior = new BaseButtonBehavior(this, (Void)null) {
     @Override
@@ -51,6 +56,18 @@ public abstract class ContentLabel extends BaseLabel {
     behavior.setupListeners();
     behavior.setActionTrigger(BaseButtonBehavior.MOUSE_PRESSED_RELEASED);
     behavior.setMouseDeadzone(TimedDeadzone.NULL);
+    setBorder(myBorder);
+  }
+
+  @Override
+  public void setBorder(Border border) {
+    // called from a superclass constructor, so myBorder CAN be null
+    //noinspection ConstantValue
+    if (myBorder != null && border != myBorder) {
+      LOG.error(new Throwable("ContentLabel doesn't support custom borders"));
+      return;
+    }
+    super.setBorder(border);
   }
 
   protected abstract void handleMouseClick(@NotNull MouseEvent e);
@@ -231,14 +248,13 @@ public abstract class ContentLabel extends BaseLabel {
       }
     }
 
-    //noinspection UseDPIAwareBorders
-    setBorder(new EmptyBorder(0, left, 0, right));
+    myBorder.setBorderInsets(0, left, 0, right);
     myIconWithInsetsWidth = rightIconWidth + right + left;
 
     if (ExperimentalUI.isNewUI()) {
       JBInsets insets = JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets();
       insets.left = Math.max(left, insets.left);
-      setBorder(new EmptyBorder(insets));
+      myBorder.setBorderInsets(insets);
       myIconWithInsetsWidth = rightIconWidth + right + left;
     }
 
@@ -286,6 +302,25 @@ public abstract class ContentLabel extends BaseLabel {
     @Override
     public int getHeight() {
       return ContentLabel.this.getHeight();
+    }
+  }
+
+  protected static class ContentLabelBorder extends EmptyBorder {
+
+    ContentLabelBorder() {
+      //noinspection UseDPIAwareBorders
+      super(0, 0, 0, 0);
+    }
+
+    protected void setBorderInsets(@NotNull Insets insets) {
+      setBorderInsets(insets.top, insets.left, insets.bottom, insets.right);
+    }
+
+    protected void setBorderInsets(int top, int left, int bottom, int right) {
+      this.top = top;
+      this.left = left;
+      this.bottom = bottom;
+      this.right = right;
     }
   }
 }
