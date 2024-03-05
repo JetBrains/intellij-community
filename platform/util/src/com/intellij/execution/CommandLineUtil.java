@@ -24,7 +24,7 @@ public final class CommandLineUtil {
   private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
-  private static final String SHELL_WHITELIST_CHARACTERS = "$:-._/@=";
+  public static final String SHELL_WHITELIST_CHARACTERS = "-._/@=";
 
   private static final char Q = '\"';
   private static final String QQ = "\"\"";
@@ -500,10 +500,16 @@ public final class CommandLineUtil {
    * replacing single quotes with hardly readable but recursion-safe {@code '"'"'}.
    */
   public static @NotNull String posixQuote(@NotNull String argument) {
-    return shouldWrapWithQuotes(argument) ? "'" + StringUtil.replace(argument, "'", "'\"'\"'") + "'" : argument;
+    return posixQuote(argument, SHELL_WHITELIST_CHARACTERS);
   }
 
-  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument) {
+  public static @NotNull String posixQuote(@NotNull String argument, @NotNull String whiteListCharacters) {
+    return shouldWrapWithQuotes(argument, whiteListCharacters) ?
+           "'" + StringUtil.replace(argument, "'", "'\"'\"'") + "'" :
+           argument;
+  }
+
+  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument, @NotNull String whiteListCharacters) {
     if (argument.length() == 0) {
       return true;
     }
@@ -511,7 +517,7 @@ public final class CommandLineUtil {
       char c = argument.charAt(i);
       if (!Character.isAlphabetic(c) &&
           !Character.isDigit(c) &&
-          !StringUtil.containsChar(SHELL_WHITELIST_CHARACTERS, c)) {
+          !StringUtil.containsChar(whiteListCharacters, c)) {
         return true;
       }
     }
