@@ -144,6 +144,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
    * @return true if changes were applied without a restart
    */
   public boolean apply(@Nullable JComponent parent) throws ConfigurationException {
+    if (ApplicationManager.getApplication().isExitInProgress()) {
+      needRestart = true; // don't unload or load plugins, app will exit anyway
+    }
+
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
     updatePluginDependencies(pluginIdMap);
     assertCanApply(pluginIdMap);
