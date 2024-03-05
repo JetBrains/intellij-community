@@ -33,6 +33,11 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
         runTest("testData/codeInsight/hints/arguments/javaParameters.kt");
     }
 
+    @TestMetadata("namedParameters.kt")
+    public void testNamedParameters() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/namedParameters.kt");
+    }
+
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("testData/codeInsight/hints/arguments/simple.kt");

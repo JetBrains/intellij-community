@@ -95,11 +95,12 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
     ) {
         for ((index, symbol) in valueParameters.withIndex()) {
             if (index >= arguments.size) break
+            val argument = arguments[index]
+            if (argument.isNamed()) break
 
             val symbolName = symbol.name
             if (!symbolName.isSpecial) {
                 val name = symbolName.asString()
-                val argument = arguments[index]
                 sink.addPresentation(InlineInlayPosition(argument.startOffset, true), hasBackground = true) {
                     if (symbol.isVararg) text(Typography.ellipsis.toString())
                     text(name,
