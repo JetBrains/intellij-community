@@ -7,10 +7,10 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.builtInHelp.BuiltInHelpBundle
 import org.jetbrains.annotations.NonNls
 
-@Service(Service.Level.APP)
-@State(name = "HelpPluginSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 const val defaultBaseUrl = "https://www.jetbrains.com/"
 
+@Service(Service.Level.APP)
+@State(name = "HelpPluginSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)])
 class HelpPluginSettings : PersistentStateComponent<HelpPluginSettings> {
 
   var openHelpFromWeb: Boolean = true
@@ -29,8 +29,6 @@ class HelpPluginSettings : PersistentStateComponent<HelpPluginSettings> {
 
   companion object {
     fun getInstance(): HelpPluginSettings {
-      //Suppressed because the plugin descriptor for built-in help plugins is generated BuiltInHelpPlugin.kt and is not available for analysis
-      @Suppress("IncorrectServiceRetrieving")
       return application.getService(HelpPluginSettings::class.java)
     }
   }
