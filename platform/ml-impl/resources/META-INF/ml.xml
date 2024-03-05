@@ -6,6 +6,8 @@
 
     <projectService serviceInterface="com.intellij.internal.statistic.local.LanguageUsageStatisticsProvider"
                     serviceImplementation="com.intellij.internal.statistic.local.LanguageUsageStatisticsProviderImpl"/>
+
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.platform.ml.impl.logs.MLEventLoggerProvider"/>
   </extensions>
 
   <projectListeners>
