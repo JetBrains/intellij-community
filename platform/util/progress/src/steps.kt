@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Experimental
 @file:Suppress("DeprecatedCallableAddReplaceWith", "UNUSED_PARAMETER")
 
 package com.intellij.platform.util.progress
@@ -89,6 +88,7 @@ suspend fun <T> reportProgress(size: Int = 100, action: suspend (reporter: Progr
  * }
  * ```
  */
+@Experimental
 suspend fun <T> reportProgressScope(size: Int = 100, action: suspend CoroutineScope.(reporter: ProgressReporter) -> T): T {
   return reportProgress(size) {
     ignoreProgressReportingIn {
@@ -170,6 +170,7 @@ suspend fun <T, R> Collection<T>.mapWithProgress(mapper: suspend (value: T) -> R
 }
 
 // <editor-fold desc="Deprecated stuff">
+@Experimental
 @Deprecated("Use `SequentialProgressReporter.indeterminateStep`")
 suspend fun <T> indeterminateStep(
   text: ProgressText? = null,
@@ -178,6 +179,7 @@ suspend fun <T> indeterminateStep(
   return coroutineScope(action)
 }
 
+@Experimental
 @Deprecated("Use `SequentialProgressReporter.sizedStep`")
 suspend fun <T> progressStep(
   endFraction: Double,
@@ -187,11 +189,13 @@ suspend fun <T> progressStep(
   return coroutineScope(action)
 }
 
+@Experimental
 @Deprecated("Use `ProgressReporter.sizedStep`")
 suspend fun <T> durationStep(duration: Double, text: ProgressText? = null, action: suspend CoroutineScope.() -> T): T {
   return coroutineScope(action)
 }
 
+@Experimental
 @Deprecated("Use `reportRawProgress`")
 suspend fun <X> withRawProgressReporter(action: suspend CoroutineScope.() -> X): X {
   return reportRawProgress { reporter ->
