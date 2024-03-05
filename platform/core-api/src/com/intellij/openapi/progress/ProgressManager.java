@@ -173,8 +173,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <li>or use {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}</li>
    * <li>or {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}.</li>
    * </ul>
-   *
    * </p>
+   *
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
    * If a dialog can't be shown (e.g. under write action or in headless environment),
@@ -197,7 +197,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <p>
    * See {@link ProgressIndicator} notice.
    * See {@link #runProcessWithProgressSynchronously(Runnable, String, boolean, Project)} notice.
-   * <p/>
+   * </p>
+   *
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
    * If a dialog can't be shown (e.g. under write action or in headless environment),
@@ -221,7 +222,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <p>
    * See {@link ProgressIndicator} notice.
    * See {@link #runProcessWithProgressSynchronously(Runnable, String, boolean, Project)} notice.
-   * <p/>
+   * </p>
    *
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
@@ -274,7 +275,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * Use {@link Task#queue()} instead of this method, or migrate the Task to coroutines.
    * Please find appropriate replacements in the respective Task documentation:
    * {@link Task.Backgroundable}, {@link Task.Modal}, {@link Task.WithResult}, {@link Task.ConditionalModal}.
-   * <p/>
+   * </p>
    *
    * Runs a specified {@code task} in either background/foreground thread and shows a progress dialog.
    *
@@ -293,7 +294,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <p>
    * See {@link ProgressIndicator} notice.
    * See {@link Task.WithResult} notice.
-   * <p/>
+   * </p>
    *
    * Runs a specified computation with a modal progress dialog.
    */
