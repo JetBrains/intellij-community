@@ -90,7 +90,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
     }
 
     val document = editor.document
-    val sessionData = currentSessionSegments.remove(fileEditor)!!
+    val sessionData = currentSessionSegments.remove(fileEditor) ?: return
     if (sessionData.documentStartedHash != document.hashCode()) {
       editor.putUserData(sessionSegmentsTotalDurationMs, AtomicLong())
       // unmatched starting/finished events? bail out just in case
