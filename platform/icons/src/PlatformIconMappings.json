@@ -324,6 +324,7 @@
       "expandAll.svg": "actions/expandall.svg",
       "export.svg": "toolbarDecorator/export.svg",
       "filter.svg": "general/filter.svg",
+      "greenCheckmark.svg": "general/greenCheckmark.svg",
       "help.svg": "actions/help.svg",
       "hide.svg": "general/hideToolWindow.svg",
       "history.svg": [
