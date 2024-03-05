@@ -55,15 +55,16 @@ internal abstract class AbstractSquareStripeButton(
       JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
     }
 
+    val color = JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
     val rect = Rectangle(areaSize)
-    buttonLook.paintLookBackground(g, rect, JBUI.CurrentTheme.ActionButton.pressedBackground())
+    buttonLook.paintLookBackground(g, rect, color)
     icon.let {
       val x = (areaSize.width - it.iconWidth) / 2
       val y = (areaSize.height - it.iconHeight) / 2
       buttonLook.paintIcon(g, this, it, x, y)
     }
 
-    buttonLook.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.pressedBorder())
+    buttonLook.paintLookBorder(g, rect, color)
   }
 }
 
