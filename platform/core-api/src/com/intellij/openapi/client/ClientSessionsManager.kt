@@ -23,7 +23,7 @@ open class ClientSessionsManager<T : ClientSession> {
     @JvmStatic
     @JvmOverloads
     fun getAppSession(clientId: ClientId = ClientId.current): ClientAppSession? {
-      return ApplicationManager.getApplication().service<ClientSessionsManager<ClientAppSession>>().getSession(clientId)
+      return ApplicationManager.getApplication()?.service<ClientSessionsManager<ClientAppSession>>()?.getSession(clientId)
     }
 
     /**
