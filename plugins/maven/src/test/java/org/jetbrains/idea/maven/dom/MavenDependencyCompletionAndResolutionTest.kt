@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings
+import com.intellij.testFramework.IndexingTestUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -369,6 +370,8 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
                           """.trimIndent())
 
     importProjectsWithErrors(projectPom, m1, m2)
+
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "m1", "m2")
     assertCompletionVariantsInclude(projectPom, LOOKUP_STRING, "project-group:m1:1", "project-group:m2:1")
