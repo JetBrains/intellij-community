@@ -151,14 +151,7 @@ $rollbackSources
 
     @JvmStatic
     fun runWithDiagnostics(diagnostics: PsiBuilderDiagnostics?, runnable: Runnable) {
-      val oldValue = PsiBuilderImpl.DIAGNOSTICS
-      try {
-        PsiBuilderImpl.DIAGNOSTICS = diagnostics
-        runnable.run()
-      }
-      finally {
-        PsiBuilderImpl.DIAGNOSTICS = oldValue
-      }
+      computeWithDiagnostics(diagnostics) { runnable.run(); null }
     }
   }
 }
