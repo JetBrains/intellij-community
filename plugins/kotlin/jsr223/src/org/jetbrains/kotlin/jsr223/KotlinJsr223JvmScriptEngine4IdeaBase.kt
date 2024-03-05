@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.daemon.client.DaemonReportingTargets
 import org.jetbrains.kotlin.daemon.client.KotlinCompilerClient
 import org.jetbrains.kotlin.daemon.client.KotlinRemoteReplCompilerClient
 import org.jetbrains.kotlin.daemon.common.*
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.utils.KotlinPaths
 import org.jetbrains.kotlin.utils.KotlinPathsFromHomeDir
 import java.io.File
@@ -24,16 +23,17 @@ import kotlin.reflect.KClass
 
 // TODO: need to manage resources here, i.e. call replCompiler.dispose when engine is collected
 
-class KotlinJsr223JvmScriptEngine4Idea(
+open class KotlinJsr223JvmScriptEngine4IdeaBase(
     factory: ScriptEngineFactory,
     templateClasspath: List<File>,
     templateClassName: String,
+    private val kotlincDirProvider: () -> File,
     private val getScriptArgs: (ScriptContext, Array<out KClass<out Any>>?) -> ScriptArgsWithTypes?,
     private val scriptArgsTypes: Array<out KClass<out Any>>?
 ) : KotlinJsr223JvmScriptEngineBase(factory) {
 
     private val daemon by lazy {
-        val libPath = KotlinPathsFromHomeDir(KotlinPluginLayout.kotlinc)
+        val libPath = KotlinPathsFromHomeDir(kotlincDirProvider.invoke())
         val classPath = libPath.classPath(KotlinPaths.ClassPaths.CompilerWithScripting)
         assert(classPath.all { it.toPath().exists() })
         val compilerId = CompilerId.makeCompilerId(classPath)
