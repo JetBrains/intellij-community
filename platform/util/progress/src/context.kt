@@ -80,9 +80,11 @@ fun CoroutineContext.internalCreateRawHandleFromContextStepIfExistsAndFresh(): R
 @Deprecated("To report use `reportProgress` or `reportSequentialProgress`. Don't pass as context.")
 fun ProgressReporter0.asContextElement(): CoroutineContext.Element = ProgressReporterElement.Step
 
+@get:Internal
 @Deprecated("To report use `reportProgress` or `reportSequentialProgress`. Don't pass as context.")
 val CoroutineContext.progressReporter: ProgressReporter0? get() = null
 
+@get:Internal
 @Deprecated("To report use `reportProgress` or `reportSequentialProgress`. Don't pass as context.")
 val CoroutineScope.progressReporter: ProgressReporter0? get() = null
 
