@@ -23,6 +23,9 @@ object BlockTerminalColors {
 
   @JvmField val COMMAND: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_COMMAND")
 
+  @JvmField val SEARCH_ENTRY: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_SEARCH_ENTRY")
+  @JvmField val CURRENT_SEARCH_ENTRY: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_CURRENT_SEARCH_ENTRY")
+
   @JvmField val BLACK: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_BLACK")
   @JvmField val RED: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_RED")
   @JvmField val GREEN: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_GREEN")
