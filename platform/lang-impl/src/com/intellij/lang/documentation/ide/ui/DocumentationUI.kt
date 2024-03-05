@@ -97,6 +97,7 @@ internal class DocumentationUI(
     trackDocumentationBackgroundChange(this) {
       scrollPane.viewport.background = it
       locationLabel.background = it
+      switcherToolbarComponent.background = it
     }
 
     browser.ui = this
