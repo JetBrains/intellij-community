@@ -11,5 +11,6 @@ Compiling files:
   src/foo3.kt
   src/useF.kt
 End of files
-Exit code: OK
+Exit code: ABORT
 ------------------------------------------
+COMPILATION FAILED
