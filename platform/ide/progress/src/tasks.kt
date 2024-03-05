@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Experimental
-
 package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.application.ApplicationManager
@@ -14,7 +12,6 @@ import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus.Experimental
 
 suspend fun <T> withBackgroundProgress(
   project: Project,
