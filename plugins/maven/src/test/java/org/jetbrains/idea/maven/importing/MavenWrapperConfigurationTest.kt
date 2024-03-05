@@ -3,9 +3,11 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.RunAll
 import com.intellij.util.io.ZipUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
@@ -26,6 +28,7 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
     httpServerFixtureForWrapper.setUp()
   }
 
+  override fun runInDispatchThread(): Boolean = false
 
   public override fun tearDown() {
     RunAll(
@@ -36,7 +39,7 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testShouldDownloadAndUseWrapperMavenSettings() = runBlocking {
+  fun testShouldDownloadAndUseWrapperMavenSettings() = runBlocking(Dispatchers.EDT) {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
