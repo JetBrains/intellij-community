@@ -20,6 +20,11 @@
     "ideaId": "org.toml.lang"
   },
   {
+    "vsCodeId": "bungcip.better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
+  },
+  {
     "vsCodeId": "codezombiech.gitignore",
     "ideaName": "gitignore",
     "builtIn": true
@@ -101,8 +106,8 @@
   },
   {
     "vsCodeId": "GitLab.gitlab-workflow",
-    "ideaName": "GitLab Workflow",
-    "builtIn": true
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql",
@@ -155,6 +160,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "mquandalle.graphql",
     "ideaName": "GraphQL",
     "ideaId": "com.intellij.lang.jsgraphql"
@@ -168,6 +178,11 @@
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
     "ideaName": "Japanese Language Pack / 日本語言語パック",
     "ideaId": "com.intellij.ja"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
+    "ideaName": "Korean Language Pack / 한국어 언어 팩",
+    "ideaId": "com.intellij.ko"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
@@ -318,6 +333,16 @@
     "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVim",
     "ideaId": "IdeaVIM"
+  },
+  {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
+    "builtIn": true
   },
   {
     "vsCodeId": "wholroyd.jinja",

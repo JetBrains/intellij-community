@@ -130,6 +130,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "GitLab.gitlab-workflow",
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
+  },
+  {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
     "ideaId": "com.intellij.lang.jsgraphql"
@@ -250,6 +255,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-vscode.node-debug2",
+    "ideaName": "Node.js",
+    "ideaId": "NodeJS"
+  },
+  {
     "vsCodeId": "ms-vscode.remote-explorer",
     "ideaName": "Remote Explorer",
     "builtIn": true
@@ -353,6 +363,16 @@
     "vsCodeId": "Vue.volar",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue"
+  },
+  {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
+    "builtIn": true
   },
   {
     "vsCodeId": "wholroyd.jinja",

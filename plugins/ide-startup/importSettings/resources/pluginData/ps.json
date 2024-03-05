@@ -17,7 +17,12 @@
   {
     "vsCodeId": "bmewburn.vscode-intelephense-client",
     "ideaName": "PHP",
-    "builtIn": true
+    "ideaId": "com.jetbrains.php"
+  },
+  {
+    "vsCodeId": "bungcip.better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
@@ -32,7 +37,7 @@
   {
     "vsCodeId": "DEVSENSE.phptools-vscode",
     "ideaName": "PHP",
-    "builtIn": true
+    "ideaId": "com.jetbrains.php"
   },
   {
     "vsCodeId": "donjayamanne.githistory",
@@ -48,6 +53,11 @@
     "vsCodeId": "ecmel.vscode-html-css",
     "ideaName": "HTML CSS Support",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "EditorConfig.EditorConfig",
+    "ideaName": "EditorConfig",
+    "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
     "vsCodeId": "emilast.LogFileHighlighter",
@@ -85,6 +95,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "GitLab.gitlab-workflow",
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
+  },
+  {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
     "ideaId": "com.intellij.lang.jsgraphql"
@@ -102,6 +117,11 @@
   {
     "vsCodeId": "ikappas.phpcs",
     "ideaName": "phpcs",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
     "builtIn": true
   },
   {
@@ -125,6 +145,16 @@
     "ideaId": "com.intellij.ja"
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
+    "ideaName": "Korean Language Pack / 한국어 언어 팩",
+    "ideaId": "com.intellij.ko"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
+    "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
+    "ideaId": "com.intellij.zh"
+  },
+  {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
     "ideaName": "Kubernetes",
     "ideaId": "com.intellij.kubernetes"
@@ -138,6 +168,11 @@
     "vsCodeId": "ms-vscode-remote.remote-wsl",
     "ideaName": "WSL",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.node-debug2",
+    "ideaName": "Node.js",
+    "ideaId": "NodeJS"
   },
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
@@ -190,6 +225,16 @@
     "ideaId": "dev.blachut.svelte.lang"
   },
   {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "xdebug.php-debug",
     "ideaName": "PHP",
     "ideaId": "com.jetbrains.php"
@@ -212,6 +257,6 @@
   {
     "vsCodeId": "zobo.php-intellisense",
     "ideaName": "PHP",
-    "builtIn": true
+    "ideaId": "com.jetbrains.php"
   }
 ]

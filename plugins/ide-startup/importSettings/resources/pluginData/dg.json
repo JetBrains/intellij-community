@@ -10,6 +10,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "bungcip.better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
+  },
+  {
     "vsCodeId": "cweijan.vscode-mysql-client2",
     "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
@@ -30,6 +35,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "EditorConfig.EditorConfig",
+    "ideaName": "EditorConfig",
+    "ideaId": "org.editorconfig.editorconfigjetbrains"
+  },
+  {
     "vsCodeId": "emilast.LogFileHighlighter",
     "ideaName": "Ideolog",
     "ideaId": "com.intellij.ideolog"
@@ -40,9 +50,24 @@
     "ideaId": "com.intellij.database"
   },
   {
+    "vsCodeId": "GitHub.vscode-pull-request-github",
+    "ideaName": "GitHub Pull Requests and Issues",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "GitLab.gitlab-workflow",
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
+  },
+  {
     "vsCodeId": "GraphQL.vscode-graphql",
     "ideaName": "GraphQL",
     "ideaId": "com.intellij.lang.jsgraphql"
+  },
+  {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
+    "builtIn": true
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
@@ -60,6 +85,16 @@
     "ideaId": "com.intellij.ja"
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
+    "ideaName": "Korean Language Pack / 한국어 언어 팩",
+    "ideaId": "com.intellij.ko"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
+    "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
+    "ideaId": "com.intellij.zh"
+  },
+  {
     "vsCodeId": "ms-vscode-remote.remote-ssh",
     "ideaName": "Remote - SSH",
     "builtIn": true
@@ -71,7 +106,7 @@
   },
   {
     "vsCodeId": "mtxr.sqltools",
-    "ideaName": "Database Support",
+    "ideaName": "SQLTools",
     "builtIn": true
   },
   {
@@ -88,6 +123,16 @@
     "vsCodeId": "streetsidesoftware.code-spell-checker",
     "ideaName": "Grazie Lite",
     "ideaId": "tanvd.grazi"
+  },
+  {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
+    "builtIn": true
   },
   {
     "vsCodeId": "yzhang.markdown-all-in-one",
