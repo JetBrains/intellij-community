@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.*
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
@@ -234,7 +235,11 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   }
 
   override fun createCenterPanel(): JComponent? {
+    val editorFont = EditorColorsManager.getInstance().globalScheme
+      .getFont(EditorFontType.PLAIN)
+      .deriveFont(UISettingsUtils.getInstance().scaledEditorFontSize)
     myCommentArea = JBTextArea(5, 0)
+    myCommentArea.font = editorFont
     myCommentArea.emptyText.setText(DiagnosticBundle.message("error.dialog.comment.prompt"))
     myCommentArea.margin = JBUI.insets(2)
     myCommentArea.document.addDocumentListener(object : DocumentAdapter() {
@@ -267,10 +272,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     }
     myAttachmentList.selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
     myAttachmentArea = JTextArea()
-    val attachmentFont = EditorColorsManager.getInstance()?.globalScheme?.getFont(EditorFontType.PLAIN)
-    if (attachmentFont != null) {
-      myAttachmentArea.font = JBFont.create(attachmentFont.deriveFont(JBFont.labelFontSize().toFloat()), false)
-    }
+    myAttachmentArea.font = editorFont
     myAttachmentArea.margin = JBUI.insets(2)
     myAttachmentArea.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -342,6 +344,13 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     loadingDecorator = LoadingDecorator(rootPanel, disposable, 100, useMinimumSize = true)
     return loadingDecorator.component
   }
+
+  private fun scrollPane(component: JComponent, width: Int, height: Int): JScrollPane =
+    JBScrollPane(component).apply {
+      if (width > 0 && height > 0) {
+        this.minimumSize = JBUI.size(width, height)
+      }
+    }
 
   override fun createActions(): Array<Action> {
     val lastActionName = PropertiesComponent.getInstance().getValue(LAST_OK_ACTION)
@@ -902,17 +911,8 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     @JvmField
     val ERROR_HANDLER_EP: ExtensionPointName<ErrorReportSubmitter> = create("com.intellij.errorHandler")
 
-
     @JvmField
     val CURRENT_TRACE_KEY: DataKey<String> = DataKey.create("current_stack_trace_key")
-
-    private fun scrollPane(component: JComponent, width: Int, height: Int): JScrollPane {
-      val scrollPane: JScrollPane = JBScrollPane(component)
-      if (width > 0 && height > 0) {
-        scrollPane.minimumSize = JBUI.size(width, height)
-      }
-      return scrollPane
-    }
 
     @JvmStatic
     fun confirmDisablePlugins(project: Project?, pluginsToDisable: List<IdeaPluginDescriptor>) {
