@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,18 +146,18 @@ public final class MavenDistributionsCache {
 
   @NotNull
   public static LocalMavenDistribution resolveEmbeddedMavenHome() {
-    if (PluginManagerCore.isRunningFromSources()) {
+    PluginDescriptor mavenPlugin = PluginManager.getPluginByClass(MavenDistributionsCache.class);
+
+    if (PluginManagerCore.isRunningFromSources()) { // running from sources
       Path mavenPath = mySourcePath.getValue();
       return new LocalMavenDistribution(mavenPath, BundledMaven3.INSTANCE.getTitle());
-    }
-    else {
-      PluginDescriptor mavenPlugin = PluginManager.getPluginByClass(MavenDistributionsCache.class);
-      if (mavenPlugin == null) {
-        throw new IllegalStateException("Maven plugin is corrupted. Can not load plugin descriptor for the current class");
-      }
-
-      // maven3 folder inside maven plugin layout
+    } else if (mavenPlugin != null) { // running with production classloading. Use maven3 folder inside maven plugin layout
       Path pathToBundledMaven = mavenPlugin.getPluginPath().resolve("lib").resolve("maven3");
+      return new LocalMavenDistribution(pathToBundledMaven, BundledMaven3.INSTANCE.getTitle());
+    }
+    else { // running with non-production class loader, e.g. integration tests
+      final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
+      Path pathToBundledMaven = pluginFileOrDir.getParent().resolve("maven3");
       return new LocalMavenDistribution(pathToBundledMaven, BundledMaven3.INSTANCE.getTitle());
     }
   }
