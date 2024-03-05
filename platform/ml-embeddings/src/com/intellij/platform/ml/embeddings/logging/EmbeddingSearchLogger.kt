@@ -15,19 +15,21 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
 
   private val MODEL_VERSION = EventFields.StringValidatedByInlineRegexp("model_version", "\\d+.\\d+.\\d+")
   private val ENABLED_INDICES = EventFields.StringList("enabled_indices", listOf("actions", "files", "classes", "symbols"))
-  private val USED_MEMORY = EventFields.Long("used_memory")
+  private val USED_MEMORY_MB = EventFields.Double("used_memory_mb")
   private val VECTOR_COUNT = EventFields.Long("vector_count")
   private val INDEX_TYPE = EventFields.String("index_type", listOf("actions", "file-based"))
   private val INDEX = EventFields.Enum("index", Index::class.java) { it.name.lowercase() }
 
-  private val COMMON_FIELDS = arrayOf(INDEX_TYPE, MODEL_VERSION, USED_MEMORY, VECTOR_COUNT, ENABLED_INDICES, EventFields.DurationMs)
+  private val COMMON_FIELDS = arrayOf(INDEX_TYPE, MODEL_VERSION, USED_MEMORY_MB, VECTOR_COUNT, ENABLED_INDICES, EventFields.DurationMs)
 
   private val INDEXING_FINISHED: VarargEventId = GROUP.registerVarargEvent("indexing.finished", *COMMON_FIELDS)
   private val INDEXING_LOADED: VarargEventId = GROUP.registerVarargEvent("indexing.loaded", *COMMON_FIELDS)
   private val INDEXING_SAVED: VarargEventId = GROUP.registerVarargEvent("indexing.saved", *COMMON_FIELDS)
 
   private val SEARCH_FINISHED: VarargEventId = GROUP.registerVarargEvent("search.finished", MODEL_VERSION,
-                                                                         USED_MEMORY, VECTOR_COUNT, INDEX, EventFields.DurationMs)
+                                                                         USED_MEMORY_MB, VECTOR_COUNT, INDEX, EventFields.DurationMs)
+
+  private const val BYTES_IN_MEGABYTE = 1024L * 1024L
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -47,13 +49,13 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
     require(index == Index.ACTIONS || project != null)
     SEARCH_FINISHED.log(project, buildList {
       add(MODEL_VERSION.with(Registry.stringValue("intellij.platform.ml.embeddings.model.version")))
-      add(USED_MEMORY.with(
+      add(USED_MEMORY_MB.with(
         when (index) {
           Index.ACTIONS -> ActionEmbeddingsStorage.getInstance().index.estimateMemoryUsage()
           Index.FILES -> FileEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
           Index.CLASSES -> ClassEmbeddingsStorage.getInstance(project!!).index.estimateMemoryUsage()
           Index.SYMBOLS -> SymbolEmbeddingStorage.getInstance(project!!).index.estimateMemoryUsage()
-        }
+        }.toDouble() / BYTES_IN_MEGABYTE
       ))
       add(VECTOR_COUNT.with(
         when (index) {
@@ -63,7 +65,7 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
           Index.SYMBOLS -> SymbolEmbeddingStorage.getInstance(project!!).index.size
         }.toLong()
       ))
-      add(INDEX.with(index.name.lowercase()))
+      add(INDEX.with(index))
       add(EventFields.DurationMs.with(durationMs))
     })
   }
@@ -75,7 +77,7 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
       add(INDEX_TYPE.with(if (forActions) "actions" else "file-based"))
       add(ENABLED_INDICES.with(getEnabledIndices()))
       add(VECTOR_COUNT.with(getVectorCount(project, forActions)))
-      add(USED_MEMORY.with(getUsedMemory(project, forActions)))
+      add(USED_MEMORY_MB.with(getUsedMemory(project, forActions)))
     }
   }
 
@@ -102,7 +104,7 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
     return totalCount
   }
 
-  private fun getUsedMemory(project: Project?, forActions: Boolean): Long {
+  private fun getUsedMemory(project: Project?, forActions: Boolean): Double {
     var totalMemory = 0L
     val settings = EmbeddingIndexSettingsImpl.getInstance()
     if (forActions && settings.shouldIndexActions) totalMemory += ActionEmbeddingsStorage.getInstance().index.estimateMemoryUsage()
@@ -111,7 +113,7 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
       if (settings.shouldIndexClasses) totalMemory += ClassEmbeddingsStorage.getInstance(project).index.estimateMemoryUsage()
       if (settings.shouldIndexSymbols) totalMemory += SymbolEmbeddingStorage.getInstance(project).index.estimateMemoryUsage()
     }
-    return totalMemory
+    return totalMemory.toDouble() / BYTES_IN_MEGABYTE
   }
 
   enum class Index { ACTIONS, FILES, CLASSES, SYMBOLS }
