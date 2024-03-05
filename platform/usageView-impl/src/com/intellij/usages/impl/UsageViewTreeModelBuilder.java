@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.usages.UsageTarget;
@@ -77,23 +77,22 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   UsageNode getFirstUsageNode() {
-    return (UsageNode)getFirstChildOfType(myRootNode, UsageNode.class);
+    return getFirstChildOfType(myRootNode, UsageNode.class);
   }
 
   @Nullable GroupNode getFirstGroupNode() {
-    return (GroupNode)getFirstChildOfType(myRootNode, GroupNode.class);
+    return getFirstChildOfType(myRootNode, GroupNode.class);
   }
 
-  private static TreeNode getFirstChildOfType(@NotNull TreeNode parent, @NotNull Class<?> type) {
-    int childCount = parent.getChildCount();
-    for (int idx = 0; idx < childCount; idx++) {
-      TreeNode child = parent.getChildAt(idx);
-      if (type.isAssignableFrom(child.getClass())) {
-        return child;
+  private static <T> T getFirstChildOfType(@NotNull GroupNode parent, @NotNull Class<T> type) {
+    for (Node child : parent.getChildren()) {
+      if (type.isInstance(child)) {
+        //noinspection unchecked
+        return (T)child;
       }
-      TreeNode firstChildOfType = getFirstChildOfType(child, type);
-      if (firstChildOfType != null) {
-        return firstChildOfType;
+      else if (child instanceof GroupNode groupNode) {
+        T result = getFirstChildOfType(groupNode, type);
+        if (result != null) return result;
       }
     }
     return null;
