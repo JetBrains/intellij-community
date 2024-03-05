@@ -106,10 +106,16 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             )
         }
 
-        override fun applyQueryFilters(element: PsiElement, options: FindUsagesOptions, query: Query<PsiReference>): Query<PsiReference> {
+        override fun applyQueryFilters(
+            element: PsiElement,
+            options: FindUsagesOptions,
+            fromHighlighting: Boolean,
+            query: Query<PsiReference>
+        ): Query<PsiReference> {
             val kotlinOptions = options as KotlinFunctionFindUsagesOptions
             return query
                 .applyFilter(kotlinOptions.isSkipImportStatements) { !it.isImportUsage() }
+                .applyFilter(!fromHighlighting) { it.element !is KtLabelReferenceExpression }
         }
     }
 
@@ -193,7 +199,12 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             )
         }
 
-        override fun applyQueryFilters(element: PsiElement, options: FindUsagesOptions, query: Query<PsiReference>): Query<PsiReference> {
+        override fun applyQueryFilters(
+            element: PsiElement,
+            options: FindUsagesOptions,
+            fromHighlighting: Boolean,
+            query: Query<PsiReference>
+        ): Query<PsiReference> {
             val kotlinOptions = options as KotlinPropertyFindUsagesOptions
 
             if (!kotlinOptions.isReadAccess && !kotlinOptions.isWriteAccess) {
@@ -278,7 +289,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
                 val searchParameters = KotlinReferencesSearchParameters(element, options.searchScope, kotlinOptions = kotlinSearchOptions)
 
-                addTask { applyQueryFilters(element, options, ReferencesSearch.search(searchParameters)).forEach(referenceProcessor) }
+                addTask { applyQueryFilters(element, options, forHighlight, ReferencesSearch.search(searchParameters)).forEach(referenceProcessor) }
 
                 if (element is KtElement && !isOnlyKotlinSearch(options.searchScope)) {
                     // TODO: very bad code!! ReferencesSearch does not work correctly for constructors and annotation parameters
@@ -294,6 +305,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                             applyQueryFilters(
                                 element,
                                 options,
+                                forHighlight,
                                 query
                             ).forEach(referenceProcessor)
                         }
@@ -323,6 +335,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
     protected abstract fun applyQueryFilters(
         element: PsiElement,
         options: FindUsagesOptions,
+        fromHighlighting: Boolean,
         query: Query<PsiReference>
     ): Query<PsiReference>
 
