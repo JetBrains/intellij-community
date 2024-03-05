@@ -24,7 +24,7 @@ private val LOG: Logger
 /** Copy html file with plotting scripts into targetDir  */
 private fun copyHtmlPlotterToOutputDir(targetDir: Path) {
   val targetToCopyTo = targetDir.resolve(CsvMetricsExporter.HTML_PLOTTER_NAME)
-  val plotterHtmlUrl = CsvMetricsExporter::class.java.getResource(CsvMetricsExporter.HTML_PLOTTER_NAME)
+  val plotterHtmlUrl = CsvMetricsExporter::class.java.classLoader.getResource(CsvMetricsExporter.HTML_PLOTTER_NAME)
   if (plotterHtmlUrl == null) {
     LOG.warn("${CsvMetricsExporter.HTML_PLOTTER_NAME} is not found in classpath")
   }
@@ -41,11 +41,8 @@ private fun copyHtmlPlotterToOutputDir(targetDir: Path) {
  * name, epochStartNanos, epochEndNanos, value
  * <br></br>
  * <br></br>
- * This is expected to be temporary solution for metrics export -- until full-fledged (json?) exporter will be implemented.
- * That is why implementation is quite limited: only simplest metrics types are supported (e.g. no support for histograms),
- * no support for attributes, and IO/file format itself is not the most effective one. But until now it seems like this limited
- * implementation could be enough at least for a while.
- *
+ * Only simplest metrics types are supported (e.g. no support for histograms),
+ * no support for attributes, and IO/file format itself is not the most effective one.
  * <br></br>
  *
  * TODO not all metrics types are supported now, see .toCSVLine()
@@ -61,7 +58,7 @@ class CsvMetricsExporter(private val writeToFileSupplier: RollingFileSupplier) :
   }
 
   init {
-    initRollingFileSupplier(writeToFileSupplier).also {
+    initRollingFileSupplier(writeToFileSupplier, OpenTelemetryUtils.csvHeadersLines()).also {
       copyHtmlPlotterToOutputDir(it.parent)
     }
   }

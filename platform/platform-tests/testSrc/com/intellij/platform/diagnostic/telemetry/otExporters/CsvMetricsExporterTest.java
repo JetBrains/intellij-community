@@ -11,7 +11,7 @@ public class CsvMetricsExporterTest {
   public void plotterHtmlIsAccessibleFromCsvMetricsExporterClass() {
     assertNotNull(
       "Resource [" + CsvMetricsExporter.HTML_PLOTTER_NAME + "] must be accessible with CsvMetricsExporter.class.getResource()",
-      CsvMetricsExporter.class.getResource(CsvMetricsExporter.HTML_PLOTTER_NAME)
+      CsvMetricsExporter.class.getClassLoader().getResource(CsvMetricsExporter.HTML_PLOTTER_NAME)
     );
   }
 }

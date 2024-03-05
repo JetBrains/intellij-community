@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.exporters
 
+import com.intellij.openapi.util.io.FileSetLimiter
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.csvHeadersLines
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.generateFileForMetrics
+import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -12,7 +12,7 @@ import java.nio.file.StandardOpenOption
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class RollingFileSupplier(private val basePath: Path) : Supplier<Path> {
+class RollingFileSupplier(private val basePath: Path, private val initialDataToWrite: List<String> = listOf()) : Supplier<Path> {
   private val maxSizeBeforeRoll: Long = 10 * 1024 * 1024
   private var currentPath: Path? = null
 
@@ -27,13 +27,36 @@ class RollingFileSupplier(private val basePath: Path) : Supplier<Path> {
     } ?: true
     if (generateNewPath) {
       currentPath = generateFileForMetrics(basePath)
-      Files.write(currentPath, csvHeadersLines(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+      Files.write(currentPath, initialDataToWrite, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
     }
     return currentPath!!
   }
+
+  /**
+   * Creates new file for reporting OTel metrics.
+   *
+   * Generated file name is derived from metricsReportingBasePath, but with date/time/sequential-number additions,
+   * i.e. '/var/logs/open-telemetry-metrics.csv' (base) -> '/var/logs/open-telemetry-metrics-2023-02-04-14-15-43.1.csv'
+   * (exact format is configurable).
+   *
+   * Method uses Date/time/seqNo additions to always create new file, not existent in the metricsReportingBasePath.parent
+   * folder before the call.
+   *
+   * Method also keeps the total number of generated files limited: it removes the oldest files if there are
+   * too many files already generated.
+   *
+   * If metricsReportingBasePath is relative -> method resolves it against IDEA logs folder to make absolute.
+   */
+  fun generateFileForMetrics(metricsReportingBasePath: Path): Path {
+    val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.metrics.max-files-to-keep", 14)
+
+    val fileLimiterForMetrics = OpenTelemetryUtils.setupFileLimiterForMetrics(metricsReportingBasePath)
+    return fileLimiterForMetrics.removeOldFilesBut(maxFilesToKeep, FileSetLimiter.DELETE_ASYNC)
+      .createNewFile()
+  }
 }
 
-internal fun initRollingFileSupplier(writeToFileSupplier: RollingFileSupplier): Path {
+internal fun initRollingFileSupplier(writeToFileSupplier: RollingFileSupplier, initialDataToWrite: List<String> = listOf()): Path {
   val pathToWrite = writeToFileSupplier.get()
   if (!Files.exists(pathToWrite)) {
     val parentDir = pathToWrite.parent
@@ -44,7 +67,7 @@ internal fun initRollingFileSupplier(writeToFileSupplier: RollingFileSupplier): 
     }
   }
   if (!Files.exists(pathToWrite) || Files.size(pathToWrite) == 0L) {
-    Files.write(pathToWrite, OpenTelemetryUtils.csvHeadersLines(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+    Files.write(pathToWrite, initialDataToWrite, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
   }
 
   return pathToWrite

@@ -34,13 +34,21 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
   @Test
   fun reportingAnyCustomMetricsFromPerfTest(testInfo: TestInfo) {
     val counter: AtomicLong = AtomicLong()
-    val counterMeter = TelemetryManager.getMeter(ExtractionMetricsScope)
-      .counterBuilder("custom.counter")
+    val meter = TelemetryManager.getMeter(ExtractionMetricsScope)
+
+    meter.counterBuilder("custom.counter")
+      .setUnit("ms").setDescription("Counter example")
       .buildWithCallback { it.record(counter.get()) }
 
     val meterCollector = TelemetryMeterCollector(MetricsAggregation.SUM) { it.key.contains("custom") }
     val testName = testInfo.testMethod.get().name
     val customSpanName = "custom span"
+
+    val histogram = meter.histogramBuilder("example.of.histogram")
+      .setDescription("Histogram example")
+      .setUnit("ns")
+      .ofLongs()
+      .build()
 
     PlatformTestUtil.newPerformanceTest(testName) {
       runWithSpan(tracer, customSpanName) {
@@ -48,6 +56,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       }
 
       counter.incrementAndGet()
+      (1L..5L).forEach { histogram.record(it) }
 
       runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
     }

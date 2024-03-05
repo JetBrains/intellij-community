@@ -65,6 +65,7 @@ private fun collectOpenTelemetryReports(): List<Attachment> {
 }
 
 private fun listMetricsFiles(): List<Path> {
-  val metricsReportingPath = OpenTelemetryUtils.metricsReportingPath() ?: return emptyList()
+  // TODO: probably should collect meters in json files as well (not spans)
+  val metricsReportingPath = OpenTelemetryUtils.metricsCsvReportingPath() ?: return emptyList()
   return OpenTelemetryUtils.setupFileLimiterForMetrics(metricsReportingPath).listExistentFiles()
 }

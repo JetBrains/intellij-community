@@ -102,8 +102,8 @@ public class PerformanceTestInfo {
       // remove content of the previous tests from the idea.log
       MetricsPublisher.Companion.truncateTestLog();
 
-      var csvFilesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) -> it.toString().endsWith(".csv")).toList();
-      for (Path file : csvFilesWithMetrics) {
+      var filesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) -> it.toString().contains("-metrics")).toList();
+      for (Path file : filesWithMetrics) {
         Files.deleteIfExists(file);
       }
     }

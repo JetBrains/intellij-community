@@ -1,20 +1,24 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.exporters.meters
 
+import com.fasterxml.jackson.module.kotlin.addMixIn
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.diagnostic.telemetry.exporters.RollingFileSupplier
 import com.intellij.platform.diagnostic.telemetry.exporters.initRollingFileSupplier
+import com.intellij.platform.diagnostic.telemetry.exporters.meters.models.MetricDataMixIn
+import com.intellij.platform.diagnostic.telemetry.exporters.meters.models.PointDataMixIn
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.metrics.InstrumentType
-import io.opentelemetry.sdk.metrics.data.*
+import io.opentelemetry.sdk.metrics.data.AggregationTemporality
+import io.opentelemetry.sdk.metrics.data.MetricData
+import io.opentelemetry.sdk.metrics.data.PointData
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.nio.file.Files
 import java.nio.file.StandardOpenOption
-import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.io.path.outputStream
 
 private val LOG: Logger
   get() = logger<TelemetryMeterJsonExporter>()
@@ -41,30 +45,12 @@ class TelemetryMeterJsonExporter(private val writeToFileSupplier: RollingFileSup
     val result = CompletableResultCode()
     val writeToFile = writeToFileSupplier.get()
 
-    //MetricDataType.HISTOGRAM -> metricData.histogramData.points.asSequence().map { p: HistogramPointData ->
-    //  OpenTelemetryUtils.concatToCsvLine(
-    //    metricData.name,
-    //    p.startEpochNanos.toString(),
-    //    p.epochNanos.toString(),
-    //    p.count.toString(),
-    //    p.sum.toString(),
-    //    p.counts.mapIndexed { index, countInBucket ->
-    //      val upperBoundary = if (index == p.counts.lastIndex) Double.POSITIVE_INFINITY
-    //      else p.boundaries[index]
-    //
-    //      "[${upperBoundary.nanoseconds} count: $countInBucket]"
-    //    }.joinToString()
-    //  )
-    //}
-
-    val lines: List<String> = metrics.asSequence()
-      .flatMap {
-        listOf("")
-        // TODO("write json chunks into the aggregated JSON file")
-      }
-      .toList()
     try {
-      Files.write(writeToFile, lines, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+      jacksonObjectMapper()
+        .addMixIn<MetricData, MetricDataMixIn>()
+        .addMixIn<PointData, PointDataMixIn>()
+        .writeValue(writeToFile.outputStream(StandardOpenOption.CREATE, StandardOpenOption.APPEND), metrics)
+
       result.succeed()
     }
     catch (e: IOException) {

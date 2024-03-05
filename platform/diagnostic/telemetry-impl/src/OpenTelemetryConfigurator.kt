@@ -17,6 +17,7 @@ import io.opentelemetry.sdk.metrics.SdkMeterProvider
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader
 import io.opentelemetry.sdk.resources.Resource
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
@@ -28,9 +29,7 @@ class OpenTelemetryConfigurator(@JvmField internal val sdkBuilder: OpenTelemetry
                                 serviceName: String = "",
                                 serviceVersion: String = "",
                                 serviceNamespace: String = "",
-                                customResourceBuilder: ((AttributesBuilder) -> Unit)? = null,
-                                enableMetricsByDefault: Boolean) {
-  private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
+                                customResourceBuilder: ((AttributesBuilder) -> Unit)? = null) {
   val resource: Resource = Resource.create(
     Attributes.builder()
       .put(AttributeKey.stringKey("service.name"), serviceName)
@@ -47,8 +46,6 @@ class OpenTelemetryConfigurator(@JvmField internal val sdkBuilder: OpenTelemetry
   )
 
   val aggregatedMetricExporter: AggregatedMetricExporter = AggregatedMetricExporter()
-
-  private fun isMetricsEnabled(): Boolean = metricsReportingPath != null
 
   private fun registerMetricExporters(metricsExporters: List<MetricsExporterEntry>) {
     val registeredMetricsReaders = SdkMeterProvider.builder()
@@ -69,40 +66,50 @@ class OpenTelemetryConfigurator(@JvmField internal val sdkBuilder: OpenTelemetry
   }
 
   private fun createMetricsExporters(): List<MetricsExporterEntry> {
-    metricsReportingPath ?: return emptyList()
+    val metricsCsvPath: Path? = OpenTelemetryUtils.metricsCsvReportingPath()
+    val metricsJsonPath: Path? = OpenTelemetryUtils.metricsJsonReportingPath()
 
-    val result = mutableListOf<MetricsExporterEntry>()
-    result.add(MetricsExporterEntry(
-      metrics = listOf(
-        FilteredMetricsExporter(
-          underlyingExporter = SynchronizedClearableLazy {
-            CsvMetricsExporter(writeToFileSupplier = RollingFileSupplier(metricsReportingPath))
-          },
-          predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
-        ),
-      ),
-      duration = 1.minutes)
-    )
-    result.add(MetricsExporterEntry(
-      metrics = listOf(
-        FilteredMetricsExporter(
-          underlyingExporter = SynchronizedClearableLazy {
-            TelemetryMeterJsonExporter(writeToFileSupplier = RollingFileSupplier(metricsReportingPath))
-          },
-          predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
-        ),
-      ),
-      duration = 1.minutes)
-    )
+    if (metricsCsvPath == null && metricsJsonPath == null) return emptyList()
 
-    result.add(MetricsExporterEntry(listOf(aggregatedMetricExporter), 1.minutes))
-    return result
+    val exporters = mutableListOf<MetricsExporterEntry>()
+
+    // old metrics exporter to .csv file
+    metricsCsvPath?.let {
+      exporters.add(
+        MetricsExporterEntry(
+          metrics = listOf(
+            FilteredMetricsExporter(
+              underlyingExporter = SynchronizedClearableLazy {
+                CsvMetricsExporter(writeToFileSupplier = RollingFileSupplier(it, OpenTelemetryUtils.csvHeadersLines()))
+              },
+              predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
+            ),
+          ),
+          duration = 1.minutes)
+      )
+    }
+
+    // metrics exporter to .json file
+    metricsJsonPath?.let {
+      exporters.add(MetricsExporterEntry(
+        metrics = listOf(
+          FilteredMetricsExporter(
+            underlyingExporter = SynchronizedClearableLazy {
+              TelemetryMeterJsonExporter(writeToFileSupplier = RollingFileSupplier(it))
+            },
+            predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
+          ),
+        ),
+        duration = 1.minutes)
+      )
+    }
+
+    exporters.add(MetricsExporterEntry(listOf(aggregatedMetricExporter), 1.minutes))
+    return exporters
   }
 
   fun getConfiguredSdkBuilder(): OpenTelemetrySdkBuilder {
-    if (isMetricsEnabled()) {
-      registerMetricExporters(createMetricsExporters())
-    }
+    registerMetricExporters(createMetricsExporters())
     return sdkBuilder
   }
 }
