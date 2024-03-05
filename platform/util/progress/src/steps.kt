@@ -187,6 +187,11 @@ suspend fun <T> progressStep(
   return coroutineScope(action)
 }
 
+@Deprecated("Use `ProgressReporter.sizedStep`")
+suspend fun <T> durationStep(duration: Double, text: ProgressText? = null, action: suspend CoroutineScope.() -> T): T {
+  return coroutineScope(action)
+}
+
 @Deprecated("Use `reportRawProgress`")
 suspend fun <X> withRawProgressReporter(action: suspend CoroutineScope.() -> X): X {
   return reportRawProgress { reporter ->
