@@ -26,6 +26,7 @@ import javax.swing.*;
 
 /**
  * <h3>Obsolescence notice</h3>
+ * <p>
  * See {@link ProgressIndicator} notice.
  * Use one of the following functions to run tasks:
  * <ul>
@@ -33,6 +34,7 @@ import javax.swing.*;
  *   <li>{@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}</li>
  *   <li>{@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}</li>
  * </ul>
+ * </p>
  *
  * Intended to run tasks, both modal and non-modal (backgroundable).
  * Example of use:
@@ -210,7 +212,7 @@ public abstract class Task implements TaskInfo, Progressive {
    * <p>
    * See {@link ProgressIndicator} notice.
    * Use {@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress}.
-   * <p/>
+   * </p>
    */
   @Obsolete
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
@@ -271,7 +273,7 @@ public abstract class Task implements TaskInfo, Progressive {
    * <li>Use {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress},</li>
    * <li>or {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}.</li>
    * </ul>
-   * <p/>
+   * </p>
    */
   @Obsolete
   public abstract static class Modal extends Task {
@@ -299,7 +301,7 @@ public abstract class Task implements TaskInfo, Progressive {
    * <li>{@link com.intellij.platform.ide.progress.TasksKt#withModalProgress},</li>
    * <li>or {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}.</li>
    * </ul>
-   * <p/>
+   * </p>
    */
   @Obsolete
   public abstract static class ConditionalModal extends Backgroundable {
@@ -371,7 +373,7 @@ public abstract class Task implements TaskInfo, Progressive {
    * <li>Use {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking},</li>
    * <li>or {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}.</li>
    * </ul>
-   * <p/>
+   * </p>
    */
   @Obsolete
   public abstract static class WithResult<T, E extends Exception> extends Task.Modal {
