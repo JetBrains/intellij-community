@@ -892,6 +892,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         LOG.debug("END preparing to show the dialog, the resulting bounds: " + getBounds());
       }
       if (dialogWrapper.isDisposed()) {
+        LOG.warn("The dialog wrapper for " + dialogWrapper.getTitle() + " is already disposed");
         return;
       }
       super.show();
