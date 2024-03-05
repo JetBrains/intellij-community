@@ -4,8 +4,15 @@
 
 package com.intellij.platform.backend.observation
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Starts tracking of all suspending activities that are invoked in [action].
@@ -42,4 +49,13 @@ fun Project.trackActivityBlocking(marker: ActivityKey, action: () -> Unit): Unit
 @RequiresBlockingContext
 fun Project.trackActivity(key: ActivityKey, action: Runnable): Unit {
   return PlatformActivityTrackerService.getInstance(this).trackConfigurationActivityBlocking(key, action::run)
+}
+
+/**
+ * Allows launching a computation on a separate coroutine scope that is still covered by the activity key.
+ */
+@RequiresBlockingContext
+fun CoroutineScope.launchTracked(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit) {
+  val blockingJob = currentThreadContext()[BlockingJob] ?: EmptyCoroutineContext
+  launch(context + blockingJob, CoroutineStart.DEFAULT, block)
 }
