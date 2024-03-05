@@ -13,14 +13,12 @@ import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.withValue
-import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestRoot
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.kotlinBuildSystemData
 import org.jetbrains.kotlin.tools.projectWizard.gradle.GradleKotlinNewProjectWizardData.Companion.kotlinGradleData
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
@@ -29,7 +27,6 @@ import org.jetbrains.plugins.gradle.setup.GradleCreateProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.util.ProjectInfo
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.*
-import java.io.File
 
 /**
  * A test case for the Kotlin Gradle new project/module wizard.
@@ -40,10 +37,10 @@ import java.io.File
  * Only files that are mentioned in these folders are asserted to be generated correctly.
  */
 @TestRoot("project-wizard/tests")
-class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
-    companion object {
-        private const val ONBOARDING_TIPS_SEARCH_STR = "with your caret at the highlighted text"
-    }
+class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotlinProjectTestUtils {
+
+    override var testDirectory = "testData/gradleNewProjectWizard"
+
     private lateinit var testInfo: TestInfo
 
     @BeforeEach
@@ -56,35 +53,8 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
         runAll({ KotlinSdkType.removeKotlinSdkInTests() })
     }
 
-    private fun getTestFolderName(): String {
+    override fun getTestFolderName(): String {
         return testInfo.displayName.takeWhile { it != '(' }.removePrefix("test").decapitalizeAsciiOnly()
-    }
-
-    private fun getTestDataFolder(): File {
-        val testRoot = getTestRoot(GradleKotlinNewProjectWizardTest::class.java)
-        return File(testRoot, "testData/gradleNewProjectWizard/${getTestFolderName()}")
-    }
-
-    private fun String.replaceFirstGroup(regex: Regex, replacement: String): String {
-        val matchResult = regex.find(this) ?: return this
-        val groupRange = matchResult.groups[1]?.range ?: return this
-        return this.replaceRange(groupRange, replacement)
-    }
-
-    private fun Project.findRelativeFile(path: String): File? {
-        Assertions.assertNotNull(basePath)
-        return File(this.basePath!!, path).takeIf { it.isFile }
-    }
-
-    private fun Project.findMainFileContent(modulePath: String? = null): String? {
-        val path = StringBuilder().apply {
-            if (modulePath != null) {
-                append(modulePath)
-                append("/")
-            }
-            append("src/main/kotlin/Main.kt")
-        }.toString()
-        return findRelativeFile(path)?.readText()
     }
 
     private fun Project.findKotlinVersion(useKotlinDsl: Boolean, modulePath: String? = null): String? {
@@ -110,7 +80,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
     }
 
     private val kotlinVersionRegex = Regex("""kotlin.*version.*["']([\w-.]*)["']""")
-    private fun substituteKotlinVersion(str: String): String {
+    override fun substituteArtifactsVersions(str: String): String {
         return str.replaceFirstGroup(kotlinVersionRegex, "KOTLIN_VERSION")
     }
 
@@ -126,34 +96,12 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
 
     // We replace dynamic values like the Kotlin version that is used with placeholders.
     // That way we do not have to update tests every time a new Kotlin version releases.
-    private fun postprocessOutputFile(relativePath: String, fileContents: String): String {
+    override fun postprocessOutputFile(relativePath: String, fileContents: String): String {
         return if (relativePath.contains("build.gradle")) {
-            substituteKotlinVersion(substituteJvmToolchainVersion(fileContents))
+            substituteArtifactsVersions(substituteJvmToolchainVersion(fileContents))
         } else if (relativePath.contains("settings.gradle")) {
             substituteFoojayVersion(fileContents)
         } else fileContents
-    }
-
-    private fun Project.assertCorrectProjectFiles() {
-        val testDataFolder = getTestDataFolder()
-        val basePath = File(basePath!!)
-        var foundExpectedFiles = 0
-        testDataFolder.walkTopDown().forEach {
-            if (!it.isFile) return@forEach
-            foundExpectedFiles++
-            val relativePath = it.relativeTo(testDataFolder).toPath().toString()
-            val pathInProject = File(basePath, relativePath)
-            Assertions.assertTrue(
-                pathInProject.exists() && pathInProject.isFile,
-                "Expected ${it.name} file to exist in output, but it could not be found."
-            )
-            val processedFileContent = postprocessOutputFile(relativePath, pathInProject.readText())
-            assertEqualsToFile("Expected correct file after generation", it, processedFileContent)
-        }
-        Assertions.assertTrue(
-            foundExpectedFiles > 0,
-            "Asserted that project files are correct, but test folder contained no expected files"
-        )
     }
 
     private fun NewProjectWizardStep.setGradleWizardData(
