@@ -193,6 +193,7 @@ object KotlinPluginBuilder {
     "kotlin.refactorings.rename.k2",
     "kotlin.performanceExtendedPlugin",
     "kotlin.bundled-compiler-plugins-support",
+    "kotlin.jsr223"
   )
 
   private val MODULES_SHARED_WITH_CLIENT = persistentListOf(

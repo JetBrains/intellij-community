@@ -1419,6 +1419,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/k1.old.post-processing/kotlin.j2k.k1.old.post-processing.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/k1.old.post-processing/kotlin.j2k.k1.old.post-processing.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/k1.shared/kotlin.j2k.k1.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/k1.shared/kotlin.j2k.k1.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jps/graphImplementationTests/kotlin.jps.graphImplementationTests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jps/graphImplementationTests/kotlin.jps.graphImplementationTests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jsr223/kotlin.jsr223.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jsr223/kotlin.jsr223.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm/kotlin.jvm.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm/kotlin.jvm.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/base/util/kotlin.jvm-debugger.base.util.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/base/util/kotlin.jvm-debugger.base.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/core/kotlin.jvm-debugger.core.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/core/kotlin.jvm-debugger.core.iml" />
