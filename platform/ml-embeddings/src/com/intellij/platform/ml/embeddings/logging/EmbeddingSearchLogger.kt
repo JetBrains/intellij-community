@@ -18,7 +18,7 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
   private val USED_MEMORY = EventFields.Long("used_memory")
   private val VECTOR_COUNT = EventFields.Long("vector_count")
   private val INDEX_TYPE = EventFields.String("index_type", listOf("actions", "file-based"))
-  private val INDEX = EventFields.String("index", Index.entries.map { it.name.lowercase() })
+  private val INDEX = EventFields.Enum("index", Index::class.java) { it.name.lowercase() }
 
   private val COMMON_FIELDS = arrayOf(INDEX_TYPE, MODEL_VERSION, USED_MEMORY, VECTOR_COUNT, ENABLED_INDICES, EventFields.DurationMs)
 
