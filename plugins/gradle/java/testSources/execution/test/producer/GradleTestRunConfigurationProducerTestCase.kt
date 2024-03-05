@@ -7,8 +7,6 @@ import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemRunConfigurationProducer
@@ -25,7 +23,6 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigura
 import org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestName
 import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -36,15 +33,7 @@ import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.runners.Parameterized
 import java.io.File
 
-abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestCase() {
-
-  fun getContextByLocation(vararg elements: PsiElement): ConfigurationContext {
-    assertTrue(elements.isNotEmpty())
-    return object : ConfigurationContext(elements[0]) {
-      override fun getDataContext() = SimpleDataContext.getSimpleContext(LangDataKeys.PSI_ELEMENT_ARRAY, elements, super.getDataContext())
-      override fun containsMultipleSelection() = elements.size > 1
-    }
-  }
+abstract class GradleTestRunConfigurationProducerTestCase : GradleRunConfigurationProducerTestCase() {
 
   private fun getGutterTestRunActionsByLocation(element: PsiNameIdentifierOwner) = runReadActionAndWait {
     val identifier = element.identifyingElement!!
@@ -57,13 +46,6 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
   protected fun assertGutterRunActionsSize(element: PsiNameIdentifierOwner, expectedSize: Int) {
     val actions = getGutterTestRunActionsByLocation(element)
     assertEquals(expectedSize, actions.size)
-  }
-
-  fun getConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContextImpl {
-    val fromContexts = context.configurationsFromContext
-    val fromContext = fromContexts?.firstOrNull()
-    assertNotNull("Gradle configuration from context not found", fromContext)
-    return fromContext as ConfigurationFromContextImpl
   }
 
   protected inline fun <reified P : GradleTestRunConfigurationProducer> getConfigurationProducer(): P {
