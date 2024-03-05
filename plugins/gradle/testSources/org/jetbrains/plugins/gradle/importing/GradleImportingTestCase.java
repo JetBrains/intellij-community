@@ -516,26 +516,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return GradleVersionUtil.isGradleOlderThan(getCurrentGradleBaseVersion(), ver);
   }
 
-  /**
-   * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected boolean isGradleOlderOrSameAs(@NotNull String ver) {
-    return GradleVersionUtil.isGradleOlderOrSameAs(getCurrentGradleBaseVersion(), ver);
-  }
-
   protected boolean isGradleAtLeast(@NotNull String ver) {
     return GradleVersionUtil.isGradleAtLeast(getCurrentGradleBaseVersion(), ver);
-  }
-
-  /**
-   * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected boolean isGradleNewerThan(@NotNull String ver) {
-    return GradleVersionUtil.isGradleNewerThan(getCurrentGradleBaseVersion(), ver);
   }
 
   protected void enableGradleDebugWithSuspend() {
