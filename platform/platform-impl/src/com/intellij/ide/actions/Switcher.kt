@@ -21,11 +21,11 @@ import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.PresentationFactory
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager.Companion.getInstance
@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.getOpenMode
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -50,6 +51,7 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -66,10 +68,13 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingTextTrimmer
 import com.intellij.util.ui.components.BorderLayoutPanel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.await
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
@@ -650,26 +655,25 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     private fun tryToOpenFileSearch(e: InputEvent?, fileName: String?) {
-      val gotoFile = ActionManager.getInstance().getAction("GotoFile")
-      if (gotoFile != null && !StringUtil.isEmpty(fileName)) {
-        cancel()
-        ApplicationManager.getApplication().invokeLater(
-          {
-            DataManager.getInstance().dataContextFromFocus.doWhenDone(
-              (com.intellij.util.Consumer { context: DataContext ->
-                val dataContext = DataContext { dataId: String? ->
-                  if (PlatformDataKeys.PREDEFINED_TEXT.`is`(dataId)) {
-                    return@DataContext fileName
-                  }
-                  context.getData(dataId!!)
-                }
-                val event = AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP,
-                                          PresentationFactory().getPresentation(
-                                            gotoFile),
-                                          ActionManager.getInstance(), 0)
-                gotoFile.actionPerformed(event)
-              } as com.intellij.util.Consumer<DataContext>))
-          }, ModalityState.current())
+      val gotoAction = ActionManager.getInstance().getAction("GotoFile")
+      if (gotoAction == null || StringUtil.isEmpty(fileName)) return
+      cancel()
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
+        val focusDC = DataManager.getInstance().dataContextFromFocusAsync.await()
+        val dataContext = CustomizedDataContext.create(focusDC) { dataId ->
+          if (PlatformDataKeys.PREDEFINED_TEXT.`is`(dataId)) {
+            fileName
+          }
+          else {
+            null
+          }
+        }
+        val event = AnActionEvent(e, dataContext, "Switcher",
+                                  gotoAction.templatePresentation.clone(),
+                                  ActionManager.getInstance(), 0)
+        blockingContext {
+          ActionUtil.performActionDumbAwareWithCallbacks(gotoAction, event)
+        }
       }
     }
 
