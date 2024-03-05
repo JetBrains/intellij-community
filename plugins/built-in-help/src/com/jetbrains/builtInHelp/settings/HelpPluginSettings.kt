@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls
 const val defaultBaseUrl = "https://www.jetbrains.com/"
 
 @Service(Service.Level.APP)
-@State(name = "HelpPluginSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)])
+@State(name = "HelpPluginSettings", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
 class HelpPluginSettings : PersistentStateComponent<HelpPluginSettings> {
 
   var openHelpFromWeb: Boolean = true
