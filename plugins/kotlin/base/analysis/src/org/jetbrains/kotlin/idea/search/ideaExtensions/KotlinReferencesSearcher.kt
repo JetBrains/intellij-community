@@ -34,20 +34,22 @@ import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KOTLIN_NAMED_ARGUMENT_SEARCH_CONTEXT
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.getClassNameForCompanionObject
 import org.jetbrains.kotlin.idea.search.effectiveSearchScope
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions.Companion.Empty
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions.Companion.calculateEffectiveScope
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
+import org.jetbrains.kotlin.idea.search.usagesSearch.operators.DestructuringDeclarationReferenceSearcher
 import org.jetbrains.kotlin.idea.search.usagesSearch.operators.OperatorReferenceSearcher
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.concurrent.Callable
@@ -430,12 +432,21 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 when (val element = elementPointer.element) {
                     is KtParameter -> {
                         val componentMethodName = element.dataClassComponentMethodName ?: return@Callable
-                        val containingClass = element.getStrictParentOfType<KtClassOrObject>()?.toLightClass() ?: return@Callable
-                        searchDataClassComponentUsages(
-                            containingClass = containingClass,
-                            componentMethodName = componentMethodName,
-                            kotlinOptions = kotlinOptions
-                        )
+
+                        searchNamedElement(element, componentMethodName)
+
+                        if (kotlinOptions.searchForComponentConventions) {
+                            val componentIndex = element.parameterIndex()
+                            val searcher = DestructuringDeclarationReferenceSearcher(
+                                element,
+                                componentIndex + 1,
+                                queryParameters.effectiveSearchScope,
+                                consumer,
+                                queryParameters.optimizer,
+                                kotlinOptions
+                            )
+                            longTasks.add { searcher.run() }
+                        }
                     }
 
                     is KtLightParameter -> {
