@@ -95,6 +95,7 @@ val CoroutineScope.progressReporter: ProgressReporter0? get() = null
 )
 fun RawProgressReporter.asContextElement(): CoroutineContext.Element = ProgressReporterElement.Raw(this)
 
+@get:Internal
 @Deprecated(
   "To report use `reportRawProgress`. " +
   "To pass reporter via context implement own context element."
