@@ -956,9 +956,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public boolean canClose() {
     return
-      !anyModalWindowsKeepPopupOpen() &&
+      (!anyModalWindowsKeepPopupOpen() &&
       (myCallBack == null || myCallBack.compute().booleanValue()) &&
-      !preventImmediateClosingAfterOpening();
+      !preventImmediateClosingAfterOpening()) ||
+      myDisposed; // check for myDisposed last to allow `myCallBack` to be executed
   }
 
   boolean anyModalWindowsKeepPopupOpen() {
@@ -1718,6 +1719,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void dispose() {
     ThreadingAssertions.assertEventDispatchThread();
+
+    if (myDisposed) {
+      return;
+    }
+    myDisposed = true;
+
     if (myState == State.SHOWN) {
       LOG.debug("shown popup must be cancelled");
       cancel();
@@ -1728,11 +1735,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     debugState("dispose popup", State.INIT, State.CANCEL);
     myState = State.DISPOSE;
-
-    if (myDisposed) {
-      return;
-    }
-    myDisposed = true;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("start disposing " + myContent);
