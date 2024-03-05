@@ -189,7 +189,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: disabled by registry");
       return false;
     }
-    if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
+    if (ExternalSystemExecutionAware.hasTargetEnvironmentConfiguration(settings)) {
       LOG.debug("TestLauncher isn't applicable: unsupported execution with remote target");
       return false;
     }
@@ -287,9 +287,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   private static void prepareTaskState(@NotNull ExternalSystemTaskId id,
                                        @NotNull GradleExecutionSettings settings,
                                        @NotNull ExternalSystemTaskNotificationListener listener) {
-    TargetEnvironmentConfigurationProvider provider =
-      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
-    if (provider != null) return; // Prepared by TargetBuildLauncher.
+    if (ExternalSystemExecutionAware.hasTargetEnvironmentConfiguration(settings)) return; // Prepared by TargetBuildLauncher.
 
     RunConfigurationTaskState taskState = settings.getUserData(RunConfigurationTaskState.getKEY());
     if (taskState == null) return;

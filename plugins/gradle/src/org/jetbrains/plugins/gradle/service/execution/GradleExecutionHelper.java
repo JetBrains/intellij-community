@@ -257,7 +257,7 @@ public class GradleExecutionHelper {
     try (Scope ignore = span.makeCurrent()) {
       settings.setRemoteProcessIdleTtlInMs(100);
 
-      if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
+      if (ExternalSystemExecutionAware.hasTargetEnvironmentConfiguration(settings)) {
         // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
         executeWrapperTask(id, settings, projectPath, listener, connection, cancellationToken);
 
