@@ -487,6 +487,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Gear = load("general/gear.svg", 1176080624, 0);
     /** 16x16 */ public static final @NotNull Icon GearHover = load("general/gearHover.svg", -142737575, 0);
     /** 16x16 */ public static final @NotNull Icon GearPlain = load("general/gearPlain.svg", -595181203, 2);
+    /** 16x16 */ public static final @NotNull Icon GreenCheckmark = load("general/greenCheckmark.svg", 1355926933, 2);
     /** 16x16 */ public static final @NotNull Icon HideToolWindow = load("general/hideToolWindow.svg", -24888126, 2);
     /** 16x16 */ public static final @NotNull Icon ImplementingMethod = load("general/implementingMethod.svg", -286814761, 1);
     /** 16x16 */ public static final @NotNull Icon Information = load("general/information.svg", 45152184, 0);

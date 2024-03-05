@@ -303,6 +303,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ExpandAll = load("expui/general/expandAll.svg", 732447936, 2);
     /** 16x16 */ public static final @NotNull Icon Export = load("expui/general/export.svg", -737835750, 2);
     /** 16x16 */ public static final @NotNull Icon Filter = load("expui/general/filter.svg", 1413384446, 2);
+    /** 16x16 */ public static final @NotNull Icon GreenCheckmark = load("expui/general/greenCheckmark.svg", -1355882469, 2);
     /** 16x16 */ public static final @NotNull Icon Groups = load("expui/general/groups.svg", -2073085413, 2);
     /** 16x16 */ public static final @NotNull Icon Help = load("expui/general/help.svg", -1074340654, 2);
     /** 16x16 */ public static final @NotNull Icon Hide = load("expui/general/hide.svg", 1047937051, 2);
