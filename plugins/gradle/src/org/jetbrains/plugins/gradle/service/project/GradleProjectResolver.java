@@ -591,8 +591,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     if (resolverCtx.isResolveModulePerSourceSet()) {
       executionSettings.withArgument("-Didea.resolveSourceSetDependencies=true");
     }
-    String gradleVersion = resolverCtx.getProjectGradleVersion();
-    if (executionSettings.isParallelModelFetch() && gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.4")) {
+    if (executionSettings.isParallelModelFetch()) {
       executionSettings.withArgument("-Didea.parallelModelFetch.enabled=true");
     }
     if (!isBuildSrcProject) {

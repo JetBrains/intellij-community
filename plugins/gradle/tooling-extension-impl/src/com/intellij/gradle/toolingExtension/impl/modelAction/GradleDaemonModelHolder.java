@@ -80,7 +80,7 @@ public class GradleDaemonModelHolder {
   }
 
   public @NotNull BuildController createBuildController(@NotNull BuildController parentController) {
-    return new DefaultBuildController(parentController, myRootGradleBuild);
+    return new DefaultBuildController(parentController, myRootGradleBuild, myBuildEnvironment);
   }
 
   public @NotNull GradleModelConsumer createModelConsumer(@NotNull ExecutorService converterExecutor) {
