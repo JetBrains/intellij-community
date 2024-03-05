@@ -1,6 +1,4 @@
 *f:com.intellij.platform.util.progress.ContextKt
-- sf:getProgressReporter(kotlin.coroutines.CoroutineContext):com.intellij.platform.util.progress.ProgressReporter0
-- sf:getProgressReporter(kotlinx.coroutines.CoroutineScope):com.intellij.platform.util.progress.ProgressReporter0
 - sf:getRawProgressReporter(kotlin.coroutines.CoroutineContext):com.intellij.platform.util.progress.RawProgressReporter
 - sf:internalCurrentStepAsRaw(kotlin.coroutines.Continuation):java.lang.Object
 - sf:internalCurrentStepAsSequential(I,kotlin.coroutines.Continuation):java.lang.Object
@@ -18,9 +16,6 @@
 - bs:itemStep$suspendImpl(com.intellij.platform.util.progress.ProgressReporter,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - a:sizedStep(I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - bs:sizedStep$default(com.intellij.platform.util.progress.ProgressReporter,I,java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-*:com.intellij.platform.util.progress.ProgressReporter0
-- a:rawReporter():com.intellij.platform.util.progress.RawProgressReporter
-- a:step(D,java.lang.String):com.intellij.platform.util.progress.ProgressReporter0
 *:com.intellij.platform.util.progress.ProgressState
 - a:getDetails():java.lang.String
 - a:getFraction():java.lang.Double
