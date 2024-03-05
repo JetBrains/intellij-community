@@ -135,6 +135,9 @@ suspend fun <T> withProgressText(text: ProgressText?, action: ScopedLambda<T>): 
   return currentProgressStep().withText(text, action)
 }
 
+/**
+ * Suppresses progress reporting inside [action] to avoid the [action] taking the ownership of the [current step][currentProgressStep].
+ */
 suspend fun <T> ignoreProgressReportingIn(action: suspend CoroutineScope.() -> T): T {
   // It's not possible to throw away a context element
   // => we replace the element with a null-object instead
