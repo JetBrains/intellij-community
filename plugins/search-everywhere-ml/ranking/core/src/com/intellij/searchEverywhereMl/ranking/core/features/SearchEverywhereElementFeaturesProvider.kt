@@ -95,8 +95,8 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     return result
   }
 
-  protected fun getQueryEmbedding(queryText: String): FloatTextEmbedding? {
-    return searchEverywhereMlRankingService?.getCurrentSession()?.getSearchQueryEmbedding(queryText)
+  protected fun getQueryEmbedding(queryText: String, split: Boolean = false): FloatTextEmbedding? {
+    return searchEverywhereMlRankingService?.getCurrentSession()?.getSearchQueryEmbedding(queryText, split)
   }
 
   internal fun setMatchValueToField(matchValue: Any,

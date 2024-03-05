@@ -69,7 +69,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     else {
       val action = extractAction(element)
       val actionEmbedding = getActionEmbedding(action, valueName)
-      val queryEmbedding = getQueryEmbedding(searchQuery)
+      val queryEmbedding = getQueryEmbedding(searchQuery, split = false)
       if (actionEmbedding != null && queryEmbedding != null) {
         data.add(SIMILARITY_SCORE.with(actionEmbedding.cosine(queryEmbedding).toDouble()))
       }

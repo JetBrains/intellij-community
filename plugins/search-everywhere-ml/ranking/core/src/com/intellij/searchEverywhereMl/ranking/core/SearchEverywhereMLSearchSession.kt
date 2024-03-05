@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ml.embeddings.utils.convertNameToNaturalLanguage
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCacheDataProvider
@@ -136,9 +137,11 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
 
   fun getCurrentSearchState() = currentSearchState.get()
 
-  fun getSearchQueryEmbedding(searchQuery: String): FloatTextEmbedding? {
+  fun getSearchQueryEmbedding(searchQuery: String, split: Boolean): FloatTextEmbedding? {
     return embeddingCache[searchQuery]
-           ?: runBlockingCancellable { generateEmbedding(searchQuery) }?.also { embeddingCache[searchQuery] = it }
+           ?: runBlockingCancellable {
+             generateEmbedding(if (split) convertNameToNaturalLanguage(searchQuery) else searchQuery)
+           }?.also { embeddingCache[searchQuery] = it }
   }
 }
 

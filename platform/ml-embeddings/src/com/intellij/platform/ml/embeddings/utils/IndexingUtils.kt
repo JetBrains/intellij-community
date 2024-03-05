@@ -45,6 +45,13 @@ fun splitIdentifierIntoTokens(identifier: String): List<String> {
   }
 }
 
+fun convertNameToNaturalLanguage(pattern: String): String {
+  val meaningfulName = if (pattern.contains(".")) {
+    pattern.split(".").dropLast(1).joinToString(".")
+  } else pattern
+  return splitIdentifierIntoTokens(meaningfulName).joinToString(" ")
+}
+
 suspend fun generateEmbedding(indexableRepresentation: String, downloadArtifacts: Boolean = false): FloatTextEmbedding? {
   return generateEmbeddings(listOf(indexableRepresentation), downloadArtifacts)?.single()
 }
