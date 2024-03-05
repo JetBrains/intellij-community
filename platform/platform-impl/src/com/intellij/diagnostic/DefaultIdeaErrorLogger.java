@@ -2,16 +2,24 @@
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
+@ApiStatus.Internal
 public final class DefaultIdeaErrorLogger {
   private static volatile boolean ourOomOccurred;
   private static volatile boolean ourLoggerBroken;
+  private static final AtomicBoolean ourPluginUpdateScheduled = new AtomicBoolean(false);
 
   private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
   private static final String DISABLED_VALUE = "disabled";
@@ -21,17 +29,18 @@ public final class DefaultIdeaErrorLogger {
 
     try {
       var app = ApplicationManager.getApplication();
-      if (app == null || app.isDisposed()) return false;
+      if (app == null || app.isExitInProgress() || app.isDisposed()) return false;
 
       var t = event.getThrowable();
       if (getOOMErrorKind(t) != null) return true;
 
-      UpdateChecker.checkForUpdate(event);
-
       var notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY));
 
-      var submitter = IdeErrorsDialog.getSubmitter(t, PluginUtil.getInstance().findPluginId(t));
+      var pluginId = PluginUtil.getInstance().findPluginId(t);
+      var submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       var showPluginError = !(submitter instanceof ITNReporter itnReporter) || itnReporter.showErrorInRelease(event);
+
+      scheduleUpdateCheck(pluginId);
 
       return app.isInternal() || notificationEnabled || showPluginError;
     }
@@ -40,6 +49,18 @@ public final class DefaultIdeaErrorLogger {
         ourLoggerBroken = true;
       }
       throw e;
+    }
+  }
+
+  private static void scheduleUpdateCheck(PluginId pluginId) {
+    var pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
+    if (pluginDescriptor != null && !pluginDescriptor.isBundled() && !ourPluginUpdateScheduled.getAndSet(true)) {
+      var app = ApplicationManager.getApplication();
+      app.executeOnPooledThread(() -> {
+        if (!app.isExitInProgress() && !app.isDisposed() && UpdateSettings.getInstance().isPluginsCheckNeeded()) {
+          UpdateChecker.updateAndShowResult();
+        }
+      });
     }
   }
 
