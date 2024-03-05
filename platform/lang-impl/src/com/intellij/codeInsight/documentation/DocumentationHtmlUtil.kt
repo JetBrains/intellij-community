@@ -57,7 +57,7 @@ object DocumentationHtmlUtil {
   val lookupDocPopupMinHeight: Int get() = 300
 
   @JvmStatic
-  fun getModuleIconResolver(baseIconResolver: Function<in String?, out Icon?>): Function<in String?, out Icon?> = Function { key: String? ->
+  fun getModuleIconResolver(baseIconResolver: Function<in String?, out Icon?>): (String) -> Icon? = { key: String ->
     baseIconResolver.apply(key)
     ?: ModuleTypeManager.getInstance().findByID(key)
       .takeIf { it !is UnknownModuleType }

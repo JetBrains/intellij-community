@@ -163,7 +163,7 @@ internal class DocumentationUI(
 
   fun trackDocumentationBackgroundChange(disposable: Disposable, onChange: (Color) -> Unit) {
     val job = cs.launch {
-      editorPane.editorBackgroundFlow.collectLatest {
+      editorPane.backgroundFlow.collectLatest {
         withContext(Dispatchers.EDT) {
           onChange(it)
         }

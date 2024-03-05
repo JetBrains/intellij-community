@@ -1,204 +1,187 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.components;
+package com.intellij.ui.components
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.impl.EditorCssFontResolver;
-import com.intellij.util.ui.*;
-import com.intellij.util.ui.accessibility.ScreenReader;
-import com.intellij.util.ui.html.UtilsKt;
-import kotlinx.coroutines.flow.MutableStateFlow;
-import kotlinx.coroutines.flow.StateFlow;
-import kotlinx.coroutines.flow.StateFlowKt;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.impl.EditorCssFontResolver
+import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider.getStyleSheet
+import com.intellij.util.containers.addAllIfNotNull
+import com.intellij.util.ui.*
+import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
+import com.intellij.util.ui.accessibility.ScreenReader
+import com.intellij.util.ui.html.cssMargin
+import com.intellij.util.ui.html.cssPadding
+import com.intellij.util.ui.html.width
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.Nls
+import java.awt.AWTEvent
+import java.awt.Color
+import java.awt.Graphics
+import java.awt.Image
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
+import java.beans.PropertyChangeEvent
+import java.net.URL
+import java.util.*
+import javax.swing.Icon
+import javax.swing.JEditorPane
+import javax.swing.KeyStroke
+import javax.swing.text.Document
+import javax.swing.text.EditorKit
+import javax.swing.text.StyledDocument
+import javax.swing.text.View
+import javax.swing.text.html.HTML
+import javax.swing.text.html.HTMLEditorKit
+import javax.swing.text.html.StyleSheet
 
-import javax.swing.*;
-import javax.swing.text.Document;
-import javax.swing.text.EditorKit;
-import javax.swing.text.StyledDocument;
-import javax.swing.text.View;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.net.URL;
-import java.util.List;
-import java.util.*;
-import java.util.function.Function;
+@Suppress("LeakingThis")
+open class JBHtmlPane(private val myStylesConfiguration: JBHtmlPaneStyleSheetRulesProvider.Configuration,
+                      private val myPaneConfiguration: Configuration
+) : JEditorPane(), Disposable {
 
-import static com.intellij.util.ui.html.UtilsKt.getCssMargin;
-import static com.intellij.util.ui.html.UtilsKt.getCssPadding;
 
-public class JBHtmlPane extends JEditorPane implements Disposable {
+  data class Configuration(
+    val keyboardActions: Map<KeyStroke, ActionListener> = emptyMap(),
+    val imageResolverFactory: (JBHtmlPane) -> Dictionary<URL, Image>? = { null },
+    val iconResolver: (String) -> Icon? = { null },
+    val additionalStyleSheetProvider: (backgroundColor: Color) -> List<StyleSheet> = { emptyList() },
+    val fontResolver: CSSFontResolver? = null,
+    val extensions: List<ExtendableHTMLViewFactory.Extension> = emptyList()
+  )
 
-  public record Configuration(
-    @NotNull Map<KeyStroke, ActionListener> keyboardActions,
-    @NotNull Function<? super @NotNull JBHtmlPane, ? extends @Nullable Dictionary<URL, Image>> imageResolverFactory,
-    @NotNull Function<? super @NotNull String, ? extends @Nullable Icon> iconResolver,
-    @NotNull Function<@NotNull Color, @NotNull List<@NotNull StyleSheet>> additionalStyleSheetProvider,
-    @Nullable CSSFontResolver fontResolver,
-    @NotNull List<ExtendableHTMLViewFactory.Extension> extensions
-  ) {
-  }
+  private var myText: @Nls String? = "" // getText() surprisingly crashes…, let's cache the text
+  private var myCurrentDefaultStyleSheet: StyleSheet? = null
+  private val mutableBackgroundFlow: MutableStateFlow<Color>
 
-  public static Configuration defaultConfiguration() {
-    return new Configuration(
-      Collections.emptyMap(), pane -> null, url -> null, color -> Collections.emptyList(), null, Collections.emptyList()
-    );
-  }
-
-  private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
-  private StyleSheet myCurrentDefaultStyleSheet = null;
-  private final MutableStateFlow<Color> editorBackgroundFlow;
-
-  private final @NotNull JBHtmlPaneStyleSheetRulesProvider.Configuration myStylesConfiguration;
-  private final @NotNull Configuration myPaneConfiguration;
-
-  public JBHtmlPane(
-    @NotNull JBHtmlPaneStyleSheetRulesProvider.Configuration stylesConfiguration,
-    @NotNull Configuration paneConfiguration
-  ) {
-    myStylesConfiguration = stylesConfiguration;
-    myPaneConfiguration = paneConfiguration;
-    enableEvents(AWTEvent.KEY_EVENT_MASK);
-    setEditable(false);
+  init {
+    enableEvents(AWTEvent.KEY_EVENT_MASK)
+    isEditable = false
     if (ScreenReader.isActive()) {
       // Note: Making the caret visible is merely for convenience
-      getCaret().setVisible(true);
+      caret.isVisible = true
     }
     else {
-      putClientProperty("caretWidth", 0); // do not reserve space for caret (making content one pixel narrower than the component)
-      UIUtil.doNotScrollToCaret(this);
+      putClientProperty("caretWidth", 0) // do not reserve space for caret (making content one pixel narrower than the component)
+
+      UIUtil.doNotScrollToCaret(this)
     }
-    editorBackgroundFlow = StateFlowKt.MutableStateFlow(getBackground());
-    ArrayList<ExtendableHTMLViewFactory.Extension> extensions = new ArrayList<>(myPaneConfiguration.extensions);
-    extensions.addAll(Arrays.asList(
-      ExtendableHTMLViewFactory.Extensions.icons(key -> myPaneConfiguration.iconResolver.apply(key)),
+    mutableBackgroundFlow = MutableStateFlow(background)
+    val extensions = ArrayList(myPaneConfiguration.extensions)
+    extensions.addAllIfNotNull(
+      icons { key: String -> myPaneConfiguration.iconResolver(key) },
       ExtendableHTMLViewFactory.Extensions.BASE64_IMAGES,
       ExtendableHTMLViewFactory.Extensions.INLINE_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.PARAGRAPH_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.LINE_VIEW_EX,
       ExtendableHTMLViewFactory.Extensions.BLOCK_VIEW_EX,
-      ExtendableHTMLViewFactory.Extensions.WBR_SUPPORT
-    ));
-    if (!myPaneConfiguration.extensions.contains(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)) {
-      extensions.add(ExtendableHTMLViewFactory.Extensions.HIDPI_IMAGES);
-    }
+      ExtendableHTMLViewFactory.Extensions.WBR_SUPPORT,
+      ExtendableHTMLViewFactory.Extensions.HIDPI_IMAGES.takeIf {
+        !myPaneConfiguration.extensions.contains(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
+      }
+    )
 
-    HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
-      .replaceViewFactoryExtensions(extensions.toArray(ExtendableHTMLViewFactory.Extension[]::new))
+    val editorKit = HTMLEditorKitBuilder()
+      .replaceViewFactoryExtensions(*extensions.toTypedArray())
       .withViewFactoryExtensions()
-      .withFontResolver(myPaneConfiguration.fontResolver != null ? myPaneConfiguration.fontResolver
-                                                                 : EditorCssFontResolver.getGlobalInstance())
-      .build();
-    updateDocumentationPaneDefaultCssRules(editorKit);
+      .withFontResolver(myPaneConfiguration.fontResolver ?: EditorCssFontResolver.getGlobalInstance())
+      .build()
+    updateDocumentationPaneDefaultCssRules(editorKit)
 
-    addPropertyChangeListener(evt -> {
-      var propertyName = evt.getPropertyName();
-      if ("background".equals(propertyName) || "UI".equals(propertyName)) {
-        updateDocumentationPaneDefaultCssRules(editorKit);
-        editorBackgroundFlow.setValue(getBackground());
+    addPropertyChangeListener { evt: PropertyChangeEvent ->
+      val propertyName = evt.propertyName
+      if ("background" == propertyName || "UI" == propertyName) {
+        updateDocumentationPaneDefaultCssRules(editorKit)
+        mutableBackgroundFlow.value = background
       }
-    });
-
-    super.setEditorKit(editorKit);
-    setBorder(JBUI.Borders.empty());
-  }
-
-  @Override
-  public void dispose() {
-    getCaret().setVisible(false); // Caret, if blinking, has to be deactivated.
-  }
-
-  @Override
-  public @Nls String getText() {
-    return myText;
-  }
-
-  @Override
-  public void setText(@Nls String t) {
-    myText = t;
-    super.setText(t);
-  }
-
-  @Override
-  public void setEditorKit(EditorKit kit) {
-    throw new UnsupportedOperationException("Cannot change EditorKit for JBHtmlPane");
-  }
-
-  public StateFlow<Color> getEditorBackgroundFlow() {
-    return editorBackgroundFlow;
-  }
-
-  private void updateDocumentationPaneDefaultCssRules(@NotNull HTMLEditorKit editorKit) {
-    StyleSheet editorStyleSheet = editorKit.getStyleSheet();
-    if (myCurrentDefaultStyleSheet != null) {
-      editorStyleSheet.removeStyleSheet(myCurrentDefaultStyleSheet);
     }
-    myCurrentDefaultStyleSheet = new StyleSheet();
-    Color background = getBackground();
-    myCurrentDefaultStyleSheet.addStyleSheet(JBHtmlPaneStyleSheetRulesProvider.getStyleSheet(background, myStylesConfiguration));
-    for (StyleSheet styleSheet : myPaneConfiguration.additionalStyleSheetProvider.apply(background)) {
-      myCurrentDefaultStyleSheet.addStyleSheet(styleSheet);
-    }
-    editorStyleSheet.addStyleSheet(myCurrentDefaultStyleSheet);
+
+    super.setEditorKit(editorKit)
+    border = JBUI.Borders.empty()
   }
 
-  @Override
-  protected void processKeyEvent(KeyEvent e) {
-    KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
-    ActionListener listener = myPaneConfiguration.keyboardActions.get(keyStroke);
+  override fun dispose() {
+    caret.isVisible = false // Caret, if blinking, has to be deactivated.
+  }
+
+  override fun getText(): @Nls String? {
+    return myText
+  }
+
+  override fun setText(t: @Nls String?) {
+    myText = t
+    super.setText(t)
+  }
+
+  override fun setEditorKit(kit: EditorKit) {
+    throw UnsupportedOperationException("Cannot change EditorKit for JBHtmlPane")
+  }
+
+  val backgroundFlow: StateFlow<Color>
+    get() = mutableBackgroundFlow
+
+  private fun updateDocumentationPaneDefaultCssRules(editorKit: HTMLEditorKit) {
+    val editorStyleSheet = editorKit.styleSheet
+    myCurrentDefaultStyleSheet
+      ?.let { editorStyleSheet.removeStyleSheet(it) }
+    val newStyleSheet = StyleSheet()
+      .also { myCurrentDefaultStyleSheet = it }
+    val background = background
+    newStyleSheet.addStyleSheet(getStyleSheet(background, myStylesConfiguration))
+    for (styleSheet in myPaneConfiguration.additionalStyleSheetProvider(background)) {
+      newStyleSheet.addStyleSheet(styleSheet)
+    }
+    editorStyleSheet.addStyleSheet(newStyleSheet)
+  }
+
+  override fun processKeyEvent(e: KeyEvent) {
+    val keyStroke = KeyStroke.getKeyStrokeForEvent(e)
+    val listener = myPaneConfiguration.keyboardActions[keyStroke]
     if (listener != null) {
-      listener.actionPerformed(new ActionEvent(this, 0, ""));
-      e.consume();
-      return;
+      listener.actionPerformed(ActionEvent(this, 0, ""))
+      e.consume()
+      return
     }
-    super.processKeyEvent(e);
+    super.processKeyEvent(e)
   }
 
-  @Override
-  protected void paintComponent(Graphics g) {
-    GraphicsUtil.setupAntialiasing(g);
-    super.paintComponent(g);
+  override fun paintComponent(g: Graphics) {
+    GraphicsUtil.setupAntialiasing(g)
+    super.paintComponent(g)
   }
 
-  @Override
-  public void setDocument(Document doc) {
-    super.setDocument(doc);
-    doc.putProperty("IgnoreCharsetDirective", Boolean.TRUE);
-    if (doc instanceof StyledDocument) {
-      doc.putProperty("imageCache", myPaneConfiguration.imageResolverFactory.apply(this));
+  override fun setDocument(doc: Document) {
+    super.setDocument(doc)
+    doc.putProperty("IgnoreCharsetDirective", true)
+    if (doc is StyledDocument) {
+      doc.putProperty("imageCache", myPaneConfiguration.imageResolverFactory(this))
     }
   }
 
-  protected int getPreferredSectionWidth(String sectionClassName) {
-    View definition = findSection(getUI().getRootView(this), sectionClassName);
-    var result = definition == null ? -1 : (int)definition.getPreferredSpan(View.X_AXIS);
+  protected fun getPreferredSectionWidth(sectionClassName: String): Int {
+    val definition = findSection(getUI().getRootView(this), sectionClassName)
+    var result = definition?.getPreferredSpan(View.X_AXIS)?.toInt() ?: -1
     if (result > 0) {
-      result += UtilsKt.getWidth(getCssMargin(definition));
-      var parent = definition.getParent();
+      result += definition!!.cssMargin.width
+      var parent = definition.parent
       while (parent != null) {
-        result += UtilsKt.getWidth(getCssMargin(parent)) + UtilsKt.getWidth(getCssPadding(parent));
-        parent = parent.getParent();
+        result += parent.cssMargin.width + parent.cssPadding.width
+        parent = parent.parent
       }
     }
-    return result;
+    return result
   }
 
-  private static @Nullable View findSection(@NotNull View view, @NotNull String sectionClassName) {
-    if (sectionClassName.equals(view.getElement().getAttributes().getAttribute(HTML.Attribute.CLASS))) {
-      return view;
+  private fun findSection(view: View, sectionClassName: String): View? {
+    if (sectionClassName == view.element.attributes.getAttribute(HTML.Attribute.CLASS)) {
+      return view
     }
-    for (int i = 0; i < view.getViewCount(); i++) {
-      View definition = findSection(view.getView(i), sectionClassName);
+    for (i in 0 until view.viewCount) {
+      val definition = findSection(view.getView(i), sectionClassName)
       if (definition != null) {
-        return definition;
+        return definition
       }
     }
-    return null;
+    return null
   }
 }
