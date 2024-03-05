@@ -583,20 +583,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     val continueOpen = span("checkChildProcess") {
-      if (ApplicationManagerEx.isInIntegrationTest()) {
-        // write current PID to file to kill the process if it hangs
-        if (IS_CHILD_PROCESS) {
-          val pid = ProcessHandle.current().pid()
-
-          @Suppress("SpellCheckingInspection")
-          val file = PathManager.getSystemDir().resolve("pids.txt")
-          withContext(Dispatchers.IO) {
-            Files.writeString(file, pid.toString())
-          }
-        }
-      }
-
-      !checkChildProcess(projectStoreBaseDir)
+      !checkChildProcess(projectStoreBaseDir, options)
     }
     if (!continueOpen) {
       return null
@@ -944,9 +931,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         if (!perProcessSupport.canBeOpenedInThisProcess(projectDir)) {
           perProcessSupport.openInChildProcess(projectDir)
 
-          @Suppress("ForbiddenInSuspectContextMethod")
-          application.invokeLater {
-            ApplicationManagerEx.getApplicationEx().exit(true, true)
+          blockingContext {
+            application.invokeLater {
+              ApplicationManagerEx.getApplicationEx().exit(true, true)
+            }
           }
 
           return true

@@ -2,11 +2,13 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.actions.OpenFileAction
+import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.util.application
 import java.nio.file.Path
@@ -38,17 +40,19 @@ private class NewProjectActionDisabler : OpenFileAction() {
   }
 }
 
-internal suspend fun checkChildProcess(projectStoreBaseDir: Path): Boolean {
+internal suspend fun checkChildProcess(projectStoreBaseDir: Path, options: OpenProjectTask): Boolean {
   val perProcessInstanceSupport = p3Support()
   if (!perProcessInstanceSupport.isEnabled())
       return false
 
-  if (!perProcessInstanceSupport.canBeOpenedInThisProcess(projectStoreBaseDir) && ProjectManagerEx.getOpenProjects().isEmpty()) {
+  if (!perProcessInstanceSupport.canBeOpenedInThisProcess(projectStoreBaseDir) && (ProjectManagerEx.getOpenProjects().isEmpty() || options.forceOpenInNewFrame)) {
     perProcessInstanceSupport.openInChildProcess(projectStoreBaseDir)
 
-    @Suppress("ForbiddenInSuspectContextMethod")
-    application.invokeLater {
-      ApplicationManagerEx.getApplicationEx().exit(true, true)
+
+    blockingContext {
+      application.invokeLater {
+        ApplicationManagerEx.getApplicationEx().exit(true, true)
+      }
     }
 
     return true
