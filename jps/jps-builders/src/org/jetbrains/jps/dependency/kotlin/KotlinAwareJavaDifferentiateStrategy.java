@@ -36,7 +36,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       affectLookupUsages(context, asIterable(new JvmNodeReferenceID(addedClass.getPackageName())), ktName != null? JvmClass.getShortName(ktName) : addedClass.getShortName(), future, null);
     }
 
-    return super.processAddedClass(context, addedClass, future, present);
+    return true;
   }
 
   @Override
@@ -44,7 +44,14 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     for (JvmClass superClass : filter(future.allDirectSupertypes(removedClass), KotlinAwareJavaDifferentiateStrategy::isSealed)) {
       affectNodeSources(context, superClass.getReferenceID(), "Subclass of a sealed class was removed, affecting ");
     }
-    return super.processRemovedClass(context, removedClass, future, present);
+
+    for (KmFunction kmFunction : allKmFunctions(removedClass)) {
+      if (Attributes.isInline(kmFunction)) {
+        debug("Function in a removed class was inlineable, affecting method usages ", kmFunction.getName());
+        affectLookupUsages(context, removedClass, kmFunction, present);
+      }
+    }
+    return true;
   }
 
   @Override
@@ -199,6 +206,17 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         debug("Function was inlineable, or has become inlineable or a body of inline method has changed; affecting method usages ", kmFunction.getName());
         affectLookupUsages(context, changedClass, kmFunction, future);
       }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean processRemovedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmMethod removedMethod, Utils future, Utils present) {
+    JvmClass changedClass = change.getPast();
+    KmFunction kmFunction = getKmFunction(changedClass, removedMethod);
+    if (kmFunction != null && Attributes.isInline(kmFunction)) {
+      debug("Function was inlineable, affecting method usages ", kmFunction.getName());
+      affectLookupUsages(context, changedClass, kmFunction, present);
     }
     return true;
   }
