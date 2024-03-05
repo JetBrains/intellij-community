@@ -1222,4 +1222,5 @@ interface SuspendingUpdateSession: UpdateSession {
 
   fun visitCaches(visitor: (AnAction, String, Any) -> Unit)
   fun dropCaches(predicate: (Any) -> Boolean)
+  suspend fun <T: Any?> readAction(block: () -> T) : T
 }
