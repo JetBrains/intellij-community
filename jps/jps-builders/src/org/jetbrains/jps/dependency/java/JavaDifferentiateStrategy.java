@@ -764,7 +764,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     JVMFlags removedFlags = diff.getRemovedFlags();
 
     if (!changedField.isPrivate() && changedField.isInlinable() && changedField.getValue() != null) { // if the field was a compile-time constant
-      boolean harmful = !isEmpty(filter(List.of(addedFlags, removedFlags), f -> f.isStatic() || f.isFinal()));
+      boolean harmful = find(List.of(addedFlags, removedFlags), f -> f.isStatic() || f.isFinal()) != null;
       if (harmful || diff.valueChanged() || diff.accessRestricted()) {
         if (context.getParams().isProcessConstantsIncrementally()) {
           debug("Potentially inlined field changed its access or value => affecting field usages and static member import usages");

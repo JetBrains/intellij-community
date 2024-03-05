@@ -203,6 +203,44 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     return true;
   }
 
+  @Override
+  public boolean processRemovedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmField removedField, Utils future, Utils present) {
+    if (!removedField.isPrivate() && removedField.isInlinable() && removedField.getValue() != null) {
+      debug("Field had value and was (non-private) final; affecting usages in Kotlin sources ");
+      JvmClass changedClass = change.getPast();
+      affectLookupUsages(
+        context,
+        flat(asIterable(changedClass.getReferenceID()), present.collectSubclassesWithoutField(changedClass.getReferenceID(), removedField)),
+        removedField.getName(),
+        present,
+        null
+      );
+    }
+
+    return true;
+  }
+
+  @Override
+  public boolean processChangedField(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> clsChange, Difference.Change<JvmField, JvmField.Diff> fieldChange, Utils future, Utils present) {
+    JvmClass changedClass = clsChange.getPast();
+    JvmField changedField = fieldChange.getPast();
+    if (!changedField.isPrivate() && changedField.isInlinable() && changedField.getValue() != null) { // if the field was a compile-time constant
+      JvmField.Diff diff = fieldChange.getDiff();
+      if (diff.valueChanged() || diff.accessRestricted() || find(List.of(diff.getAddedFlags(), diff.getRemovedFlags()), f -> f.isStatic() || f.isFinal()) != null) {
+        debug("Potentially inlined field changed its access or value; affecting usages in Kotlin sources ");
+        affectLookupUsages(
+          context,
+          flat(asIterable(changedClass.getReferenceID()), present.collectSubclassesWithoutField(changedClass.getReferenceID(), changedField)),
+          changedField.getName(),
+          present,
+          null
+        );
+      }
+    }
+
+    return true;
+  }
+
   private void affectConflictingCallExpressions(DifferentiateContext context, JvmClass cls, JvmMethod clsMethod, Utils utils, @Nullable Predicate<Node<?, ?>> constraint) {
     if (clsMethod.isPrivate()) {
       return;
@@ -290,7 +328,14 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   }
 
   private void affectLookupUsages(DifferentiateContext context, Iterable<JvmNodeReferenceID> symbolOwners, String symbolName, Utils utils, @Nullable Predicate<Node<?, ?>> constraint) {
-    affectUsages(context, "lookup '" + symbolName + "'" , symbolOwners, id -> {
+    // since '$' is both a valid bytecode name symbol and inner class name separator, for every class name containing '$' use additional classname with '/'
+    Iterable<JvmNodeReferenceID> owners = filter(flat(symbolOwners, map(symbolOwners, o -> {
+      String original = o.getNodeName();
+      String normalized = original.replace('$', '/'); // inner class names on Kotlin lookups level use '/' separators instead of '$'
+      return normalized.equals(original)? null : new JvmNodeReferenceID(normalized);
+    })), Objects::nonNull);
+
+    affectUsages(context, "lookup '" + symbolName + "'" , owners, id -> {
       String kotlinName = getKotlinName(id, utils);
       return new LookupNameUsage(kotlinName != null ? new JvmNodeReferenceID(kotlinName) : id, symbolName);
     }, constraint);
