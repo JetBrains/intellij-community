@@ -3,6 +3,7 @@ package com.intellij.platform.ijent
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.*
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.io.awaitExit
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.*
@@ -22,7 +23,7 @@ import kotlin.time.Duration.Companion.seconds
  * of problems in the IDE.
  */
 @ApiStatus.Internal
-class IjentSessionMediator private constructor(internal val process: Process, private val lastStderrMessages: SharedFlow<String?>) {
+class IjentSessionMediator private constructor(val scope: CoroutineScope, val process: Process, private val lastStderrMessages: SharedFlow<String?>) {
   enum class ExpectedErrorCode {
     /** During initialization, even a sudden successful exit is an error. */
     NO,
@@ -79,28 +80,39 @@ class IjentSessionMediator private constructor(internal val process: Process, pr
   companion object {
     /** See the docs of [IjentSessionMediator] */
     @OptIn(DelicateCoroutinesApi::class)
-    fun launch(coroutineScope: CoroutineScope, process: Process, ijentId: IjentId): IjentSessionMediator {
+    fun create(process: Process, ijentId: IjentId): IjentSessionMediator {
       val lastStderrMessages = MutableSharedFlow<String?>(
         replay = 0,
         extraBufferCapacity = 30,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
       )
 
+      val ijentMainScope = IjentMainScopeHolder.getInstance().scope
+      val connectionScope = ijentMainScope.namedChildScope("ijent $ijentId > connection scope", supervisor = false)
+
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
-      GlobalScope.launch(blockingDispatcher + coroutineScope.coroutineNameAppended("$ijentId > stderr logger")) {
+      GlobalScope.launch(blockingDispatcher + CoroutineName("ijent $ijentId > stderr logger")) {
         ijentProcessStderrLogger(process, ijentId, lastStderrMessages)
       }
 
-      val mediator = IjentSessionMediator(process, lastStderrMessages)
+      val mediator = IjentSessionMediator(connectionScope, process, lastStderrMessages)
 
-      coroutineScope.launch(coroutineScope.coroutineNameAppended("$ijentId > exit code awaiter")) {
-        ijentProcessExitCodeAwaiter(coroutineScope, ijentId, mediator, lastStderrMessages)
+      val awaiterScope = ijentMainScope.launch(CoroutineName("ijent $ijentId > exit awaiter scope")) {
+        ijentProcessExitAwaiter(ijentId, mediator, lastStderrMessages)
       }
 
-      coroutineScope.launch(coroutineScope.coroutineNameAppended("$ijentId > finalizer")) {
+      val finalizerScope = connectionScope.launch(CoroutineName("ijent $ijentId > finalizer scope")) {
         ijentProcessFinalizer(ijentId, mediator)
+      }
+
+      awaiterScope.invokeOnCompletion {
+        finalizerScope.cancel()
+      }
+
+      finalizerScope.invokeOnCompletion {
+        connectionScope.cancel()
       }
 
       return mediator
@@ -143,8 +155,7 @@ private fun logIjentStderr(ijentId: IjentId, line: String) {
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private suspend fun ijentProcessExitCodeAwaiter(
-  ijentCoroutineScope: CoroutineScope,
+private suspend fun ijentProcessExitAwaiter(
   ijentId: IjentId,
   mediator: IjentSessionMediator,
   lastStderrMessages: MutableSharedFlow<String?>,
@@ -158,12 +169,7 @@ private suspend fun ijentProcessExitCodeAwaiter(
     IjentSessionMediator.ExpectedErrorCode.ANY -> true
   }
 
-  if (isExitExpected) {
-    ijentCoroutineScope.cancel(CancellationException("The process expectedly exited with code $exitCode"))
-  }
-  else {
-    val message = "The process suddenly exited with the code $exitCode"
-
+  if (!isExitExpected) {
     // This coroutine must be bound to something that outlives `coroutineScope`, in order to not block its cancellation and
     // to not truncate the last lines of the logs, which are usually the most important.
     GlobalScope.launch {
@@ -175,10 +181,9 @@ private suspend fun ijentProcessExitCodeAwaiter(
       }
       finally {
         // There's `LOG.error(message, Attachment)`, but it doesn't work well with `LoggedErrorProcessor.executeAndReturnLoggedError`.
-        LOG.error(RuntimeExceptionWithAttachments(message, Attachment("stderr", stderr.toString())))
+        LOG.error(RuntimeExceptionWithAttachments("The process suddenly exited with the code $exitCode", Attachment("stderr", stderr.toString())))
       }
     }
-    ijentCoroutineScope.cancel(CancellationException(message))
   }
 }
 
