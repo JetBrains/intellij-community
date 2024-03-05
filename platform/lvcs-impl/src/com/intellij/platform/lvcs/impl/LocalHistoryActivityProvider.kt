@@ -34,6 +34,8 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     val projectId = project.locationHash
     if (scope is ActivityScope.File) {
       return loadFileActivityList(projectId, scope, scopeFilter)
+    } else if (scope is ActivityScope.Files) {
+      return loadFilesActivityList(projectId, scope, scopeFilter)
     }
     return loadRecentActivityList(projectId, scope, scopeFilter)
   }
@@ -43,6 +45,25 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     val activityItems = mutableListOf<ActivityItem>()
     val affectedPaths = mutableSetOf(path)
 
+    doLoadPathActivityList(projectId, scope, path, scopeFilter, affectedPaths, activityItems)
+
+    return ActivityData(activityItems).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
+  }
+
+  private fun loadFilesActivityList(projectId: String, scope: ActivityScope.Files, scopeFilter: String?): ActivityData {
+    val paths = scope.files.map { gateway.getPathOrUrl(it) }
+    val activityItems = mutableListOf<ActivityItem>()
+    val affectedPaths = paths.toMutableSet()
+
+    for (path in paths) {
+      doLoadPathActivityList(projectId, scope, path, scopeFilter, affectedPaths, activityItems)
+    }
+
+    return ActivityData(activityItems.toSet().sortedByDescending { it.timestamp }).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
+  }
+
+  private fun doLoadPathActivityList(projectId: String, scope: ActivityScope, path: String, scopeFilter: String?,
+                                     affectedPaths: MutableSet<String>, activityItems: MutableList<ActivityItem>) {
     var lastLabel: ChangeSet? = null
     facade.collectChanges(path, ChangeAndPathProcessor(projectId, scopeFilter, affectedPaths::add) { changeSet ->
       if (changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
@@ -57,8 +78,6 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
         activityItems.add(changeSet.toActivityItem(scope))
       }
     })
-
-    return ActivityData(activityItems).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
   }
 
   private fun loadRecentActivityList(projectId: String, scope: ActivityScope, scopeFilter: String?): ActivityData {

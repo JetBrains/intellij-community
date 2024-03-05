@@ -33,11 +33,13 @@ internal fun LocalHistoryFacade.getSingleFileDiff(rootEntry: RootEntry,
 
 internal fun LocalHistoryFacade.getDiff(rootEntry: RootEntry,
                                         selection: ChangeSetSelection,
-                                        entryPath: String,
+                                        entryPaths: Collection<String>,
                                         isOldContentUsed: Boolean): List<Difference> {
-  val leftEntry = findEntry(rootEntry, selection.leftRevision, entryPath, isOldContentUsed)
-  val rightEntry = findEntry(rootEntry, selection.rightRevision, entryPath, isOldContentUsed)
-  return Entry.getDifferencesBetween(leftEntry, rightEntry, selection.rightRevision is RevisionId.Current)
+  return entryPaths.flatMap {
+    val leftEntry = findEntry(rootEntry, selection.leftRevision, it, isOldContentUsed)
+    val rightEntry = findEntry(rootEntry, selection.rightRevision, it, isOldContentUsed)
+    Entry.getDifferencesBetween(leftEntry, rightEntry, selection.rightRevision is RevisionId.Current)
+  }
 }
 
 internal fun LocalHistoryFacade.getDiff(gateway: IdeaGateway,
@@ -45,13 +47,19 @@ internal fun LocalHistoryFacade.getDiff(gateway: IdeaGateway,
                                         selection: ChangeSetSelection,
                                         isOldContentUsed: Boolean): List<Difference> {
   val rootEntry = selection.data.getRootEntry(gateway)
-  val entryPath = getEntryPath(gateway, scope)
-  return getDiff(rootEntry, selection, entryPath, isOldContentUsed).toList()
+  val entryPaths = getEntryPaths(gateway, scope)
+  return getDiff(rootEntry, selection, entryPaths, isOldContentUsed).toList()
 }
 
-internal fun getEntryPath(gateway: IdeaGateway, scope: ActivityScope): String {
-  return if (scope is ActivityScope.File) gateway.getPathOrUrl(scope.file) else ""
+internal fun getEntryPaths(gateway: IdeaGateway, scope: ActivityScope): Collection<String> {
+  return when (scope) {
+    is ActivityScope.File -> listOf(getEntryPath(gateway, scope))
+    is ActivityScope.Files -> scope.files.map { gateway.getPathOrUrl(it) }
+    else -> listOf("")
+  }
 }
+
+internal fun getEntryPath(gateway: IdeaGateway, scope: ActivityScope.File) = gateway.getPathOrUrl(scope.file)
 
 internal fun getChanges(gateway: IdeaGateway, scope: ActivityScope, diff: List<Difference>): List<Change> {
   return diff.map { difference ->

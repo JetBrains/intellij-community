@@ -11,18 +11,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.lvcs.impl.ActivityScope;
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.platform.lvcs.impl.ui.ActivityView;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Objects;
 
 @ApiStatus.Internal
 public final class ShowSelectionHistoryAction extends ShowHistoryAction {
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
-    VirtualFile f = Objects.requireNonNull(getFile(e));
+    VirtualFile f = ContainerUtil.getOnlyItem(getFiles(e));
+    if (f == null) return;
+
     VcsSelection sel = Objects.requireNonNull(VcsSelectionUtil.getSelection(this, e));
 
     int from = sel.getSelectionStartLineNumber();
@@ -51,7 +55,9 @@ public final class ShowSelectionHistoryAction extends ShowHistoryAction {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull IdeaGateway gw, @NotNull VirtualFile f) {
-    return super.isEnabled(gw, f) && !f.isDirectory();
+  protected boolean isActionEnabled(@NotNull IdeaGateway gw, @NotNull Collection<VirtualFile> files) {
+    VirtualFile singleFile = ContainerUtil.getOnlyItem(files);
+    if (singleFile == null || singleFile.isDirectory()) return false;
+    return super.isActionEnabled(gw, files);
   }
 }

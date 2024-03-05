@@ -843,8 +843,10 @@ com.intellij.platform.lvcs.impl.ActivityDiffObject
 *:com.intellij.platform.lvcs.impl.ActivityScope
 - *sf:Companion:com.intellij.platform.lvcs.impl.ActivityScope$Companion
 - s:fromFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.lvcs.impl.ActivityScope
+- s:fromFiles(java.util.Collection):com.intellij.platform.lvcs.impl.ActivityScope
 *f:com.intellij.platform.lvcs.impl.ActivityScope$Companion
 - f:fromFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.lvcs.impl.ActivityScope
+- f:fromFiles(java.util.Collection):com.intellij.platform.lvcs.impl.ActivityScope
 *f:com.intellij.platform.lvcs.impl.ActivityScope$Directory
 - com.intellij.platform.lvcs.impl.ActivityScope$File
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
@@ -858,6 +860,16 @@ com.intellij.platform.lvcs.impl.ActivityDiffObject
 *:com.intellij.platform.lvcs.impl.ActivityScope$File
 - com.intellij.platform.lvcs.impl.ActivityScope
 - a:getFile():com.intellij.openapi.vfs.VirtualFile
+*f:com.intellij.platform.lvcs.impl.ActivityScope$Files
+- com.intellij.platform.lvcs.impl.ActivityScope
+- <init>(java.util.Collection):V
+- f:component1():java.util.Collection
+- f:copy(java.util.Collection):com.intellij.platform.lvcs.impl.ActivityScope$Files
+- bs:copy$default(com.intellij.platform.lvcs.impl.ActivityScope$Files,java.util.Collection,I,java.lang.Object):com.intellij.platform.lvcs.impl.ActivityScope$Files
+- equals(java.lang.Object):Z
+- f:getFiles():java.util.Collection
+- hashCode():I
+- toString():java.lang.String
 *f:com.intellij.platform.lvcs.impl.ActivityScope$Recent
 - com.intellij.platform.lvcs.impl.ActivityScope
 - sf:INSTANCE:com.intellij.platform.lvcs.impl.ActivityScope$Recent
@@ -1006,6 +1018,7 @@ e:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 - java.lang.Enum
 - sf:Directory:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 - sf:File:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
+- sf:Files:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 - sf:Recent:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 - sf:Selection:com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter$Kind
 - s:getEntries():kotlin.enums.EnumEntries

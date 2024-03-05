@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.integration.ui.actions;
 
@@ -27,12 +13,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.lvcs.impl.ActivityScope;
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter;
 import com.intellij.platform.lvcs.impl.ui.ActivityView;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.Collection;
+import java.util.List;
 
 @ApiStatus.Internal
 public class ShowHistoryAction extends LocalHistoryAction {
@@ -43,32 +30,47 @@ public class ShowHistoryAction extends LocalHistoryAction {
     Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
       IdeaGateway gateway = getGateway();
-      VirtualFile file = getFile(e);
-      presentation.setEnabled(gateway != null && file != null && isEnabled(gateway, file));
+      Collection<VirtualFile> files = getFiles(e);
+      presentation.setEnabled(gateway != null && isActionEnabled(gateway, files));
     }
   }
 
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
-    VirtualFile f = Objects.requireNonNull(getFile(e));
+    Collection<VirtualFile> selectedFiles = getFiles(e);
+    List<VirtualFile> enabledFiles = ContainerUtil.filter(selectedFiles, file -> isFileVersioned(gw, file));
+    if (enabledFiles.isEmpty()) return;
+
     if (ActivityView.isViewEnabled()) {
-      ActivityView.showInDialog(p, gw, ActivityScope.fromFile(f));
+      ActivityView.showInDialog(p, gw, ActivityScope.fromFiles(enabledFiles));
+      return;
     }
-    else if (f.isDirectory()) {
+
+    VirtualFile singleFile = ContainerUtil.getOnlyItem(enabledFiles);
+    if (singleFile == null) return;
+
+    if (singleFile.isDirectory()) {
       LocalHistoryCounter.INSTANCE.logLocalHistoryOpened(LocalHistoryCounter.Kind.Directory);
-      new DirectoryHistoryDialog(p, gw, f).show();
+      new DirectoryHistoryDialog(p, gw, singleFile).show();
     }
     else {
       LocalHistoryCounter.INSTANCE.logLocalHistoryOpened(LocalHistoryCounter.Kind.File);
-      new FileHistoryDialog(p, gw, f).show();
+      new FileHistoryDialog(p, gw, singleFile).show();
     }
   }
 
-  protected boolean isEnabled(@NotNull IdeaGateway gw, @NotNull VirtualFile f) {
-    return gw.isVersioned(f) && (f.isDirectory() || gw.areContentChangesVersioned(f));
+  protected boolean isActionEnabled(@NotNull IdeaGateway gw, @NotNull Collection<VirtualFile> files) {
+    if (files.size() > 1 && !ActivityView.isViewEnabled()) return false;
+    return ContainerUtil.exists(files, file -> {
+      return isFileVersioned(gw, file);
+    });
   }
 
-  protected @Nullable VirtualFile getFile(@NotNull AnActionEvent e) {
-    return JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single();
+  protected static boolean isFileVersioned(@NotNull IdeaGateway gw, @NotNull VirtualFile file) {
+    return gw.isVersioned(file) && (file.isDirectory() || gw.areContentChangesVersioned(file));
+  }
+
+  protected @NotNull Collection<VirtualFile> getFiles(@NotNull AnActionEvent e) {
+    return JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).toSet();
   }
 }

@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
+import com.intellij.history.LocalHistory
 import com.intellij.history.integration.IntegrationTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
 
 class LocalHistoryActivityProviderTest : IntegrationTestCase() {
@@ -117,6 +119,64 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
       val activityContents = getContentFor(file, fileActivity.getChangeSets())
       TestCase.assertEquals(listOf("initial", ""), activityContents)
     }
+  }
+
+  fun `test multiple files history`() {
+    val file = createFile("file.txt")
+    val otherFile = createFile("other.txt")
+    val excludedFile = createFile("excluded.txt")
+
+    for (c in listOf("initial", "current")) {
+      setContent(file, c)
+      setContent(otherFile, c)
+      setContent(excludedFile, c)
+    }
+
+    val visibleLabel = "visible label"
+    val hiddenLabel = "invisible label"
+    vcs.putUserLabel(visibleLabel, project.locationHash)
+    vcs.putUserLabel(hiddenLabel, project.locationHash)
+
+    val provider = LocalHistoryActivityProvider(project, gateway)
+    val scope = ActivityScope.fromFiles(listOf(file, otherFile))
+
+    val activityList = provider.loadActivityList(scope, null)
+
+    TestCase.assertEquals(listOf(visibleLabel,
+                                 "Changes in ${otherFile.name}",
+                                 "Changes in ${file.name}",
+                                 "Changes in ${otherFile.name}",
+                                 "Changes in ${file.name}",
+                                 "External change",
+                                 "External change"), activityList.getNamesList())
+  }
+
+  fun `test parent directory and child file history`() {
+    val file = createFile("file.txt")
+    val directory = createDirectory("directory")
+
+    setContent(file, "initial")
+    setContent(file, "content")
+
+    // Starting an action to set a normal name instead of WriteCommandAction.getDefaultCommandName
+    val moveActionName = "Move ${file.name}"
+    val action = LocalHistory.getInstance().startAction(moveActionName)
+    HeavyPlatformTestCase.move(file, directory)
+    action.finish()
+
+    setContent(file, "current")
+
+    val provider = LocalHistoryActivityProvider(project, gateway)
+    val scope = ActivityScope.fromFiles(listOf(file, directory))
+
+    val activityList = provider.loadActivityList(scope, null)
+
+    TestCase.assertEquals(listOf("Changes in ${file.name}",
+                                 moveActionName,
+                                 "Changes in ${file.name}",
+                                 "Changes in ${file.name}",
+                                 "Changes in directory" /* directory created */,
+                                 "External change" /* file created */), activityList.getNamesList())
   }
 
   private fun ActivityData.getLabelNameSet(): Set<String> {
