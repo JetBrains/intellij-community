@@ -14,7 +14,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS
+import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -57,7 +57,7 @@ fun descriptorByFileDirective(testDataFile: File, languageLevel: LanguageLevel =
 internal fun getK2FileTextWithErrors(file: KtFile): String {
     val errors: List<String> = allowAnalysisOnEdt {
         analyze(file) {
-            val diagnostics = file.collectDiagnosticsForFile(filter = EXTENDED_AND_COMMON_CHECKERS).asSequence()
+            val diagnostics = file.collectDiagnosticsForFile(filter = ONLY_COMMON_CHECKERS).asSequence()
             diagnostics
                 // TODO: For some reason, there is a "redeclaration" error on every declaration for K2 tests
                 .filter { it.factoryName != "PACKAGE_OR_CLASSIFIER_REDECLARATION" }
