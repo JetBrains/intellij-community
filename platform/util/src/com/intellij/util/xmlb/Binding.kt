@@ -68,3 +68,14 @@ internal interface MultiNodeBinding : Binding {
 
   fun doDeserializeListToJson(elements: List<Element>): JsonElement
 }
+
+@RequiresOptIn(level = RequiresOptIn.Level.ERROR)
+@Target(
+  AnnotationTarget.CLASS,
+  AnnotationTarget.TYPEALIAS,
+  AnnotationTarget.FUNCTION,
+  AnnotationTarget.PROPERTY,
+  AnnotationTarget.FIELD,
+  AnnotationTarget.CONSTRUCTOR
+)
+annotation class SettingsInternalApi

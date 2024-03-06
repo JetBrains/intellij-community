@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:OptIn(SettingsInternalApi::class)
 
 package com.intellij.configurationStore
 
@@ -18,6 +19,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.write
+import com.intellij.util.xmlb.SettingsInternalApi
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Text
 import com.intellij.util.xmlb.annotations.XCollection
@@ -52,7 +54,7 @@ class ControllerBackedStoreTest {
   }
 
   @Test
-  fun `get`() = runBlocking<Unit>(Dispatchers.Default) {
+  fun get() = runBlocking<Unit>(Dispatchers.Default) {
     val store = createStore { key ->
       if (data.containsKey(key.key)) {
         val data = data.get(key.key)
@@ -363,6 +365,34 @@ class ControllerBackedStoreTest {
     component.state.foo = "newValue"
     store.save(forceSavingAllSettings = true)
     assertThat(Json.encodeToString(saved)).isEqualTo("""{"foo":"newValue","bar":"test2"}""")
+  }
+
+  @Suppress("unused")
+  @Test
+  fun cache_storage() = runBlocking<Unit>(Dispatchers.Default) {
+    data class TestState(var foo: String = "", var bar: String = "")
+
+    val store = ControllerBackedTestComponentStore(
+      testAppConfigPath = appConfig,
+      controller = SettingsControllerMediator(),
+    )
+
+    @State(name = "TestCacheState", storages = [Storage(value = StoragePathMacros.CACHE_FILE)], allowLoadInTests = true)
+    class TestComponent : SerializablePersistentStateComponent<TestState>(TestState()) {
+      override fun noStateLoaded() {
+        loadState(TestState())
+      }
+    }
+
+    val component = TestComponent()
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+
+    component.state.foo = "hello"
+    store.save(forceSavingAllSettings = true)
+
+    store.reloadStates(setOf("TestCacheState"))
+
+    assertThat(component.state.foo).isEqualTo("hello")
   }
 
   @Suppress("SameParameterValue")
