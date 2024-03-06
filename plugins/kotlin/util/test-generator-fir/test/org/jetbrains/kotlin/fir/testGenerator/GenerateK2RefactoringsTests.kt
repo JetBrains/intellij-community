@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToElementTest
+import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToFqnTest
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2PsiUnifierTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
@@ -42,7 +43,11 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
 
         testClass<AbstractK2BindToElementTest> {
+            model("refactoring/bindToFqn")
             model("refactoring/bindToElement")
+        }
+        testClass<AbstractK2BindToFqnTest> {
+            model("refactoring/bindToFqn")
         }
         testClass<AbstractKotlinFirInlineTest> {
             model("refactoring/inline/inlineVariableOrProperty", isRecursive = false, pattern = Patterns.KT_WITHOUT_DOTS)
