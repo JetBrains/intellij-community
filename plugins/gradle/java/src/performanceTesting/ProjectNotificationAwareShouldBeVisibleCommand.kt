@@ -5,6 +5,11 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotif
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 
+/**
+ * The command validates if Project notification aware(Maven/Gradle icon when you need to reload project) is [visible]
+ * Syntax: %projectNotificationAwareShouldBeVisible [visible]
+ * Example: %projectNotificationAwareShouldBeVisible true
+ */
 class ProjectNotificationAwareShouldBeVisibleCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
