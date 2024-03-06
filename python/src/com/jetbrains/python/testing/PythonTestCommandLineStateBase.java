@@ -247,9 +247,9 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
                                                          @NotNull Map<String, Function<TargetEnvironment, String>> envs,
                                                          boolean passParentEnvs) {
     super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs);
-    Function<TargetEnvironment, String> helpersTargetPath = helpersAwareTargetRequest.preparePyCharmHelpers();
+    var helpersTargetPath = helpersAwareTargetRequest.preparePyCharmHelpers();
     Function<TargetEnvironment, String> targetPycharmHelpersPath =
-      TargetEnvironmentFunctions.getRelativeTargetPath(helpersTargetPath, "pycharm");
+      TargetEnvironmentFunctions.getRelativeTargetPath(helpersTargetPath.getCommunityHelpers().getTargetPathFun(), "pycharm");
     envs.put("PYCHARM_HELPERS_DIR", targetPycharmHelpersPath);
   }
 

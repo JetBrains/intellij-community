@@ -20,15 +20,14 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PlatformUtils
 import com.jetbrains.python.HelperPackage
-import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.run.target.PathMapping
+import com.jetbrains.python.run.target.tryResolveAsPythonHelperDir
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -36,7 +35,6 @@ import com.jetbrains.python.sdk.flavors.conda.fixCondaPathEnvIfNeeded
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 
 private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
@@ -94,11 +92,11 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
 
 data class Upload(val localPath: String, val targetPath: TargetEnvironmentFunction<String>)
 
-private fun resolveUploadPath(localPath: String, uploads: Iterable<Upload>): TargetEnvironmentFunction<String> {
+private fun resolveUploadPath(localPath: String, uploads: List<PathMapping>): TargetEnvironmentFunction<String> {
   val localFileSeparator = Platform.current().fileSeparator
   val matchUploads = uploads.mapNotNull { upload ->
-    if (FileUtil.isAncestor(upload.localPath, localPath, false)) {
-      FileUtil.getRelativePath(upload.localPath, localPath, localFileSeparator)?.let { upload to it }
+    if (FileUtil.isAncestor(upload.localPath.toString(), localPath, false)) {
+      FileUtil.getRelativePath(upload.localPath.toString(), localPath, localFileSeparator)?.let { upload to it }
     }
     else {
       null
@@ -109,7 +107,7 @@ private fun resolveUploadPath(localPath: String, uploads: Iterable<Upload>): Tar
   }
   val (upload, localRelativePath) = matchUploads.firstOrNull()
                                     ?: throw IllegalStateException("Failed to find uploads for the local path '$localPath'")
-  return upload.targetPath.getRelativeTargetPath(localRelativePath)
+  return upload.targetPathFun.getRelativeTargetPath(localRelativePath)
 }
 
 fun prepareHelperScriptExecution(helperPackage: HelperPackage,
@@ -125,12 +123,12 @@ private const val PYTHONPATH_ENV = "PYTHONPATH"
  * Requests the upload of PyCharm helpers root directory to the target.
  */
 fun PythonExecution.applyHelperPackageToPythonPath(helperPackage: HelperPackage,
-                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
+                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): List<PathMapping> {
   return applyHelperPackageToPythonPath(helperPackage.pythonPathEntries, helpersAwareTargetRequest)
 }
 
 fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<String>,
-                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
+                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): List<PathMapping> {
   return addHelperEntriesToPythonPath(envs, pythonPathEntries, helpersAwareTargetRequest)
 }
 
@@ -146,49 +144,32 @@ fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<Strin
 fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                                  pythonPathEntries: List<String>,
                                  helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
-                                 failOnError: Boolean = true): Iterable<Upload> {
-  val helpersRoots = getPythonHelpersRoots()
+                                 failOnError: Boolean = true): List<PathMapping> {
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
-  val targetUploadPath = helpersAwareTargetRequest.preparePyCharmHelpers()
+  val pythonHelpersMappings = helpersAwareTargetRequest.preparePyCharmHelpers()
+  val pythonHelpersRoots =
+    listOfNotNull(
+      pythonHelpersMappings.communityHelpers,
+      pythonHelpersMappings.proHelpers
+    )
+      .map(PathMapping::localPath)
   val targetPathSeparator = targetPlatform.platform.pathSeparator
-  val uploads = pythonPathEntries
-    .mapNotNull { pythonPathEntry ->
-      val relativePath = pythonPathEntry.tryToRelativizeAgainstOneOf(helpersRoots)
-      if (relativePath == null) {
-        val message = "$pythonPathEntry cannot be resolved against Python helpers roots: ${helpersRoots.joinToString()}"
-        if (failOnError) {
-          error(message)
-        }
-        else {
-          // log the error and skip this entry
-          LOG.error(message)
-          null
-        }
-      }
-      else {
-        Upload(pythonPathEntry, targetUploadPath.getRelativeTargetPath(relativePath))
-      }
-    }
-  val pythonPathEntriesOnTarget = uploads.map { it.targetPath }
+
+  fun <T> T?.onResolutionFailure(message: String): T? =
+    this ?: if (failOnError) error(message)
+    // log the error and skip this entry
+    else also { LOG.error(message) }
+
+  val uploads = pythonPathEntries.mapNotNull { pythonPathEntry ->
+    pythonPathEntry
+      .tryResolveAsPythonHelperDir(pythonHelpersMappings)
+      .onResolutionFailure(message = "$pythonPathEntry cannot be resolved against Python helpers roots: ${pythonHelpersRoots}")
+  }
+  val pythonPathEntriesOnTarget = uploads.map { it.targetPathFun }
   val pythonPathValue = pythonPathEntriesOnTarget.joinToStringFunction(separator = targetPathSeparator.toString())
   appendToPythonPath(envs, pythonPathValue, targetPlatform)
   return uploads
 }
-
-private fun String.tryToRelativizeAgainstOneOf(basePaths: List<String>): @NlsSafe String? =
-  basePaths
-    .filter { FileUtil.isAncestor(it, this, false) }
-    .firstNotNullOfOrNull<String, @NlsSafe String> { FileUtil.getRelativePath(it, this, Platform.current().fileSeparator) }
-
-private fun getPythonHelpersRoots(): List<String> =
-  buildList {
-    // helpers included in the PyCharm and the Python plugin both Community and Professional versions
-    add(PythonHelpersLocator.getHelpersRoot().absolutePath)
-    if (PlatformUtils.isCommercialEdition()) {
-      // helpers included only in the PyCharm Professional and the Python plugin for IDEA Ultimate
-      add(PythonHelpersLocator.getHelpersProRoot().absolutePathString())
-    }
-  }
 
 /**
  * Suits for coverage and profiler scripts.
