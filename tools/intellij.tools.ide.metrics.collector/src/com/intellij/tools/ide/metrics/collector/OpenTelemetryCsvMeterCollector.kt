@@ -9,11 +9,11 @@ import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 /**
- * Extract meters from OpenTelemetry CSV report stored by [com.intellij.diagnostic.telemetry.MetricsExporterUtils]
+ * Extract meters from OpenTelemetry CSV report stored by [com.intellij.platform.diagnostic.telemetry.exporters.meters.CsvMetricsExporter]
  * [metersFilter] Input data: key - meter name. value - list of collected data points for that meter
  */
-open class OpenTelemetryMeterCollector(val metricsSelectionStrategy: MetricsSelectionStrategy,
-                                  val metersFilter: (Map.Entry<String, List<LongPointData>>) -> Boolean) : TelemetryMetricsCollector {
+open class OpenTelemetryCsvMeterCollector(val metricsSelectionStrategy: MetricsSelectionStrategy,
+                                          val metersFilter: (Map.Entry<String, List<LongPointData>>) -> Boolean) : TelemetryMetricsCollector {
   private fun getOpenTelemetryCsvReportFiles(logsDirPath: Path): List<Path> {
     val metricsCsvFiles = logsDirPath.listDirectoryEntries("*.csv").filter { it.name.startsWith("open-telemetry-metrics") }
     require(metricsCsvFiles.isNotEmpty()) {

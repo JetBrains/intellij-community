@@ -13,12 +13,11 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Paths
 import kotlin.io.path.div
 
+internal val openTelemetryReports by lazy {
+  Paths.get(OpenTelemetryTest::class.java.classLoader.getResource("opentelemetry")!!.toURI())
+}
 
 class OpenTelemetryTest {
-
-  private val openTelemetryReports by lazy {
-    Paths.get(this::class.java.classLoader.getResource("opentelemetry")!!.toURI())
-  }
 
   @Test
   fun startupMetricsCollected() {

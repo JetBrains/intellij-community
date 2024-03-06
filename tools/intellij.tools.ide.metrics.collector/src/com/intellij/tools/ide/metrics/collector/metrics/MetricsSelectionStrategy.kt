@@ -2,6 +2,7 @@ package com.intellij.tools.ide.metrics.collector.metrics
 
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.metrics.data.LongPointData
+import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.internal.data.ImmutableLongPointData
 
 enum class MetricsSelectionStrategy {
@@ -37,6 +38,17 @@ enum class MetricsSelectionStrategy {
                                                LATEST.selectMetric(metrics).epochNanos,
                                                Attributes.empty(),
                                                SUM.selectMetric(metrics).value / metrics.size)
+    }
+  }
+
+  fun selectMetric(metrics: List<MetricData>): MetricData {
+    return when (this) {
+      EARLIEST -> metrics.minBy { it.data.points.minBy { point -> point.startEpochNanos }.startEpochNanos }
+      LATEST -> metrics.maxBy { it.data.points.maxBy { point -> point.startEpochNanos }.startEpochNanos }
+      MINIMUM -> TODO()
+      MAXIMUM -> TODO()
+      SUM -> TODO()
+      AVERAGE -> TODO()
     }
   }
 }

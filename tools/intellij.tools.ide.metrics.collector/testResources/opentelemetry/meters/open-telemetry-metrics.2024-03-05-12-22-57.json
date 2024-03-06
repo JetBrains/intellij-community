@@ -1,0 +1,97 @@
+[
+  {
+    "name": "cacheStateStorage.get.counter",
+    "description": "",
+    "unit": "",
+    "type": "LONG_SUM",
+    "data": {
+      "points": [
+        {
+          "startEpochNanos": 1709634178232000000,
+          "epochNanos": 1709634181005000000,
+          "attributes": {
+            "empty": true
+          },
+          "value": 0
+        }
+      ],
+      "monotonic": true,
+      "aggregationTemporality": "DELTA"
+    }
+  },
+  {
+    "name": "example.of.histogram",
+    "description": "Histogram example",
+    "unit": "ns",
+    "type": "HISTOGRAM",
+    "data": {
+      "aggregationTemporality": "DELTA",
+      "points": [
+        {
+          "attributes": {
+            "empty": true
+          },
+          "count": 20,
+          "max": 5.0,
+          "counts": [
+            0,
+            20,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "epochNanos": 1709634181005000000,
+          "startEpochNanos": 1709634178232000000,
+          "min": 1.0,
+          "sum": 60.0,
+          "boundaries": [
+            0.0,
+            5.0,
+            10.0,
+            25.0,
+            50.0,
+            75.0,
+            100.0,
+            250.0,
+            500.0,
+            750.0,
+            1000.0,
+            2500.0,
+            5000.0,
+            7500.0,
+            10000.0
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "writeAction.median.wait.ms",
+    "description": "Median time waiting for the write lock, step 100 ms",
+    "unit": "ms",
+    "type": "LONG_GAUGE",
+    "data": {
+      "points": [
+        {
+          "startEpochNanos": 1709634181205000000,
+          "epochNanos": 1709634181487000000,
+          "attributes": {
+            "empty": true
+          },
+          "value": 0
+        }
+      ]
+    }
+  }
+]
