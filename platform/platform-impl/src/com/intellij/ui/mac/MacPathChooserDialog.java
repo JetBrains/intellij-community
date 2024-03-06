@@ -16,18 +16,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.PathChooserDialogHelper;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.OwnerOptional;
 import com.jetbrains.JBRFileDialog;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
+@ApiStatus.Internal
+@SuppressWarnings("DuplicatedCode")
 public final class MacPathChooserDialog implements PathChooserDialog, FileChooserDialog{
   private FileDialog myFileDialog;
   private final FileChooserDescriptor myFileChooserDescriptor;
@@ -47,14 +48,11 @@ public final class MacPathChooserDialog implements PathChooserDialog, FileChoose
     String key = "awt.file.dialog.enable.filter";
     System.setProperty(key, Boolean.toString(Registry.is(key, true)));
 
-    Consumer<Dialog> dialogConsumer = owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD);
-    Consumer<Frame> frameConsumer = owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD);
-
     OwnerOptional
       .fromComponent(parent)
-      .ifDialog(dialogConsumer)
-      .ifFrame(frameConsumer)
-      .ifNull(frameConsumer);
+      .ifDialog(owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD))
+      .ifFrame(owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD))
+      .ifNull(owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD));
 
     JBRFileDialog jbrDialog = JBRFileDialog.get(myFileDialog);
     if (jbrDialog != null) {
@@ -122,35 +120,27 @@ public final class MacPathChooserDialog implements PathChooserDialog, FileChoose
       }
     }
 
-    File[] files = myFileDialog.getFiles();
-    List<VirtualFile> virtualFileList = myHelper.getChosenFiles(files);
+    List<VirtualFile> virtualFileList = myHelper.getChosenFiles(myFileDialog.getFiles());
     myChosenFiles = virtualFileList.toArray(VirtualFile.EMPTY_ARRAY);
     FileChooserUsageCollector.log(this, myFileChooserDescriptor, myChosenFiles);
 
     if (!virtualFileList.isEmpty()) {
       try {
-        if (virtualFileList.size() == 1) {
-          myFileChooserDescriptor.isFileSelectable(virtualFileList.get(0));
-        }
         myFileChooserDescriptor.validateSelectedFiles(myChosenFiles);
       }
       catch (Exception e) {
-        if (parent == null) {
-          Messages.showErrorDialog(myProject, e.getMessage(), myTitle);
-        }
-        else {
+        if (parent != null) {
           Messages.showErrorDialog(parent, e.getMessage(), myTitle);
         }
-
+        else {
+          Messages.showErrorDialog(myProject, e.getMessage(), myTitle);
+        }
         return;
       }
 
-      if (!ArrayUtil.isEmpty(files)) {
-        callback.consume(virtualFileList);
-        return;
-      }
+      callback.consume(virtualFileList);
     }
-    if (callback instanceof FileChooser.FileChooserConsumer) {
+    else if (callback instanceof FileChooser.FileChooserConsumer) {
       ((FileChooser.FileChooserConsumer)callback).cancelled();
     }
   }

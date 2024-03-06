@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ide.IdeEventQueue;
@@ -33,11 +33,10 @@ public final class OwnerOptional {
 
     if (manager.isPopupWindow(owner)) {
       if (!owner.isFocused() || !SystemInfo.isJetBrainsJvm) {
-        owner = owner.getOwner();
-
-        while (UIUtil.isSimpleWindow(owner)) {
+        do {
           owner = owner.getOwner();
         }
+        while (UIUtil.isSimpleWindow(owner));
       }
     }
 
@@ -53,7 +52,7 @@ public final class OwnerOptional {
       owner = owner.getOwner();
     }
 
-    // Window cannot be parent of JDialog ()
+    // `Window` cannot be a parent of `JDialog`
     if (UIUtil.isSimpleWindow(owner)) {
       owner = null;
     }
@@ -71,13 +70,6 @@ public final class OwnerOptional {
   public OwnerOptional ifNull(Consumer<? super Frame> consumer) {
     if (myPermanentOwner == null) {
       consumer.accept(null);
-    }
-    return this;
-  }
-
-  public OwnerOptional ifWindow(Consumer<? super Window> consumer) {
-    if (myPermanentOwner != null) {
-      consumer.accept(myPermanentOwner);
     }
     return this;
   }
