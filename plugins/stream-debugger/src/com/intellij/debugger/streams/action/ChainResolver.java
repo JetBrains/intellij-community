@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
@@ -87,6 +88,8 @@ final class ChainResolver {
             }
             catch (ProcessCanceledException e) {
               throw e;
+            }
+            catch (PsiInvalidElementAccessException ignored) {
             }
             catch (Throwable e) {
               LOG.error(e);
