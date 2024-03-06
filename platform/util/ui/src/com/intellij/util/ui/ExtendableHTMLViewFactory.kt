@@ -403,8 +403,10 @@ class ExtendableHTMLViewFactory internal constructor(
           || attrs.getAttribute(CSS.Attribute.MARGIN_LEFT) != null
           || attrs.getAttribute(CSS.Attribute.MARGIN_TOP) != null
           || attrs.getAttribute(CSS.Attribute.MARGIN_RIGHT) != null
+          || element.attributes.getAttribute(HTML.Attribute.TITLE) != null
           || attrs.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
-            ?.asSafely<String>()?.endsWith("px") == true) {
+            ?.asSafely<String>()?.endsWith("px") == true
+      ) {
         return InlineViewEx(element)
       }
       return null
@@ -416,7 +418,9 @@ class ExtendableHTMLViewFactory internal constructor(
       if (view.javaClass != BlockView::class.java) return null
       val attrs = view.attributes
       if (attrs.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
-          ?.asSafely<String>()?.endsWith("px") == true) {
+            ?.asSafely<String>()?.endsWith("px") == true
+          || element.attributes.getAttribute(HTML.Attribute.TITLE) != null
+      ) {
         return BlockViewEx(element, (view as BlockView).axis)
       }
       return null
@@ -427,7 +431,10 @@ class ExtendableHTMLViewFactory internal constructor(
     override fun invoke(element: Element, view: View): View? {
       if (view.javaClass != ParagraphView::class.java) return null
       val attrs = view.attributes
-      if (attrs.getAttribute(CSS.Attribute.LINE_HEIGHT) != null) {
+      if (
+        attrs.getAttribute(CSS.Attribute.LINE_HEIGHT) != null
+        || element.attributes.getAttribute(HTML.Attribute.TITLE) != null
+      ) {
         return ParagraphViewEx(element)
       }
       return null

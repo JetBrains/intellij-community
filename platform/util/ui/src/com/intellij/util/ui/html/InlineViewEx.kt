@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.html
 
+import com.intellij.util.asSafely
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Insets
@@ -9,6 +10,7 @@ import java.awt.Shape
 import javax.swing.text.Element
 import javax.swing.text.TabExpander
 import javax.swing.text.View
+import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.InlineView
 import kotlin.math.max
@@ -126,6 +128,12 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
     }
     return super.getAlignment(axis)
   }
+
+  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String =
+     element.attributes.getAttribute(HTML.Attribute.TITLE)
+      ?.asSafely<String>()
+      ?.takeIf { it.isNotEmpty() }
+     ?: super.getToolTipText(x, y, allocation)
 
   private fun getSibling(parentView: View, curIndex: Int, direction: Int): View? {
     var siblingIndex = curIndex + direction

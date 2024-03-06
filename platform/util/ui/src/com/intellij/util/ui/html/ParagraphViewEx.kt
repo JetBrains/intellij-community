@@ -8,6 +8,7 @@ import javax.swing.SizeRequirements
 import javax.swing.text.*
 import javax.swing.text.Position.Bias
 import javax.swing.text.html.CSS
+import javax.swing.text.html.HTML
 import javax.swing.text.html.ParagraphView
 import kotlin.math.max
 
@@ -66,6 +67,12 @@ open class ParagraphViewEx(elem: Element) : ParagraphView(elem) {
   override fun createRow(): View {
     return ParagraphRow(element)
   }
+
+  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String =
+    element.attributes.getAttribute(HTML.Attribute.TITLE)
+      ?.asSafely<String>()
+      ?.takeIf { it.isNotEmpty() }
+    ?: super.getToolTipText(x, y, allocation)
 
   inner class ParagraphRow internal constructor(elem: Element) : BoxView(elem, X_AXIS) {
 
