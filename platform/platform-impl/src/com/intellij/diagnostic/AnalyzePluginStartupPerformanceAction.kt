@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.IdeBundle
@@ -14,7 +14,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.ListTableModel
+import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.util.concurrent.TimeUnit
 import javax.swing.AbstractAction
@@ -129,4 +131,10 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
         .toList(),
     )
   }
+
+  override fun getPreferredFocusedComponent(): JComponent = table
+
+  override fun getInitialSize(): Dimension = JBDimension(800, 600)
+
+  override fun getDimensionServiceKey(): String = "AnalyzePluginStartupPerformanceAction.PluginStartupCostDialog"
 }
