@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
-import com.intellij.codeInsight.daemon.*
+import com.intellij.codeInsight.daemon.DaemonBundle
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
+import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.codeInsight.daemon.NavigateAction
 import com.intellij.codeInsight.daemon.impl.GutterTooltipBuilder
 import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.navigation.GotoTargetHandler
@@ -87,7 +90,8 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
             KotlinBundle.message("highlighter.action.text.go.to.overridden.methods"),
-            IdeActions.ACTION_GOTO_IMPLEMENTATION
+            IdeActions.ACTION_GOTO_IMPLEMENTATION,
+            gutter.icon
         )
         result.add(lineMarkerInfo)
     }
@@ -124,7 +128,8 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
                     KotlinBundle.message("highlighter.action.text.go.to.super.method")
                 else
                     KotlinBundle.message("highlighter.action.text.go.to.super.property"),
-                IdeActions.ACTION_GOTO_SUPER
+                IdeActions.ACTION_GOTO_SUPER,
+                gutter.icon
             )
             result.add(lineMarkerInfo)
         }
@@ -159,7 +164,8 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
                 KotlinBundle.message("highlighter.action.text.go.to.implementations")
             else
                 KotlinBundle.message("highlighter.action.text.go.to.subclasses"),
-            IdeActions.ACTION_GOTO_IMPLEMENTATION
+            IdeActions.ACTION_GOTO_IMPLEMENTATION,
+            gutter.icon
         )
         result.add(lineMarkerInfo)
     }
