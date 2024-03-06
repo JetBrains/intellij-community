@@ -13,11 +13,11 @@ import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceQ
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 
 private val DOWNLOADS_ICON = HtmlChunk.tag("icon")
-  .attr("src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Download")
+  .attr("src", "icons/download.svg")
 private val LIKES_ICON = HtmlChunk.tag("icon")
-  .attr(".src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Like")
+  .attr(".src", "icons/like.svg")
 private val LOGO_ICON = HtmlChunk.tag("icon")
-  .attr(".src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Logo")
+  .attr(".src", "icons/logo.svg")
 
 class HuggingFaceHtmlBuilder(
   private val project: Project,
