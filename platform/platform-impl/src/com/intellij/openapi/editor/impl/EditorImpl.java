@@ -277,6 +277,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private int myDragOnGutterSelectionStartLine = -1;
   private RangeMarker myDraggedRange;
+  private boolean myMouseDragStarted;
   private boolean myDragStarted;
   private boolean myDragSelectionStarted;
 
@@ -301,6 +302,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   LogicalPosition myLastMousePressedLocation;
 
   Point myLastMousePressedPoint;
+  private boolean myLastPressedOnGutter;
   private boolean myLastPressedOnGutterIcon;
   private VisualPosition myTargetMultiSelectionPosition;
   private boolean myMultiSelectionInProgress;
@@ -2600,6 +2602,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
+    if (!myMouseDragStarted) {
+      var point = new RelativePoint(e).getPoint(myEditorComponent);
+      var sensitivity = Registry.intValue("editor.drag.sensitivity", 5, 0, 25);
+      myMouseDragStarted = myLastMousePressedPoint == null
+                           || !myLastPressedOnGutter // Small drags aren't a problem in the editor, only on the gutter.
+                           || Math.abs(myLastMousePressedPoint.x - point.x) >= sensitivity
+                           || Math.abs(myLastMousePressedPoint.y - point.y) >= sensitivity;
+      if (!myMouseDragStarted) {
+        return;
+      }
+    }
+
     EditorMouseEventArea eventArea = getMouseEventArea(e);
     if (eventArea == EditorMouseEventArea.ANNOTATIONS_AREA) return;
     if (eventArea == EditorMouseEventArea.LINE_MARKERS_AREA ||
@@ -4143,10 +4157,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLastPressWasAtBlockInlay = false;
       myLastMousePressedLocation = event.getLogicalPosition();
       myLastMousePressedPoint = new RelativePoint(event.getMouseEvent()).getPoint(myEditorComponent);
+      myLastPressedOnGutter = e.getSource() == myGutterComponent;
       var lastPressedPointOnGutter = SwingUtilities.convertPoint(myEditorComponent, myLastMousePressedPoint, myGutterComponent);
       myLastPressedOnGutterIcon = myGutterComponent.getGutterRenderer(lastPressedPointOnGutter) != null;
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
+      myMouseDragStarted = false;
       myDragStarted = false;
       myDragSelectionStarted = false;
       myForcePushHappened = false;
