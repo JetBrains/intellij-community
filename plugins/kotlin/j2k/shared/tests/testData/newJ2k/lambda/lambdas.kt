@@ -49,7 +49,7 @@ class Java8Class {
             "42"
         }
 
-        bar({ "f" }, { i: Int? -> "g" })
+        bar({ "f" }) { i: Int? -> "g" }
 
         checkNotNull("s") { "that's strange" }
 

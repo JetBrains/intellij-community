@@ -303,18 +303,6 @@ internal class LiftAssignmentInspectionBasedProcessing : InspectionLikeProcessin
     }
 }
 
-internal class MoveLambdaOutsideParenthesesProcessing : InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
-    private val inspection = MoveLambdaOutsideParenthesesInspection()
-
-    override fun isApplicableTo(element: KtCallExpression, settings: ConverterSettings?): Boolean =
-        isInspectionEnabledInCurrentProfile(inspection, element.project) &&
-                element.canMoveLambdaOutsideParentheses()
-
-    override fun apply(element: KtCallExpression) {
-        element.moveFunctionLiteralOutsideParentheses()
-    }
-}
-
 // Don't destructure regular variables, it will lose the original variable name and may hurt code readability
 internal class DestructureForLoopParameterProcessing : InspectionLikeProcessingForElement<KtParameter>(KtParameter::class.java) {
     override fun isApplicableTo(element: KtParameter, settings: ConverterSettings?): Boolean =
