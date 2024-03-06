@@ -99,8 +99,8 @@ object JBHtmlPaneStyleSheetRulesProvider {
     BorderRadius("borderRadius"),
   }
 
-  const val CODE_BLOCK_PREFIX: String = "<div class='styled-code'><pre style=\"padding: 0px; margin: 0px\">"
-  const val CODE_BLOCK_SUFFIX: String = "</pre></div>"
+  internal const val CODE_BLOCK_PREFIX: String = "<div class='code-block'><pre style=\"padding: 0px; margin: 0px\">"
+  internal const val CODE_BLOCK_SUFFIX: String = "</pre></div>"
 
   @JvmStatic
   val spaceBeforeParagraph: Int get() = 4
@@ -235,9 +235,9 @@ object JBHtmlPaneStyleSheetRulesProvider {
         )
       else
         blockCodeStyling
-      result.add("div.styled-code { ${blockCodeStyling.getCssStyle(paneBackgroundColor, configuration)} }")
-      result.add("div.styled-code { margin: ${spacingBefore}px 0 ${spacingAfter}px 0; padding: ${scale(10)}px ${scale(13)}px ${scale(10)}px ${scale(13)}px; }")
-      result.add("div.styled-code pre { padding: 0px; margin: 0px; line-height: 120%; }")
+      result.add("div.code-block { ${blockCodeStyling.getCssStyle(paneBackgroundColor, configuration)} }")
+      result.add("div.code-block { margin: ${spacingBefore}px 0 ${spacingAfter}px 0; padding: ${scale(10)}px ${scale(13)}px ${scale(10)}px ${scale(13)}px; }")
+      result.add("div.code-block pre { padding: 0px; margin: 0px; line-height: 120%; }")
     }
     return result.joinToString("\n");
   }

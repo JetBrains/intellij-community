@@ -25,8 +25,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 object QuickDocHighlightingHelper {
 
-  const val CODE_BLOCK_PREFIX = JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_PREFIX
-  const val CODE_BLOCK_SUFFIX = JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_SUFFIX
+  const val CODE_BLOCK_PREFIX = "<pre><code>"
+  const val CODE_BLOCK_SUFFIX = "</code></pre>"
 
   const val INLINE_CODE_PREFIX = "<code>"
   const val INLINE_CODE_SUFFIX = "</code>"

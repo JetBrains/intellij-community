@@ -37,8 +37,6 @@ object DocMarkdownToHtmlConverter {
   private const val FENCED_CODE_BLOCK = "```"
 
   private val HTML_DOC_SUBSTITUTIONS: Map<String, String> = mapOf(
-    "<pre><code>" to "<pre>",
-    "</code></pre>" to "</pre>",
     "<em>" to "<i>",
     "</em>" to "</i>",
     "<strong>" to "<b>",

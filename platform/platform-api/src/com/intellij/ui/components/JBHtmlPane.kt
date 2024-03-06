@@ -56,6 +56,9 @@ import javax.swing.text.html.StyleSheet
  *     <pre><code>
  *     System.out.println("Hello world")
  *     </code></pre>
+ *     <blockquote>
+ *       <pre>System.out.println("Hello other world")</pre>
+ *     </blockquote>
  *     ```
  * - `<kbd>` - display a keyboard shortcut, e.g.
  *     ```html
