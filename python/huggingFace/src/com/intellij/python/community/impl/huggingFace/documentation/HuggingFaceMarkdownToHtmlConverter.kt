@@ -1,15 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.huggingFace.documentation
 
+import com.intellij.json.JsonLanguage
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTION
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS
-import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.annotations.Nls
 import com.intellij.markdown.utils.convertMarkdownToHtml
 import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PythonLanguage
+import org.jetbrains.annotations.Nls
 
 
 /**
@@ -75,8 +76,10 @@ class HuggingFaceMarkdownToHtmlConverter(private val project: Project) {
       rawCode = decodeHtmlEntities(rawCode)
 
       val language = when {
+        // PY-70540 - if additional languages are needed - to be added here
         "language-python" in codeAttributes -> PythonLanguage.INSTANCE
-        else -> null  // it seems like only python is crucial
+        "language-json" in codeAttributes -> JsonLanguage.INSTANCE
+        else -> null
       }
 
       val highlightedHtmlChunk = if (language != null) {
