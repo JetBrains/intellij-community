@@ -11,7 +11,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.util.Function
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.text.VersionComparatorUtil
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
@@ -42,10 +41,10 @@ private fun hasInModuleScope(file: PsiFile, detectionClass: String): Boolean {
 
 private fun getProductionClassDetectionMap(module: Module): Map<String, Boolean> {
   return CachedValuesManager.getManager(module.project).getCachedValue(module, CachedValueProvider {
-    val map = ConcurrentFactoryMap.createMap<String, Boolean>(Function {
+    val map = ConcurrentFactoryMap.createMap<String, Boolean> {
       val productionScope = module.getModuleWithDependenciesAndLibrariesScope(false)
       JavaPsiFacade.getInstance(module.project).findClass(it, productionScope) != null
-    })
+    }
     Result.create(map, JavaLibraryModificationTracker.getInstance(module.project))
   })
 }
