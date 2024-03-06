@@ -2,28 +2,32 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.should
 import org.intellij.lang.annotations.Language
+import kotlin.time.Duration.Companion.seconds
 
 fun Finder.popup(@Language("xpath") xpath: String? = null) =
-  x(xpath ?: "//div[@class='HeavyWeightWindow' or @class='JBPopupMenu']", PopupUiComponent::class.java)
+  x(xpath ?: "//div[@class='HeavyWeightWindow']", PopupUiComponent::class.java)
 
-fun Finder.popups(@Language("xpath") xpath: String? = null) =
-  xx(xpath ?: "//div[@class='HeavyWeightWindow' or @class='JBPopupMenu']", PopupUiComponent::class.java).list()
+fun Finder.popupMenu(@Language("xpath") xpath: String? = null) =
+  x(xpath ?: "//div[@class='MyMenu']", PopupMenuUiComponent::class.java)
 
-open class PopupUiComponent(data: ComponentData) : UiComponent(data) {
+class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
 
-  fun select(item: String, vararg subItem: String) {
-    findText(item).click()
-    subItem.forEach { i ->
-      popups().map { it.findAllText() }.flatten().first { it.text == i }.click()
+  private val menuItems
+    get() = xx("//div[@class='ActionMenuItem' or @class='ActionMenu']", PopupItemUiComponent::class.java)
+
+  fun select(vararg items: String) {
+    items.forEach { item ->
+      should(timeout = 5.seconds) { menuItems.list().map { it.getText() }.contains(item) }
+      menuItems.list().first { it.getText() == item }.click()
     }
   }
 
-  val items
-    get() = xx("//div[@class='ActionMenuItem']", PopupItemUiComponent::class.java).list()
-
-  fun itemsList() = items.map { it.getText() }
+  fun itemsList() = menuItems.list().map { it.getText() }
 }
+
+open class PopupUiComponent(data: ComponentData) : UiComponent(data)
 
 @Remote("com.intellij.openapi.actionSystem.impl.ActionMenuItem")
 interface PopupItemRef {
