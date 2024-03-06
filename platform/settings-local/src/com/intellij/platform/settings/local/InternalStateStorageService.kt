@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(ExperimentalSerializationApi::class)
+@file:OptIn(ExperimentalSerializationApi::class, SettingsInternalApi::class)
 
 package com.intellij.platform.settings.local
 
@@ -10,12 +10,19 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.settings.JsonElementSettingSerializerDescriptor
 import com.intellij.platform.settings.RawSettingSerializerDescriptor
 import com.intellij.platform.settings.SettingSerializerDescriptor
 import com.intellij.platform.settings.SettingValueSerializer
+import com.intellij.util.xmlb.SettingsInternalApi
+import com.intellij.util.xmlb.__json
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.serializer
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
@@ -40,11 +47,16 @@ internal class InternalStateStorageService(@JvmField val map: MvMapManager, tele
       bytes = map.get(key)
       @Suppress("UNCHECKED_CAST")
       val result: T? = bytes?.let {
-        if (serializer === RawSettingSerializerDescriptor) {
-          bytes as T
-        }
-        else {
-          cborFormat.decodeFromByteArray((serializer as SettingValueSerializer<T>).serializer, bytes)
+        when {
+          serializer === RawSettingSerializerDescriptor -> {
+            bytes as T
+          }
+          serializer === JsonElementSettingSerializerDescriptor -> {
+            __json.parseToJsonElement(cborFormat.decodeFromByteArray(stringSerializer, bytes)) as T
+          }
+          else -> {
+            cborFormat.decodeFromByteArray((serializer as SettingValueSerializer<T>).serializer, bytes)
+          }
         }
       }
       getMeasurer.add(System.nanoTime() - start)
@@ -84,12 +96,20 @@ internal class InternalStateStorageService(@JvmField val map: MvMapManager, tele
       if (value == null) {
         map.remove(key)
       }
-      else if (serializer === RawSettingSerializerDescriptor) {
-        map.put(key, value as ByteArray)
-      }
       else {
-        @Suppress("UNCHECKED_CAST")
-        map.put(key, cborFormat.encodeToByteArray((serializer as SettingValueSerializer<T>).serializer, value))
+        val serialized = when {
+          serializer === RawSettingSerializerDescriptor -> {
+            value as ByteArray
+          }
+          serializer === JsonElementSettingSerializerDescriptor -> {
+            cborFormat.encodeToByteArray(stringSerializer, Json.encodeToString(value as JsonElement))
+          }
+          else -> {
+            @Suppress("UNCHECKED_CAST")
+            cborFormat.encodeToByteArray((serializer as SettingValueSerializer<T>).serializer, value)
+          }
+        }
+        map.put(key, serialized)
       }
       setMeasurer.add(System.nanoTime() - start)
     }
@@ -100,6 +120,10 @@ internal class InternalStateStorageService(@JvmField val map: MvMapManager, tele
       thisLogger().error(PluginException("Cannot set value for key $key", e, pluginId))
     }
   }
+}
+
+private val stringSerializer by lazy(LazyThreadSafetyMode.NONE) {
+  serializer<String>()
 }
 
 private class Measurer(meter: Meter, subKey: String) {

@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
+@file:OptIn(SettingsInternalApi::class)
 
 package com.intellij.configurationStore.xml
 
@@ -15,9 +16,7 @@ import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.util.xmlb.*
 import com.intellij.util.xmlb.annotations.*
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.intellij.lang.annotations.Language
@@ -1413,15 +1412,15 @@ fun <T : Any> testSerializer(
   assertSerializer(bean = o, binding = binding, expected = expectedTrimmed, filter = filter, description = "Deserialization failure")
 
   val jsonTree = binding.toJson(bean, filter)
-  val expectedTree = PrettyJson.parseToJsonElement(expectedJson)
-  val expectedNormalizedJson = PrettyJson.encodeToString(expectedTree)
-  assertThat(PrettyJson.encodeToString(jsonTree)).isEqualTo(expectedNormalizedJson)
+  val expectedTree = __json.parseToJsonElement(expectedJson)
+  val expectedNormalizedJson = __json.encodeToString(expectedTree)
+  assertThat(__json.encodeToString(jsonTree)).isEqualTo(expectedNormalizedJson)
 
   val deserializedBean = binding.fromJson(currentValue = null, element = expectedTree)!!
-  assertThat(PrettyJson.encodeToString(binding.toJson(deserializedBean, filter))).`as`("deserialized bean toJson failure").isEqualTo(expectedNormalizedJson)
+  assertThat(__json.encodeToString(binding.toJson(deserializedBean, filter))).`as`("deserialized bean toJson failure").isEqualTo(expectedNormalizedJson)
 
-  assertThat(PrettyJson.encodeToString(binding.deserializeToJson(element)))
-    .isEqualTo(if (expectedJsonByXml === expectedJson) expectedNormalizedJson else PrettyJson.encodeToString(PrettyJson.parseToJsonElement(expectedJsonByXml!!)))
+  assertThat(__json.encodeToString(binding.deserializeToJson(element)))
+    .isEqualTo(if (expectedJsonByXml === expectedJson) expectedNormalizedJson else __json.encodeToString(__json.parseToJsonElement(expectedJsonByXml!!)))
   return o
 }
 
@@ -1455,10 +1454,3 @@ internal class BeanWithProperty {
 
 @Suppress("PropertyName")
 internal class BeanWithPublicFieldsDescendant(@JvmField var NEW_S: String? = "foo") : BeanWithPublicFields()
-
-@OptIn(ExperimentalSerializationApi::class)
-private val PrettyJson = Json {
-  prettyPrint = true
-  prettyPrintIndent = "  "
-  ignoreUnknownKeys = true
-}

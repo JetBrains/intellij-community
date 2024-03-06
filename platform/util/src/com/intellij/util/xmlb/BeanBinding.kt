@@ -112,7 +112,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
     var index = 0
     val extraSize = if (includeClassDiscriminator) 1 else 0
     for (binding in bindings) {
-      if (isPropertySkipped(filter = filter, binding = binding, bean = bean, isFilterPropertyItself = true)) {
+      if (isPropertySkipped(filter = filter, binding = binding, bean = bean, rootBinding = this, isFilterPropertyItself = true)) {
         continue
       }
 
@@ -180,7 +180,7 @@ open class BeanBinding(@JvmField val beanClass: Class<*>) : Binding, RootBinding
   }
 
   fun serializeProperty(binding: NestedBinding, bean: Any, parentElement: Element?, filter: SerializationFilter?, isFilterPropertyItself: Boolean): Element? {
-    if (isPropertySkipped(filter = filter, binding = binding, bean = bean, isFilterPropertyItself = isFilterPropertyItself)) {
+    if (isPropertySkipped(filter = filter, binding = binding, bean = bean, rootBinding = this, isFilterPropertyItself = isFilterPropertyItself)) {
       return parentElement
     }
 
@@ -752,7 +752,7 @@ private fun getTagName(aClass: Class<*>): String {
 private fun getTagNameFromAnnotation(aClass: Class<*>): String? = aClass.getAnnotation(Tag::class.java)?.value?.takeIf { it.isNotEmpty() }
 
 @Internal
-fun isPropertySkipped(filter: SerializationFilter?, binding: NestedBinding, bean: Any, isFilterPropertyItself: Boolean): Boolean {
+fun isPropertySkipped(filter: SerializationFilter?, binding: NestedBinding, rootBinding: BeanBinding, bean: Any, isFilterPropertyItself: Boolean): Boolean {
   val accessor = binding.accessor
 
   if (bean is SerializationFilter && !bean.accepts(accessor, bean)) {
@@ -763,7 +763,9 @@ fun isPropertySkipped(filter: SerializationFilter?, binding: NestedBinding, bean
   if (property == null || !property.alwaysWrite) {
     if (filter != null && isFilterPropertyItself) {
       if (filter is SkipDefaultsSerializationFilter) {
-        if (filter.equal(binding, bean)) {
+        val c = bean.javaClass
+        val defaultBean = filter.getDefaultValue(c) { rootBinding.newInstance() }
+        if (filter.equal(binding, accessor.read(bean), accessor.read(defaultBean))) {
           return true
         }
       }
@@ -782,7 +784,7 @@ fun isPropertySkipped(filter: SerializationFilter?, binding: NestedBinding, bean
   return false
 }
 
-private fun normalizePropertyNameForKotlinx(binding: NestedBinding): String {
+fun normalizePropertyNameForKotlinx(binding: NestedBinding): String {
   val s = binding.propertyName
   if (s.all { it.isUpperCase() || it == '_' || it.isDigit() }) {
     // lower-case it
