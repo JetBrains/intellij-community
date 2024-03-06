@@ -6,6 +6,7 @@ import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.ide.actions.CollapseAllAction;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -46,8 +47,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   protected final ChangesTree myViewer;
 
-  private final DefaultActionGroup myToolBarGroup = new DefaultActionGroup();
-  private final DefaultActionGroup myPopupMenuGroup = new DefaultActionGroup();
+  private final List<AnAction> myAdditionalToolbarActions = new ArrayList<>();
+
   private final ActionToolbar myToolbar;
   private final int myToolbarAnchor;
   private final JScrollPane myViewerScrollPane;
@@ -63,12 +64,10 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myProject = project;
     myViewer = createTreeList(project, showCheckboxes, highlightProblems);
 
-    myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", myToolBarGroup, true);
+    myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", new DefaultActionGroup(), true);
     myToolbar.setTargetComponent(this);
     myToolbarAnchor = getToolbarAnchor();
     myToolbar.setOrientation(isVerticalToolbar() ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
-
-    myViewer.installPopupHandler(myPopupMenuGroup);
 
     myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer, true);
     setViewerBorder(createViewerBorder());
@@ -104,27 +103,51 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     add(topPanel, BorderLayout.NORTH);
     add(createCenterPanel(), BorderLayout.CENTER);
 
-    myToolBarGroup.addAll(createToolbarActions());
-    myPopupMenuGroup.addAll(createPopupMenuActions());
+    ActionGroup toolbarGroup = new ActionGroup() {
+      final List<AnAction> actions = createToolbarActions();
+      final AnAction groupBy = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
 
-    AnAction groupByAction = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
-    if (!ActionUtil.recursiveContainsAction(myToolBarGroup, groupByAction)) {
-      myToolBarGroup.addSeparator();
-      myToolBarGroup.add(groupByAction);
-    }
-
-    if (isVerticalToolbar()) {
-      List<AnAction> treeActions = TreeActionsToolbarPanel.createTreeActions(myViewer);
-      boolean hasTreeActions = ContainerUtil.exists(treeActions,
-                                                    action -> ActionUtil.recursiveContainsAction(myToolBarGroup, action));
-      if (!hasTreeActions) {
-        myToolBarGroup.addSeparator();
-        myToolBarGroup.addAll(treeActions);
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        if (e == null) return AnAction.EMPTY_ARRAY;
+        e.getUpdateSession().presentation(groupBy);
+        return ContainerUtil.concat(actions, myAdditionalToolbarActions).toArray(AnAction.EMPTY_ARRAY);
       }
-    }
 
+      @Override
+      public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
+                                                                @NotNull UpdateSession updateSession) {
+        if (visibleChildren.contains(groupBy)) return Collections.unmodifiableList(visibleChildren);
+        return ContainerUtil.concat(visibleChildren, List.of(Separator.getInstance()), List.of(groupBy));
+      }
+    };
+    ((DefaultActionGroup)myToolbar.getActionGroup()).add(toolbarGroup);
+
+    ActionGroup popupGroup = new ActionGroup() {
+      final List<AnAction> actions = createPopupMenuActions();
+      final List<AnAction> treeActions = isVerticalToolbar() ? TreeActionsToolbarPanel.createTreeActions(myViewer) : Collections.emptyList();
+
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        if (e == null) return AnAction.EMPTY_ARRAY;
+        for (AnAction action : treeActions) {
+          e.getUpdateSession().presentation(action);
+        }
+        return actions.toArray(AnAction.EMPTY_ARRAY);
+      }
+
+      @Override
+      public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
+                                                                @NotNull UpdateSession updateSession) {
+        if (treeActions.isEmpty()) return Collections.unmodifiableList(visibleChildren);
+        if (ContainerUtil.findInstance(visibleChildren, CollapseAllAction.class) != null) return Collections.unmodifiableList(visibleChildren);
+        return ContainerUtil.concat(visibleChildren, List.of(Separator.getInstance()), treeActions);
+      }
+    };
+
+    DiffUtil.keepToolbarActionsPromoted(myToolbar);
+    myViewer.installPopupHandler(popupGroup);
     myShowDiffAction.registerCustomShortcutSet(this, null);
-    DiffUtil.recursiveRegisterShortcutSet(myToolBarGroup, this, null);
   }
 
   @NotNull
@@ -222,14 +245,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public void addToolbarAction(@NotNull AnAction action) {
-    myToolBarGroup.add(action);
-    action.registerCustomShortcutSet(this, null);
+    myAdditionalToolbarActions.add(action);
   }
-
-  public void addToolbarSeparator() {
-    myToolBarGroup.addSeparator();
-  }
-
 
   @NotNull
   public JComponent getPreferredFocusedComponent() {
