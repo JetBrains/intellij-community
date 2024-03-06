@@ -216,6 +216,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                                                @NotNull String place,
                                                                @NotNull Presentation presentation,
                                                                Supplier<? extends @NotNull Dimension> minimumSize) {
+        if (Registry.is("ide.redesigned.inspector", false)) return super.createTextButton(action, place, presentation, minimumSize);
+
         ActionButtonWithText button = super.createTextButton(action, place, presentation, minimumSize);
         JBColor color = JBColor.lazy(() -> {
           return ObjectUtils.notNull(editor.getColorsScheme().getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor());
@@ -229,6 +231,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                                        @NotNull String place,
                                                        @NotNull Presentation presentation,
                                                        Supplier<? extends @NotNull Dimension> minimumSize) {
+        if (Registry.is("ide.redesigned.inspector", false)) return super.createIconButton(action, place, presentation, minimumSize);
+
         return new ActionButton(action, presentation, place, minimumSize) {
           @Override
           public void updateIcon() {
@@ -246,6 +250,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
           @Override
           public @NotNull Dimension getPreferredSize() {
+
             Icon icon = getIcon();
             Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
 
@@ -270,7 +275,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       }
 
-      @Override
+/*      @Override
       protected Dimension updatePreferredSize(Dimension preferredSize) {
         return preferredSize;
       }
@@ -278,7 +283,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       @Override
       protected Dimension updateMinimumSize(Dimension minimumSize) {
         return minimumSize;
-      }
+      }*/
     };
 
     statusToolbar.setMiniMode(true);

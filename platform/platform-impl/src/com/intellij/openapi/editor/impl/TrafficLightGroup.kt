@@ -2,22 +2,22 @@
 package com.intellij.openapi.editor.impl.inspections.actions
 
 import com.intellij.codeInsight.daemon.DaemonBundle
+import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.AnalyzerStatus
 import com.intellij.openapi.editor.markup.StatusItem
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
-import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -34,6 +34,7 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
 
   private val actionList = mutableListOf<InspectionAction>()
   private var base: BaseAction? = null
+  private var settingAction: SettingAction = SettingAction()
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     if (!Registry.`is`("ide.redesigned.inspector", false)) return emptyArray()
@@ -47,13 +48,10 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
     val newStatus: List<StatusItem> = analyzerStatus.expandedStatus
     val newIcon: Icon = analyzerStatus.icon
 
-
-
-
     val bla = if (newStatus.size == 1) newStatus.first() else null
 
-    println("${analyzerStatus.analyzingType} ${analyzerStatus.icon} ${newStatus.isEmpty()} isTextStatus: ${analyzerStatus.isTextStatus()} showNavigation: " +
-            "${analyzerStatus.showNavigation} ${bla?.text} ${bla?.detailsText}")
+/*    println("${analyzerStatus.analyzingType} ${analyzerStatus.icon} ${newStatus.isEmpty()} isTextStatus: ${analyzerStatus.isTextStatus()} showNavigation: " +
+            "${analyzerStatus.showNavigation} ${bla?.text} ${bla?.detailsText}")*/
 
     if (!analyzerStatus.showNavigation) {
       val item = if (newStatus.isEmpty()) StatusItem("", newIcon) else newStatus.first()
@@ -65,13 +63,11 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
       } ?: BaseAction(item, editor, analyzerStatus.title, analyzerStatus.details)
       base = action
 
-      return arrayOf(action)
+      return arrayOf(action, settingAction)
     }
 
     val arr = mutableListOf<AnAction>()
-
-
-
+    val actionLink = Link(DaemonBundle.message("iw.inspection.show.all")) { analyzerStatus.controller.toggleProblemsView() }
 
     newStatus.forEachIndexed { index, item ->
       arr.add(if (index < actionList.size) {
@@ -80,15 +76,40 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
         action
       }
               else {
-        val action = InspectionAction(item, editor)
+        val action = InspectionAction(item, editor, actionLink = actionLink)
         actionList.add(action)
         action
       })
     }
+    arr.add(settingAction)
     return arr.toTypedArray()
   }
 
-  private open class BaseAction(var item: StatusItem, val editor: EditorImpl, var title: @Nls String? = null, var description: @Nls String? = null) : DumbAwareAction(), CustomComponentAction {
+  private class SettingAction() : DumbAwareAction(), CustomComponentAction {
+
+    override fun createCustomComponent(presentation: Presentation, place: String): ActionButton {
+      return object : ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+        /*override fun onMousePresenceChanged(setInfo: Boolean) {
+          icon = if(setInfo) {
+            AllIcons.General.GearPlain
+          } else {
+            AllIcons.General.Gear
+          }
+          super.onMousePresenceChanged(setInfo)
+        }*/
+      }
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      TODO("Not yet implemented")
+    }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.icon = AllIcons.General.Gear
+    }
+  }
+
+  private open class BaseAction(var item: StatusItem, val editor: EditorImpl, var title: @Nls String? = null, var description: @Nls String? = null, var actionLink: Link? = null) : DumbAwareAction(), CustomComponentAction {
     companion object {
       private val ICON_TEXT_COLOR: ColorKey = ColorKey.createColorKey("ActionButton.iconTextForeground",
                                                                       UIUtil.getContextHelpForeground())
@@ -108,6 +129,7 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
 
     override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
       return object : ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+
         init {
           border = JBUI.Borders.empty()
           font = com.intellij.util.ui.JBFont.small()
@@ -124,16 +146,15 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
         override fun getMargins(): Insets = JBUI.insets(0, 3, 0, 3)
 
         override fun updateToolTipText() {
-          //  val project = editor.project
-          if (Registry.`is`("ide.helptooltip.enabled")/* && project != null*/) {
+          if (Registry.`is`("ide.helptooltip.enabled")) {
             HelpTooltip.dispose(this)
-            HelpTooltip()
+            val tooltip = HelpTooltip()
               .setTitle(title)
               .setDescription(description)
-              /*.setShortcut("  ↩ Return  ")
-              .setLink(LangBundle.message("action.ReaderModeProvider.link.configure"))
-              { ShowSettingsUtil.getInstance().showSettingsDialog(project, ReaderModeConfigurable::class.java)}*/
-              .installOn(this)
+            actionLink?.let {
+              tooltip.setLink(it.text) { it.action() }
+            }
+            tooltip.installOn(this)
           }
           else {
             toolTipText = "${title?.let { "$it\n" } ?: ""}${description}"
@@ -150,7 +171,19 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
     }
   }
 
-  private class InspectionAction(item: StatusItem, editor: EditorImpl) : BaseAction(item, editor) {
+  private data class Link(val text: @Nls String, val action: () -> Unit)
+
+  private class InspectionAction(item: StatusItem, editor: EditorImpl, actionLink: Link? = null) : BaseAction(item, editor, actionLink = actionLink) {
+    companion object{
+      private val leftRight = DaemonBundle.message("iw.inspection.next.previous", convertSC("Left Click"), convertSC("Right Click"))
+
+      private const val previousActionId = "GotoPreviousError"
+      private const val nextActionId = "GotoNextError"
+
+      private fun convertSC(str: String) : String {
+        return "<span style=\"color: ${ColorUtil.toHex(JBColor.WHITE)};\"><b>$str</b></span>"
+      }
+    }
 
     init {
       item.detailsText?.let {
@@ -164,10 +197,10 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
 
     override fun actionPerformed(e: AnActionEvent) {
       val action = if (isSecondActionEvent(e.inputEvent)) {
-        ActionManager.getInstance().getAction("GotoPreviousError")
+        ActionManager.getInstance().getAction(previousActionId)
       }
                    else {
-        ActionManager.getInstance().getAction("GotoNextError")
+        ActionManager.getInstance().getAction(nextActionId)
       } ?: return
 
 
@@ -199,14 +232,17 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
     override fun update(e: AnActionEvent) {
       e.presentation.icon = item.icon
       e.presentation.text = item.text
+
+      val nextKey = getShortcut(nextActionId)
+      val prevKey = getShortcut(previousActionId)
+      val allTypes = DaemonBundle.message("iw.inspection.all.types", convertSC(nextKey), convertSC( prevKey ))
+
+      description = "<html>${leftRight}<p>${allTypes}</html>"
     }
 
-    protected fun getShortcut(): String {
-      val shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).shortcuts
-      if (shortcuts.size == 0) {
-        return "Double" + (if (SystemInfo.isMac) FontUtil.thinSpace() + MacKeymapUtil.SHIFT else " Shift") //NON-NLS
-      }
-      return KeymapUtil.getShortcutsText(shortcuts)
+    protected fun getShortcut(id: String): String {
+      val shortcuts = KeymapUtil.getActiveKeymapShortcuts(id).shortcuts
+      return if(shortcuts.isEmpty()) "Not set" else KeymapUtil.getShortcutsText(shortcuts)
     }
   }
 }
