@@ -181,7 +181,7 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
       private const val nextActionId = "GotoNextError"
 
       private fun convertSC(str: String) : String {
-        return "<span style=\"color: ${ColorUtil.toHex(JBColor.WHITE)};\"><b>$str</b></span>"
+        return "<span style=\"color: ${ColorUtil.toHex(UIUtil.getToolTipForeground())};\"><b>$str</b></span>"
       }
     }
 
