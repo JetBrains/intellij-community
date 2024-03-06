@@ -62,12 +62,17 @@ object DocMarkdownToHtmlConverter {
     .apply {
       addAll(ACCEPTABLE_BLOCK_TAGS)
       addAll(listOf( // Content sectioning
-        "h1", "h2", "h3", "h4", "h5", "h6",  // Inline text semantic
-        "a", "b", "br", "code", "em", "i", "s", "span", "strong", "u", "wbr", "kbd",  // Image and multimedia
-        "img",  // Svg and math
-        "svg",  // Obsolete
+        "h1", "h2", "h3", "h4", "h5", "h6",
+        // Inline text semantic
+        "a", "b", "br", "code", "em", "i", "s", "span", "strong", "u", "wbr", "kbd", "samp",
+        // Image and multimedia
+        "img",
+        // Svg and math
+        "svg",
+        // Obsolete
         "tt",
-        "shortcut", "icon" // special IJ tags
+        // special IJ tags
+        "shortcut", "icon"
       ))
     }
 

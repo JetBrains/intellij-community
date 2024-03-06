@@ -79,6 +79,8 @@ import javax.swing.text.html.StyleSheet
  *     Start debug with <kbd>⌘</kbd> <kbd>F8</kbd>
  *     ```
  * - `<wbr>` - provides optional word breaking location
+ * - `<samp>` - show a piece of text in editor font. Similar to `<code>`,
+ *     but without any special formatting except for the font.
  *
  * ### CSS Support
  *

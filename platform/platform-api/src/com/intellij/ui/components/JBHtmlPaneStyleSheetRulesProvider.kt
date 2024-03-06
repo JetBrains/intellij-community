@@ -217,8 +217,9 @@ object JBHtmlPaneStyleSheetRulesProvider {
 
     val fontName = if (configuration.useFontLigaturesInCode) EDITOR_FONT_NAME_PLACEHOLDER else EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
     result.addAllIfNotNull(
-      "tt, code, pre, .pre { font-family:\"$fontName\"; font-size:$contentCodeFontSizePercent%; }",
+      "tt, code, samp, pre, .pre { font-family:\"$fontName\"; font-size:$contentCodeFontSizePercent%; }",
     )
+    result.add("samp { font-weight: bold }")
     if (configuration.largeCodeFontSizeSelectors.isNotEmpty()) {
       result.add("${configuration.largeCodeFontSizeSelectors.joinToString(", ")} { font-size: $definitionCodeFontSizePercent% }")
     }
