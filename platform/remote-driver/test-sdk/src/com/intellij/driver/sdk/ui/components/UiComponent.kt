@@ -141,4 +141,8 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   fun moveMouse(point: Point) {
     robotService.robot.moveMouse(component, point)
   }
+
+  fun hasFocus(): Boolean {
+    return component.isFocusOwner()
+  }
 }

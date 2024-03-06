@@ -11,4 +11,5 @@ interface Component {
   fun isVisible(): Boolean
   fun isShowing(): Boolean
   fun isEnabled(): Boolean
+  fun isFocusOwner(): Boolean
 }
