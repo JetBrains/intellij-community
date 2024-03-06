@@ -95,7 +95,7 @@ internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<V
       dependencies.add(settings.modificationTracker)
     }
     dependencies.add(computation.tracker)
-    dependencies.add(file)
+    dependencies.add(ModificationTracker { if (file.isValid) 0 else 1 })
     return ArrayUtil.toObjectArray(dependencies)
   }
 
