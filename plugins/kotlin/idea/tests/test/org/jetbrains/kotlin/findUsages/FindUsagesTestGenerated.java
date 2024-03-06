@@ -164,6 +164,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                     runTest("testData/findUsages/kotlin/conventions/components/operators.0.kt");
                 }
 
+                @TestMetadata("propertyDelegate.0.kt")
+                public void testPropertyDelegate() throws Exception {
+                    runTest("testData/findUsages/kotlin/conventions/components/propertyDelegate.0.kt");
+                }
+
                 @TestMetadata("recursiveDataClass1.0.kt")
                 public void testRecursiveDataClass1() throws Exception {
                     runTest("testData/findUsages/kotlin/conventions/components/recursiveDataClass1.0.kt");

@@ -358,6 +358,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
+                public static class TestPropertyDelegate extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("propertyDelegate.0.kt")
+                    public void testPropertyDelegate() throws Exception {
+                        runTest("../../idea/tests/testData/findUsages/kotlin/conventions/components/propertyDelegate.0.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestRecursiveDataClass1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
