@@ -74,6 +74,7 @@ interface Driver : AutoCloseable {
 
   /**
    * Forcefully exits the application.
+   * Don't use directly in tests, instead use [com.intellij.ide.starter.extended.engine.driver.RunWithDriverKt.closeIdeAndWait]
    */
   fun exitApplication()
 
