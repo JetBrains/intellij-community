@@ -1657,6 +1657,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
       if (caresAboutInjection) {
         setupEditorForInjectedLanguage();
       }
@@ -1666,8 +1667,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         policy.testFileConfigured(getFile());
       }
     });
-
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     return getFile();
   }
