@@ -38,11 +38,11 @@ public abstract class Compressor implements Closeable {
   public static class Tar extends Compressor {
     public enum Compression {GZIP, BZIP2, NONE}
 
-    @ApiStatus.Obsolete
     public Tar(@NotNull Path file, @NotNull Compression compression) throws IOException {
       this(Files.newOutputStream(file), compression);
     }
 
+    @ApiStatus.Obsolete
     public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
       this(file.toPath(), compression);
     }
@@ -50,7 +50,7 @@ public abstract class Compressor implements Closeable {
     //<editor-fold desc="Implementation">
     private final TarArchiveOutputStream myStream;
 
-    public Tar(@NotNull OutputStream stream, @NotNull Compression compression) throws IOException {
+    private Tar(OutputStream stream, Compression compression) throws IOException {
       myStream = new TarArchiveOutputStream(compressedStream(stream, compression));
       myStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
     }
@@ -174,6 +174,7 @@ public abstract class Compressor implements Closeable {
   }
 
   public static final class Jar extends Zip {
+    @ApiStatus.Obsolete
     public Jar(@NotNull File file) throws IOException {
       this(file.toPath());
     }
@@ -201,6 +202,7 @@ public abstract class Compressor implements Closeable {
     return this;
   }
 
+  @ApiStatus.Obsolete
   public final void addFile(@NotNull String entryName, @NotNull File file) throws IOException {
     addFile(entryName, file.toPath());
   }
@@ -258,6 +260,7 @@ public abstract class Compressor implements Closeable {
     addDirectory("", directory);
   }
 
+  @ApiStatus.Obsolete
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
     addDirectory(prefix, directory.toPath());
   }

@@ -10,6 +10,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public abstract class Decompressor {
       mySource = file;
     }
 
+    @ApiStatus.Obsolete
     public Tar(@NotNull File file) {
       mySource = file.toPath();
     }
@@ -101,6 +103,7 @@ public abstract class Decompressor {
       mySource = file;
     }
 
+    @ApiStatus.Obsolete
     public Zip(@NotNull File file) {
       mySource = file.toPath();
     }
@@ -292,7 +295,7 @@ public abstract class Decompressor {
     return this;
   }
 
-  public Decompressor escapingSymlinkPolicy(EscapingSymlinkPolicy policy) {
+  public Decompressor escapingSymlinkPolicy(@NotNull EscapingSymlinkPolicy policy) {
     myEscapingSymlinkPolicy = policy;
     return this;
   }
@@ -322,6 +325,7 @@ public abstract class Decompressor {
     return this;
   }
 
+  @ApiStatus.Obsolete
   public final void extract(@NotNull File outputDir) throws IOException {
     extract(outputDir.toPath());
   }
