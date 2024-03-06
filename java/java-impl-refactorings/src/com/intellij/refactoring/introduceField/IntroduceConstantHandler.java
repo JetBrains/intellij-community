@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -119,7 +119,7 @@ public class IntroduceConstantHandler extends BaseExpressionToFieldHandler imple
     for (PsiExpression occurrence : occurrences) {
       if (RefactoringUtil.isAssignmentLHS(occurrence)) {
         String message =
-          RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("introduce.constant.used.for.write.cannot.refactor.message"));
+          RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", occurrence.getText()));
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringNameText(), getHelpID());
         highlightError(project, editor, occurrence);
         return null;
