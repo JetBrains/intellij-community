@@ -4,6 +4,7 @@ package com.intellij.ui.components
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CENTERED
+import com.intellij.lang.documentation.DocumentationMarkup.CLASS_GRAYED
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -176,7 +177,8 @@ object JBHtmlPaneStyleSheetRulesProvider {
       td pre { padding: ${scale(1)}px 0 0 0; margin: 0 0 0 0 }
       blockquote { padding-left: ${scale(5)}px; border-left: ${toHtmlColor(Gray.get(0x90))} solid ${scale(2)}px; }
       blockquote p { border: none }
-      .$CLASS_CENTERED { text-align: center}
+      .$CLASS_CENTERED { text-align: center }
+      .$CLASS_GRAYED { color: #909090 }
     """.trimIndent()
     return styles
   }
