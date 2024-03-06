@@ -240,10 +240,12 @@ class UltimateInstallationService(
 
 private fun SuggestedIde.canBeAutoInstalled(): Boolean {
   return when {
-    PlatformUtils.isIdeaCommunity() && productCode == "IU" -> true
-    PlatformUtils.isPyCharmCommunity() && productCode == "PY" -> true
+    PlatformUtils.isIdeaCommunity() && isIdeUltimate() -> true
+    PlatformUtils.isPyCharmCommunity() && isPycharmProfessional() -> true
     else -> false
   }
 }
-  
+
+internal fun SuggestedIde.isIdeUltimate() = productCode == "IU"
+internal fun SuggestedIde.isPycharmProfessional() = productCode == "PY"
 
