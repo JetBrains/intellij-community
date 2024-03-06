@@ -14,6 +14,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.platform.backend.observation.Observation
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
@@ -89,6 +90,7 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
       val attemptNumber = attemptsCount.incrementAndGet()
       IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckStarted(project, filter, attemptNumber)
 
+      Observation.awaitConfiguration(project) // wait for project import IDEA-348501
       val (nonIndexableFilesInFilter, indexableFilesNotInFilter) = smartReadAction(project) {
         runHealthCheck(project, filter)
       }
