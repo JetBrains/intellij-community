@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -25,7 +26,9 @@ public final class CommandLineUtil {
   private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
-  private static final String SHELL_WHITELIST_CHARACTERS = "-._/@=";
+  private static final List<Character> SHELL_UNSAFE_CHARACTERS = Arrays.asList(
+    '|', '&', ';', '<', '>', '(', ')', '$', '`', '\\', '\"', '\'', ' ', '\t', '\n', '*', '?', '[', '#', '~', '=', '%'
+  );
 
   private static final char Q = '\"';
   private static final String QQ = "\"\"";
@@ -499,28 +502,34 @@ public final class CommandLineUtil {
   /**
    * When necessary, quotes the specified argument with single quotes, according to the POSIX shell rules,
    * replacing single quotes with hardly readable but recursion-safe {@code '"'"'}.
+   * <p>
+   * For the reference see - <a href="https://pubs.opengroup.org/onlinepubs/009604499/utilities/xcu_chap02.html">specification</a>
    */
   public static @NotNull String posixQuote(@NotNull String argument) {
-    return posixQuote(argument, "");
+    return posixQuote(argument, Collections.emptyList());
   }
 
+  /**
+   * @param whiteListCharacters - list of characters that is safe to use as it is in a specific context
+   */
   @ApiStatus.Internal
-  public static @NotNull String posixQuote(@NotNull String argument, @NotNull String extraWhiteListCharacters) {
-    return shouldWrapWithQuotes(argument, extraWhiteListCharacters) ?
+  public static @NotNull String posixQuote(@NotNull String argument, @NotNull List<Character> whiteListCharacters) {
+    return shouldWrapWithQuotes(argument, whiteListCharacters) ?
            "'" + StringUtil.replace(argument, "'", "'\"'\"'") + "'" :
            argument;
   }
 
-  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument, @NotNull String extraWhiteListCharacters) {
+  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument, @NotNull List<Character> whiteListCharacters) {
     if (argument.length() == 0) {
       return true;
     }
     for (int i = 0; i < argument.length(); i++) {
       char c = argument.charAt(i);
-      if (!Character.isAlphabetic(c) &&
-          !Character.isDigit(c) &&
-          !StringUtil.containsChar(SHELL_WHITELIST_CHARACTERS, c) &&
-          !StringUtil.containsChar(extraWhiteListCharacters, c)) {
+      if (whiteListCharacters.contains(c)) {
+        continue;
+      }
+
+      if (SHELL_UNSAFE_CHARACTERS.contains(c)) {
         return true;
       }
     }
