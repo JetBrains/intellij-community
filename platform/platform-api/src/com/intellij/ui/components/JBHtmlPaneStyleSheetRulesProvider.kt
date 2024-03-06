@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER
 import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.ui.Gray
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.StartupUiUtil
@@ -28,7 +29,7 @@ import javax.swing.text.html.StyleSheet
  * Provides list of default CSS rules for JBHtmlPane
  */
 @Internal
-@Suppress("UseJBColor", "CssInvalidHtmlTagReference", "CssInvalidPropertyValue")
+@Suppress("UseJBColor", "CssInvalidHtmlTagReference", "CssInvalidPropertyValue", "CssUnusedSymbol")
 object JBHtmlPaneStyleSheetRulesProvider {
 
   @JvmStatic
@@ -173,6 +174,8 @@ object JBHtmlPaneStyleSheetRulesProvider {
       td { margin: 0 0 0 0; padding: ${spacingBefore}px ${spacingBefore + spacingAfter}px ${spacingAfter}px 0; }
       td p { padding-top: 0; padding-bottom: 0; }
       td pre { padding: ${scale(1)}px 0 0 0; margin: 0 0 0 0 }
+      blockquote { padding-left: ${scale(5)}px; border-left: ${toHtmlColor(Gray.get(0x90))} solid ${scale(2)}px; }
+      blockquote p { border: none }
       .$CLASS_CENTERED { text-align: center}
     """.trimIndent()
     return styles
@@ -240,8 +243,11 @@ object JBHtmlPaneStyleSheetRulesProvider {
       result.add("div.code-block { margin: ${spacingBefore}px 0 ${spacingAfter}px 0; padding: ${scale(10)}px ${scale(13)}px ${scale(10)}px ${scale(13)}px; }")
       result.add("div.code-block pre { padding: 0px; margin: 0px; line-height: 120%; }")
     }
-    return result.joinToString("\n");
+    return result.joinToString("\n")
   }
+
+  private fun toHtmlColor(color: Color): String =
+    toHexString(color.rgb and 0xFFFFFF)
 
   private data class ControlColorStyleBuilder(
     val controlKind: ControlKind,
@@ -337,9 +343,6 @@ object JBHtmlPaneStyleSheetRulesProvider {
     private fun <T : Any> StringBuilder.append(themeVersion: T?, defaultVersion: T?, editorVersion: T? = null, mapper: (T) -> String) {
       choose(themeVersion, defaultVersion, editorVersion)?.let(mapper)?.let { this.append(it) }
     }
-
-    private fun toHtmlColor(color: Color): String =
-      toHexString(color.rgb and 0xFFFFFF)
 
     private fun mixColors(c1: Color, c2: Color, opacity2: Int): Color {
       if (opacity2 >= 100) return c2
