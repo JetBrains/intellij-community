@@ -1,0 +1,19 @@
+{
+  "com": {
+    "intellij": {
+      "python": {
+        "community": {
+          "impl": {
+            "huggingFace": {
+              "icons": {
+                "download.svg": "com/intellij/python/community/impl/huggingFace/icons/download.svg",
+                "like.svg": "com/intellij/python/community/impl/huggingFace/icons/like.svg",
+                "logo.svg": "com/intellij/python/community/impl/huggingFace/icons/logo.svg"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
