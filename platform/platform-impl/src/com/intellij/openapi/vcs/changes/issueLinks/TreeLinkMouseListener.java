@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.issueLinks;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,10 +45,8 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase<Object> {
       boolean isLeaf;
       if (node instanceof TreeNode treeNode) {
         isLeaf = treeNode.isLeaf();
-      } else if (node instanceof IsLeafProvider isLeafProvider) {
-        isLeaf = isLeafProvider.isLeaf();
       } else {
-        isLeaf = false;
+        isLeaf = tree.getModel().isLeaf(node);
       }
       AppUIUtil.targetToDevice(myRenderer, tree);
       if (myLastHitNode == null || myLastHitNode.get() != node || e.getButton() != MouseEvent.NOBUTTON) {
@@ -79,10 +76,5 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase<Object> {
 
   public interface HaveTooltip {
     @NlsContexts.Tooltip String getTooltip();
-  }
-
-  @ApiStatus.Internal
-  public interface IsLeafProvider {
-    boolean isLeaf();
   }
 }

@@ -48,9 +48,6 @@ interface PsiViewerPropertyNode {
   val weight: Int
 }
 
-val PsiViewerPropertyNode.isLeaf: Boolean
-  get() = children.let { it is PsiViewerPropertyNode.Children.Enumeration && it.childrenList.isEmpty() }
-
 fun PsiViewerPropertyNode.appendPresentation(otherPresentation: PsiViewerPropertyNode.Presentation): PsiViewerPropertyNode =
   addPresentation(otherPresentation, before = false)
 
