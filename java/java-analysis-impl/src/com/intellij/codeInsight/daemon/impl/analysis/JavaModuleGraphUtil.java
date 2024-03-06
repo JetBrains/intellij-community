@@ -243,12 +243,23 @@ public final class JavaModuleGraphUtil {
     if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
     if (from instanceof LightJavaModule) return false;
     if (to.equals(from.getName())) return false;
+    if (!PsiNameHelper.isValidModuleName(to, from)) return false;
     if (alreadyContainsRequires(from, to)) return false;
     PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
                                      (isStaticModule(to, scope) ? PsiKeyword.STATIC + " " : "") +
                                      (isExported ? PsiKeyword.TRANSITIVE + " " : "") +
                                      to);
+    PsiJavaModule toModule = findDependencyByName(from, to);
+    if (toModule != null) optimizeDependencies(from, toModule);
     return true;
+  }
+
+  @Nullable
+  private static PsiJavaModule findDependencyByName(@NotNull PsiJavaModule module, @NotNull String name) {
+    for (PsiRequiresStatement require : module.getRequires()) {
+      if (name.equals(require.getModuleName())) return require.resolve();
+    }
+    return null;
   }
 
   public static boolean addDependency(@NotNull PsiElement from,
@@ -266,10 +277,10 @@ public final class JavaModuleGraphUtil {
   public static boolean addDependency(@NotNull PsiJavaModule from,
                                       @NotNull PsiJavaModule to,
                                       @Nullable DependencyScope scope) {
-    if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
-    if (from == to) return false;
     if (to.getName().equals(JAVA_BASE)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
     if (from instanceof LightJavaModule) return false;
+    if (from == to) return false;
     if (!PsiNameHelper.isValidModuleName(to.getName(), to)) return false;
     if (contains(from.getRequires(), to.getName())) return false;
     if (reads(from, to)) return false;
