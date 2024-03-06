@@ -41,8 +41,8 @@ class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout
       isOpaque = false
       return
     }
-    savedSize = size
-    savedPreferredSize = preferredSize
+    savedSize = size.dimensionCopy()
+    savedPreferredSize = size.dimensionCopy()
 
     isChildOpaque = content.isOpaque
     content.isOpaque = false
@@ -64,11 +64,11 @@ class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout
   }
 
   override fun getSize(): Dimension {
-    return savedSize ?: super.getSize()
+    return savedSize?.dimensionCopy() ?: super.getSize()
   }
 
   override fun getPreferredSize(): Dimension {
-    return savedPreferredSize ?: super.getPreferredSize()
+    return savedPreferredSize?.dimensionCopy() ?: super.getPreferredSize()
   }
 
   @DirtyUI
@@ -101,3 +101,5 @@ class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout
     }
   }
 }
+
+private fun Dimension.dimensionCopy(): Dimension = Dimension(width, height)

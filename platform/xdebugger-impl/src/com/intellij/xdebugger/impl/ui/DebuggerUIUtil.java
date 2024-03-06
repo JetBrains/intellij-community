@@ -607,12 +607,14 @@ public final class DebuggerUIUtil {
     return !ApplicationManager.getApplication().isUnitTestMode() && Registry.intValue("debugger.anti.flickering.delay", 0) > 0;
   }
 
-  public static void freezePaintingToReduceFlickering(@Nullable Component component) {
+  public static boolean freezePaintingToReduceFlickering(@Nullable Component component) {
     if (component instanceof AntiFlickeringPanel antiFlickeringPanel) {
       int delay = Registry.intValue("debugger.anti.flickering.delay", 0);
       if (delay > 0) {
         antiFlickeringPanel.freezePainting(delay);
+        return true;
       }
     }
+    return false;
   }
 }
