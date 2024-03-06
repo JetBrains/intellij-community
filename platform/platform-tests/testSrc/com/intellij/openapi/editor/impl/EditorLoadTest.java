@@ -47,7 +47,6 @@ public class EditorLoadTest extends FileEditorManagerTestCase {
       loaded.set(false);
       List<FileEditor> editors = manager.openEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), false);
       LOG.debug(i+": "+editors);
-      System.out.println(i+": "+editors);
       try {
         assertTrue(loaded.get());
         run.set(false);
