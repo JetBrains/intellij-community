@@ -283,7 +283,6 @@ def py_start_callback(code, instruction_offset):
             if result:
                 flag, breakpoint, new_frame, bp_type = result
                 if flag:
-                    print(result)
                     result = py_db.plugin.suspend(py_db, thread, frame, bp_type)
                     if result:
                         frame = result
