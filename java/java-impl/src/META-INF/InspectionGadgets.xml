@@ -1397,10 +1397,6 @@
                      key="logger.initialized.with.foreign.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.logging.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.logging.LoggerInitializedWithForeignClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="LogStatementGuardedByLogCondition" bundle="messages.InspectionGadgetsBundle"
-                     key="log.statement.guarded.by.log.condition.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.logging.LogStatementGuardedByLogConditionInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonConstantLogger" shortName="NonStaticFinalLogger" bundle="messages.InspectionGadgetsBundle"
                      key="non.constant.logger.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.logging.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.logging.NonStaticFinalLoggerInspection"/>

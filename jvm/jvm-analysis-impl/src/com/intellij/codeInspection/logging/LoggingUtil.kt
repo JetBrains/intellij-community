@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
 import com.intellij.psi.util.CachedValueProvider
@@ -9,7 +9,7 @@ import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
-internal class LoggingUtil {
+class LoggingUtil {
   companion object {
     internal const val SLF4J_LOGGER = "org.slf4j.Logger"
 
@@ -44,6 +44,11 @@ internal class LoggingUtil {
       SLF4J_BUILDER_MATCHER,
     )
 
+    internal val LOG_MATCHERS_WITHOUT_BUILDERS: CallMatcher = CallMatcher.anyOf(
+      SLF4J_MATCHER,
+      LOG4J_MATCHER,
+    )
+
     internal val FORMATTED_LOG4J: CallMatcher = CallMatcher.staticCall("org.apache.logging.log4j.LogManager", "getFormatterLogger")
 
     internal const val LOG_4_J_LOGGER = "org.apache.logging.slf4j.Log4jLogger"
@@ -65,6 +70,25 @@ internal class LoggingUtil {
 
     private val LEVEL_CLASSES = setOf("org.apache.logging.log4j.Level", "org.slf4j.event.Level")
     private val LEGACY_LEVEL_CLASSES = setOf("org.apache.logging.log4j.Level", "org.apache.log4j.Priority", "java.util.logging.Level")
+
+    fun skipAccordingLevel(node: UCallExpression, myLimitLevelType: LimitLevelType): Boolean {
+      if (myLimitLevelType != LimitLevelType.ALL) {
+        val loggerLevel = getLoggerLevel(node)
+        if (loggerLevel == null) return true
+        val notSkip: Boolean = when (loggerLevel) {
+          Companion.LevelType.FATAL -> false
+          Companion.LevelType.ERROR -> false
+          Companion.LevelType.WARN -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
+          Companion.LevelType.INFO -> myLimitLevelType.ordinal <= LimitLevelType.INFO_AND_LOWER.ordinal
+          Companion.LevelType.DEBUG -> myLimitLevelType.ordinal <= LimitLevelType.DEBUG_AND_LOWER.ordinal
+          Companion.LevelType.TRACE -> myLimitLevelType.ordinal <= LimitLevelType.TRACE.ordinal
+        }
+        return !notSkip
+      }
+      else {
+        return false
+      }
+    }
 
     internal fun getLoggerType(uCall: UCallExpression?): LoggerType? {
       return if (SLF4J_MATCHER.uCallMatches(uCall)) {
@@ -412,4 +436,9 @@ internal class LoggingUtil {
       Pair("isFatalEnabled", "fatal"),
     )
   }
+
+  enum class LimitLevelType {
+    ALL, WARN_AND_LOWER, INFO_AND_LOWER, DEBUG_AND_LOWER, TRACE
+  }
 }
+

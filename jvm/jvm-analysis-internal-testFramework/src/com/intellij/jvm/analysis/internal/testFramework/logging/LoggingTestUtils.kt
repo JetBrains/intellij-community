@@ -38,6 +38,7 @@ object LoggingTestUtils {
             return null;
           }
           public void warning(String msg) {}
+          public void fine(String msg) {}
           public boolean isLoggable(Level level) {}
         }
       """.trimIndent())
