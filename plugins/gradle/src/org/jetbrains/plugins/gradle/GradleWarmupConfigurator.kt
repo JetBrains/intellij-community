@@ -6,6 +6,7 @@ import com.intellij.ide.CommandLineProgressReporterElement
 import com.intellij.ide.environment.EnvironmentService
 import com.intellij.ide.impl.ProjectOpenKeyProvider
 import com.intellij.ide.warmup.WarmupConfigurator
+import com.intellij.ide.warmup.WarmupLogger
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -194,6 +195,7 @@ class GradleWarmupConfigurator : WarmupConfigurator {
           }
 
           override fun onImportFailed(projectPath: String?, t: Throwable) {
+            WarmupLogger.fatalError(t.message ?: "Gradle import finished with error", t)
             LOG.info("Gradle data import stage finished with failure: ${id.ideProjectId}")
           }
         })
@@ -201,6 +203,7 @@ class GradleWarmupConfigurator : WarmupConfigurator {
 
     override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
       if (!id.isGradleProjectResolveTask()) return
+      WarmupLogger.fatalError(e.message ?: "Gradle import finished with error", e)
       LOG.error("Gradle resolve stage finished with failure ${id.ideProjectId}", e)
     }
 

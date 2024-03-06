@@ -4,11 +4,25 @@ package com.intellij.ide.warmup
 import com.intellij.openapi.extensions.ExtensionPointName
 
 /**
- * The logger that is used to relay important information to the user.
+ * This class is used when warmup decides to relay important information to the user.
  */
 interface WarmupLogger {
+
+  /**
+   * Allows reporting information messages.
+   */
   fun logInfo(message: String)
+
+  /**
+   * Allows reporting error messages to the user.
+   * Use this if there is an important error, which is still recoverable.
+   */
   fun logError(message: String, throwable: Throwable?)
+
+  /**
+   * Allows aborting the process of warmup if something non-recoverable happens.
+   */
+  fun logFatalError(message: String, throwable: Throwable?)
 
   companion object {
     private val EP_NAME: ExtensionPointName<WarmupLogger> = ExtensionPointName("com.intellij.warmupLogger")
@@ -22,6 +36,12 @@ interface WarmupLogger {
     fun error(message: String, throwable: Throwable? = null) {
       for (warmupLogger in EP_NAME.extensionList) {
         warmupLogger.logError(message, throwable)
+      }
+    }
+
+    fun fatalError(message: String, throwable: Throwable? = null) {
+      for (warmupLogger in EP_NAME.extensionList) {
+        warmupLogger.logFatalError(message, throwable)
       }
     }
   }

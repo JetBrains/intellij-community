@@ -11,4 +11,9 @@ class DefaultWarmupLogger : WarmupLogger {
   override fun logError(message: String, throwable: Throwable?) {
     com.intellij.warmup.util.WarmupLogger.logError(message, throwable)
   }
+
+  override fun logFatalError(message: String, throwable: Throwable?) {
+    logError(message, throwable)
+    abortFlow.tryEmit(message)
+  }
 }

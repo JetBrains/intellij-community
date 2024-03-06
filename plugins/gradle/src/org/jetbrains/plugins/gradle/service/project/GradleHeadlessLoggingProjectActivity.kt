@@ -32,7 +32,7 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
         if (message == null) {
           return
         }
-        WarmupLogger.error(message, null)
+        WarmupLogger.fatalError(message, null)
       }
 
       override fun reportMessage(minVerboseLevel: Int, message: String?) {
