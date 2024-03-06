@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnimatedIcon.Blinking;
@@ -28,8 +29,13 @@ final class IdeErrorsIcon extends JLabel {
       myEnableBlink && TIMEOUT > 0 ? new MergingUpdateQueue("ide-error-icon-blink-timeout", TIMEOUT, true, null).setRestartTimerOnAdd(true) : null;
   }
 
+  private static @NotNull Icon getUnreadIcon() {
+    return ApplicationInfo.getInstance().isEAP() ?
+           AllIcons.Ide.FatalError : AllIcons.Ide.FatalErrorRead; // let's be less annoying in releases
+  }
+
   void setState(@NotNull MessagePool.State state) {
-    Icon myUnreadIcon = myEnableBlink ? new Blinking(AllIcons.Ide.FatalError) : AllIcons.Ide.FatalError;
+    Icon myUnreadIcon = myEnableBlink ? new Blinking(AllIcons.Ide.FatalError) : getUnreadIcon();
     if (state != MessagePool.State.NoErrors) {
       setIcon(state == MessagePool.State.ReadErrors ? AllIcons.Ide.FatalErrorRead : myUnreadIcon);
       setToolTipText(DiagnosticBundle.message("error.notification.tooltip"));
