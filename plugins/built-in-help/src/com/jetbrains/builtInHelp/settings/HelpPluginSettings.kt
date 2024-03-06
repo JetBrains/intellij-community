@@ -7,7 +7,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.jetbrains.builtInHelp.BuiltInHelpBundle
 import org.jetbrains.annotations.NonNls
 
-const val defaultBaseUrl = "https://www.jetbrains.com/"
+internal const val defaultBaseUrl = "https://www.jetbrains.com/"
 
 @Service(Service.Level.APP)
 @State(name = "HelpPluginSettings", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
