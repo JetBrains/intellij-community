@@ -89,7 +89,7 @@ public interface TestIndexingModeSupporter {
       return shutdownToken;
     }
 
-    public void tearDownTest(@NotNull Project project, @NotNull ShutdownToken token) {
+    public void tearDownTest(@Nullable Project project, @NotNull ShutdownToken token) {
       if (token.dumbTask != null) {
         DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, token.dumbTask);
       }

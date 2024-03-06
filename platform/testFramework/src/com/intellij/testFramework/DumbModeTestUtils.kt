@@ -104,9 +104,11 @@ object DumbModeTestUtils {
   }
 
   @JvmStatic
-  fun endEternalDumbModeTaskAndWaitForSmartMode(project: Project, task: EternalTaskShutdownToken) {
+  fun endEternalDumbModeTaskAndWaitForSmartMode(project: Project?, task: EternalTaskShutdownToken) {
     endEternalDumbModeTask(task)
-    waitForSmartMode(project, ignoreEternalTasks = true /* there can be nested eternal tasks */)
+    if (project != null) {
+      waitForSmartMode(project, ignoreEternalTasks = true /* there can be nested eternal tasks */)
+    }
   }
 
   /**
