@@ -271,6 +271,7 @@ public final class JavaModuleGraphUtil {
     if (to.getName().equals(JAVA_BASE)) return false;
     if (from instanceof LightJavaModule) return false;
     if (!PsiNameHelper.isValidModuleName(to.getName(), to)) return false;
+    if (contains(from.getRequires(), to.getName())) return false;
     if (reads(from, to)) return false;
     PsiUtil.addModuleStatement(from, PsiKeyword.REQUIRES + " " +
                                      (isStaticModule(to.getName(), scope) ? PsiKeyword.STATIC + " " : "") +
@@ -278,6 +279,13 @@ public final class JavaModuleGraphUtil {
                                      to.getName());
     optimizeDependencies(from, to);
     return true;
+  }
+
+  private static boolean contains(@NotNull Iterable<PsiRequiresStatement> requires, @NotNull String name) {
+    for (PsiRequiresStatement statement : requires) {
+      if (name.equals(statement.getModuleName())) return true;
+    }
+    return false;
   }
 
   /**

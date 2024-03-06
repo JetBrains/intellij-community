@@ -65,6 +65,7 @@ public class JavaEmptyModuleInfoFileInspection extends AbstractBaseJavaLocalInsp
       if (!(element instanceof PsiJavaFile psiJavaFile)) return;
       PsiJavaModule descriptor = psiJavaFile.getModuleDeclaration();
       if (descriptor == null) return;
+      if (!isEmptyModule(descriptor)) return;
       Set<PsiJavaModule> modules = walk(descriptor, stmt -> true);
 
       if (modules.isEmpty()) {
