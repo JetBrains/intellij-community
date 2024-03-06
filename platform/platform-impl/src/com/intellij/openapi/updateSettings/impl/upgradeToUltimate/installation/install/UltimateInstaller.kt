@@ -51,7 +51,7 @@ internal abstract class UltimateInstaller(
       throw e
     }
 
-    return DownloadResult(downloadPath, buildInfo.version)
+    return DownloadResult(downloadPath, buildInfo.version, suggestedIde)
   }
 
   fun install(downloadResult: DownloadResult): InstallationResult? {
@@ -134,6 +134,13 @@ internal fun runCommand(command: GeneralCommandLine): Boolean {
   }
 }
 
-internal data class DownloadResult(val downloadPath: Path, val buildVersion: String)
-internal data class InstallationResult(val appPath: Path)
+internal data class DownloadResult(
+  val downloadPath: Path,
+  val buildVersion: String,
+  val suggestedIde: SuggestedIde,
+)
+internal data class InstallationResult(
+  val appPath: Path,
+  val suggestedIde: SuggestedIde,
+)
 
