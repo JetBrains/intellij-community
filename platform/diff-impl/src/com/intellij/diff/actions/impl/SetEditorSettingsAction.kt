@@ -8,9 +8,10 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.util.CombinedDiffToggle
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.diff.DiffBundle
@@ -24,7 +25,6 @@ import com.intellij.ui.BadgeIcon
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.JBUI
-import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.SwingConstants
@@ -32,9 +32,8 @@ import javax.swing.SwingConstants
 class SetEditorSettingsAction(
   settings: TextDiffSettingsHolder.TextDiffSettings,
   editors: List<Editor?>,
-) : DumbAwareAction(DiffBundle.message("editor.settings")),
-    Toggleable,
-    CustomComponentAction {
+) : DumbAwareAction(DiffBundle.message("editor.settings")) {
+
   private val badgeIcon = BadgeIcon(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.INFORMATION)
   private val editorSettingsActionGroup = SetEditorSettingsActionGroup(settings, editors)
 
@@ -51,7 +50,6 @@ class SetEditorSettingsAction(
   override fun actionPerformed(e: AnActionEvent) {
     val popup = createMainPopup(editorSettingsActionGroup, e.dataContext)
 
-    PopupUtil.addToggledStateListener(popup, e.presentation)
     PopupUtil.showForActionButtonEvent(popup, e)
     val diffModeToggle = getDiffModeToggle(e) ?: return
 
@@ -66,10 +64,6 @@ class SetEditorSettingsAction(
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
-  }
 
   fun applyDefaults() {
     editorSettingsActionGroup.applyDefaults()
