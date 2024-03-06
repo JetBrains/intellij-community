@@ -20,7 +20,6 @@ object PythonCommunityPluginModules {
     "intellij.python.community.core.impl",
     "intellij.python.pydev",
     "intellij.python.community.impl",
-    "intellij.python.community.impl.poetry",
     "intellij.python.community.impl.huggingFace",
     "intellij.python.community.communityOnly",
     "intellij.python.langInjection",

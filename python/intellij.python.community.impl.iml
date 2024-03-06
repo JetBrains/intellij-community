@@ -147,7 +147,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.impl.huggingFace" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.syntax" />
   </component>
 </module>

@@ -5,7 +5,6 @@
   <content>
     <module name="intellij.commandInterface"/> <!-- used by Django in Prof, by some plugins in community -->
     <module name="intellij.python.community.impl"/> <!-- The whole open-source part of Python support -->
-    <module name="intellij.python.community.impl.poetry"/>
     <module name="intellij.python.community.impl.huggingFace"/>
     <module name="intellij.python.community.plugin.impl"/><!--Python for any IDE except PyCharm -->
     <module name="intellij.python.community.plugin.java"/><!-- Python for Java IDE -->

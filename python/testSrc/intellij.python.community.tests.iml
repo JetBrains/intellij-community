@@ -55,6 +55,5 @@
     <orderEntry type="library" scope="TEST" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.commandInterface" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" scope="RUNTIME" />
   </component>
 </module>
