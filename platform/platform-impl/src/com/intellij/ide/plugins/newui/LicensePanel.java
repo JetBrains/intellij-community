@@ -153,7 +153,7 @@ public final class LicensePanel extends NonOpaquePanel {
   public void showBuyPlugin(@NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate) {
     IdeaPluginDescriptor plugin = getPlugin.get();
 
-    setLink(IdeBundle.message("plugins.configurable.buy.the.full.version"), () ->
+    setLink(IdeBundle.message("plugins.configurable.buy.the.license"), () ->
       BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode())), true);
 
     if (forUpdate) {
@@ -170,9 +170,9 @@ public final class LicensePanel extends NonOpaquePanel {
     if (forUpdate) {
       return;
     }
-    PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.full.version.from.0", price), false), price -> {
+    PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.license.from.0", price), false), price -> {
       if (plugin == getPlugin.get()) {
-        updateLink(IdeBundle.message("plugins.configurable.buy.the.full.version.from.0", price), true);
+        updateLink(IdeBundle.message("plugins.configurable.buy.the.license.from.0", price), true);
       }
     });
   }
