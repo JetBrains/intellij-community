@@ -7,20 +7,7 @@ End of files
 Compiling files:
   src/A.kt
 End of files
-After build round. Marked as dirty by Kotlin:
-  src/AChild.kt
-  src/AGrandChild.kt
-  src/ATypeParameter.kt
-  src/classLiteral.kt
-  src/functionParameter.kt
-  src/getA.kt
-  src/importA.kt
-  src/importAGrandChild.kt
-  src/importStar.kt
-  src/referencedByFqName.kt
-  src/returnType.kt
-  src/returnTypeImplicit.kt
-Exit code: ADDITIONAL_PASS_REQUIRED
+Exit code: OK
 ------------------------------------------
 Cleaning output files:
   out/production/module/META-INF/module.kotlin_module
@@ -62,20 +49,7 @@ End of files
 Compiling files:
   src/A.kt
 End of files
-After build round. Marked as dirty by Kotlin:
-  src/AChild.kt
-  src/AGrandChild.kt
-  src/ATypeParameter.kt
-  src/classLiteral.kt
-  src/functionParameter.kt
-  src/getA.kt
-  src/importA.kt
-  src/importAGrandChild.kt
-  src/importStar.kt
-  src/referencedByFqName.kt
-  src/returnType.kt
-  src/returnTypeImplicit.kt
-Exit code: ADDITIONAL_PASS_REQUIRED
+Exit code: OK
 ------------------------------------------
 Cleaning output files:
   out/production/module/META-INF/module.kotlin_module

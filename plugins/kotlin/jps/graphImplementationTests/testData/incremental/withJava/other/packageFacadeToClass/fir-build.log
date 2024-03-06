@@ -29,9 +29,7 @@ Compiling files:
   src/useF.kt
   src/useG.kt
 End of files
-After build round. Marked as dirty by Kotlin:
-  src/useAA.kt
-Exit code: ADDITIONAL_PASS_REQUIRED
+Exit code: OK
 ------------------------------------------
 Compiling files:
   src/UseFJava.java
