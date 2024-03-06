@@ -10,7 +10,7 @@ from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xr
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
-from _pydevd_bundle.pydevd_asyncio_provider import eval_async_expression
+from _pydevd_bundle.pydevd_asyncio_provider import get_eval_async_expression
 
 try:
     from StringIO import StringIO
@@ -456,9 +456,9 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
 
     try:
         expression = str(expression.replace('@LINE@', '\n'))
-
-        if eval_async_expression is not None:
-            return eval_async_expression(expression, updated_globals, frame, doExec, get_eval_exception_msg)
+        eval_func = get_eval_async_expression()
+        if eval_func is not None:
+            return eval_func(expression, updated_globals, frame, doExec, get_eval_exception_msg)
 
         if doExec:
             try:
