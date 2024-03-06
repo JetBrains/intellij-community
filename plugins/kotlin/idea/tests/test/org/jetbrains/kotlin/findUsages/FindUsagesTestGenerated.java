@@ -787,6 +787,31 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages5.0.kt");
             }
 
+            @TestMetadata("kotlinOverloadAndExtensionUsagesSameClass.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesSameClass() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesSameClass.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevel.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesTopLevel() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevel.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelExtension.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesTopLevelExtension() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelExtension.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelVsInstance.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesTopLevelVsInstance() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelVsInstance.0.kt");
+            }
+
             @TestMetadata("kotlinPrivateMethodUsages.0.kt")
             public void testKotlinPrivateMethodUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinPrivateMethodUsages.0.kt");

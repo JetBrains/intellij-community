@@ -118,24 +118,32 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         }
     }
 
-    context(KtAnalysisSession)
-    private fun containerSymbol(symbol: KtCallableSymbol): KtDeclarationSymbol? {
-        return symbol.getContainingSymbol() ?: symbol.receiverType?.expandedClassSymbol
-    }
-
     override fun isUsageInContainingDeclaration(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
-        val container = analyze(declaration) {
-            val symbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
-             containerSymbol(symbol)?.psi?.originalElement ?: return false
-        }
         return reference.unwrappedTargets.filterIsInstance<KtFunction>().any { candidateDeclaration ->
             if (candidateDeclaration == declaration) return@any false
-            if (candidateDeclaration.receiverTypeReference == null && candidateDeclaration.containingFile != container.containingFile) {
-                return@any false
-            }
             analyze(candidateDeclaration) {
-                val candidateSymbol = candidateDeclaration.getSymbol()
-                candidateSymbol is KtCallableSymbol && candidateDeclaration != declaration && containerSymbol(candidateSymbol)?.psi == container
+                val candidateSymbol = candidateDeclaration.getSymbol() as? KtCallableSymbol ?: return@any false
+
+                if (!declaration.canBeAnalysed()) return@any false
+
+                val candidateReceiverType = candidateDeclaration.receiverTypeReference?.getKtType()
+                val declarationSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return@any false
+                val receiverType = declarationSymbol.receiverType
+
+                //do not treat callable with different receivers as overloads
+                if (receiverType != null && candidateReceiverType != null && !receiverType.isEqualTo(candidateReceiverType)) {
+                    return@any false
+                }
+
+                val candidateContainer = candidateSymbol.getContainingSymbol()
+                val container = declarationSymbol.getContainingSymbol()
+                if (candidateContainer == null && container == null) {
+                    //top level functions should be from the same file
+                    declaration.containingFile == candidateDeclaration.containingFile
+                } else if (candidateContainer != null && container != null) {
+                    //instance functions should be from the same class/function
+                    candidateContainer == container
+                } else false
             }
         }
     }
