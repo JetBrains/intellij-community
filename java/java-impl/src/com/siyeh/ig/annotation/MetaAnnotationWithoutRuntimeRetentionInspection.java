@@ -14,16 +14,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Set;
 
 public final class MetaAnnotationWithoutRuntimeRetentionInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Collection<String> ourAnnotations = new HashSet<>();
-  static {
-    ourAnnotations.add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST);
-    ourAnnotations.add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED);
-    ourAnnotations.add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST);
-    ourAnnotations.add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
-  }
+  private static final Collection<String> ourAnnotations = Set.of(
+    JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST,
+    JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED,
+    JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST,
+    JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
+  );
 
   @Override
   public ProblemDescriptor @Nullable [] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -41,18 +40,20 @@ public final class MetaAnnotationWithoutRuntimeRetentionInspection extends Abstr
                                                                        newAnnotation.getParameterList().getAttributes());
         ProblemDescriptor descriptor =
           manager.createProblemDescriptor(ObjectUtils.notNull(aClass.getNameIdentifier(), aClass),
-                                          InspectionGadgetsBundle.message("inspection.meta.annotation.without.runtime.description", aClass.getName()),
+                                          InspectionGadgetsBundle.message("inspection.meta.annotation.without.runtime.description",
+                                                                          aClass.getName()),
                                           annotationPsiFix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-        return new ProblemDescriptor[] {descriptor};
+        return new ProblemDescriptor[]{descriptor};
       }
       else {
         PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("value");
         if (attributeValue == null || !attributeValue.getText().contains("RUNTIME")) {
           ProblemDescriptor descriptor =
             manager.createProblemDescriptor(ObjectUtils.notNull(aClass.getNameIdentifier(), aClass),
-                                            InspectionGadgetsBundle.message("inspection.meta.annotation.without.runtime.description", aClass.getName()),
+                                            InspectionGadgetsBundle.message("inspection.meta.annotation.without.runtime.description",
+                                                                            aClass.getName()),
                                             (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-          return new ProblemDescriptor[] {descriptor};
+          return new ProblemDescriptor[]{descriptor};
         }
       }
     }
