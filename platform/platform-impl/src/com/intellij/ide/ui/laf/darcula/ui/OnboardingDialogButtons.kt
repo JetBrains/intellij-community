@@ -2,14 +2,17 @@
 package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Color
-import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.Icon
+import javax.swing.JButton
+import javax.swing.SwingConstants
 
 object OnboardingDialogButtons {
   fun createLinkButton(@Nls text: String, icon: Icon?, onClick: Runnable?): JButton {
@@ -40,7 +43,7 @@ object OnboardingDialogButtons {
 
   fun createHoveredLinkButton(): JButton {
     val btn = createLinkButton()
-    btn.preferredSize = Dimension(280, 40)
+    btn.preferredSize = JBDimension(280, 40)
     btn.isBorderPainted = true
     btn.putClientProperty("JButton.backgroundColor", JBUI.CurrentTheme.ActionButton.hoverBackground())
     btn.putClientProperty("JButton.borderColor", Color(0, true))

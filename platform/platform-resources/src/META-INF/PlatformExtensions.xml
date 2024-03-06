@@ -164,6 +164,10 @@
                  restartRequired="false"
                  description="Set initial Linux tty size to 100x100 for WSL processes not attached to Windows PTY (workaround for https://github.com/microsoft/WSL/issues/10701)"
                  defaultValue="true"/>
+    <registryKey key="ide.redesigned.inspector"
+                 restartRequired="false"
+                 description="New inspection widget with pencils functionality"
+                 defaultValue="false"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"

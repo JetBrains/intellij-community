@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.ui.laf.darcula.ui.OnboardingDialogButtons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import javax.swing.JButton
@@ -21,7 +22,9 @@ class SkipImportAction(val doClose: () -> Unit) : ChooseProductActionButton(Impo
 
 
   override fun createButton(): JButton {
-    return OnboardingDialogButtons.createHoveredLinkButton()
+    return OnboardingDialogButtons.createHoveredLinkButton().apply {
+      preferredSize = UiUtils.prefButtonSize
+    }
   }
 
 }

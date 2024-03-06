@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.KeyboardFocusManager
@@ -22,4 +23,6 @@ object UiUtils {
     val focussed = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
     return (focussed == null || !SwingUtilities.isDescendingFrom(container, focussed))
   }
+
+  val prefButtonSize = JBDimension(DEFAULT_BUTTON_WIDTH, DEFAULT_BUTTON_HEIGHT)
 }
