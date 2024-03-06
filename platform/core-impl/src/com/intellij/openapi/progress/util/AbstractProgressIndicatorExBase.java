@@ -14,6 +14,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link AbstractProgressIndicatorBase} notice.
+ * </p>
+ */
 public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
   private final boolean myReusable;
   private volatile ProgressIndicatorEx @Nullable [] myStateDelegates; // never updated inplace, only the whole array is replaced under getLock()

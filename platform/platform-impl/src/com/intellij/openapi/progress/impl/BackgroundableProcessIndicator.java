@@ -19,6 +19,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * Use {@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress}.
+ * </p>
+ */
 public class BackgroundableProcessIndicator extends ProgressWindow {
   private static final Logger LOG = Logger.getInstance(BackgroundableProcessIndicator.class);
 

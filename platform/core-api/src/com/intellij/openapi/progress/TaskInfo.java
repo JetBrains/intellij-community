@@ -5,6 +5,12 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link ProgressIndicator} notice.
+ * </p>
+ */
 @Obsolete
 public interface TaskInfo {
   @NotNull
