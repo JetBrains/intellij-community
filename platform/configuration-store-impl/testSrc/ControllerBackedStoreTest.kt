@@ -82,6 +82,9 @@ class ControllerBackedStoreTest {
     component.state = ControllerTestState(list = listOf("d", "c"))
     store.save(forceSavingAllSettings = true)
 
+    // https://youtrack.jetbrains.com/issue/IJPL-753/NPE-when-calling-IComponentStore.reloadStatesSetString
+    store.reloadStates(setOf("TestState"))
+
     val propertyName = "bar"
     data.put("TestState.$propertyName", encodePrimitiveValue("12"))
     data.put("TestState.text", encodePrimitiveValue("a long sad story"))
