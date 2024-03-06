@@ -21,7 +21,7 @@ public final class MetaAnnotationWithoutRuntimeRetentionInspection extends Abstr
     JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST,
     JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED,
     JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST,
-    JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST);
+    JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST
   );
 
   @Override
