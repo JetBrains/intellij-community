@@ -525,14 +525,14 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/FasterXML/jackson-dataformats-binary/blob/2.14/pom.xml")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
-    LibraryLicense(name = "Jackson Dataformat YAML", libraryName = "jackson-dataformat-yaml",
-                   url = "https://github.com/FasterXML/jackson-dataformats-text")
-      .apache("https://github.com/FasterXML/jackson-dataformats-text/blob/2.16/pom.xml")
-      .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
-
     LibraryLicense(name = "Jackson Dataformat XML", libraryName = "jackson-dataformat-xml",
                    url = "https://github.com/FasterXML/jackson-dataformat-xml")
       .apache("https://github.com/FasterXML/jackson-dataformat-xml/blob/2.16/LICENSE")
+      .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
+
+    LibraryLicense(name = "Jackson Dataformat YAML", libraryName = "jackson-dataformat-yaml",
+                   url = "https://github.com/FasterXML/jackson-dataformats-text")
+      .apache("https://github.com/FasterXML/jackson-dataformats-text/blob/2.16/pom.xml")
       .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
     LibraryLicense(name = "Jackson Module Kotlin", libraryName = "jackson-module-kotlin",
