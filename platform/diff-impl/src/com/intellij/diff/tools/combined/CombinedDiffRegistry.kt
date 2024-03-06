@@ -19,6 +19,10 @@ object CombinedDiffRegistry {
 
   fun setCombinedDiffEnabled(enabled: Boolean) {
     AdvancedSettings.setBoolean(COMBINED_DIFF_SETTING_ID, enabled)
+
+    if (enabled) {
+      resetBadge()
+    }
   }
 
   fun getPreloadedBlocksCount(): Int = Registry.intValue("combined.diff.visible.viewport.delta", 3, 1, 100)

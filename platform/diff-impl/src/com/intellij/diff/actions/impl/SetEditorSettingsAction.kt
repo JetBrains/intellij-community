@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.util.PopupUtil
@@ -46,18 +45,13 @@ class SetEditorSettingsAction(
     }
   }
 
-
   override fun actionPerformed(e: AnActionEvent) {
-    val popup = createMainPopup(editorSettingsActionGroup, e.dataContext)
-
+    val popup = MyPopup(editorSettingsActionGroup, e.dataContext)
     PopupUtil.showForActionButtonEvent(popup, e)
-    val diffModeToggle = getDiffModeToggle(e) ?: return
 
     popup.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
-        if (!diffModeToggle.isCombinedDiffEnabled) {
-          CombinedDiffRegistry.resetBadge()
-        }
+        CombinedDiffRegistry.resetBadge()
       }
     })
   }
@@ -75,16 +69,12 @@ class SetEditorSettingsAction(
 
   private val presentationFactory = PresentationFactory()
 
-  private fun createMainPopup(actionGroup: ActionGroup, dataContext: DataContext): JBPopup {
-    return MyPopup(actionGroup, dataContext)
-  }
-
   private fun getDiffModeToggle(e: AnActionEvent): CombinedDiffToggle? {
     val context = e.getData(DiffDataKeys.DIFF_CONTEXT) ?: return null
     return context.getUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE)
   }
 
-  inner class MyPopup(
+  private inner class MyPopup(
     group: ActionGroup,
     context: DataContext
   ) : PopupFactoryImpl.ActionGroupPopup(null, group, context, false, false, true, true, null, -1, null, null, presentationFactory, false) {

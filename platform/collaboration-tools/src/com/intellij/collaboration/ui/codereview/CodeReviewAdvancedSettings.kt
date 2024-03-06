@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview
 
 import com.intellij.collaboration.file.codereview.CodeReviewDiffVirtualFile
 import com.intellij.diff.editor.DiffEditorViewerFileEditor
+import com.intellij.diff.tools.combined.CombinedDiffRegistry
 import com.intellij.diff.util.CombinedDiffToggle
 import com.intellij.idea.AppMode
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -16,6 +17,10 @@ object CodeReviewAdvancedSettings {
 
   private fun setCombinedDiffEnabled(enabled: Boolean) {
     AdvancedSettings.setBoolean(COMBINED_DIFF_SETTING_ID, enabled)
+
+    if (enabled) {
+      CombinedDiffRegistry.resetBadge()
+    }
   }
 
   val CodeReviewCombinedDiffToggle: CombinedDiffToggle = object : CombinedDiffToggle {
