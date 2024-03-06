@@ -659,6 +659,7 @@ public class BreakpointManager {
   public void updateBreakpointsUI() {
     ReadAction.nonBlocking(this::getBreakpoints)
       .coalesceBy(this)
+      .expireWhen(myProject::isDisposed)
       .submit(AppExecutorUtil.getAppExecutorService())
       .onSuccess(b -> b.forEach(Breakpoint::updateUI));
   }
