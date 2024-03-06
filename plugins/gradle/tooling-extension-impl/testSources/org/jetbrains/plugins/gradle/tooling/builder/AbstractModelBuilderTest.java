@@ -29,6 +29,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
+import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -57,6 +58,8 @@ public abstract class AbstractModelBuilderTest {
 
   @Rule public TestName name = new TestName();
   @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
+  @Rule public TargetJavaVersionWatcher myTargetJavaVersionWatcher = new TargetJavaVersionWatcher();
+
   @ClassRule public static final ApplicationRule ourApplicationRule = new ApplicationRule();
 
   protected final @NotNull GradleVersion gradleVersion;
@@ -102,7 +105,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   private void setUpGradleJvmHomePath() {
-    gradleJvmHomePath = GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion);
+    gradleJvmHomePath = GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion, myTargetJavaVersionWatcher.getRestriction());
   }
 
   private void setUpTemporaryTestDirectory() {

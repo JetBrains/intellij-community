@@ -59,6 +59,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
+import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -72,7 +73,10 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -88,6 +92,8 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   @Rule public TestName name = new TestName();
 
   public VersionMatcherRule versionMatcherRule = asOuterRule(new VersionMatcherRule());
+  public TargetJavaVersionWatcher myTargetJavaVersionWatcher = asOuterRule(new TargetJavaVersionWatcher());
+
   @Parameterized.Parameter
   public @NotNull String gradleVersion;
   private GradleProjectSettings myProjectSettings;
@@ -235,16 +241,22 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
-    if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current())) {
+    return requireJdkHome(gradleVersion, GradleJvmResolver.VersionRestriction.NO);
+  }
+
+  public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion,
+                                               @NotNull GradleJvmResolver.VersionRestriction javaVersionRestriction) {
+    if (GradleJvmSupportMatrix.isSupported(gradleVersion, JavaVersion.current()) &&
+        !javaVersionRestriction.isRestricted(gradleVersion, JavaVersion.current())) {
       return IdeaTestUtil.requireRealJdkHome();
     }
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    return GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion);
+    return GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion, javaVersionRestriction);
   }
 
   public String findJdkPath() {
-    return requireJdkHome(getCurrentGradleVersion());
+    return requireJdkHome(getCurrentGradleVersion(), myTargetJavaVersionWatcher.getRestriction());
   }
 
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {

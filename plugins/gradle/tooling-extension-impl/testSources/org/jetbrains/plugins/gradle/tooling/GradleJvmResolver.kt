@@ -15,7 +15,10 @@ import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 
-class GradleJvmResolver(private val gradleVersion: GradleVersion) {
+class GradleJvmResolver(
+  private val gradleVersion: GradleVersion,
+  private val versionRestriction: VersionRestriction
+) {
 
   private val sdkType = JavaSdk.getInstance()
 
@@ -28,6 +31,7 @@ class GradleJvmResolver(private val gradleVersion: GradleVersion) {
     return GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)
            && GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
            && isJavaSupportedByGradleToolingApi(gradleVersion, javaVersion)
+           && !versionRestriction.isRestricted(gradleVersion, javaVersion)
   }
 
   private fun throwSdkNotFoundException(): Nothing {
@@ -120,18 +124,31 @@ class GradleJvmResolver(private val gradleVersion: GradleVersion) {
     return sdk
   }
 
+  fun interface VersionRestriction {
+
+    fun isRestricted(gradleVersion: GradleVersion, source: JavaVersion): Boolean
+
+    companion object {
+      @JvmField
+      val NO = VersionRestriction { _, _ -> false }
+    }
+  }
+
   companion object {
     private val GRADLE_5_6 = GradleVersion.version("5.6")
     private val GRADLE_7_2 = GradleVersion.version("7.2")
 
     @JvmStatic
     fun resolveGradleJvm(gradleVersion: GradleVersion, parentDisposable: Disposable): Sdk {
-      return GradleJvmResolver(gradleVersion).resolveGradleJvmImpl(parentDisposable)
+      return GradleJvmResolver(gradleVersion, VersionRestriction.NO)
+        .resolveGradleJvmImpl(parentDisposable)
     }
 
     @JvmStatic
-    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion): String {
-      return GradleJvmResolver(gradleVersion).resolveGradleJvmHomePathImpl()
+    @JvmOverloads
+    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion, versionRestriction: VersionRestriction = VersionRestriction.NO): String {
+      return GradleJvmResolver(gradleVersion, versionRestriction)
+        .resolveGradleJvmHomePathImpl()
     }
   }
 }
