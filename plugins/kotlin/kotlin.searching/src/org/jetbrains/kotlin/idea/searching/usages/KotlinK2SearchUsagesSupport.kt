@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
@@ -166,23 +165,23 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return when (psiElement) {
             is KtCallableDeclaration -> {
                 analyze(psiElement) {
-                    fun getPsiClassOfKtType(ktType: KtType): PsiClass? {
-                        return (ktType as? KtNonErrorClassType)?.classSymbol?.psiSafe<KtClassOrObject>()?.toLightClass()
+                    fun resolveKtClassOrObject(ktType: KtType): KtClassOrObject? {
+                        return (ktType as? KtNonErrorClassType)?.classSymbol?.psiSafe<KtClassOrObject>()
                     }
 
                     when (val elementSymbol = psiElement.getSymbol()) {
                         is KtValueParameterSymbol -> {
                             // TODO: The following code handles only constructors. Handle other cases e.g.,
                             //       look for uses of component functions cf [isDestructionDeclarationSearch]
-                            val psiClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java)?.toLightClass() ?: return@analyze null
+                            val ktClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java) ?: return@analyze null
 
-                            val classPointer = psiClass.createSmartPointer()
-                            ReceiverTypeSearcherInfo(psiClass) { declaration ->
+                            val classPointer = ktClass.createSmartPointer()
+                            ReceiverTypeSearcherInfo(ktClass) { declaration ->
                                 runReadAction {
                                     analyze(declaration) {
-                                        fun KtType.containsClassType(clazz: PsiClass?): Boolean {
+                                        fun KtType.containsClassType(clazz: KtClassOrObject?): Boolean {
                                             if (clazz == null) return false
-                                            return this is KtNonErrorClassType && (clazz.unwrapped?.isEquivalentTo(classSymbol.psi) == true || ownTypeArguments.any { arg ->
+                                            return this is KtNonErrorClassType && (clazz.isEquivalentTo(classSymbol.psi) == true || ownTypeArguments.any { arg ->
                                                 when (arg) {
                                                     is KtStarTypeProjection -> false
                                                     is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
@@ -199,7 +198,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                             val receiverType =
                                 elementSymbol.receiverType
                                     ?: getContainingClassType(elementSymbol)
-                            val psiClass = receiverType?.let { getPsiClassOfKtType(it) }
+                            val psiClass = receiverType?.let { resolveKtClassOrObject(it) }
 
                             ReceiverTypeSearcherInfo(psiClass) {
                                 // TODO: stubbed - not exercised by FindUsagesFir Test Suite
