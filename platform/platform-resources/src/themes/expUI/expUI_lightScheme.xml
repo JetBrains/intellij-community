@@ -156,10 +156,25 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option name="DOC_CODE_BLOCK">
+      <value>
+        <option name="FOREGROUND" value="000000"/>
+        <option name="BACKGROUND" value="f8f8f9"/>
+        <option name="EFFECT_COLOR" value="EBECF0" />
+        <option name="EFFECT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="DOC_CODE_INLINE">
+      <value>
+        <option name="FOREGROUND" value="000000"/>
+        <option name="BACKGROUND" value="f3f3f4"/>
+      </value>
+    </option>
     <option name="DOC_TIPS_SHORTCUT">
       <value>
         <option name="FOREGROUND" value="000000"/>
-        <option name="BACKGROUND" value="ebecf0"/>
+        <option name="EFFECT_COLOR" value="A8ADBD" />
+        <option name="EFFECT_TYPE" value="0" />
       </value>
     </option>
     <option name="DEFAULT_ENTITY">

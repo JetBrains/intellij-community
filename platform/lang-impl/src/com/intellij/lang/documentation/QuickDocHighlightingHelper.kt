@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider
+import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider.ControlKind
+import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider.ControlProperty
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -267,9 +269,10 @@ object QuickDocHighlightingHelper {
 
   @Internal
   @JvmStatic
-  fun getDefaultDocStyleOptions(colorScheme: EditorColorsScheme): JBHtmlPaneStyleSheetRulesProvider.Configuration =
+  fun getDefaultDocStyleOptions(colorScheme: EditorColorsScheme, editorInlineContext: Boolean): JBHtmlPaneStyleSheetRulesProvider.Configuration =
     JBHtmlPaneStyleSheetRulesProvider.Configuration(
       colorScheme = colorScheme,
+      editorInlineContext = editorInlineContext,
       inlineCodeParentSelectors = listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)",
                                          ".$CLASS_CONTENT div:not(.$CLASS_TOP)", ".$CLASS_SECTIONS"),
       largeCodeFontSizeSelectors = listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_SEPARATED code",
@@ -278,7 +281,15 @@ object QuickDocHighlightingHelper {
                                    && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
       enableCodeBlocksBackground = DocumentationSettings.isCodeBackgroundEnabled()
                                    && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
-      useFontLigaturesInCode = false
+      useFontLigaturesInCode = false,
+      themeOverrides = if (editorInlineContext)
+        JBHtmlPaneStyleSheetRulesProvider.ThemeOverrides(
+          controlKindSuffix = "EditorPane",
+          overrides = mapOf(
+            ControlKind.CodeBlock to listOf(ControlProperty.BackgroundColor, ControlProperty.BackgroundOpacity, ControlProperty.BorderColor)
+          )
+        )
+      else null
     )
 
   private fun StringBuilder.appendHighlightedCode(project: Project, language: Language?, doHighlighting: Boolean,

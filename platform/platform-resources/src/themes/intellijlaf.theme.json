@@ -172,7 +172,8 @@
         "backgroundOpacity": 7
       },
       "Block": {
-        "backgroundOpacity": 100,
+        "backgroundColor": "#5A5D6B",
+        "backgroundOpacity": 4,
         "borderColor":"#EBECF0",
         "EditorPane": {
           "backgroundColor": "#5A5D6B",
@@ -180,6 +181,10 @@
           "borderColor": "#EBECF0"
         }
       }
+    },
+
+    "Shortcut": {
+      "borderColor":"#A8ADBD"
     },
 
     "CodeWithMe": {

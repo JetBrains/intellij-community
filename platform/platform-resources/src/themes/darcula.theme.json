@@ -146,11 +146,17 @@
         "borderRadius": 10,
         "borderWidth": 1,
         "EditorPane": {
-          "background": "#9DA0A8",
+          "backgroundColor": "#9DA0A8",
           "backgroundOpacity": 10,
           "borderColor": "#393B40"
         }
       }
+    },
+
+    "Shortcut": {
+      "borderColor":"#6F737A",
+      "borderRadius": 7,
+      "borderWidth": 1
     },
 
     "ComboBoxButton": {

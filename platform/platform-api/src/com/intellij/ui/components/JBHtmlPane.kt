@@ -1,9 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
+import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.editor.impl.EditorCssFontResolver
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_PREFIX
+import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_SUFFIX
 import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider.getStyleSheet
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.*
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
@@ -35,6 +41,68 @@ import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
 
+/**
+ * The [JBHtmlPane] allows to render HTML according to the IntelliJ UI guidelines.
+ *
+ * ### HTML support
+ *
+ * Additionally to tags supported by AWT HTML toolkit, [JBHtmlPane] supports:
+ * - `<code>` - display code fragment, e.g:
+ *     ```html
+ *     <code>This is my code</code>
+ *     ```
+ * - `<pre><code>` or `<blockquote><pre>` - display code block, e.g:
+ *     ```html
+ *     <pre><code>
+ *     System.out.println("Hello world")
+ *     </code></pre>
+ *     ```
+ * - `<kbd>` - display a keyboard shortcut, e.g.
+ *     ```html
+ *     <kbd>⌘</kbd> <kbd>C</kbd>
+ *     ```
+ * - `<shortcut>` - special tag, which supports two attributes:
+ *     - an IDE `actionId`
+ *     - or `raw` keystroke, as supported by [KeyStroke.getKeyStroke]
+ *     The tag is expanded to a sequence of `<kbd>` tags. E.g:
+ *     ```html
+ *     Start debug with <shortcut actionId="Debug"></shortcut>
+ *     ```
+ *     ```html
+ *     Start debug with <shortcut raw="meta F8"/>
+ *     ```
+ *     Both can be expanded to
+ *     ```html
+ *     Start debug with <kbd>⌘</kbd> <kbd>F8</kbd>
+ *     ```
+ * - `<wbr>` - provides optional word breaking location
+ *
+ * ### CSS Support
+ *
+ * Additionally, to CSS properties supported by AWT HTML toolkit, [JBHtmlPane] supports:
+ * - `border-radius` through `caption-side` property, e.g.:
+ *     ```CSS
+ *     code {
+ *        caption-side /* border-radius */: 8px
+ *     }
+ *     ```
+ * - `line-height` (`px`, `%`, number), e.g.:
+ *     ```CSS
+ *     p {
+ *        line-height: 120%;
+ *        line-height: 1.2;
+ *        line-height: 24px;
+ *     }
+ *     ```
+ * - paddings and margins for inline elements (no nesting supported), e.g.:
+ *     ```CSS
+ *     span.padded {
+ *        padding: 5px;
+ *        margin: 0px 2px 1px 2px;
+ *     }
+ *     ```
+ *
+ */
 @Suppress("LeakingThis")
 open class JBHtmlPane(private val myStylesConfiguration: JBHtmlPaneStyleSheetRulesProvider.Configuration,
                       private val myPaneConfiguration: Configuration
@@ -50,7 +118,7 @@ open class JBHtmlPane(private val myStylesConfiguration: JBHtmlPaneStyleSheetRul
     val extensions: List<ExtendableHTMLViewFactory.Extension> = emptyList()
   )
 
-  private var myText: @Nls String? = "" // getText() surprisingly crashes…, let's cache the text
+  private var myText: @Nls String = "" // getText() surprisingly crashes…, let's cache the text
   private var myCurrentDefaultStyleSheet: StyleSheet? = null
   private val mutableBackgroundFlow: MutableStateFlow<Color>
 
@@ -104,13 +172,13 @@ open class JBHtmlPane(private val myStylesConfiguration: JBHtmlPaneStyleSheetRul
     caret.isVisible = false // Caret, if blinking, has to be deactivated.
   }
 
-  override fun getText(): @Nls String? {
+  override fun getText(): @Nls String {
     return myText
   }
 
   override fun setText(t: @Nls String?) {
-    myText = t
-    super.setText(t)
+    myText = t?.let { HtmlEditorPaneInputTranspiler(it).process() } ?: ""
+    super.setText(myText)
   }
 
   override fun setEditorKit(kit: EditorKit) {
@@ -183,5 +251,357 @@ open class JBHtmlPane(private val myStylesConfiguration: JBHtmlPaneStyleSheetRul
       }
     }
     return null
+  }
+
+  /**
+   * Transpiler performs some simple lexing to understand where are tags, attributes and text.
+   *
+   * For performance reasons, all the following actions are applied in a single run:
+   * - Add `<wbr>` after `.` if surrounded by letters
+   * - Add `<wbr>` after `]`, `)` or `/` followed by a char or digit
+   * - Remove empty <p> before some tags - workaround for Swing html renderer not removing empty paragraphs before non-inline tags
+   * - Replace `<blockquote>\\s*<pre>` with [JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_PREFIX]
+   * - Replace `</pre>\\s*</blockquote>` with [JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_SUFFIX]
+   * - Replace `<pre><code>` with [JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_PREFIX]
+   * - Replace `</code></pre>` with [JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_SUFFIX]
+   * - Expand `<shortcut raw|actionId="*"/>` tag into a sequence of `<kbd>` tags
+   */
+  private class HtmlEditorPaneInputTranspiler(@Nls text: String) {
+    private val codePoints = text.codePoints().iterator()
+    private val result = StringBuilder(text.length + 50)
+    private var codePoint = codePoints.nextInt()
+    private var openingTag = false
+    private val tagStart = StringBuilder()
+    private val tagName = StringBuilder()
+    private val tagBuffer = StringBuilder()
+
+    @Nls
+    fun process(): String {
+      if (!codePoints.hasNext()) return ""
+
+
+      while (codePoint >= 0) {
+        when {
+          // break after dot if surrounded by letters
+          Character.isLetter(codePoint) -> {
+            next()
+            if (codePoint == '.'.code) {
+              next()
+              if (Character.isLetter(codePoint)) {
+                result.append("<wbr>")
+              }
+            }
+          }
+          // break after ], ) or / followed by a char or digit
+          codePoint == ')'.code || codePoint == ']'.code || codePoint == '/'.code -> {
+            next()
+            if (Character.isLetterOrDigit(codePoint)) {
+              result.append("<wbr>")
+            }
+          }
+          // process tags
+          codePoint == '<'.code -> {
+            readTagStart()
+            if (tagName.isEmpty()) {
+              result.append(tagStart)
+              continue
+            }
+            if (tagName.contentEquals("style", true)
+                || tagName.contentEquals("title", true)
+                || tagName.contentEquals("script", true)
+                || tagName.contentEquals("textarea", true)) {
+              result.append(tagStart)
+              skipUntilTagClose(tagName.toString(), result)
+            }
+            else
+              handleTag()
+          }
+          else -> next()
+        }
+      }
+
+      @Suppress("HardCodedStringLiteral")
+      return result.toString()
+    }
+
+    private fun next(builder: StringBuilder = result) {
+      builder.appendCodePoint(codePoint)
+      codePoint = if (codePoints.hasNext())
+        codePoints.nextInt()
+      else
+        -1
+    }
+
+    private fun skipUntilTagClose(curTag: String, builder: StringBuilder) {
+      do {
+        if (codePoint == '<'.code) {
+          readTagStart()
+          builder.append(tagStart)
+          if (tagName.contentEquals(curTag, true) && !openingTag) {
+            skipUntil(">", builder)
+            break
+          }
+        }
+        else next(builder)
+      }
+      while (codePoint >= 0)
+    }
+
+    private fun readTagStart() {
+      assert(codePoint == '<'.code)
+      tagStart.clear()
+      tagName.clear()
+      next(tagStart)
+      if (codePoint == '/'.code) {
+        openingTag = false
+        next(tagStart)
+      }
+      else if (codePoint == '!'.code) {
+        next(tagStart)
+        if (consume("--", tagStart)) {
+          skipUntil("->", tagStart)
+        }
+      }
+      else {
+        openingTag = true
+      }
+      if (!Character.isLetter(codePoint))
+        return
+      while (Character.isLetterOrDigit(codePoint) || codePoint == '-'.code) {
+        next(tagName)
+      }
+      tagStart.append(tagName)
+    }
+
+    private fun consume(text: String, builder: StringBuilder): Boolean {
+      for (c in text) {
+        if (codePoint != c.code) return false
+        next(builder)
+      }
+      return true
+    }
+
+    private fun skipUntil(text: String, builder: StringBuilder) {
+      loop@ while (codePoint >= 0) {
+        for (i in text.indices) {
+          val c = text[i]
+          if (codePoint != c.code) {
+            if (i == 0) next(builder)
+            continue@loop
+          }
+          next(builder)
+        }
+        return
+      }
+    }
+
+    private fun skipToTagEnd(builder: StringBuilder) {
+      while (codePoint >= 0) {
+        when (codePoint) {
+          '/'.code -> {
+            openingTag = false
+            next(builder)
+          }
+          '>'.code -> {
+            next(builder)
+            break
+          }
+          '\''.code, '"'.code -> {
+            val quoteStyle = codePoint
+            next(builder)
+            while (codePoint >= 0) {
+              when (codePoint) {
+                '\\'.code -> {
+                  next(builder)
+                  if (codePoint >= 0)
+                    next(builder)
+                }
+                quoteStyle -> {
+                  next(builder)
+                  break
+                }
+                else -> next(builder)
+              }
+            }
+          }
+          else -> next(builder)
+        }
+      }
+    }
+
+    private fun readAttributes(builder: StringBuilder): Map<String, String> {
+      val result = mutableMapOf<String, String>()
+      var attributeName: String? = null
+      var nextIsValue = false
+      val text = StringBuilder()
+      while (codePoint >= 0) {
+        when (codePoint) {
+          '/'.code -> {
+            openingTag = false
+            next(builder)
+          }
+          '>'.code -> {
+            if (text.isNotEmpty()) {
+              builder.append(text)
+              result[text.toString()] = text.toString()
+            }
+            else if (attributeName != null) {
+              result[attributeName] = attributeName
+            }
+            next(builder)
+            break
+          }
+          '\''.code, '"'.code -> {
+            val quoteStyle = codePoint
+            next(builder)
+            while (codePoint >= 0) {
+              when (codePoint) {
+                '\\'.code -> {
+                  next(text)
+                  if (codePoint >= 0)
+                    next(text)
+                }
+                quoteStyle -> {
+                  builder.append(text)
+                  next(builder)
+                  break
+                }
+                else -> next(text)
+              }
+            }
+            if (nextIsValue) {
+              result[attributeName!!] = text.toString()
+              attributeName = null
+              nextIsValue = false
+            }
+            text.clear()
+          }
+          else -> if (codePoint == '='.code || Character.isWhitespace(codePoint)) {
+            if (text.isNotEmpty()) {
+              if (codePoint != '='.code && nextIsValue) {
+                result[attributeName!!] = text.toString()
+                attributeName = null
+              }
+              else {
+                attributeName = StringUtil.toLowerCase(text.toString())
+              }
+              builder.append(text)
+              text.clear()
+            }
+            nextIsValue = codePoint == '='.code && !attributeName.isNullOrEmpty()
+            next(builder)
+          }
+          else
+            next(text)
+        }
+      }
+      return result
+    }
+
+    private fun handleTag() {
+      val isOpeningTag = openingTag
+      if (isOpeningTag && tagName.contentEquals("shortcut", true)) {
+        handleShortcutTag()
+        return
+      }
+      val isP = tagName.contentEquals("p", true)
+      val isPre = tagName.contentEquals("pre", true)
+      val isCode = tagName.contentEquals("code", true)
+      val isBlockquote = tagName.contentEquals("blockquote", true)
+      if (!isP && !isPre && !(isCode && !isOpeningTag) && !(isBlockquote && isOpeningTag)) {
+        result.append(tagStart)
+        skipToTagEnd(result)
+        return
+      }
+
+      tagBuffer.clear()
+      tagBuffer.append(tagStart)
+      skipToTagEnd(tagBuffer)
+      if (isP || isBlockquote || (isPre && !isOpeningTag)) {
+        // Skip whitespace
+        while (codePoint >= 0 && Character.isWhitespace(codePoint)) {
+          next(tagBuffer)
+        }
+      }
+      if (codePoint == '<'.code) {
+        readTagStart()
+        if (isP) {
+          // Remove empty <p> before some tags - workaround for Swing html renderer not removing empty paragraphs before non-inline tags
+          if (tagName !in dropPrecedingEmptyParagraphTags) {
+            result.append(tagBuffer)
+          }
+          handleTag()
+        }
+        else {
+          // Replace <blockquote>\\s*<pre> with JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_PREFIX
+          // Replace </pre>\\s*</blockquote> with JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_SUFFIX
+          // Replace <pre><code> with JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_PREFIX
+          // Replace </code></pre> with JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_SUFFIX
+          val nextTag = if (isPre) {
+            if (isOpeningTag) "code" else "blockquote"
+          }
+          else "pre"
+          if (tagName.contentEquals(nextTag, true) && (isOpeningTag == openingTag)) {
+            skipToTagEnd(tagBuffer)
+            if (isCode || (isPre && !isOpeningTag)) {
+              // trim trailing whitespace
+              result.setLength(result.indexOfLast { !Character.isWhitespace(it) } + 1)
+            }
+            result.append(if (isOpeningTag) CODE_BLOCK_PREFIX else CODE_BLOCK_SUFFIX)
+          }
+          else {
+            result.append(tagBuffer)
+            handleTag()
+          }
+        }
+      }
+      else {
+        result.append(tagBuffer)
+      }
+    }
+
+    private fun handleShortcutTag() {
+      tagBuffer.clear()
+      tagBuffer.append(tagStart)
+      val attributes = readAttributes(tagBuffer)
+      val actionId = attributes["actionid"]
+      val raw = attributes["raw"]
+
+      if (openingTag)
+        skipUntilTagClose("shortcut", tagBuffer)
+
+      if (actionId != null || raw != null) {
+        val shortcutData =
+          if (actionId != null)
+            ShortcutsRenderingUtil.getShortcutByActionId(actionId)
+              ?.let { ShortcutsRenderingUtil.getKeyboardShortcutData(it) }?.first
+            ?: ShortcutsRenderingUtil.getGotoActionData(actionId, false)
+              .takeIf { ActionManager.getInstance().getAction(actionId) != null }
+              ?.first
+          else
+            KeyStroke.getKeyStroke(raw)
+              ?.let { ShortcutsRenderingUtil.getKeyStrokeData(it) }
+              ?.first
+        if (shortcutData != null) {
+          shortcutData
+            .splitToSequence(ShortcutsRenderingUtil.SHORTCUT_PART_SEPARATOR)
+            .joinToString(StringUtil.NON_BREAK_SPACE) { "<kbd>$it</kbd>" }
+            .let(result::append)
+        }
+        else {
+          result.append("<kbd>${actionId ?: raw}</kbd>")
+        }
+      }
+      else {
+        result.append(tagBuffer)
+      }
+    }
+
+  }
+
+  companion object {
+    private val dropPrecedingEmptyParagraphTags = CollectionFactory.createCharSequenceSet(false).also {
+      it.addAll(listOf("ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "p", "tr", "td"))
+    }
   }
 }

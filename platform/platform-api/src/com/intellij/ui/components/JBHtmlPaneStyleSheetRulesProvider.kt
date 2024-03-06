@@ -5,11 +5,13 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CENTERED
 import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER
-import com.intellij.ui.ColorUtil
+import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.StartupUiUtil
@@ -35,6 +37,7 @@ object JBHtmlPaneStyleSheetRulesProvider {
 
   data class Configuration(
     val colorScheme: EditorColorsScheme = EditorColorsManager.getInstance().globalScheme,
+    val editorInlineContext: Boolean = false,
     val inlineCodeParentSelectors: List<String> = listOf(""),
     val largeCodeFontSizeSelectors: List<String> = emptyList(),
     val enableInlineCodeBackground: Boolean = true,
@@ -44,6 +47,7 @@ object JBHtmlPaneStyleSheetRulesProvider {
     val spaceBeforeParagraph: Int = JBHtmlPaneStyleSheetRulesProvider.spaceBeforeParagraph,
     /** Unscaled */
     val spaceAfterParagraph: Int = JBHtmlPaneStyleSheetRulesProvider.spaceAfterParagraph,
+    val themeOverrides: ThemeOverrides? = null,
   ) {
     override fun equals(other: Any?): Boolean =
       other is Configuration
@@ -60,6 +64,12 @@ object JBHtmlPaneStyleSheetRulesProvider {
       // Update here when more colors are used from the colorScheme
       colorScheme.defaultBackground.rgb == colorScheme2.defaultBackground.rgb
       && colorScheme.defaultForeground.rgb == colorScheme2.defaultForeground.rgb
+      && sequenceOf(inlineCodeStyling, blockCodeStyling, shortcutStyling)
+        .all {
+          colorScheme.getAttributes(it.editorSchemeAttributeKey, false) ==
+            colorScheme2.getAttributes(it.editorSchemeAttributeKey, false)
+        }
+
 
     override fun hashCode(): Int =
       Objects.hash(colorScheme.defaultBackground.rgb and 0xffffff,
@@ -67,6 +77,26 @@ object JBHtmlPaneStyleSheetRulesProvider {
                    inlineCodeParentSelectors, largeCodeFontSizeSelectors,
                    enableInlineCodeBackground, enableCodeBlocksBackground,
                    useFontLigaturesInCode, spaceBeforeParagraph, spaceAfterParagraph)
+  }
+
+  data class ThemeOverrides(
+    val controlKindSuffix: String,
+    val overrides: Map<ControlKind, Collection<ControlProperty>>
+  )
+
+  enum class ControlKind(val id: String) {
+    CodeInline("Code.Inline"),
+    CodeBlock("Code.Block"),
+    Shortcut("Shortcut"),
+  }
+
+  enum class ControlProperty(val id: String) {
+    BackgroundColor("backgroundColor"),
+    ForegroundColor("foregroundColor"),
+    BorderColor("borderColor"),
+    BackgroundOpacity("backgroundOpacity"),
+    BorderWidth("borderWidth"),
+    BorderRadius("borderRadius"),
   }
 
   const val CODE_BLOCK_PREFIX: String = "<div class='styled-code'><pre style=\"padding: 0px; margin: 0px\">"
@@ -79,25 +109,44 @@ object JBHtmlPaneStyleSheetRulesProvider {
   val spaceAfterParagraph: Int get() = 4
 
   private val inlineCodeStyling = ControlColorStyleBuilder(
-    "Code.Inline",
+    ControlKind.CodeInline,
+    DefaultLanguageHighlighterColors.DOC_CODE_INLINE,
     defaultBackgroundColor = Color(0x5A5D6B),
     defaultBackgroundOpacity = 10,
     defaultBorderRadius = 10,
+    fallbackToEditorForeground = true,
   )
 
   private val blockCodeStyling = ControlColorStyleBuilder(
-    "Code.Block",
+    ControlKind.CodeBlock,
+    DefaultLanguageHighlighterColors.DOC_CODE_BLOCK,
     defaultBorderColor = Color(0xEBECF0),
     defaultBorderRadius = 10,
     defaultBorderWidth = 1,
+    fallbackToEditorBackground = true,
+    fallbackToEditorForeground = true,
+  )
+
+  private val shortcutStyling = ControlColorStyleBuilder(
+    ControlKind.Shortcut,
+    DefaultLanguageHighlighterColors.DOC_TIPS_SHORTCUT,
+    defaultBorderColor = Color(0xA8ADBD),
+    defaultBorderRadius = 7,
+    defaultBorderWidth = 1,
+    fallbackToEditorForeground = true,
+    fallbackToEditorBorder = true,
   )
 
   private val styleSheetCache: LoadingCache<Pair<Int, Configuration>, StyleSheet> = Caffeine.newBuilder()
     .maximumSize(20)
-    .build { (bgColor, configuration) ->
-      StyleSheetUtil.loadStyleSheet(
-        getDefaultFormattingStyles(configuration) + "\n" + getCodeRules(Color(bgColor), configuration))
-    }
+    .build { (bgColor, configuration) -> buildStyleSheet(Color(bgColor), configuration) }
+
+  private fun buildStyleSheet(paneBackgroundColor: Color, configuration: Configuration): StyleSheet =
+    StyleSheetUtil.loadStyleSheet(sequenceOf(
+      getDefaultFormattingStyles(configuration),
+      getCodeRules(paneBackgroundColor, configuration),
+      getShortcutRules(paneBackgroundColor, configuration)
+    ).joinToString("\n"))
 
   private fun getDefaultFormattingStyles(configuration: Configuration): String {
     val fontSize = StartupUiUtil.labelFont.size
@@ -129,6 +178,31 @@ object JBHtmlPaneStyleSheetRulesProvider {
     return styles
   }
 
+  private fun getMonospaceFontSizeCorrection(inlineCode: Boolean) =
+    @Suppress("DEPRECATION", "removal")
+    // TODO: When removing `getMonospaceFontSizeCorrection` copy it's code here
+    DocumentationSettings.getMonospaceFontSizeCorrection(inlineCode)
+
+  private fun getShortcutRules(
+    paneBackgroundColor: Color,
+    configuration: Configuration
+  ): String {
+    val fontName = if (configuration.useFontLigaturesInCode) EDITOR_FONT_NAME_PLACEHOLDER else EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
+    val contentCodeFontSizePercent = getMonospaceFontSizeCorrection(true)
+
+    @Language("CSS")
+    val result = """
+      kbd { 
+        font-size: ${contentCodeFontSizePercent}%; 
+        font-family:"$fontName"; 
+        padding: ${scale(1)}px ${scale(6)}px; 
+        margin: ${scale(1)}px 0px;
+        ${shortcutStyling.getCssStyle(paneBackgroundColor, configuration)}
+      }
+      """.trimIndent()
+    return result
+  }
+
   @JvmStatic
   private fun getCodeRules(
     paneBackgroundColor: Color,
@@ -138,12 +212,8 @@ object JBHtmlPaneStyleSheetRulesProvider {
     val spacingBefore = scale(configuration.spaceBeforeParagraph)
     val spacingAfter = scale(configuration.spaceAfterParagraph)
 
-    // TODO: When removing `getMonospaceFontSizeCorrection` copy it's code here
-    @Suppress("DEPRECATION", "removal")
-    val definitionCodeFontSizePercent = DocumentationSettings.getMonospaceFontSizeCorrection(false)
-
-    @Suppress("DEPRECATION", "removal")
-    val contentCodeFontSizePercent = DocumentationSettings.getMonospaceFontSizeCorrection(true)
+    val definitionCodeFontSizePercent = getMonospaceFontSizeCorrection(false)
+    val contentCodeFontSizePercent = getMonospaceFontSizeCorrection(true)
 
     val fontName = if (configuration.useFontLigaturesInCode) EDITOR_FONT_NAME_PLACEHOLDER else EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
     result.addAllIfNotNull(
@@ -154,20 +224,18 @@ object JBHtmlPaneStyleSheetRulesProvider {
     }
     if (configuration.enableInlineCodeBackground) {
       val selectors = configuration.inlineCodeParentSelectors.asSequence().map { "$it code" }.joinToString(", ")
-      result.add("$selectors { ${inlineCodeStyling.getCssStyle(paneBackgroundColor, configuration.colorScheme)} }")
+      result.add("$selectors { ${inlineCodeStyling.getCssStyle(paneBackgroundColor, configuration)} }")
       result.add("$selectors { padding: ${scale(1)}px ${scale(4)}px; margin: ${scale(1)}px 0px; }")
     }
     if (configuration.enableCodeBlocksBackground) {
-      val defaultBgColor = configuration.colorScheme.defaultBackground
-      val blockCodeStyling = if (ColorUtil.getContrast(defaultBgColor, paneBackgroundColor) < 1.1)
+      val blockCodeStyling = if (configuration.editorInlineContext)
         blockCodeStyling.copy(
-          suffix = ".EditorPane",
           defaultBackgroundColor = Color(0x5A5D6B),
           defaultBackgroundOpacity = 4,
         )
       else
         blockCodeStyling
-      result.add("div.styled-code { ${blockCodeStyling.getCssStyle(paneBackgroundColor, configuration.colorScheme)} }")
+      result.add("div.styled-code { ${blockCodeStyling.getCssStyle(paneBackgroundColor, configuration)} }")
       result.add("div.styled-code { margin: ${spacingBefore}px 0 ${spacingAfter}px 0; padding: ${scale(10)}px ${scale(13)}px ${scale(10)}px ${scale(13)}px; }")
       result.add("div.styled-code pre { padding: 0px; margin: 0px; line-height: 120%; }")
     }
@@ -175,69 +243,104 @@ object JBHtmlPaneStyleSheetRulesProvider {
   }
 
   private data class ControlColorStyleBuilder(
-    val id: String,
-    val suffix: String = "",
+    val controlKind: ControlKind,
+    val editorSchemeAttributeKey: TextAttributesKey,
     val defaultBackgroundColor: Color? = null,
     val defaultBackgroundOpacity: Int = 100,
     val defaultForegroundColor: Color? = null,
     val defaultBorderColor: Color? = null,
     val defaultBorderWidth: Int = 0,
     val defaultBorderRadius: Int = 0,
+    val fallbackToEditorBackground: Boolean = false,
+    val fallbackToEditorForeground: Boolean = false,
+    val fallbackToEditorBorder: Boolean = false
   ) {
 
-    private val backgroundColor: Color? get() = UIManager.getColor("$id$suffix.backgroundColor")
+    private fun getBackgroundColor(configuration: Configuration): Color? = getColor(configuration, ControlProperty.BackgroundColor)
 
-    private val foregroundColor: Color? get() = UIManager.getColor("$id.foregroundColor")
+    private fun getForegroundColor(configuration: Configuration): Color? = getColor(configuration, ControlProperty.ForegroundColor)
 
-    private val borderColor: Color? get() = UIManager.getColor("$id$suffix.borderColor")
+    private fun getBorderColor(configuration: Configuration): Color? = getColor(configuration, ControlProperty.BorderColor)
 
-    private val backgroundOpacity: Int? get() = UIManager.get("$id$suffix.backgroundOpacity") as? Int
+    private fun getBackgroundOpacity(configuration: Configuration): Int? = getInt(configuration, ControlProperty.BackgroundOpacity)
 
-    private val borderWidth: Int? get() = UIManager.get("$id.borderWidth") as? Int
+    private fun getBorderWidth(configuration: Configuration): Int? = getInt(configuration, ControlProperty.BorderWidth)
 
-    private val borderRadius: Int? get() = UIManager.get("$id.borderRadius") as? Int
+    private fun getBorderRadius(configuration: Configuration): Int? = getInt(configuration, ControlProperty.BorderRadius)
 
-    fun getCssStyle(editorPaneBackgroundColor: Color, editorColorsScheme: EditorColorsScheme): String {
+    fun getCssStyle(editorPaneBackgroundColor: Color, configuration: Configuration): String {
       val result = StringBuilder()
 
-      result.append(backgroundColor, defaultBackgroundColor, editorColorsScheme.defaultBackground) {
-        val opacity = choose(backgroundOpacity, defaultBackgroundOpacity) ?: 100
+      if (configuration.editorInlineContext) {
+        val attributes = configuration.colorScheme.getAttributes(editorSchemeAttributeKey, false)
+        if (attributes != null) {
+          attributes.backgroundColor?.let { result.append("background-color: #${toHtmlColor(it)};") }
+          attributes.foregroundColor?.let { result.append("color: #${toHtmlColor(it)};") }
+          if (attributes.effectType == EffectType.BOXED && attributes.effectColor != null) {
+            result.append("border-color: #${toHtmlColor(attributes.effectColor)};")
+            result.append(getBorderWidth(configuration)?.takeIf { it > 0 }, 1) {
+              "border-width: ${scale(it)}px;"
+            }
+          }
+          result.append(getBorderRadius(configuration), defaultBorderRadius) {
+            "caption-side: ${scale(it)}px;"
+          }
+          return result.toString()
+        }
+      }
+
+      val editorColorsScheme = configuration.colorScheme
+
+      result.append(
+        getBackgroundColor(configuration),
+        defaultBackgroundColor,
+        editorColorsScheme.takeIf { fallbackToEditorBackground }?.defaultBackground
+      ) {
+        val opacity = choose(getBackgroundOpacity(configuration), defaultBackgroundOpacity) ?: 100
         val background = mixColors(editorPaneBackgroundColor, it, opacity)
         "background-color: #${toHtmlColor(background)};"
       }
 
-      result.append(foregroundColor, defaultForegroundColor, editorColorsScheme.defaultForeground) {
+      result.append(
+        getForegroundColor(configuration),
+        defaultForegroundColor,
+        editorColorsScheme.takeIf { fallbackToEditorForeground }?.defaultForeground
+      ) {
         "color: #${toHtmlColor(it)};"
       }
 
-      result.append(borderColor, defaultBorderColor) {
+      result.append(
+        getBorderColor(configuration),
+        defaultBorderColor,
+        editorColorsScheme.takeIf { fallbackToEditorBorder }?.defaultForeground
+      ) {
         "border-color: #${toHtmlColor(it)};"
       }
 
-      result.append(borderWidth, defaultBorderWidth) {
+      result.append(getBorderWidth(configuration), defaultBorderWidth) {
         "border-width: ${scale(it)}px;"
       }
 
       // 'caption-side' is a hack to support 'border-radius'.
       // See also: com.intellij.util.ui.html.InlineViewEx
-      result.append(borderRadius, defaultBorderRadius) {
+      result.append(getBorderRadius(configuration), defaultBorderRadius) {
         "caption-side: ${scale(it)}px;"
       }
 
       return result.toString()
     }
 
-    fun <T : Any> choose(themeVersion: T?, defaultVersion: T?, editorVersion: T? = null): T? =
+    private fun <T : Any> choose(themeVersion: T?, defaultVersion: T?, editorVersion: T? = null): T? =
       themeVersion ?: defaultVersion ?: editorVersion
 
-    fun <T : Any> StringBuilder.append(themeVersion: T?, defaultVersion: T?, editorVersion: T? = null, mapper: (T) -> String) {
+    private fun <T : Any> StringBuilder.append(themeVersion: T?, defaultVersion: T?, editorVersion: T? = null, mapper: (T) -> String) {
       choose(themeVersion, defaultVersion, editorVersion)?.let(mapper)?.let { this.append(it) }
     }
 
-    fun toHtmlColor(color: Color): String =
+    private fun toHtmlColor(color: Color): String =
       toHexString(color.rgb and 0xFFFFFF)
 
-    fun mixColors(c1: Color, c2: Color, opacity2: Int): Color {
+    private fun mixColors(c1: Color, c2: Color, opacity2: Int): Color {
       if (opacity2 >= 100) return c2
       if (opacity2 <= 0) return c1
       return Color(
@@ -245,6 +348,21 @@ object JBHtmlPaneStyleSheetRulesProvider {
         ((100 - opacity2) * c1.green + opacity2 * c2.green) / 100,
         ((100 - opacity2) * c1.blue + opacity2 * c2.blue) / 100
       )
+    }
+
+    private fun getColor(configuration: Configuration, property: ControlProperty): Color? =
+      UIManager.getColor(getKey(configuration, property))
+
+    private fun getInt(configuration: Configuration, property: ControlProperty): Int? =
+      UIManager.get(getKey(configuration, property)) as Int?
+
+    private fun getKey(configuration: Configuration, property: ControlProperty): String {
+      val themeOverrides = configuration.themeOverrides
+      val suffix = if (themeOverrides != null && themeOverrides.overrides[controlKind]?.contains(property) == true) {
+        "." + themeOverrides.controlKindSuffix
+      }
+      else ""
+      return "${controlKind.id}$suffix.${property.id}"
     }
 
   }

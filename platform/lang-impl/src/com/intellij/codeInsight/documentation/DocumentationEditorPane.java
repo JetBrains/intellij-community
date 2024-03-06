@@ -61,7 +61,7 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
     @NotNull Function<? super @NotNull String, ? extends @Nullable Icon> iconResolver
   ) {
     super(
-      getDefaultDocStyleOptions(EditorColorsManager.getInstance().getGlobalScheme()),
+      getDefaultDocStyleOptions(EditorColorsManager.getInstance().getGlobalScheme(), false),
       new Configuration(
         keyboardActions,
         component -> new DocumentationImageProvider(component, imageResolver),

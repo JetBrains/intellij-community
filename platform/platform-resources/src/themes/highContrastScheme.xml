@@ -317,10 +317,27 @@
         <option name="FOREGROUND" value="a66e32" />
       </value>
     </option>
+    <option name="DOC_CODE_BLOCK">
+      <value>
+        <option name="FOREGROUND" value="ffffff"/>
+        <option name="BACKGROUND" value="000000"/>
+        <option name="EFFECT_COLOR" value="777777" />
+        <option name="EFFECT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="DOC_CODE_INLINE">
+      <value>
+        <option name="FOREGROUND" value="ffffff"/>
+        <option name="BACKGROUND" value="000000"/>
+        <option name="EFFECT_COLOR" value="777777" />
+        <option name="EFFECT_TYPE" value="0" />
+      </value>
+    </option>
     <option name="DOC_TIPS_SHORTCUT">
       <value>
         <option name="FOREGROUND" value="ffffff"/>
-        <option name="BACKGROUND" value="3c3f41"/>
+        <option name="EFFECT_COLOR" value="777777" />
+        <option name="EFFECT_TYPE" value="0" />
       </value>
     </option>
     <option name="DEFAULT_DOC_MARKUP">

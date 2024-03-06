@@ -1971,7 +1971,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       text += getBottom().child(links);
     }
     text = addExternalLinksIcon(text);
-    return DocumentationHtmlUtil.transpileForHtmlEditorPaneInput(text);
+    return text;
   }
 
   private static int indexOfIgnoreQuotesType(@NotNull String text, @NotNull String substring) {

@@ -603,7 +603,6 @@
       "since": "2019.2",
       "description": "Selected tab underline color when the tab is not in focus. If value isn't specified the value of DefaultTabs.inactiveUnderlineColor will be used"
     },
-
     {
       "key": "EditorTabs.selectedBackground",
       "description": "Background for all tabs in 2019.1",
@@ -1176,7 +1175,7 @@
       "key": "NotificationsToolwindow.Notification.hoverBackground"
     },
     {
-      "key" : "OnePixelDivider.background",
+      "key": "OnePixelDivider.background",
       "description": "One pixel divider color"
     },
     {
@@ -1547,6 +1546,36 @@
       "description": "Color of the border around highlighted items when searching in the Settings dialog"
     },
     {
+      "key": "Shortcut.backgroundColor",
+      "description": "Shortcut elements background",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.backgroundOpacity",
+      "description": "Shortcut elements background opacity in percents",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.foregroundColor",
+      "description": "Shortcut elements foreground",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.borderColor",
+      "description": "Shortcut elements border color",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.borderWidth",
+      "description": "Shortcut elements border width in pixels",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.borderRadius",
+      "description": "Shortcut elements border radius in pixels",
+      "since": "2024.2"
+    },
+    {
       "key": "SidePanel.background",
       "description": "Left-side tree background in the Settings and Project Structure dialogs"
     },
@@ -1564,7 +1593,6 @@
       "key": "Slider.trackColor",
       "description": "Slider track color",
       "since": "2019.3"
-
     },
     {
       "key": "Slider.tickColor",

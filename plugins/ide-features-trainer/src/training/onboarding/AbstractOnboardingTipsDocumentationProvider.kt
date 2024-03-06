@@ -64,7 +64,8 @@ abstract class AbstractOnboardingTipsDocumentationProvider(private val commentTo
       .map { if (it.startsWith(tipPrefix)) it.substring(tipPrefix.length, it.length) else it }
       .map { if (it.startsWith("//")) it.substring(2, it.length) else it }
       .joinToString(separator = " ").trim()
-    return "<tip><p>$result</p></tip>"
+    @Suppress("HardCodedStringLiteral")
+    return "<p>$result"
   }
 }
 

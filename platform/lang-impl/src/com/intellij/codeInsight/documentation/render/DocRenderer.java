@@ -27,7 +27,6 @@ import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ShortcutExtension;
 import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
@@ -55,8 +54,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.createAdditionalStylesForTips;
-import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.unwrapTipsText;
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 
 @ApiStatus.Internal
@@ -307,16 +304,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
                                                 @Nls @NotNull String text,
                                                 @Nullable Color backgroundColor,
                                                 boolean reusable) {
-    boolean useTipsKit = false;
-    if (text.startsWith(InlineDocumentationImplKt.START_TIP_PREFIX)) {
-      text = unwrapTipsText(text);
-      text = ShortcutExtension.Companion.patchShortcutTags(text, false);
-      useTipsKit = true;
-    }
-    else {
-      text = DocumentationHtmlUtil.transpileForHtmlEditorPaneInput(text);
-    }
-    EditorInlineHtmlPane pane = new EditorInlineHtmlPane(!reusable, editor, useTipsKit);
+    EditorInlineHtmlPane pane = new EditorInlineHtmlPane(!reusable, editor);
     pane.getCaret().setSelectionVisible(!reusable);
     pane.setBorder(JBUI.Borders.empty());
     Map<TextAttribute, Object> fontAttributes = new HashMap<>();
@@ -358,12 +346,12 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     return color == null ? scheme.getDefaultForeground() : color;
   }
 
-  private static StyleSheet getStyleSheet(@NotNull Editor editor, boolean useTipsKit) {
+  private static StyleSheet getStyleSheet(@NotNull Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
     Color linkColor = colorsScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK);
     if (linkColor == null) linkColor = getTextColor(colorsScheme);
     String checkColors = ColorUtil.toHex(linkColor);
-    if (useTipsKit || !Objects.equals(checkColors, ourCachedStyleSheetCheckColors)) {
+    if (!Objects.equals(checkColors, ourCachedStyleSheetCheckColors)) {
       // When updating styles here, consider updating styles in DocumentationHtmlUtil#getDocumentationPaneAdditionalCssRules
       int beforeSpacing = scale(DocumentationHtmlUtil.getSpaceBeforeParagraph());
       int afterSpacing = scale(DocumentationHtmlUtil.getSpaceAfterParagraph());
@@ -373,13 +361,10 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         "a {color: #" + ColorUtil.toHex(linkColor) + "; text-decoration: none}" +
         "." + CLASS_SECTIONS + " {border-spacing: 0}" +
         "." + CLASS_SECTION + " {padding-right: " + scale(5) + "; white-space: nowrap}" +
-        "." + CLASS_CONTENT + " {padding: " + beforeSpacing + "px 2px " + afterSpacing + "px 0}" +
-        (useTipsKit ? createAdditionalStylesForTips(editor) : "");
+        "." + CLASS_CONTENT + " {padding: " + beforeSpacing + "px 2px " + afterSpacing + "px 0}";
       StyleSheet result = StyleSheetUtil.loadStyleSheet(input);
-      if (!useTipsKit) {
-        ourCachedStyleSheet = result;
-        ourCachedStyleSheetCheckColors = checkColors;
-      }
+      ourCachedStyleSheet = result;
+      ourCachedStyleSheetCheckColors = checkColors;
       return result;
     }
     return ourCachedStyleSheet;
@@ -415,13 +400,12 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     };
     private boolean myRepaintRequested;
 
-    EditorInlineHtmlPane(boolean trackMemory, Editor editor, boolean useTips) {
+    EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
       super(
-        QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.getColorsScheme()),
+        QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.getColorsScheme(), true),
         new Configuration(Collections.emptyMap(), pane -> IMAGE_MANAGER.getImageProvider(),
-                          url -> null, bg -> Collections.singletonList(getStyleSheet(editor, useTips)),
-                          EditorCssFontResolver.getInstance(editor),
-                          useTips ? Collections.singletonList(new ShortcutExtension()) : Collections.emptyList())
+                          url -> null, bg -> Collections.singletonList(getStyleSheet(editor)),
+                          EditorCssFontResolver.getInstance(editor), Collections.emptyList())
       );
       if (trackMemory) {
         MEMORY_MANAGER.register(DocRenderer.this, 50 /* rough size estimation */);
