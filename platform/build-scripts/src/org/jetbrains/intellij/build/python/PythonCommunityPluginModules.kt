@@ -22,7 +22,7 @@ object PythonCommunityPluginModules {
     "intellij.python.community.impl",
     "intellij.python.community.impl.poetry",
     "intellij.python.community.impl.huggingFace",
-    "intellij.python.community.impl.community_only",
+    "intellij.python.community.communityOnly",
     "intellij.python.langInjection",
     "intellij.python.copyright",
     "intellij.python.terminal",
