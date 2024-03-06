@@ -133,7 +133,13 @@ internal class CoroutineScopeModel internal constructor(
 
     for (provider in ScopeDescriptorProvider.EP_NAME.extensionList) {
       val scopes = readAction {
-        provider.getScopeDescriptors(project, dataContext)
+        try {
+          provider.getScopeDescriptors(project, dataContext)
+        }
+        catch (e: Exception) {
+          LOG.error("Couldn't retrieve scopes from $provider", e)
+          emptyArray()
+        }
       }
       for (descriptor in scopes) {
         if (filter.test(descriptor)) {
@@ -146,7 +152,13 @@ internal class CoroutineScopeModel internal constructor(
       val separatorName = provider.displayName
       if (separatorName.isNullOrEmpty()) continue
       val scopes = readAction {
-        provider.getSearchScopes(project, dataContext)
+        try {
+          provider.getSearchScopes(project, dataContext)
+        }
+        catch (e: Exception) {
+          LOG.error("Couldn't retrieve scopes from $provider", e)
+          emptyList()
+        }
       }
       if (scopes.isEmpty()) continue
       val scopeSeparator = ScopeSeparator(separatorName)
