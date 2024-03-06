@@ -714,21 +714,15 @@ fun Location.getClassName(): String? {
 }
 
 private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: Int): List<ReferenceType> {
-    val vmProxy = virtualMachineProxy
+    val targetClasses = ArrayList<ReferenceType>(1)
 
     try {
         if (!outerClass.isPrepared) {
             return emptyList()
         }
-    } catch (e: ObjectCollectedException) {
-        return emptyList()
-    }
 
-    val targetClasses = ArrayList<ReferenceType>(1)
-
-    try {
         for (location in outerClass.safeAllLineLocations()) {
-            val locationLine = location.lineNumber() - 1
+            val locationLine = location.getZeroBasedLineNumber()
             if (locationLine < 0) {
                 // such locations do not correspond to real lines in code
                 continue
@@ -753,11 +747,13 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
         //             val a = Foo() /* line 3 */
         //          }
         //     }
-        val nestedTypes = vmProxy.nestedTypes(outerClass)
+        val nestedTypes = virtualMachineProxy.nestedTypes(outerClass)
         for (nested in nestedTypes) {
             targetClasses += findTargetClasses(nested, lineAt)
         }
     } catch (_: AbsentInformationException) {
+    } catch (_: ObjectCollectedException) {
+        return emptyList()
     }
 
     return targetClasses
