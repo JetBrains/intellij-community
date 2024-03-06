@@ -2,26 +2,29 @@
 package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.jetbrains.rd.util.AtomicInteger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
-import java.util.concurrent.Callable
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.minutes
 
 
 private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::class.java)
@@ -29,34 +32,40 @@ private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::cla
 internal typealias FileId = Int
 private fun FileId.fileInfo(): String = "file id=$this path=${PersistentFS.getInstance().findFileById(this)?.path}"
 
-internal class ProjectIndexableFilesFilterHealthCheck(private val project: Project, private val filter: ProjectIndexableFilesFilter) {
-  private val attemptsCount = AtomicInteger()
-  private val successfulAttemptsCount = AtomicInteger()
-  @Volatile
-  private var healthCheckFuture: ScheduledFuture<*>? = null
-
-  fun setUpHealthCheck() {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      healthCheckFuture = AppExecutorUtil
-        .getAppScheduledExecutorService()
-        .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index files filter health check for project ${project.name}") {
-          runHealthCheck()
-        }, 5, 5, TimeUnit.MINUTES)
-    }
-  }
-
-  fun triggerHealthCheck() {
+private class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
+  override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
 
-    stopHealthCheck()
-    AppExecutorUtil.getAppExecutorService().submit {
+    val healthCheck = project.getService(ProjectIndexableFilesFilterHealthCheck::class.java)
+    while (true) {
+      delay(5.minutes)
+      healthCheck.launchHealthCheck()
+    }
+  }
+}
+
+@Service(Service.Level.PROJECT)
+class ProjectIndexableFilesFilterHealthCheck(private val project: Project, private val coroutineScope: CoroutineScope) {
+  private val isRunning = AtomicBoolean()
+  private val attemptsCount = AtomicInteger()
+  private val successfulAttemptsCount = AtomicInteger()
+
+  fun launchHealthCheck() {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+
+    coroutineScope.launch {
+      if (!isRunning.compareAndSet(false, true)) {
+        return@launch
+      }
       try {
         runHealthCheck()
       }
       finally {
-        setUpHealthCheck()
+        isRunning.set(false)
       }
     }
   }
@@ -70,15 +79,18 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
    *    This is fine because files can be removed from workspace, but we clear indexes for them lazily
    * 2. False negatives - files that were NOT found in filter but were iterated by [FileBasedIndexImpl.iterateIndexableFiles]
    */
-  @Synchronized // don't allow two parallel health checks in case of triggerHealthCheck()
-  private fun runHealthCheck() {
+  private suspend fun runHealthCheck() {
     if (!IndexInfrastructure.hasIndices()) return
+    val filter = (FileBasedIndex.getInstance() as? FileBasedIndexImpl)?.indexableFilesFilterHolder?.getProjectIndexableFiles(project)
+                 ?: return
 
     try {
       val attemptNumber = attemptsCount.incrementAndGet()
       IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckStarted(project, filter, attemptNumber)
 
-      val (nonIndexableFilesInFilter, indexableFilesNotInFilter) = doRunHealthCheckInReadAction()
+      val (nonIndexableFilesInFilter, indexableFilesNotInFilter) = smartReadAction(project) {
+        runHealthCheck(project, filter)
+      }
 
       nonIndexableFilesInFilter.fix(filter)
       indexableFilesNotInFilter.fix(filter)
@@ -102,11 +114,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     }
   }
 
-  private fun doRunHealthCheckInReadAction(): Pair<NonIndexableFilesInFilterGroup, IndexableFilesNotInFilterGroup> {
-    return ReadAction.nonBlocking(::doRunHealthCheck).inSmartMode(project).executeSynchronously()
-  }
-
-  private fun doRunHealthCheck(): Pair<NonIndexableFilesInFilterGroup, IndexableFilesNotInFilterGroup> {
+  private fun runHealthCheck(project: Project, filter: ProjectIndexableFilesFilter): Pair<NonIndexableFilesInFilterGroup, IndexableFilesNotInFilterGroup> {
     return runIfScanningScanningIsCompleted(project) {
       filter.runAndCheckThatNoChangesHappened {
         // It is possible that scanning will start and finish while we are performing healthcheck,
@@ -185,11 +193,6 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
       processor(provider, set)
     }
   }
-
-  fun stopHealthCheck() {
-    healthCheckFuture?.cancel(true)
-    healthCheckFuture = null
-  }
 }
 
 private sealed class HealthCheckErrorGroup(val fileIds: List<FileId>, val message: String) {
@@ -202,11 +205,13 @@ private sealed class HealthCheckErrorGroup(val fileIds: List<FileId>, val messag
     }
   }
 
-  fun logMessage() {
+  suspend fun logMessage() {
     if (fileIds.isEmpty()) return
 
-    val message = "${message}. Errors count: ${fileIds.size}. Examples:\n" + fileIds.joinToString("\n", limit = 5) { error ->
-      ReadAction.nonBlocking(Callable { fileInfo(error) }).executeSynchronously()
+    val message = readAction {
+      "${message}. Errors count: ${fileIds.size}. Examples:\n" + fileIds.joinToString("\n", limit = 5) { error ->
+        fileInfo(error)
+      }
     }
     log(message)
   }

@@ -50,9 +50,9 @@ public interface FilesFilterScanningHandler {
 
     @Override
     public void scanningCompleted(@NotNull Project project) {
-      ProjectIndexableFilesFilterHealthCheck healthCheck = myFilterHolder.getHealthCheck(project);
+      ProjectIndexableFilesFilterHealthCheck healthCheck = project.getService(ProjectIndexableFilesFilterHealthCheck.class);
       if (healthCheck != null) {
-        healthCheck.triggerHealthCheck();
+        healthCheck.launchHealthCheck();
       }
     }
 
