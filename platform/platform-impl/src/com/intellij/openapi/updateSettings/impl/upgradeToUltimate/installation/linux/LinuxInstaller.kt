@@ -32,7 +32,7 @@ internal class LinuxInstaller(scope: CoroutineScope, project: Project) : Ultimat
 
     val installFolder = installationPath.resolve(entries.first().fileName) // todo add desktop entry
 
-    return InstallationResult(installFolder)
+    return InstallationResult(installFolder, downloadResult.suggestedIde)
   }
 
   override fun startUltimate(installationResult: InstallationResult): Boolean {
