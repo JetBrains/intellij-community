@@ -591,13 +591,26 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     };
   }
 
-  private KmFunction findKmFunction(String methodName, String methodDescriptor) {
+  private boolean isInlined(String methodName, String methodDescriptor) {
     KmDeclarationContainer container = findKotlinDeclarationContainer();
     if (container != null) {
       JvmMethodSignature sig = new JvmMethodSignature(methodName, methodDescriptor);
-      return Iterators.find(container.getFunctions(), f -> sig.equals(JvmExtensionsKt.getSignature(f)));
+      for (KmFunction f : container.getFunctions()) {
+        if (Attributes.isInline(f) && sig.equals(JvmExtensionsKt.getSignature(f))) {
+          return true;
+        }
+      }
+      for (KmProperty p : container.getProperties()) {
+        if (Attributes.isInline(p.getGetter()) && sig.equals(JvmExtensionsKt.getGetterSignature(p))) {
+          return true;
+        }
+        var setter = p.getSetter();
+        if (setter != null && Attributes.isInline(setter) && sig.equals(JvmExtensionsKt.getSetterSignature(p))) {
+          return true;
+        }
+      }
     }
-    return null;
+    return false;
   }
 
   private KmDeclarationContainer findKotlinDeclarationContainer() {
@@ -612,7 +625,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     final Set<ParamAnnotation> paramAnnotations = new HashSet<>();
     processSignature(signature);
 
-    KmFunction kmFunction = findKmFunction(n, desc);
+    boolean isInlined = isInlined(n, desc);
     Textifier printer = new Textifier();
 
     MethodVisitor visitor = new MethodVisitor(ASM_API_VERSION) {
@@ -620,7 +633,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       @Override
       public void visitEnd() {
         if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
-          if (kmFunction != null && Attributes.isInline(kmFunction)) {
+          if (isInlined) {
             // use 'defaultValue' attribute to store the hash of the function body to track changes in inline method implementation
             ContentHashBuilder hashBuilder = ContentHashBuilder.create();
             for (Object o : printer.getText()) {
@@ -858,7 +871,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     };
 
-    return kmFunction != null && Attributes.isInline(kmFunction)? new TraceMethodVisitor(visitor, printer) : visitor;
+    return isInlined? new TraceMethodVisitor(visitor, printer) : visitor;
   }
 
   /**
