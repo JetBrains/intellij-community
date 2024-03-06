@@ -12,12 +12,6 @@ import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceQuickDocStyles.LINK_TOP_MARGIN
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
 
-private val DOWNLOADS_ICON = HtmlChunk.tag("icon")
-  .attr("src", "icons/download.svg")
-private val LIKES_ICON = HtmlChunk.tag("icon")
-  .attr(".src", "icons/like.svg")
-private val LOGO_ICON = HtmlChunk.tag("icon")
-  .attr(".src", "icons/logo.svg")
 
 class HuggingFaceHtmlBuilder(
   private val project: Project,
@@ -52,8 +46,8 @@ class HuggingFaceHtmlBuilder(
     val modelNameWithIconRow = HtmlChunk.tag("h3")
       .children(
         HtmlChunk.raw(cardTitle),
-        HtmlChunk.nbsp(2),
-        LOGO_ICON
+        // HtmlChunk.nbsp(2),
+        // LOGO_ICON
       )
 
     // modelPurpose chunk is not applicable for datasets
@@ -91,8 +85,6 @@ class HuggingFaceHtmlBuilder(
       .wrapWith("p")
       .style("margin-top: ${LINK_TOP_MARGIN}px;") // compensate h3 tag bottom margin
 
-
-
       val headerContainer = HtmlChunk.div()
         .setClass(DocumentationMarkup.CLASS_DEFINITION)
         .children(
@@ -101,5 +93,16 @@ class HuggingFaceHtmlBuilder(
           linkRow,
         )
     return headerContainer
+  }
+
+  companion object {
+    private val DOWNLOADS_ICON = HtmlChunk.tag("icon")
+      // .attr("src", "com.intellij.python.community.impl.huggingFace.icons.PythonCommunityImplHuggingFaceIcons.Download")
+      .attr("src", "AllIcons.Actions.Download")
+    private val LIKES_ICON = HtmlChunk.tag("icon")
+      // .attr(".src", "com.intellij.python.community.impl.huggingFace.icons.PythonCommunityImplHuggingFaceIcons.Like")
+      .attr(".src", "AllIcons.Toolwindows.ToolWindowFavorites")
+    //private val LOGO_ICON = HtmlChunk.tag("icon")
+    //  .attr(".src", "/com/intellij/python/community/impl/huggingFace/icons/logo.svg")
   }
 }
