@@ -8,12 +8,23 @@ public abstract class ProgressIndicatorProvider {
     return ProgressManager.getInstance();
   }
 
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressManager#getProgressIndicator} notice.
+   * </p>
+   */
   @Obsolete
   public abstract ProgressIndicator getProgressIndicator();
 
   protected abstract void doCheckCanceled() throws ProcessCanceledException;
 
   /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressManager#getProgressIndicator} notice.
+   * </p>
+   *
    * @return progress indicator under which this method is executing (see {@link ProgressManager} on how to run a process under a progress indicator)
    * or null if this code is running outside any progress.
    */
