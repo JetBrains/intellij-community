@@ -3,10 +3,7 @@ package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.DownloadResult
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.InstallationResult
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstaller
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.runCommand
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.*
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties
 import com.intellij.util.applyIf
@@ -46,7 +43,7 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
 
   override fun startUltimate(installationResult: InstallationResult): Boolean {
     val appPath = installationResult.appPath
-    val exeName = if (installationResult.suggestedIde.productCode == "PY") "pycharm64" else "idea64"
+    val exeName = if (installationResult.suggestedIde.isPycharmProfessional()) "pycharm64" else "idea64"
     val exePath = appPath.resolve("bin").resolve("$exeName.exe").pathString
 
     val basePath = project.basePath
