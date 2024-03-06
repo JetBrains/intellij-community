@@ -42,7 +42,7 @@ object PythonCommunityPluginModules {
   fun pythonCommunityPluginLayout(body: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     val communityOnlyModules = persistentListOf(
       "intellij.python.community.plugin.minor",
-      "intellij.python.community.plugin.minor.rider",
+      "intellij.python.community.plugin.minorRider",
     )
     return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) { spec ->
       body?.invoke(spec)

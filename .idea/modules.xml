@@ -1136,7 +1136,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/pluginJava/intellij.python.community.plugin.java.iml" filepath="$PROJECT_DIR$/python/pluginJava/intellij.python.community.plugin.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.plugin.main.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minor.iml" filepath="$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minor.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minor.rider/intellij.python.community.plugin.minor.rider.iml" filepath="$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minor.rider/intellij.python.community.plugin.minor.rider.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minorRider/intellij.python.community.plugin.minorRider.iml" filepath="$PROJECT_DIR$/python/pluginMinor/intellij.python.community.plugin.minorRider/intellij.python.community.plugin.minorRider.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.plugin.modules.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.plugin.modules.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.plugin.tests.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.plugin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/testFramework/intellij.python.community.testFramework.iml" filepath="$PROJECT_DIR$/python/testFramework/intellij.python.community.testFramework.iml" />
