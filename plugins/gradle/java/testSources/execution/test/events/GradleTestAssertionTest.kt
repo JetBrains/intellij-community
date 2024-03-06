@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import junit.framework.ComparisonFailure
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
@@ -1727,7 +1726,7 @@ class GradleTestAssertionTest : GradleExecutionTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test assertion result of Junit 4 (Opentest4j FileInfo)`(gradleVersion: GradleVersion) {
-    Assumptions.assumeTrue(gradleVersion.isGradleOlderThan("7.6") || gradleVersion.isGradleAtLeast("8.4")) {
+    Assumptions.assumeTrue(GradleVersionUtil.isGradleOlderThan(gradleVersion, "7.6") || GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.4")) {
       "Integration between Junit 4 and Gradle ${gradleVersion.version} doesn't support Opentest4j assertion exceptions."
     }
     testJunit4Opentest4jProject(gradleVersion) {

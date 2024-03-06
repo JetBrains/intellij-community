@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import com.intellij.framework.FrameworkTypeEx
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.project.ProjectId
@@ -32,7 +33,6 @@ import org.jetbrains.kotlin.idea.statistics.WizardStatsService
 import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import javax.swing.Icon
 
 abstract class KotlinDslGradleKotlinFrameworkSupportProvider(
@@ -146,7 +146,7 @@ class KotlinDslGradleKotlinJavaFrameworkSupportProvider :
     }
 
     private fun addJvmTargetTask(buildScriptData: BuildScriptDataBuilder) {
-        if (buildScriptData.gradleVersion.isGradleAtLeast("5.0"))
+        if (GradleVersionUtil.isGradleAtLeast(buildScriptData.gradleVersion, "5.0"))
             buildScriptData
                 .addOther(
                     """

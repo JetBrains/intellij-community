@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
@@ -76,7 +76,7 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
     withJavaPlugin()
     withTask(name, "JavaExec", dependsOn) {
       assign("classpath", code("rootProject.sourceSets.main.runtimeClasspath"))
-      if (gradleVersion.isGradleAtLeast("7.0")) {
+      if (GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.0")) {
         assign("mainClass", "pack.AClass")
       } else {
         assign("main", "pack.AClass")

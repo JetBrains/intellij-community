@@ -10,6 +10,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass;
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -65,7 +66,6 @@ import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHel
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
-import static org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil.isGradleOlderThan;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
@@ -201,7 +201,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: Gradle version cannot be determined");
       return false;
     }
-    if (isGradleOlderThan(gradleVersion, "8.3")) {
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.3")) {
       LOG.debug("TestLauncher isn't applicable: unsupported Gradle version: " + gradleVersion);
       return false;
     }
@@ -210,7 +210,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: Project is already closed");
       return false;
     }
-    if (isGradleOlderThan(gradleVersion, "8.4") && hasProjectIncludedBuild(project, projectPath)) {
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.4") && hasProjectIncludedBuild(project, projectPath)) {
       LOG.debug("TestLauncher isn't applicable: Project has included build. " + gradleVersion);
       return false;
     }
@@ -442,7 +442,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   }
 
   private static void setupBuiltInTestEvents(@NotNull GradleExecutionSettings settings, @Nullable GradleVersion gradleVersion) {
-    if (gradleVersion != null && !isGradleOlderThan(gradleVersion, "7.6")) {
+    if (gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.6")) {
       settings.setBuiltInTestEventsUsed(true);
     }
   }
