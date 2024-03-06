@@ -36,7 +36,7 @@ suspend fun <R> Project.trackActivity(marker: ActivityKey, action: suspend () ->
  * @see ActivityKey for high-level explanations
  */
 @RequiresBlockingContext
-fun Project.trackActivityBlocking(marker: ActivityKey, action: () -> Unit): Unit {
+fun <R> Project.trackActivityBlocking(marker: ActivityKey, action: () -> R): R {
   return PlatformActivityTrackerService.getInstance(this).trackConfigurationActivityBlocking(marker, action)
 }
 
