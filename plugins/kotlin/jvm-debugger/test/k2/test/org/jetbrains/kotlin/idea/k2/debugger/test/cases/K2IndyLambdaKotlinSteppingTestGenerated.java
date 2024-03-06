@@ -1625,6 +1625,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/smartStepIntoMethodReference.kt");
         }
 
+        @TestMetadata("smartStepIntoMethodReferenceWithLocalFun.kt")
+        public void testSmartStepIntoMethodReferenceWithLocalFun() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoMethodReferenceWithLocalFun.kt");
+        }
+
         @TestMetadata("smartStepIntoMethodWithJvmNameAnnotation.kt")
         public void testSmartStepIntoMethodWithJvmNameAnnotation() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoMethodWithJvmNameAnnotation.kt");

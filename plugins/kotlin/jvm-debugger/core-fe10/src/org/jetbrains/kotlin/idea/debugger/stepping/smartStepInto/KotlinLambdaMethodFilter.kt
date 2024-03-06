@@ -6,7 +6,6 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.BreakpointStepMethodFilter
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.openapi.application.runReadAction
-import com.intellij.psi.util.parentOfType
 import com.intellij.util.Range
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
@@ -16,9 +15,7 @@ import org.jetbrains.kotlin.idea.debugger.breakpoints.inTheMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.stepping.StopOnReachedMethodFilter
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 class KotlinLambdaMethodFilter(
@@ -76,7 +73,7 @@ fun findFirstAndLastStatementPositions(declaration: KtDeclarationWithBody): Pair
     if (body != null && declaration.isMultiLine() && body.children.isNotEmpty()) {
         var firstStatementPosition: SourcePosition? = null
         var lastStatementPosition: SourcePosition? = null
-        val statements = (body as? KtBlockExpression)?.statements ?: listOf(body)
+        val statements = findExecutableStatements(body)
         if (statements.isNotEmpty()) {
             firstStatementPosition = SourcePosition.createFromElement(statements.first())
             if (firstStatementPosition != null) {
@@ -91,4 +88,10 @@ fun findFirstAndLastStatementPositions(declaration: KtDeclarationWithBody): Pair
     }
     val position = SourcePosition.createFromElement(declaration)
     return Pair(position, position)
+}
+
+private fun findExecutableStatements(body: KtExpression?): List<KtExpression> {
+    val statements = (body as? KtBlockExpression)?.statements ?: listOf(body)
+    // local function declaration is not an executable statement
+    return statements.filter { it !is KtNamedFunction }
 }
