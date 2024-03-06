@@ -28,6 +28,8 @@ import java.util.zip.ZipFile;
 public abstract class Decompressor {
   /**
    * The Tar decompressor automatically detects the compression of an input file/stream.
+   * <p>
+   * <b>NOTE</b>: requires {@code commons-compress} and {@code commons-io} libraries to be on the classpath.
    */
   public static final class Tar extends Decompressor {
     public Tar(@NotNull Path file) {
@@ -104,8 +106,9 @@ public abstract class Decompressor {
     }
 
     /**
-     * <p>Returns an alternative implementation that is slower but supports ZIP extensions (UNIX/DOS attributes, symlinks).</p>
-     * <p><b>NOTE</b>: requires the Apache Commons Compress library to be on the classpath.</p>
+     * Returns an alternative implementation that is slower but supports ZIP extensions (UNIX/DOS attributes, symlinks).
+     * <p>
+     * <b>NOTE</b>: requires {@code commons-compress} and {@code commons-io} libraries to be on the classpath.
      */
     public @NotNull Decompressor withZipExtensions() {
       return new ExtZip(mySource);
