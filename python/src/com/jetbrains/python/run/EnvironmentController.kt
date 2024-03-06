@@ -152,7 +152,7 @@ class TargetEnvironmentController(private val envs: MutableMap<String, TargetEnv
    * @see HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers
    */
   override fun addHelperEntriesToPythonPath(pythonPathEntries: List<String>) {
-    addHelperEntriesToPythonPath(envs, pythonPathEntries, request)
+    addHelperEntriesToPythonPath(envs, pythonPathEntries, request, failOnError = false)
   }
 
   override fun isEnvSet(name: String): Boolean {

@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.HelperPackage
@@ -137,32 +138,47 @@ fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<Strin
  * @param envs the environment variables to be modified
  * @param pythonPathEntries the paths located either in PyCharm Community or in PyCharm Professional helpers directories
  * @param helpersAwareTargetRequest the request
+ * @param failOnError specifies whether the method should fail if one of [pythonPathEntries] is not located within PyCharm helpers dirs
  *
  * **Note.** This method assumes that PyCharm Community and PyCharm Professional helpers are uploaded to the same root path on the target.
  * This assumption comes from [HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers] method that returns the single path value.
  */
 fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                                  pythonPathEntries: List<String>,
-                                 helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
-  val localHelpersRoots = getPythonHelpersRoots()
+                                 helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+                                 failOnError: Boolean = true): Iterable<Upload> {
+  val helpersRoots = getPythonHelpersRoots()
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
   val targetUploadPath = helpersAwareTargetRequest.preparePyCharmHelpers()
   val targetPathSeparator = targetPlatform.platform.pathSeparator
   val uploads = pythonPathEntries
-    .map { pythonPathEntry ->
-      val relativePath =
-        localHelpersRoots
-          .filter { FileUtil.isAncestor(it, pythonPathEntry, false) }
-          .firstNotNullOfOrNull { FileUtil.getRelativePath(it, pythonPathEntry, Platform.current().fileSeparator) }
-        ?: error("Helpers PYTHONPATH entry '$pythonPathEntry' cannot be resolved against the root paths of PyCharm helpers: " +
-                 localHelpersRoots.joinToString { "'$it'" })
-      Upload(pythonPathEntry, targetUploadPath.getRelativeTargetPath(relativePath))
+    .mapNotNull { pythonPathEntry ->
+      val relativePath = pythonPathEntry.tryToRelativizeAgainstOneOf(helpersRoots)
+      if (relativePath == null) {
+        val message = "$pythonPathEntry cannot be resolved against Python helpers roots: ${helpersRoots.joinToString()}"
+        if (failOnError) {
+          error(message)
+        }
+        else {
+          // log the error and skip this entry
+          LOG.error(message)
+          null
+        }
+      }
+      else {
+        Upload(pythonPathEntry, targetUploadPath.getRelativeTargetPath(relativePath))
+      }
     }
   val pythonPathEntriesOnTarget = uploads.map { it.targetPath }
   val pythonPathValue = pythonPathEntriesOnTarget.joinToStringFunction(separator = targetPathSeparator.toString())
   appendToPythonPath(envs, pythonPathValue, targetPlatform)
   return uploads
 }
+
+private fun String.tryToRelativizeAgainstOneOf(basePaths: List<String>): @NlsSafe String? =
+  basePaths
+    .filter { FileUtil.isAncestor(it, this, false) }
+    .firstNotNullOfOrNull<String, @NlsSafe String> { FileUtil.getRelativePath(it, this, Platform.current().fileSeparator) }
 
 private fun getPythonHelpersRoots(): List<String> =
   buildList {
