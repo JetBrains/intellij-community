@@ -6,113 +6,37 @@ import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CENTERED
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_GRAYED
 import com.intellij.lang.documentation.DocumentationSettings
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.ui.Gray
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ControlKind
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ControlProperty
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.StyleSheetUtil
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.lang.Integer.toHexString
-import java.util.*
 import javax.swing.UIManager
 import javax.swing.text.html.StyleSheet
 
 /**
  * Provides list of default CSS rules for JBHtmlPane
  */
-@Internal
 @Suppress("UseJBColor", "CssInvalidHtmlTagReference", "CssInvalidPropertyValue", "CssUnusedSymbol")
-object JBHtmlPaneStyleSheetRulesProvider {
+internal object JBHtmlPaneStyleSheetRulesProvider {
 
   @JvmStatic
-  fun getStyleSheet(paneBackgroundColor: Color, configuration: Configuration): StyleSheet =
+  fun getStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
     styleSheetCache.get(Pair(paneBackgroundColor.rgb and 0xffffff, configuration))
-
-  data class Configuration(
-    val colorScheme: EditorColorsScheme = EditorColorsManager.getInstance().globalScheme,
-    val editorInlineContext: Boolean = false,
-    val inlineCodeParentSelectors: List<String> = listOf(""),
-    val largeCodeFontSizeSelectors: List<String> = emptyList(),
-    val enableInlineCodeBackground: Boolean = true,
-    val enableCodeBlocksBackground: Boolean = true,
-    val useFontLigaturesInCode: Boolean = false,
-    /** Unscaled */
-    val spaceBeforeParagraph: Int = JBHtmlPaneStyleSheetRulesProvider.spaceBeforeParagraph,
-    /** Unscaled */
-    val spaceAfterParagraph: Int = JBHtmlPaneStyleSheetRulesProvider.spaceAfterParagraph,
-    val themeOverrides: ThemeOverrides? = null,
-  ) {
-    override fun equals(other: Any?): Boolean =
-      other is Configuration
-      && colorSchemesEqual(colorScheme, other.colorScheme)
-      && inlineCodeParentSelectors == other.inlineCodeParentSelectors
-      && largeCodeFontSizeSelectors == other.largeCodeFontSizeSelectors
-      && enableInlineCodeBackground == other.enableInlineCodeBackground
-      && enableCodeBlocksBackground == other.enableCodeBlocksBackground
-      && useFontLigaturesInCode == other.useFontLigaturesInCode
-      && spaceBeforeParagraph == other.spaceBeforeParagraph
-      && spaceAfterParagraph == other.spaceAfterParagraph
-
-    private fun colorSchemesEqual(colorScheme: EditorColorsScheme, colorScheme2: EditorColorsScheme): Boolean =
-      // Update here when more colors are used from the colorScheme
-      colorScheme.defaultBackground.rgb == colorScheme2.defaultBackground.rgb
-      && colorScheme.defaultForeground.rgb == colorScheme2.defaultForeground.rgb
-      && sequenceOf(inlineCodeStyling, blockCodeStyling, shortcutStyling)
-        .all {
-          colorScheme.getAttributes(it.editorSchemeAttributeKey, false) ==
-            colorScheme2.getAttributes(it.editorSchemeAttributeKey, false)
-        }
-
-
-    override fun hashCode(): Int =
-      Objects.hash(colorScheme.defaultBackground.rgb and 0xffffff,
-                   colorScheme.defaultForeground.rgb and 0xffffff,
-                   inlineCodeParentSelectors, largeCodeFontSizeSelectors,
-                   enableInlineCodeBackground, enableCodeBlocksBackground,
-                   useFontLigaturesInCode, spaceBeforeParagraph, spaceAfterParagraph)
-  }
-
-  data class ThemeOverrides(
-    val controlKindSuffix: String,
-    val overrides: Map<ControlKind, Collection<ControlProperty>>
-  )
-
-  enum class ControlKind(val id: String) {
-    CodeInline("Code.Inline"),
-    CodeBlock("Code.Block"),
-    Shortcut("Shortcut"),
-  }
-
-  enum class ControlProperty(val id: String) {
-    BackgroundColor("backgroundColor"),
-    ForegroundColor("foregroundColor"),
-    BorderColor("borderColor"),
-    BackgroundOpacity("backgroundOpacity"),
-    BorderWidth("borderWidth"),
-    BorderRadius("borderRadius"),
-  }
 
   internal const val CODE_BLOCK_PREFIX: String = "<div class='code-block'><pre style=\"padding: 0px; margin: 0px\">"
   internal const val CODE_BLOCK_SUFFIX: String = "</pre></div>"
 
-  @JvmStatic
-  val spaceBeforeParagraph: Int get() = 4
-
-  @JvmStatic
-  val spaceAfterParagraph: Int get() = 4
-
   private val inlineCodeStyling = ControlColorStyleBuilder(
     ControlKind.CodeInline,
-    DefaultLanguageHighlighterColors.DOC_CODE_INLINE,
     defaultBackgroundColor = Color(0x5A5D6B),
     defaultBackgroundOpacity = 10,
     defaultBorderRadius = 10,
@@ -121,7 +45,6 @@ object JBHtmlPaneStyleSheetRulesProvider {
 
   private val blockCodeStyling = ControlColorStyleBuilder(
     ControlKind.CodeBlock,
-    DefaultLanguageHighlighterColors.DOC_CODE_BLOCK,
     defaultBorderColor = Color(0xEBECF0),
     defaultBorderRadius = 10,
     defaultBorderWidth = 1,
@@ -131,7 +54,6 @@ object JBHtmlPaneStyleSheetRulesProvider {
 
   private val shortcutStyling = ControlColorStyleBuilder(
     ControlKind.Shortcut,
-    DefaultLanguageHighlighterColors.DOC_TIPS_SHORTCUT,
     defaultBorderColor = Color(0xA8ADBD),
     defaultBorderRadius = 7,
     defaultBorderWidth = 1,
@@ -139,18 +61,18 @@ object JBHtmlPaneStyleSheetRulesProvider {
     fallbackToEditorBorder = true,
   )
 
-  private val styleSheetCache: LoadingCache<Pair<Int, Configuration>, StyleSheet> = Caffeine.newBuilder()
+  private val styleSheetCache: LoadingCache<Pair<Int, JBHtmlPaneStyleConfiguration>, StyleSheet> = Caffeine.newBuilder()
     .maximumSize(20)
     .build { (bgColor, configuration) -> buildStyleSheet(Color(bgColor), configuration) }
 
-  private fun buildStyleSheet(paneBackgroundColor: Color, configuration: Configuration): StyleSheet =
+  private fun buildStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
     StyleSheetUtil.loadStyleSheet(sequenceOf(
       getDefaultFormattingStyles(configuration),
       getCodeRules(paneBackgroundColor, configuration),
       getShortcutRules(paneBackgroundColor, configuration)
     ).joinToString("\n"))
 
-  private fun getDefaultFormattingStyles(configuration: Configuration): String {
+  private fun getDefaultFormattingStyles(configuration: JBHtmlPaneStyleConfiguration): String {
     val fontSize = StartupUiUtil.labelFont.size
     val spacingBefore = scale(configuration.spaceBeforeParagraph)
     val spacingAfter = scale(configuration.spaceAfterParagraph)
@@ -190,7 +112,7 @@ object JBHtmlPaneStyleSheetRulesProvider {
 
   private fun getShortcutRules(
     paneBackgroundColor: Color,
-    configuration: Configuration
+    configuration: JBHtmlPaneStyleConfiguration
   ): String {
     val fontName = if (configuration.useFontLigaturesInCode) EDITOR_FONT_NAME_PLACEHOLDER else EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
     val contentCodeFontSizePercent = getMonospaceFontSizeCorrection(true)
@@ -211,7 +133,7 @@ object JBHtmlPaneStyleSheetRulesProvider {
   @JvmStatic
   private fun getCodeRules(
     paneBackgroundColor: Color,
-    configuration: Configuration,
+    configuration: JBHtmlPaneStyleConfiguration,
   ): String {
     val result = mutableListOf<String>()
     val spacingBefore = scale(configuration.spaceBeforeParagraph)
@@ -253,7 +175,6 @@ object JBHtmlPaneStyleSheetRulesProvider {
 
   private data class ControlColorStyleBuilder(
     val controlKind: ControlKind,
-    val editorSchemeAttributeKey: TextAttributesKey,
     val defaultBackgroundColor: Color? = null,
     val defaultBackgroundOpacity: Int = 100,
     val defaultForegroundColor: Color? = null,
@@ -265,23 +186,23 @@ object JBHtmlPaneStyleSheetRulesProvider {
     val fallbackToEditorBorder: Boolean = false
   ) {
 
-    private fun getBackgroundColor(configuration: Configuration): Color? = getColor(configuration, ControlProperty.BackgroundColor)
+    private fun getBackgroundColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ControlProperty.BackgroundColor)
 
-    private fun getForegroundColor(configuration: Configuration): Color? = getColor(configuration, ControlProperty.ForegroundColor)
+    private fun getForegroundColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ControlProperty.ForegroundColor)
 
-    private fun getBorderColor(configuration: Configuration): Color? = getColor(configuration, ControlProperty.BorderColor)
+    private fun getBorderColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ControlProperty.BorderColor)
 
-    private fun getBackgroundOpacity(configuration: Configuration): Int? = getInt(configuration, ControlProperty.BackgroundOpacity)
+    private fun getBackgroundOpacity(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ControlProperty.BackgroundOpacity)
 
-    private fun getBorderWidth(configuration: Configuration): Int? = getInt(configuration, ControlProperty.BorderWidth)
+    private fun getBorderWidth(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ControlProperty.BorderWidth)
 
-    private fun getBorderRadius(configuration: Configuration): Int? = getInt(configuration, ControlProperty.BorderRadius)
+    private fun getBorderRadius(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ControlProperty.BorderRadius)
 
-    fun getCssStyle(editorPaneBackgroundColor: Color, configuration: Configuration): String {
+    fun getCssStyle(editorPaneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): String {
       val result = StringBuilder()
 
       if (configuration.editorInlineContext) {
-        val attributes = configuration.colorScheme.getAttributes(editorSchemeAttributeKey, false)
+        val attributes = configuration.colorScheme.getAttributes(controlKind.colorSchemeKey, false)
         if (attributes != null) {
           attributes.backgroundColor?.let { result.append("background-color: #${toHtmlColor(it)};") }
           attributes.foregroundColor?.let { result.append("color: #${toHtmlColor(it)};") }
@@ -356,14 +277,14 @@ object JBHtmlPaneStyleSheetRulesProvider {
       )
     }
 
-    private fun getColor(configuration: Configuration, property: ControlProperty): Color? =
+    private fun getColor(configuration: JBHtmlPaneStyleConfiguration, property: ControlProperty): Color? =
       UIManager.getColor(getKey(configuration, property))
 
-    private fun getInt(configuration: Configuration, property: ControlProperty): Int? =
+    private fun getInt(configuration: JBHtmlPaneStyleConfiguration, property: ControlProperty): Int? =
       UIManager.get(getKey(configuration, property)) as Int?
 
-    private fun getKey(configuration: Configuration, property: ControlProperty): String {
-      val themeOverrides = configuration.themeOverrides
+    private fun getKey(configuration: JBHtmlPaneStyleConfiguration, property: ControlProperty): String {
+      val themeOverrides = configuration.controlStyleOverrides
       val suffix = if (themeOverrides != null && themeOverrides.overrides[controlKind]?.contains(property) == true) {
         "." + themeOverrides.controlKindSuffix
       }

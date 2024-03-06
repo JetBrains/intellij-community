@@ -12,9 +12,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
-import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider
-import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider.ControlKind
-import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider.ControlProperty
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -269,8 +268,8 @@ object QuickDocHighlightingHelper {
 
   @Internal
   @JvmStatic
-  fun getDefaultDocStyleOptions(colorScheme: EditorColorsScheme, editorInlineContext: Boolean): JBHtmlPaneStyleSheetRulesProvider.Configuration =
-    JBHtmlPaneStyleSheetRulesProvider.Configuration(
+  fun getDefaultDocStyleOptions(colorScheme: EditorColorsScheme, editorInlineContext: Boolean): JBHtmlPaneStyleConfiguration =
+    JBHtmlPaneStyleConfiguration(
       colorScheme = colorScheme,
       editorInlineContext = editorInlineContext,
       inlineCodeParentSelectors = listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)",
@@ -282,8 +281,8 @@ object QuickDocHighlightingHelper {
       enableCodeBlocksBackground = DocumentationSettings.isCodeBackgroundEnabled()
                                    && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
       useFontLigaturesInCode = false,
-      themeOverrides = if (editorInlineContext)
-        JBHtmlPaneStyleSheetRulesProvider.ThemeOverrides(
+      controlStyleOverrides = if (editorInlineContext)
+        ControlStyleOverrides(
           controlKindSuffix = "EditorPane",
           overrides = mapOf(
             ControlKind.CodeBlock to listOf(ControlProperty.BackgroundColor, ControlProperty.BackgroundOpacity, ControlProperty.BorderColor)

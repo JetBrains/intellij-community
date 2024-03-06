@@ -5,7 +5,7 @@ import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.module.UnknownModuleType
 import com.intellij.ui.ColorUtil
-import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StyleSheetUtil
@@ -27,10 +27,10 @@ object DocumentationHtmlUtil {
   val contentInnerPadding: Int get() = 2
 
   @JvmStatic
-  val spaceBeforeParagraph: Int get() = JBHtmlPaneStyleSheetRulesProvider.spaceBeforeParagraph
+  val spaceBeforeParagraph: Int get() = JBHtmlPaneStyleConfiguration.defaultSpaceBeforeParagraph
 
   @JvmStatic
-  val spaceAfterParagraph: Int get() = JBHtmlPaneStyleSheetRulesProvider.spaceAfterParagraph
+  val spaceAfterParagraph: Int get() = JBHtmlPaneStyleConfiguration.defaultSpaceAfterParagraph
 
   @JvmStatic
   val docPopupPreferredMinWidth: Int get() = 300

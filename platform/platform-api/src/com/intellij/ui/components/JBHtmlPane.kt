@@ -23,14 +23,9 @@ import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Graphics
-import java.awt.Image
 import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeEvent
-import java.net.URL
-import java.util.*
-import javax.swing.Icon
 import javax.swing.JEditorPane
 import javax.swing.KeyStroke
 import javax.swing.text.Document
@@ -109,19 +104,10 @@ import javax.swing.text.html.StyleSheet
  *
  */
 @Suppress("LeakingThis")
-open class JBHtmlPane(private val myStylesConfiguration: JBHtmlPaneStyleSheetRulesProvider.Configuration,
-                      private val myPaneConfiguration: Configuration
+open class JBHtmlPane(private val myStyleConfiguration: JBHtmlPaneStyleConfiguration,
+                      private val myPaneConfiguration: JBHtmlPaneConfiguration
 ) : JEditorPane(), Disposable {
 
-
-  data class Configuration(
-    val keyboardActions: Map<KeyStroke, ActionListener> = emptyMap(),
-    val imageResolverFactory: (JBHtmlPane) -> Dictionary<URL, Image>? = { null },
-    val iconResolver: (String) -> Icon? = { null },
-    val additionalStyleSheetProvider: (backgroundColor: Color) -> List<StyleSheet> = { emptyList() },
-    val fontResolver: CSSFontResolver? = null,
-    val extensions: List<ExtendableHTMLViewFactory.Extension> = emptyList()
-  )
 
   private var myText: @Nls String = "" // getText() surprisingly crashes…, let's cache the text
   private var myCurrentDefaultStyleSheet: StyleSheet? = null
@@ -200,7 +186,7 @@ open class JBHtmlPane(private val myStylesConfiguration: JBHtmlPaneStyleSheetRul
     val newStyleSheet = StyleSheet()
       .also { myCurrentDefaultStyleSheet = it }
     val background = background
-    newStyleSheet.addStyleSheet(getStyleSheet(background, myStylesConfiguration))
+    newStyleSheet.addStyleSheet(getStyleSheet(background, myStyleConfiguration))
     for (styleSheet in myPaneConfiguration.additionalStyleSheetProvider(background)) {
       newStyleSheet.addStyleSheet(styleSheet)
     }

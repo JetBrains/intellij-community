@@ -26,7 +26,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBHtmlPane;
-import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider;
+import com.intellij.ui.components.JBHtmlPaneConfiguration;
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
@@ -717,8 +718,8 @@ public class IdeTooltipManager implements Disposable {
                                      @Nullable JLayeredPane layeredPane,
                                      boolean limitWidthToScreen) {
 
-    JBHtmlPaneStyleSheetRulesProvider.Configuration stylesConfiguration = new JBHtmlPaneStyleSheetRulesProvider.Configuration();
-    JBHtmlPane.Configuration paneConfiguration = new JBHtmlPane.Configuration(
+    JBHtmlPaneStyleConfiguration styleConfiguration = new JBHtmlPaneStyleConfiguration();
+    JBHtmlPaneConfiguration paneConfiguration = new JBHtmlPaneConfiguration(
       Collections.emptyMap(), url -> null, icon -> null,
       color -> Collections.singletonList(
         StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}")),
@@ -742,8 +743,8 @@ public class IdeTooltipManager implements Disposable {
 
     Ref<Boolean> prefSizeWasComputed = new Ref<>(false);
     JBHtmlPane pane = !limitWidthToScreen
-                      ? new JBHtmlPane(stylesConfiguration, paneConfiguration)
-                      : new LimitedWidthJBHtmlPane(stylesConfiguration, paneConfiguration, prefSizeWasComputed, hintHint, layeredPane);
+                      ? new JBHtmlPane(styleConfiguration, paneConfiguration)
+                      : new LimitedWidthJBHtmlPane(styleConfiguration, paneConfiguration, prefSizeWasComputed, hintHint, layeredPane);
 
     @NonNls String text = HintUtil.prepareHintText(html, hintHint);
     // Remove <style> rule for <code> added by prepareHintText() call
@@ -816,12 +817,12 @@ public class IdeTooltipManager implements Disposable {
     private final @Nullable JLayeredPane myLayeredPane;
     private Dimension prefSize;
 
-    private LimitedWidthJBHtmlPane(JBHtmlPaneStyleSheetRulesProvider.Configuration stylesConfiguration,
-                                   Configuration paneConfiguration,
+    private LimitedWidthJBHtmlPane(JBHtmlPaneStyleConfiguration styleConfiguration,
+                                   JBHtmlPaneConfiguration paneConfiguration,
                                    Ref<Boolean> prefSizeWasComputed,
                                    HintHint hintHint,
                                    @Nullable JLayeredPane layeredPane) {
-      super(stylesConfiguration, paneConfiguration);
+      super(styleConfiguration, paneConfiguration);
       myPrefSizeWasComputed = prefSizeWasComputed;
       myHintHint = hintHint;
       myLayeredPane = layeredPane;

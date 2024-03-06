@@ -28,6 +28,7 @@ import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBHtmlPane;
+import com.intellij.ui.components.JBHtmlPaneConfiguration;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -403,9 +404,9 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
       super(
         QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.getColorsScheme(), true),
-        new Configuration(Collections.emptyMap(), pane -> IMAGE_MANAGER.getImageProvider(),
-                          url -> null, bg -> Collections.singletonList(getStyleSheet(editor)),
-                          EditorCssFontResolver.getInstance(editor), Collections.emptyList())
+        new JBHtmlPaneConfiguration(Collections.emptyMap(), pane -> IMAGE_MANAGER.getImageProvider(),
+                                    url -> null, bg -> Collections.singletonList(getStyleSheet(editor)),
+                                    EditorCssFontResolver.getInstance(editor), Collections.emptyList())
       );
       if (trackMemory) {
         MEMORY_MANAGER.register(DocRenderer.this, 50 /* rough size estimation */);
