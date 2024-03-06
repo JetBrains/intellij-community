@@ -130,7 +130,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   public void testWithHintsEnabledForNonLiterals() {
     disableVirtualComma();
 
-    Option option = JavaInlayParameterHintsProvider.Companion.getInstance().getShowForParamsWithSameType();
+    Option option = JavaInlayParameterHintsProvider.Utils.getInstance().getShowForParamsWithSameType();
     boolean savedValue = option.get();
     try {
       option.set(true);
