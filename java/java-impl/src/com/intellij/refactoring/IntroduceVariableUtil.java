@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -278,6 +278,9 @@ public final class IntroduceVariableUtil {
     }
     if (expr instanceof PsiClassObjectAccessExpression && PsiUtilCore.hasErrorElementChild(expr)) {
       return JavaRefactoringBundle.message("selected.block.should.represent.an.expression");
+    }
+    if (expr instanceof PsiSuperExpression) {
+      return JavaRefactoringBundle.message("selected.expression.cannot.be.extracted");
     }
     if (!CodeBlockSurrounder.canSurround(expr)) {
       PsiExpression topLevelExpression = ExpressionUtils.getTopLevelExpression(expr);
