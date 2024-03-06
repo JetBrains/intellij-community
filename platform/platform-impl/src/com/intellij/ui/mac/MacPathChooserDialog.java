@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.concurrency.ThreadContext;
@@ -7,10 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.PathChooserDialog;
+import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
@@ -31,16 +28,14 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-
 public final class MacPathChooserDialog implements PathChooserDialog, FileChooserDialog{
-
   private FileDialog myFileDialog;
   private final FileChooserDescriptor myFileChooserDescriptor;
   private final WeakReference<Component> myParent;
   private final Project myProject;
   private final @NlsContexts.DialogTitle String myTitle;
-  private VirtualFile [] virtualFiles;
   private final PathChooserDialogHelper myHelper;
+  private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
 
   public MacPathChooserDialog(@NotNull FileChooserDescriptor descriptor, Component parent, Project project) {
     myFileChooserDescriptor = descriptor;
@@ -129,14 +124,15 @@ public final class MacPathChooserDialog implements PathChooserDialog, FileChoose
 
     File[] files = myFileDialog.getFiles();
     List<VirtualFile> virtualFileList = myHelper.getChosenFiles(files);
-    virtualFiles = virtualFileList.toArray(VirtualFile.EMPTY_ARRAY);
+    myChosenFiles = virtualFileList.toArray(VirtualFile.EMPTY_ARRAY);
+    FileChooserUsageCollector.log(this, myFileChooserDescriptor, myChosenFiles);
 
     if (!virtualFileList.isEmpty()) {
       try {
         if (virtualFileList.size() == 1) {
           myFileChooserDescriptor.isFileSelectable(virtualFileList.get(0));
         }
-        myFileChooserDescriptor.validateSelectedFiles(virtualFiles);
+        myFileChooserDescriptor.validateSelectedFiles(myChosenFiles);
       }
       catch (Exception e) {
         if (parent == null) {
@@ -159,21 +155,10 @@ public final class MacPathChooserDialog implements PathChooserDialog, FileChoose
     }
   }
 
-  private static @NotNull FileDialog createFileDialogWithoutOwner(String title, int load) {
-    // This is bad. But sometimes we do not have any windows at all.
-    // On the other hand, it is a bit strange to show a file dialog without an owner
-    // Therefore we should minimize usage of this case.
-    return new FileDialog((Frame)null, title, load);
-  }
-
-  @Override
-  public VirtualFile @NotNull [] choose(@Nullable VirtualFile toSelect, @Nullable Project project) {
-    choose(toSelect, files -> {});
-    return virtualFiles;
-  }
-
   @Override
   public VirtualFile @NotNull [] choose(@Nullable Project project, VirtualFile @NotNull ... toSelect) {
-    return choose((toSelect.length > 0 ? toSelect[0] : null), project);
+    choose(toSelect.length > 0 ? toSelect[0] : null, __ -> { });
+    FileChooserUsageCollector.log(this, myFileChooserDescriptor, myChosenFiles);
+    return myChosenFiles;
   }
 }
