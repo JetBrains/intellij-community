@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.L
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.IdeBorderFactory.createBorder
 import com.intellij.ui.JBColor
@@ -83,6 +84,8 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
       !progressPanel.isDumbMode &&
       UIUtil.isFocusAncestor(rootComponent ?: this)
     }
+
+    InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(this)
   }
 
   fun registerRootComponent(newRootComponent: JComponent) {
