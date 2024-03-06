@@ -73,6 +73,9 @@ object HuggingFaceURLProvider {
     return url
   }
 
-  //fun makeAbsoluteImageLink(modelName: String, relativeImagePath: String): URL =
-  //  URL("$baseURL/$modelName/resolve/main/$relativeImagePath")
+  fun makeAbsoluteImageLink(entityId: String, relativeImagePath: String): URL =
+    URL("$baseURL/$entityId/resolve/main/$relativeImagePath")
+
+  fun makeAbsoluteFileLink(entityId: String, relativeFilePath: String): URL =
+    URL("$baseURL/$entityId/blob/main/$relativeFilePath")
 }
