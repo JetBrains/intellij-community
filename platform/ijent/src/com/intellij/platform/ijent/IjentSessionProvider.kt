@@ -25,24 +25,11 @@ interface IjentSessionProvider {
    *
    * [ijentCoroutineScope] must be the scope generated inside [IjentSessionRegistry.register]
    */
-  suspend fun IjentSessionMediator.connect(
-    ijentId: IjentId,
-    platform: IjentExecFileProvider.SupportedPlatform,
-  ): IjentApi
-
-  /**
-   * See also [doBootstrapOverShellSession].
-   */
   suspend fun connect(
     ijentId: IjentId,
     platform: IjentExecFileProvider.SupportedPlatform,
-    mediator: IjentSessionMediator,
-  ): IjentApi {
-    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
-    return with(mediator) {
-      connect(ijentId, platform)
-    }
-  }
+    mediator: IjentSessionMediator
+  ): IjentApi
 
   companion object {
     suspend fun instanceAsync(): IjentSessionProvider = serviceAsync()
@@ -50,7 +37,7 @@ interface IjentSessionProvider {
 }
 
 internal class DefaultIjentSessionProvider : IjentSessionProvider {
-  override suspend fun IjentSessionMediator.connect(ijentId: IjentId, platform: IjentExecFileProvider.SupportedPlatform): IjentApi {
+  override suspend fun connect(ijentId: IjentId, platform: IjentExecFileProvider.SupportedPlatform, mediator: IjentSessionMediator): IjentApi {
     throw UnsupportedOperationException()
   }
 }
@@ -72,6 +59,7 @@ fun IjentApi.bindToScope(coroutineScope: CoroutineScope) {
 suspend fun connectToRunningIjent(ijentName: String, platform: IjentExecFileProvider.SupportedPlatform, process: Process): IjentApi =
   IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
     val mediator = IjentSessionMediator.create(process, ijentId)
+    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
     IjentSessionProvider.instanceAsync().connect(ijentId, platform, mediator)
   }
 

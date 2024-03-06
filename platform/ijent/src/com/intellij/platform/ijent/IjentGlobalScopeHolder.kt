@@ -4,18 +4,13 @@ package com.intellij.platform.ijent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 
 @Service
-internal class IjentMainScopeHolder private constructor(myScope: CoroutineScope) {
-  // don't dare close this scope
-  @DelicateCoroutinesApi
-  val scope = myScope
-
+internal class IjentApplicationScope private constructor(scope: CoroutineScope) : CoroutineScope by scope {
   companion object {
-    fun getInstance(): IjentMainScopeHolder {
-      return ApplicationManager.getApplication().service()
-    }
+    fun instance(): IjentApplicationScope = ApplicationManager.getApplication().service()
+    suspend fun instanceAsync(): IjentApplicationScope = serviceAsync()
   }
 }

@@ -87,8 +87,7 @@ class IjentSessionMediator private constructor(val scope: CoroutineScope, val pr
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
       )
 
-      val ijentMainScope = IjentMainScopeHolder.getInstance().scope
-      val connectionScope = ijentMainScope.namedChildScope("ijent $ijentId > connection scope", supervisor = false)
+      val connectionScope = IjentApplicationScope.instance().namedChildScope("ijent $ijentId > connection scope", supervisor = false)
 
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
@@ -99,7 +98,7 @@ class IjentSessionMediator private constructor(val scope: CoroutineScope, val pr
 
       val mediator = IjentSessionMediator(connectionScope, process, lastStderrMessages)
 
-      val awaiterScope = ijentMainScope.launch(CoroutineName("ijent $ijentId > exit awaiter scope")) {
+      val awaiterScope = IjentApplicationScope.instance().launch(CoroutineName("ijent $ijentId > exit awaiter scope")) {
         ijentProcessExitAwaiter(ijentId, mediator, lastStderrMessages)
       }
 
