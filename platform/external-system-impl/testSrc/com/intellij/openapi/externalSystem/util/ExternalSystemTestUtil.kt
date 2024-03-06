@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -87,19 +87,10 @@ private inline fun <R> withSelectedFileIfNeeded(selectedFile: VirtualFile?, acti
 
   Disposer.newDisposable().use {
     ApplicationManager.getApplication().replaceService(FileChooserFactory::class.java, object : FileChooserFactoryImpl() {
-      override fun createFileChooser(descriptor: FileChooserDescriptor, project: Project?, parent: Component?): FileChooserDialog {
-        return object : FileChooserDialog {
-
-          @Suppress("OVERRIDE_DEPRECATION")
-          override fun choose(toSelect: VirtualFile?, project: Project?): Array<VirtualFile> {
-            return choose(project, toSelect)
-          }
-
-          override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<VirtualFile> {
-            return arrayOf(selectedFile)
-          }
+      override fun createFileChooser(descriptor: FileChooserDescriptor, project: Project?, parent: Component?): FileChooserDialog =
+        object : FileChooserDialog {
+          override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<VirtualFile> = arrayOf(selectedFile)
         }
-      }
     }, it)
     return action()
   }

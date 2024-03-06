@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.icons.AllIcons;
@@ -124,19 +124,18 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     show();
 
+    FileChooserUsageCollector.log(this, myChooserDescriptor, myChosenFiles);
     return myChosenFiles;
-  }
-
-  @Override
-  public VirtualFile @NotNull [] choose(final @Nullable VirtualFile toSelect, final @Nullable Project project) {
-    return toSelect == null ? choose(project) : choose(project, toSelect);
   }
 
   @Override
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<? super List<VirtualFile>> callback) {
     init();
     restoreSelection(toSelect);
+
     show();
+
+    FileChooserUsageCollector.log(this, myChooserDescriptor, myChosenFiles);
     if (myChosenFiles.length > 0) {
       callback.consume(Arrays.asList(myChosenFiles));
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
@@ -61,22 +61,20 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   }
 
   @Override
-  public VirtualFile @NotNull [] choose(@Nullable VirtualFile toSelect, @Nullable Project project) {
-    return choose(project, toSelect);
-  }
-
-  @Override
   public VirtualFile @NotNull [] choose(@Nullable Project project, VirtualFile @NotNull ... toSelect) {
     if (myProject == null) myProject = project;
     myPanel.load(FileChooserUtil.getInitialPath(myDescriptor, myProject, toSelect.length > 0 ? toSelect[0] : null));
     show();
-    return myResults != null ? VfsUtilCore.toVirtualFileArray(myResults) : VirtualFile.EMPTY_ARRAY;
+    var chosenFiles = myResults != null ? VfsUtilCore.toVirtualFileArray(myResults) : VirtualFile.EMPTY_ARRAY;
+    FileChooserUsageCollector.log(this, myDescriptor, chosenFiles);
+    return chosenFiles;
   }
 
   @Override
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<? super List<VirtualFile>> callback) {
     myPanel.load(FileChooserUtil.getInitialPath(myDescriptor, myProject, toSelect));
     show();
+    FileChooserUsageCollector.log(this, myDescriptor, myResults != null ? myResults.toArray(VirtualFile.EMPTY_ARRAY) : VirtualFile.EMPTY_ARRAY);
     if (myResults != null) {
       callback.consume(myResults);
     }
