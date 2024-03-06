@@ -4327,6 +4327,24 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../shared/tests/testData/newJ2k/mutability")
+    public static class Mutability extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("NestedIfStatements.java")
+        public void testNestedIfStatements() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutability/NestedIfStatements.java");
+        }
+
+        @TestMetadata("ValAssignedInIfStatement.java")
+        public void testValAssignedInIfStatement() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutability/ValAssignedInIfStatement.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/mutableCollections")
     public static class MutableCollections extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {

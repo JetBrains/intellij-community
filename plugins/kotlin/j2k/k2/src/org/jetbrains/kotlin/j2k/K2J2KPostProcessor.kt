@@ -62,7 +62,6 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
             InspectionLikeProcessingGroup(
                 runSingleTime = true,
                 listOf(
-                    VarToValProcessing(),
                     RemoveExplicitPropertyTypeProcessing(),
                 )
             ),

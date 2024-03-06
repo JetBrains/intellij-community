@@ -21,16 +21,6 @@ import org.jetbrains.kotlin.types.typeUtil.isSignedOrUnsignedNumberType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 
-internal val fixValToVarDiagnosticBasedProcessing =
-    diagnosticBasedProcessing(
-        Errors.VAL_REASSIGNMENT, Errors.CAPTURED_VAL_INITIALIZATION, Errors.CAPTURED_MEMBER_VAL_INITIALIZATION
-    ) { element: KtExpression, _ ->
-        val property = element.unpackedReferenceToProperty() ?: return@diagnosticBasedProcessing
-        if (!property.isVar) {
-            property.valOrVarKeyword.replace(KtPsiFactory(element.project).createVarKeyword())
-        }
-    }
-
 internal val fixTypeMismatchDiagnosticBasedProcessing =
     diagnosticBasedProcessing(Errors.TYPE_MISMATCH) { element: PsiElement, diagnostic ->
         @Suppress("UNCHECKED_CAST")
