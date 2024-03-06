@@ -40,9 +40,8 @@ final class InspectopediaExtractor implements ApplicationStarter {
 
   @Override
   public void main(@NotNull List<String> args) {
-    final int size = args.size();
-    if (size != 2) {
-      LOG.error("Usage: %s <output directory>".formatted(getCommandName()));
+    if (args.size() != 2) {
+      LOG.error("Usage: %s <output directory>".formatted("inspectopedia-generator"));
       System.exit(-1);
     }
 
@@ -92,7 +91,8 @@ final class InspectopediaExtractor implements ApplicationStarter {
       final InspectionMetaInformationService
         service = ApplicationManager.getApplication().getService(InspectionMetaInformationService.class);
 
-      @SuppressWarnings("DataFlowIssue") //In Kotlin, this handles nulls just fine, here it seems to be some weird Java interop issue, still works with null as well.
+      @SuppressWarnings("DataFlowIssue")
+      //In Kotlin, this handles nulls just fine, here it seems to be some weird Java interop issue, still works with null as well.
       final MetaInformationState inspectionsExtraState = service == null ? null : (MetaInformationState)service.getState(null);
 
       for (final ScopeToolState scopeToolState : scopeToolStates) {
@@ -116,7 +116,8 @@ final class InspectopediaExtractor implements ApplicationStarter {
         catch (Throwable t) {
           LOG.info("Cannot create options panel " + wrapper.getShortName(), t);
         }
-        final MetaInformation metaInformation = inspectionsExtraState == null ? null : inspectionsExtraState.getInspections().get(wrapper.getID());
+        final MetaInformation metaInformation =
+          inspectionsExtraState == null ? null : inspectionsExtraState.getInspections().get(wrapper.getID());
         final List<Integer> cweIds = metaInformation == null ? null : metaInformation.getCweIds();
 
         final String language = wrapper.getLanguage();
