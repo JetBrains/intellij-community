@@ -4,9 +4,12 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doWriteAction
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.test.KotlinCliCompilerFacade
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -20,6 +23,13 @@ abstract class AbstractIrKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEv
         doWriteAction {
             PsiTestUtil.addSourceRoot(module, virtualFile)
         }
+    }
+
+    override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
+        // Warm up the script configuration, otherwise it will be initialized during evaluation
+        // which leads to "Evaluation is not possible during indexing" exception
+        runInEdtAndWait { ScriptConfigurationManager.updateScriptDependenciesSynchronously(getScriptKtFile()) }
+        super.doMultiFileTest(files, preferences)
     }
 
     override fun createBreakpoints(className: String?) = super.createBreakpoints(getScriptKtFile())

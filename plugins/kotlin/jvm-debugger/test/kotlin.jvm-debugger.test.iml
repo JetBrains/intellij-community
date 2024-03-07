@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" />
     <orderEntry type="module" module-name="kotlin.base.fe10.analysis" />
+    <orderEntry type="module" module-name="kotlin.base.scripting" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
