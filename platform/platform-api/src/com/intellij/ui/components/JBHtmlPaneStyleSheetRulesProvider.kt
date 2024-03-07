@@ -9,6 +9,7 @@ import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER
 import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ControlKind
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ControlProperty
@@ -16,6 +17,7 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.StyleSheetUtil
+import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import java.awt.Color
 import java.lang.Integer.toHexString
@@ -76,6 +78,8 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
     val fontSize = StartupUiUtil.labelFont.size
     val spacingBefore = scale(configuration.spaceBeforeParagraph)
     val spacingAfter = scale(configuration.spaceAfterParagraph)
+    val hrColor = ColorUtil.toHtmlColor(UIUtil.getTooltipSeparatorColor())
+    val blockquoteBorderColor = Gray.get(0x90)
     val paragraphSpacing = """padding: ${spacingBefore}px 0 ${spacingAfter}px 0"""
 
     @Language("CSS")
@@ -97,10 +101,20 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
       td { margin: 0 0 0 0; padding: ${spacingBefore}px ${spacingBefore + spacingAfter}px ${spacingAfter}px 0; }
       td p { padding-top: 0; padding-bottom: 0; }
       td pre { padding: ${scale(1)}px 0 0 0; margin: 0 0 0 0 }
-      blockquote { padding-left: ${scale(5)}px; border-left: ${toHtmlColor(Gray.get(0x90))} solid ${scale(2)}px; }
-      blockquote p { border: none }
+      blockquote { 
+          padding: 0 0 0 ${scale(10)}px; 
+          border-left: ${toHtmlColor(blockquoteBorderColor)} solid ${scale(2)}px;
+          margin: ${spacingBefore}px 0 ${spacingAfter}px 0;
+      }
+      blockquote p { border: none; }
       .$CLASS_CENTERED { text-align: center }
       .$CLASS_GRAYED { color: #909090 }
+      hr { 
+         padding: ${spacingAfter + spacingBefore + scale(1)}px 0 0 0; 
+         margin: 0 0 ${spacingAfter + spacingBefore + scale(1)}px 0; 
+         border-bottom: ${scale(1)}px solid $hrColor; 
+         width: 100%;
+      }
     """.trimIndent()
     return styles
   }

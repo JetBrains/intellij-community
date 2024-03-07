@@ -76,6 +76,7 @@ import javax.swing.text.html.StyleSheet
  * - `<wbr>` - provides optional word breaking location
  * - `<samp>` - show a piece of text in editor font. Similar to `<code>`,
  *     but without any special formatting except for the font.
+ * - `<hr>` - a horizontal line, no shade, with support for colors
  *
  * ### CSS Support
  *
@@ -138,12 +139,12 @@ open class JBHtmlPane(
       ExtendableHTMLViewFactory.Extensions.WBR_SUPPORT,
       ExtendableHTMLViewFactory.Extensions.HIDPI_IMAGES.takeIf {
         !myPaneConfiguration.extensions.contains(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
-      }
+      },
+      ExtendableHTMLViewFactory.Extensions.BLOCK_HR_SUPPORT
     )
 
     val editorKit = HTMLEditorKitBuilder()
       .replaceViewFactoryExtensions(*extensions.toTypedArray())
-      .withViewFactoryExtensions()
       .withFontResolver(myPaneConfiguration.fontResolver ?: EditorCssFontResolver.getGlobalInstance())
       .build()
     updateDocumentationPaneDefaultCssRules(editorKit)

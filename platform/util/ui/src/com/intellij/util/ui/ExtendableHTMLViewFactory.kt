@@ -163,6 +163,12 @@ class ExtendableHTMLViewFactory internal constructor(
     @JvmField
     val WBR_SUPPORT: Extension = WbrSupportExtension()
 
+    /**
+     * Adds support for `<hr>` rendering as block view
+     */
+    @JvmField
+    val BLOCK_HR_SUPPORT: Extension = BlockHrSupportExtension()
+
     private class IconsExtension(private val existingIconsProvider: (key: String) -> Icon?) : Extension {
 
       constructor(preloadedIcons: Map<String, Icon>) : this(preloadedIconsProvider(preloadedIcons))
@@ -458,6 +464,18 @@ class ExtendableHTMLViewFactory internal constructor(
         WbrView(elem)
       else
         null
+  }
+
+  private class BlockHrSupportExtension : Extension {
+    override fun invoke(elem: Element, defaultView: View): View? {
+      val attrs = elem.attributes
+      return if (attrs.getAttribute(AbstractDocument.ElementNameAttribute) == null &&
+                 attrs.getAttribute(StyleConstants.NameAttribute) === HTML.Tag.HR) {
+        (elem as AbstractDocument.AbstractElement).addAttribute(HTML.Tag.HR, SimpleAttributeSet())
+        HRViewEx(elem, View.Y_AXIS)
+      } else
+        null
+    }
   }
 }
 
