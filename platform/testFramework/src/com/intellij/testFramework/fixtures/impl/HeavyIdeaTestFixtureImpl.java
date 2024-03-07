@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.IdeView;
@@ -239,10 +239,8 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
         return myProject;
       }
       else if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-        if (myProject == null || myProject.isDisposed()) {
-          return null;
-        }
-        return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
+        Project project = myProject;
+        return project == null || project.isDisposed() ? null : FileEditorManager.getInstance(project).getSelectedTextEditor();
       }
       else {
         Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
@@ -256,9 +254,10 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
           }
         }
         if (LangDataKeys.IDE_VIEW.is(dataId)) {
-          VirtualFile[] contentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
-          if (contentRoots.length > 0) {
-            final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(contentRoots[0]);
+          Project project = myProject;
+          VirtualFile[] contentRoots = project == null ? VirtualFile.EMPTY_ARRAY : ProjectRootManager.getInstance(myProject).getContentRoots();
+          if (contentRoots.length > 0 && project != null) {
+            PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(contentRoots[0]);
             return new IdeView() {
               @Override
               public PsiDirectory @NotNull [] getDirectories() {
