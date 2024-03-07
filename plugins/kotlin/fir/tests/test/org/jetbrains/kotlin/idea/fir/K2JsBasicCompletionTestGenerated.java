@@ -2688,6 +2688,11 @@ public abstract class K2JsBasicCompletionTestGenerated extends AbstractK2JsBasic
                 runTest("../../completion/testData/basic/common/EnumValuesMethodUsualPriorityWhenFeatureDisabled.kt");
             }
 
+            @TestMetadata("Error.kt")
+            public void testError() throws Exception {
+                runTest("../../completion/testData/basic/common/Error.kt");
+            }
+
             @TestMetadata("ExtendClassName.kt")
             public void testExtendClassName() throws Exception {
                 runTest("../../completion/testData/basic/common/ExtendClassName.kt");

@@ -2688,6 +2688,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/EnumValuesMethodUsualPriorityWhenFeatureDisabled.kt");
             }
 
+            @TestMetadata("Error.kt")
+            public void testError() throws Exception {
+                runTest("../testData/basic/common/Error.kt");
+            }
+
             @TestMetadata("ExtendClassName.kt")
             public void testExtendClassName() throws Exception {
                 runTest("../testData/basic/common/ExtendClassName.kt");
