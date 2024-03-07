@@ -5,16 +5,29 @@ import io.opentelemetry.sdk.metrics.data.HistogramData
 import io.opentelemetry.sdk.metrics.data.HistogramPointData
 import io.opentelemetry.sdk.metrics.data.MetricData
 
-fun HistogramData.calculatePercentile(percentile: Double): Double {
-  val boundaries: List<Double> = this.points.first().boundaries
-  val counts: List<Long> = this.points.first().counts
+/**
+ * Calculate percentile for the histogram.
+ *
+ * Value: > 0 [percentile] < 100
+ */
+fun HistogramData.calculatePercentile(percentile: Byte): Double {
+  assert(percentile in 0..100) { "Percentile must be between 0 and 100" }
 
-  val rank = counts.sum() * percentile
+  val point = this.points.first()
+
+  val boundaries: List<Double> = point.boundaries
+  val counts: List<Long> = point.counts
+
+  assert(boundaries.isNotEmpty() && counts.isNotEmpty()) { "Boundaries and counts of histogram should not be empty" }
+
+  val rank: Double = (counts.sum() * percentile) / 100.0
   var runningTotal = 0L
   for ((index, count) in counts.withIndex()) {
     runningTotal += count
     if (runningTotal >= rank) {
-      return boundaries[index]
+      // Ensure there is a next boundary
+      return if (index < boundaries.size) boundaries[index]
+      else boundaries.last()
     }
   }
 
