@@ -67,7 +67,10 @@ sealed class TargetBuildParameters : Serializable {
     }
   }
 
-  class ModelBuilderParametersBuilder<T : Any?>(private val modelType: Class<T>) : Builder(), TasksAwareBuilder {
+  class ModelBuilderParametersBuilder<T>(
+    private val modelType: Class<T>
+  ) : Builder(), TasksAwareBuilder {
+
     private val tasks = mutableListOf<String>()
     override fun withTasks(vararg args: String) = apply { tasks.addAll(args) }
     override fun withTasks(args: Iterable<String>) = apply { tasks.addAll(args) }
@@ -77,18 +80,23 @@ sealed class TargetBuildParameters : Serializable {
     }
   }
 
-  class BuildActionParametersBuilder<T : Any?>(private val action: BuildAction<T?>) : Builder(), TasksAwareBuilder {
+  class BuildActionParametersBuilder<T>(
+    private val action: BuildAction<T>
+  ) : Builder(), TasksAwareBuilder {
+
     private val tasks = mutableListOf<String>()
     override fun withTasks(vararg args: String) = apply { tasks.addAll(args) }
     override fun withTasks(args: Iterable<String>) = apply { tasks.addAll(args) }
-    override fun build(): BuildActionParameters<T?> {
+    override fun build(): BuildActionParameters<T> {
       return BuildActionParameters(action, tasks, gradleHome, gradleUserHome,
                                    arguments, jvmArguments, environmentVariables, progressListenerOperationTypes, initScripts)
     }
   }
 
-  class PhasedBuildActionParametersBuilder<T : Any?>(private var projectsLoadedAction: BuildAction<T>?,
-                                                     private var buildFinishedAction: BuildAction<T>?) : Builder(), TasksAwareBuilder {
+  class PhasedBuildActionParametersBuilder<T>(
+    private var projectsLoadedAction: BuildAction<T>?,
+    private var buildFinishedAction: BuildAction<T>?
+  ) : Builder(), TasksAwareBuilder {
 
     private val tasks = mutableListOf<String>()
     override fun withTasks(vararg args: String) = apply { tasks.addAll(args) }
