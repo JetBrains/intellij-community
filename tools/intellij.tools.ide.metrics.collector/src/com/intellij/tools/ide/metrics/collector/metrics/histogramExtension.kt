@@ -46,7 +46,7 @@ fun HistogramData.standardDeviation(): Double {
   val frequencies = mutableListOf<Double>()
   this.points.forEach { point ->
     point.boundaries.zip(point.counts) { boundary, count ->
-      repeat(count.toInt()) { frequencies.add(boundary.toDouble()) }
+      repeat(count.toInt()) { frequencies.add(boundary) }
     }
   }
   return frequencies.standardDeviation().toDouble()
@@ -56,7 +56,7 @@ fun HistogramData.mad(): Double {
   val frequencies = mutableListOf<Double>()
   this.points.forEach { point ->
     point.boundaries.zip(point.counts) { boundary, count ->
-      repeat(count.toInt()) { frequencies.add(boundary.toDouble()) }
+      repeat(count.toInt()) { frequencies.add(boundary) }
     }
   }
   return frequencies.map { it }.mad()

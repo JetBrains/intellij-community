@@ -1,11 +1,14 @@
 package com.intellij.tools.ide.metrics.collector
 
 import com.intellij.tools.ide.metrics.collector.metrics.median
+import com.intellij.tools.ide.metrics.collector.metrics.standardDeviation
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
 
 class HistogramStatisticsTest {
+  // Median
+
   @Test
   fun testSingleBucket() {
     val histogramData = createHistogramData(listOf(10.0), listOf(50, 0))
@@ -46,5 +49,25 @@ class HistogramStatisticsTest {
   fun testUnevenDistributionFourBuckets() {
     val histogramData = createHistogramData(listOf(10.0, 20.0, 30.0, 40.0), listOf(18, 46, 25, 11, 0))
     histogramData.median() shouldBe 20.0
+  }
+
+  // Standard deviation
+
+  @Test
+  fun testSingleBucketStandardDeviation() {
+    val histogramData = createHistogramData(listOf(10.0), listOf(50, 0))
+    histogramData.standardDeviation() shouldBe 0.0
+  }
+
+  @Test
+  fun testEvenDistributionStandardDeviation() {
+    val histogramData = createHistogramData(listOf(10.0, 20.0, 30.0, 40.0), listOf(25, 25, 25, 25, 0))
+    histogramData.standardDeviation() shouldBe 11
+  }
+
+  @Test
+  fun testUnevenDistributionStandardDeviation() {
+    val histogramData = createHistogramData(listOf(10.0, 20.0, 30.0), listOf(20, 80, 100, 0))
+    histogramData.standardDeviation() shouldBe 6
   }
 }
