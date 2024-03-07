@@ -80,25 +80,19 @@ object DocumentationHtmlUtil {
         body { padding: 0; margin: 0; overflow-wrap: anywhere;}
         pre  { white-space: pre-wrap; }
         a { color: $linkColor; text-decoration: none;}
-        .$CLASS_DEFINITION, .$CLASS_DEFINITION_SEPARATED {    
+        .$CLASS_DEFINITION {    
           padding: ${beforeSpacing}px ${contentInnerPadding}px ${afterSpacing}px ${contentInnerPadding}px;
         }
-        .$CLASS_DEFINITION pre, .$CLASS_DEFINITION_SEPARATED pre { 
+        .$CLASS_DEFINITION pre { 
           margin: 0; padding: 0;
         }
-        .$CLASS_CONTENT, .$CLASS_CONTENT_SEPARATED {
+        .$CLASS_CONTENT {
           padding: 0 ${contentInnerPadding}px 0px ${contentInnerPadding}px;
           max-width: 100%;
-        }
-        .$CLASS_SEPARATED, .$CLASS_DEFINITION_SEPARATED, .$CLASS_CONTENT_SEPARATED {
-          padding-bottom: ${beforeSpacing + afterSpacing}px;
-          margin-bottom: ${afterSpacing}px;
-          border-bottom: thin solid $borderColor;
         }
         .$CLASS_BOTTOM, .$CLASS_DOWNLOAD_DOCUMENTATION, .$CLASS_TOP { 
           padding: ${beforeSpacing}px ${contentInnerPadding}px ${afterSpacing}px ${contentInnerPadding}px;
         }
-        
         .$CLASS_SECTIONS { padding: 0 ${contentInnerPadding - 2}px 0 ${contentInnerPadding - 2}px 0; border-spacing: 0; }
         .$CLASS_SECTION { color: $sectionColor; padding-right: 4px; white-space: nowrap; }
       """.trimIndent()

@@ -272,10 +272,9 @@ object QuickDocHighlightingHelper {
     JBHtmlPaneStyleConfiguration(
       colorScheme = colorScheme,
       editorInlineContext = editorInlineContext,
-      inlineCodeParentSelectors = listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)",
+      inlineCodeParentSelectors = listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)",
                                          ".$CLASS_CONTENT div:not(.$CLASS_TOP)", ".$CLASS_SECTIONS"),
-      largeCodeFontSizeSelectors = listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_SEPARATED code",
-                                          ".$CLASS_DEFINITION_SEPARATED pre", ".$CLASS_BOTTOM code", ".$CLASS_TOP code"),
+      largeCodeFontSizeSelectors = listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_BOTTOM code", ".$CLASS_TOP code"),
       enableInlineCodeBackground = DocumentationSettings.isCodeBackgroundEnabled()
                                    && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
       enableCodeBlocksBackground = DocumentationSettings.isCodeBackgroundEnabled()

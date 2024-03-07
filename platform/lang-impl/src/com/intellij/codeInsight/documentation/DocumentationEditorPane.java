@@ -114,8 +114,7 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
   }
 
   private int definitionPreferredWidth() {
-    int preferredDefinitionWidth = Math.max(getPreferredSectionWidth(CLASS_DEFINITION),
-                                            getPreferredSectionWidth(CLASS_DEFINITION_SEPARATED));
+    int preferredDefinitionWidth = getPreferredSectionWidth(CLASS_DEFINITION);
     int preferredLocationWidth = getPreferredSectionWidth(CLASS_BOTTOM);
     if (preferredDefinitionWidth < 0) {
       return -1;

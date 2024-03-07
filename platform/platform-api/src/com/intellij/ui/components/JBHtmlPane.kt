@@ -501,7 +501,7 @@ open class JBHtmlPane(
       val isPre = tagName.contentEquals("pre", true)
       val isCode = tagName.contentEquals("code", true)
       val isBlockquote = tagName.contentEquals("blockquote", true)
-      if (!isP && !isPre && !(isCode && !isOpeningTag) && !(isBlockquote && isOpeningTag)) {
+      if (!(isP && isOpeningTag) && !isPre && !(isCode && !isOpeningTag) && !(isBlockquote && isOpeningTag)) {
         result.append(tagStart)
         skipToTagEnd(result)
         return
@@ -519,6 +519,20 @@ open class JBHtmlPane(
       if (codePoint == '<'.code) {
         readTagStart()
         if (isP) {
+          if (!openingTag && tagName.contentEquals("p", true)) {
+            tagBuffer.append(tagStart)
+            skipToTagEnd(tagBuffer)
+            // Skip whitespace
+            while (codePoint >= 0 && Character.isWhitespace(codePoint)) {
+              next(tagBuffer)
+            }
+            if (codePoint == '<'.code) {
+              readTagStart()
+            } else {
+              result.append(tagBuffer)
+              return
+            }
+          }
           // Remove empty <p> before some tags - workaround for Swing html renderer not removing empty paragraphs before non-inline tags
           if (tagName !in dropPrecedingEmptyParagraphTags) {
             result.append(tagBuffer)
@@ -594,7 +608,8 @@ open class JBHtmlPane(
 
   companion object {
     private val dropPrecedingEmptyParagraphTags = CollectionFactory.createCharSequenceSet(false).also {
-      it.addAll(listOf("ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6", "p", "tr", "td"))
+      it.addAll(listOf("ul", "ol", "dl", "h1", "h2", "h3", "h4", "h5", "h6", "p", "tr", "td",
+                       "table", "pre", "blockquote", "div"))
     }
   }
 }
