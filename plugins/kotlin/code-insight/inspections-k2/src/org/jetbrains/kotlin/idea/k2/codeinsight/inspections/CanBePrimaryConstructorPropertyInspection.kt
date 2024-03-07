@@ -48,7 +48,7 @@ internal class CanBePrimaryConstructorPropertyInspection
         val isMergeableType = if (paramSymbol.isVararg) {
             propertyType.getArrayElementType()?.isEqualTo(paramSymbol.returnType) == true
         } else {
-            element.getReturnKtType().isEqualTo(paramSymbol.returnType)
+            propertyType.isEqualTo(paramSymbol.returnType)
         }
         if (!isMergeableType) return null
         return MovePropertyToConstructorInfo.create(element)
