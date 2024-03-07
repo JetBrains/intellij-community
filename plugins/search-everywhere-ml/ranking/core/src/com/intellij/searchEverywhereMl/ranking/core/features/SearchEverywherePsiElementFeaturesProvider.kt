@@ -77,14 +77,14 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
     }
 
     if (similarityScore != null) {
-      result.add(SIMILARITY_SCORE.with(similarityScore!!))
+      result.add(SIMILARITY_SCORE.with(roundDouble(similarityScore!!)))
     }
     else {
       val elementName = getElementName(item)
       val elementEmbedding = elementName?.let { runBlockingCancellable { generateEmbedding(convertNameToNaturalLanguage(it)) } }
       val queryEmbedding = getQueryEmbedding(searchQuery, split = true)
       if (elementEmbedding != null && queryEmbedding != null) {
-        result.add(SIMILARITY_SCORE.with(elementEmbedding.cosine(queryEmbedding).toDouble()))
+        result.add(SIMILARITY_SCORE.with(roundDouble(elementEmbedding.cosine(queryEmbedding).toDouble())))
       }
     }
 

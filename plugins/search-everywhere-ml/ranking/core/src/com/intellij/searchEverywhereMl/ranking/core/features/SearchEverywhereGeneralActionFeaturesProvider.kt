@@ -64,14 +64,14 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
       data.addAll(getNameMatchingFeatures(it, searchQuery))
     }
     if (similarityScore != null) {
-      data.add(SIMILARITY_SCORE.with(similarityScore!!))
+      data.add(SIMILARITY_SCORE.with(roundDouble(similarityScore!!)))
     }
     else {
       val action = extractAction(element)
       val actionEmbedding = getActionEmbedding(action, valueName)
       val queryEmbedding = getQueryEmbedding(searchQuery, split = false)
       if (actionEmbedding != null && queryEmbedding != null) {
-        data.add(SIMILARITY_SCORE.with(actionEmbedding.cosine(queryEmbedding).toDouble()))
+        data.add(SIMILARITY_SCORE.with(roundDouble(actionEmbedding.cosine(queryEmbedding).toDouble())))
       }
     }
 
