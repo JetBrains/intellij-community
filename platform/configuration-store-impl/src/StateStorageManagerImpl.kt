@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:OptIn(SettingsInternalApi::class)
 
 package com.intellij.configurationStore
 
@@ -12,6 +13,7 @@ import com.intellij.platform.settings.SettingsController
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
+import com.intellij.util.xmlb.SettingsInternalApi
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path

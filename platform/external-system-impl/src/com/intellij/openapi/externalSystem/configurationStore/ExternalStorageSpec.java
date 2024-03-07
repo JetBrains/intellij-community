@@ -11,9 +11,11 @@ import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ExternalStorageSpec extends FileStorageAnnotation implements StorageCreator {
   private final State inProjectStateSpec;
 
