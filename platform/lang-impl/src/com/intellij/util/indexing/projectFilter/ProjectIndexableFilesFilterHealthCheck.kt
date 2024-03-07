@@ -14,6 +14,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexInfrastructure
@@ -170,29 +171,45 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
 
   private fun getFilesThatShouldBeIndexable(project: Project): IndexableFiles {
     val indexableFiles = IndexableFiles()
-    iterateIndexableFiles(project) { provider, fileSet ->
-      indexableFiles.add(fileSet, provider)
-    }
+    getFilesThatShouldBeIndexable(project, if (shouldLogProviders) IndexableFilesSetWithProvidersHandler(indexableFiles) else IndexableFilesSetHandler(indexableFiles))
     return indexableFiles
   }
 
-  private fun iterateIndexableFiles(project: Project, processor: (IndexableFilesIterator, BitSet) -> Unit) {
+  private fun <T> getFilesThatShouldBeIndexable(project: Project, handler: FilesSetHandler<T>) {
     val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
     val providers = index.getIndexableFilesProviders(project)
     for (provider in providers) {
-      val set = BitSet()
+      val state: T = handler.createStateForProvider()
       val outerProcessor = ContentIterator {
         if (it is VirtualFileWithId) {
           ProgressManager.checkCanceled()
-          set.set(it.id)
+          handler.addToState(state, it.id)
         }
         true
       }
       ProgressManager.checkCanceled()
       provider.iterateFiles(project, outerProcessor, VirtualFileFilter.ALL)
-      processor(provider, set)
+      handler.flushState(state, provider)
     }
   }
+}
+
+private interface FilesSetHandler<T> {
+  fun createStateForProvider(): T
+  fun addToState(state: T, id: FileId)
+  fun flushState(state: T, iterator: IndexableFilesIterator)
+}
+
+private class IndexableFilesSetWithProvidersHandler(val indexableFiles: IndexableFiles) : FilesSetHandler<BitSet> {
+  override fun createStateForProvider(): BitSet = BitSet()
+  override fun addToState(state: BitSet, id: FileId) = state.set(id)
+  override fun flushState(state: BitSet, iterator: IndexableFilesIterator) = indexableFiles.add(state, iterator)
+}
+
+private class IndexableFilesSetHandler(val indexableFiles: IndexableFiles) : FilesSetHandler<Unit> {
+  override fun createStateForProvider() = Unit
+  override fun addToState(state: Unit, id: FileId) = indexableFiles.add(id)
+  override fun flushState(state: Unit, iterator: IndexableFilesIterator) = Unit
 }
 
 private sealed class HealthCheckErrorGroup(val fileIds: List<FileId>, val message: String) {
@@ -235,6 +252,8 @@ private class NonIndexableFilesInFilterGroup(files: List<FileId>) : HealthCheckE
   }
 }
 
+private val shouldLogProviders = SystemProperties.getBooleanProperty("project.indexable.files.filter.health.check.log.provider", false) // may consume too much memory
+
 private class IndexableFilesNotInFilterGroup(files: List<FileId>, private val shouldBeIndexableFiles: IndexableFiles) : HealthCheckErrorGroup(files, "Following files are indexable but they were NOT found in filter") {
   override fun fix(fileId: FileId, filter: ProjectIndexableFilesFilter) {
     filter.ensureFileIdPresent(fileId) { true }
@@ -245,7 +264,8 @@ private class IndexableFilesNotInFilterGroup(files: List<FileId>, private val sh
   }
 
   override fun fileInfo(fileId: FileId): String {
-    return "${fileId.fileInfo()} provider=${shouldBeIndexableFiles.getProvider(fileId)?.debugName}"
+    return if (shouldLogProviders) "${fileId.fileInfo()} provider=${shouldBeIndexableFiles.getProvider(fileId)?.debugName}"
+    else fileId.fileInfo()
   }
 }
 
@@ -254,6 +274,10 @@ private class IndexableFiles {
   private val perProvider: MutableList<Pair<IndexableFilesIterator, BitSet>> = mutableListOf()
 
   val size = allFiles.size()
+
+  fun add(fileId: FileId) {
+    allFiles.set(fileId)
+  }
 
   fun add(fileSet: BitSet, provider: IndexableFilesIterator) {
     allFiles.or(fileSet)
