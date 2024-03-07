@@ -86,13 +86,15 @@ internal var isInitialStart: CompletableDeferred<Boolean>? = null
 
 // the main thread's dispatcher is sequential - use it with care
 @OptIn(ExperimentalCoroutinesApi::class)
-fun CoroutineScope.startApplication(args: List<String>,
-                                    configImportNeededDeferred: Deferred<Boolean>,
-                                    targetDirectoryToImportConfig: Path?,
-                                    mainClassLoaderDeferred: Deferred<ClassLoader>?,
-                                    appStarterDeferred: Deferred<AppStarter>,
-                                    mainScope: CoroutineScope,
-                                    busyThread: Thread) {
+fun CoroutineScope.startApplication(
+  args: List<String>,
+  configImportNeededDeferred: Deferred<Boolean>,
+  targetDirectoryToImportConfig: Path?,
+  mainClassLoaderDeferred: Deferred<ClassLoader>?,
+  appStarterDeferred: Deferred<AppStarter>,
+  mainScope: CoroutineScope,
+  busyThread: Thread,
+) {
   launch {
     Java11Shim.INSTANCE = Java11ShimImpl()
   }
@@ -143,13 +145,8 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    scheduleShowSplashIfNeeded(lockSystemDirsJob = lockSystemDirsJob,
-                               initUiScale = initUiScale,
-                               appInfoDeferred = appInfoDeferred,
-                               args = args)
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob = initAwtToolkitJob,
-                                                               initUiScale = initUiScale,
-                                                               appInfoDeferred = appInfoDeferred)
+    scheduleShowSplashIfNeeded(lockSystemDirsJob = lockSystemDirsJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred, args = args)
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(initAwtToolkitJob = initAwtToolkitJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
   }
 
   val initLafJob = launch {
@@ -193,34 +190,34 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(logDeferred = logDeferred,
-                                                appInfoDeferred = appInfoDeferred,
-                                                initUiDeferred = initLafJob,
-                                                args = args,
-                                                mainScope = mainScope)
+  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(logDeferred = logDeferred, appInfoDeferred = appInfoDeferred, initUiDeferred = initLafJob, args = args, mainScope = mainScope)
 
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
   val configImportDeferred: Deferred<Job?> = async {
-    importConfigIfNeeded(isHeadless = isHeadless,
-                         configImportNeededDeferred = configImportNeededDeferred,
-                         lockSystemDirsJob = lockSystemDirsJob,
-                         logDeferred = logDeferred,
-                         args = args,
-                         targetDirectoryToImportConfig = targetDirectoryToImportConfig,
-                         appStarterDeferred = appStarterDeferred,
-                         euaDocumentDeferred = euaDocumentDeferred,
-                         initLafJob =initLafJob)
+    importConfigIfNeeded(
+      isHeadless = isHeadless,
+      configImportNeededDeferred = configImportNeededDeferred,
+      lockSystemDirsJob = lockSystemDirsJob,
+      logDeferred = logDeferred,
+      args = args,
+      targetDirectoryToImportConfig = targetDirectoryToImportConfig,
+      appStarterDeferred = appStarterDeferred,
+      euaDocumentDeferred = euaDocumentDeferred,
+      initLafJob = initLafJob,
+    )
   }
 
   val pluginSetDeferred = async {
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     configImportDeferred.join()
 
-    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this@startApplication,
-                                                zipFilePoolDeferred = zipFilePoolDeferred,
-                                                mainClassLoaderDeferred = mainClassLoaderDeferred,
-                                                logDeferred = logDeferred)
+    PluginManagerCore.scheduleDescriptorLoading(
+      coroutineScope = this@startApplication,
+      zipFilePoolDeferred = zipFilePoolDeferred,
+      mainClassLoaderDeferred = mainClassLoaderDeferred,
+      logDeferred = logDeferred,
+    )
   }
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
@@ -261,16 +258,18 @@ fun CoroutineScope.startApplication(args: List<String>,
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).namedChildScope("Application"), isInternal)
     }
 
-    loadApp(app = app,
-            initAwtToolkitAndEventQueueJob = initEventQueueJob,
-            pluginSetDeferred = pluginSetDeferred,
-            appInfoDeferred = appInfoDeferred,
-            euaDocumentDeferred = euaDocumentDeferred,
-            asyncScope = this@startApplication,
-            initLafJob = initLafJob,
-            logDeferred = logDeferred,
-            appRegisteredJob = appRegisteredJob,
-            args = args.filterNot { CommandLineArgs.isKnownArgument(it) })
+    loadApp(
+      app = app,
+      initAwtToolkitAndEventQueueJob = initEventQueueJob,
+      pluginSetDeferred = pluginSetDeferred,
+      appInfoDeferred = appInfoDeferred,
+      euaDocumentDeferred = euaDocumentDeferred,
+      asyncScope = this@startApplication,
+      initLafJob = initLafJob,
+      logDeferred = logDeferred,
+      appRegisteredJob = appRegisteredJob,
+      args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
+    )
   }
 
   launch {
@@ -334,11 +333,13 @@ private fun CoroutineScope.scheduleSvgIconCacheInitAndPreloadPhm(logDeferred: De
   }
 }
 
-private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(logDeferred: Deferred<Logger>,
-                                                                         appInfoDeferred: Deferred<ApplicationInfoEx>,
-                                                                         initUiDeferred: Job,
-                                                                         args: List<String>,
-                                                                         mainScope: CoroutineScope) {
+private fun CoroutineScope.scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
+  logDeferred: Deferred<Logger>,
+  appInfoDeferred: Deferred<ApplicationInfoEx>,
+  initUiDeferred: Job,
+  args: List<String>,
+  mainScope: CoroutineScope,
+) {
   launch {
     // this must happen after locking system dirs
     val log = logDeferred.await()
@@ -572,8 +573,7 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
   val buildTimeString = DateTimeFormatter.RFC_1123_DATE_TIME.format(appInfo.buildTime)
   log.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${appInfo.build.asString()}, $buildTimeString)")
   log.info("OS: ${SystemInfoRt.OS_NAME} (${SystemInfoRt.OS_VERSION})")
-  log.info(
-    "JRE: ${System.getProperty("java.runtime.version", "-")}, ${System.getProperty("os.arch")} (${System.getProperty("java.vendor", "-")})")
+  log.info("JRE: ${System.getProperty("java.runtime.version", "-")}, ${System.getProperty("os.arch")} (${System.getProperty("java.vendor", "-")})")
   log.info("JVM: ${System.getProperty("java.vm.version", "-")} (${System.getProperty("java.vm.name", "-")})")
   log.info("PID: ${ProcessHandle.current().pid()}")
   if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
@@ -603,7 +603,7 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
     ${PathManager.PROPERTY_LOG_PATH}=${logPath(PathManager.getLogPath())}""")
   val cores = Runtime.getRuntime().availableProcessors()
   val pool = ForkJoinPool.commonPool()
-  log.info("CPU cores: ${cores}; ForkJoinPool.commonPool: ${pool}; factory: ${pool.factory}")
+  log.info("CPU cores: $cores; ForkJoinPool.commonPool: $pool; factory: ${pool.factory}")
 }
 
 private fun logEnvVar(log: Logger, variable: String) {
@@ -613,13 +613,13 @@ private fun logEnvVar(log: Logger, variable: String) {
 }
 
 private fun logPath(path: String): String {
-  return try {
+  try {
     val configured = Path.of(path)
     val real = configured.toRealPath()
-    if (configured == real) path else "${path} -> ${real}"
+    return if (configured == real) path else "$path -> $real"
   }
   catch (e: Exception) {
-    "${path} -> ${e.javaClass.name}: ${e.message}"
+    return "$path -> ${e.javaClass.name}: ${e.message}"
   }
 }
 
