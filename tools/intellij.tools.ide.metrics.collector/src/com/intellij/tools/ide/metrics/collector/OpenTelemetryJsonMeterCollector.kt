@@ -1,11 +1,13 @@
 package com.intellij.tools.ide.metrics.collector
 
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.MetricsJsonImporter
+import com.intellij.tools.ide.metrics.collector.meters.DoubleHistogramMeterToMetricConverter
 import com.intellij.tools.ide.metrics.collector.meters.LongCounterToMetricConverter
 import com.intellij.tools.ide.metrics.collector.meters.LongGaugeToMetricConverter
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import io.opentelemetry.sdk.metrics.data.MetricData
+import io.opentelemetry.sdk.metrics.data.MetricDataType
 import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -34,13 +36,16 @@ open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: Metrics
       .filter(meterFilter)
 
     val metricsGroupedByName: Map<String, List<MetricData>> = telemetryMetrics.groupBy { it.name }
-    val x: List<MetricData> = metricsGroupedByName.map { metricsSelectionStrategy.selectMetric(it.value) }
+    val selectedMetric: List<MetricData> = metricsGroupedByName.map { metricsSelectionStrategy.selectMetric(it.value) }
 
-    // TODO: use meter converters for each metric data type
-    //LongCounterToMetricConverter
-    //LongGaugeToMetricConverter
-    //DoubleHistogramMeterToMetricConverter
-
-    return x.map { PerformanceMetrics.newDuration(it.name, -100500) }
+    return selectedMetric.flatMap {
+      // TODO: add other metric data types (double counter, double sum)
+      when (it.type) {
+        MetricDataType.LONG_SUM -> LongCounterToMetricConverter()
+        MetricDataType.LONG_GAUGE -> LongGaugeToMetricConverter()
+        MetricDataType.HISTOGRAM -> DoubleHistogramMeterToMetricConverter()
+        else -> TODO("Type ${it.type} isn't supported yet")
+      }.convert(it)
+    }
   }
 }

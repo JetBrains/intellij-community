@@ -15,7 +15,9 @@ class MetersJsonCollectionTest {
 
     metrics.shouldNotBeEmpty()
 
-    // TODO: add validation for each metric type
+    println(metrics)
+
+    TODO("add validation for each metric type")
 
     //val metric = metrics.first()
     //metric.id.name shouldBe "testMetric"

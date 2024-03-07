@@ -10,7 +10,7 @@ import com.intellij.platform.testFramework.diagnostic.MetricsPublisher
 import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.tools.ide.metrics.collector.OpenTelemetryCsvMeterCollector
+import com.intellij.tools.ide.metrics.collector.OpenTelemetryJsonMeterCollector
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
@@ -123,7 +123,7 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
   }
 }
 
-internal fun TelemetryMeterCollector.convertToCompleteMetricsCollector(): OpenTelemetryCsvMeterCollector {
+internal fun TelemetryMeterCollector.convertToCompleteMetricsCollector(): OpenTelemetryJsonMeterCollector {
   val metricsSelectionStrategy = when (this.metricsAggregation) {
     MetricsAggregation.EARLIEST -> MetricsSelectionStrategy.EARLIEST
     MetricsAggregation.LATEST -> MetricsSelectionStrategy.LATEST
@@ -133,11 +133,5 @@ internal fun TelemetryMeterCollector.convertToCompleteMetricsCollector(): OpenTe
     MetricsAggregation.AVERAGE -> MetricsSelectionStrategy.AVERAGE
   }
 
-  return OpenTelemetryCsvMeterCollector(metricsSelectionStrategy) { meter ->
-    this.metersFilter(
-      object : Map.Entry<String, List<Long>> {
-        override val key: String = meter.key
-        override val value: List<Long> = meter.value.map { it.value }
-      })
-  }
+  return OpenTelemetryJsonMeterCollector(metricsSelectionStrategy) { meter -> this.metersFilter(meter.name) }
 }

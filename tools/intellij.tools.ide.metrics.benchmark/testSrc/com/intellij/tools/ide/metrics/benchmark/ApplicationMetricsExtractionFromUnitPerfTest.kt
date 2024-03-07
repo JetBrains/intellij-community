@@ -40,11 +40,11 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .setUnit("ms").setDescription("Counter example")
       .buildWithCallback { it.record(counter.get()) }
 
-    val meterCollector = TelemetryMeterCollector(MetricsAggregation.SUM) { it.key.contains("custom") }
+    val meterCollector = TelemetryMeterCollector(MetricsAggregation.SUM) { it.contains("custom") }
     val testName = testInfo.testMethod.get().name
     val customSpanName = "custom span"
 
-    val histogram = meter.histogramBuilder("example.of.histogram")
+    val histogram = meter.histogramBuilder("custom.example.of.histogram")
       .setDescription("Histogram example")
       .setUnit("ns")
       .ofLongs()
@@ -56,7 +56,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       }
 
       counter.incrementAndGet()
-      (1L..5L).forEach { histogram.record(it) }
+      (1L..10L).forEach { histogram.record(it) }
 
       runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
     }
