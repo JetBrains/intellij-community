@@ -543,6 +543,8 @@
 
     <extensionPoint name="idePerformanceListener" interface="com.intellij.diagnostic.PerformanceListener" dynamic="true"/>
 
+    <extensionPoint name="mac.dockMenuActions" interface="com.intellij.ui.mac.MacDockMenuActions"/>
+    
     <extensionPoint name="textEditorInitializer" interface="com.intellij.openapi.fileEditor.impl.text.TextEditorInitializer"/>
 
     <extensionPoint name="toolbarQuickAction" beanClass="com.intellij.ide.ui.customization.ToolbarAddQuickActionInfoBean">
