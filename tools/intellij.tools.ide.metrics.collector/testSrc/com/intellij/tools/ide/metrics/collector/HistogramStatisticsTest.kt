@@ -2,6 +2,7 @@ package com.intellij.tools.ide.metrics.collector
 
 import com.intellij.tools.ide.metrics.collector.metrics.mad
 import com.intellij.tools.ide.metrics.collector.metrics.median
+import com.intellij.tools.ide.metrics.collector.metrics.range
 import com.intellij.tools.ide.metrics.collector.metrics.standardDeviation
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
@@ -90,5 +91,25 @@ class HistogramStatisticsTest {
   fun testUnevenDistributionMad() {
     val histogramData = createHistogramData(listOf(10.0, 20.0, 30.0), listOf(20, 80, 100, 0))
     histogramData.mad() shouldBe 5.0
+  }
+
+  // Range
+
+  @Test
+  fun testSingleBucketRange() {
+    val histogramData = createHistogramData(listOf(10.0), listOf(50, 0))
+    histogramData.range() shouldBe 0.0
+  }
+
+  @Test
+  fun testUniformDistributionRange() {
+    val histogramData = createHistogramData(listOf(10.0, 20.0, 30.0, 40.0), listOf(25, 25, 25, 25, 0))
+    histogramData.range() shouldBe 30.0
+  }
+
+  @Test
+  fun testSkewedDistributionRange() {
+    val histogramData = createHistogramData(listOf(10.0, 20.0, 30.0), listOf(100, 200, 300, 0))
+    histogramData.range() shouldBe 20.0
   }
 }
