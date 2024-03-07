@@ -6,6 +6,7 @@ import org.gradle.tooling.events.OperationType
 import java.io.Serializable
 
 sealed class TargetBuildParameters : Serializable {
+
   abstract val gradleHome: String?
   abstract val gradleUserHome: String?
   abstract val arguments: List<String>
@@ -14,8 +15,10 @@ sealed class TargetBuildParameters : Serializable {
   abstract val progressListenerOperationTypes: Set<OperationType>
   abstract val initScripts: Map<String, String>
 
-  abstract class Builder {
+  abstract class Builder<This : Builder<This>> {
+
     private var initScriptNameDedupSuffix = 0
+
     protected val arguments = mutableListOf<String>()
     protected val jvmArguments = mutableListOf<String>()
     protected val environmentVariables = mutableMapOf<String, String>()
@@ -23,44 +26,84 @@ sealed class TargetBuildParameters : Serializable {
     protected var gradleHome: String? = null
     protected var gradleUserHome: String? = null
     protected val initScripts = mutableMapOf<String, String>()
-    fun useInstallation(gradleHome: String?) {
+
+    abstract fun getThis(): This
+
+    fun useInstallation(gradleHome: String?): This {
       this.gradleHome = gradleHome
+      return getThis()
     }
 
-    fun useGradleUserHome(gradleUserHome: String?) {
+    fun useGradleUserHome(gradleUserHome: String?): This {
       this.gradleUserHome = gradleUserHome
+      return getThis()
     }
 
-    fun withArguments(vararg args: String): Builder = apply { arguments.addAll(args) }
-    fun withArguments(args: Iterable<String>) = apply { arguments.addAll(args) }
-    fun withJvmArguments(vararg args: String): Builder = apply { jvmArguments.addAll(args) }
-    fun withJvmArguments(args: Iterable<String>) = apply { jvmArguments.addAll(args) }
-    fun withEnvironmentVariables(envVars: Map<String, String>): Builder = apply { environmentVariables.putAll(envVars) }
-    fun withSubscriptions(args: Iterable<OperationType>) = apply { progressListenerOperationTypes.addAll(args) }
-    fun withInitScript(filePrefix: String, initScript: String): Builder = apply {
+    fun withArguments(vararg args: String): This {
+      return withArguments(args.asIterable())
+    }
+
+    fun withArguments(args: Iterable<String>): This {
+      arguments.addAll(args)
+      return getThis()
+    }
+
+    fun withJvmArguments(vararg args: String): This {
+      return withJvmArguments(args.asIterable())
+    }
+
+    fun withJvmArguments(args: Iterable<String>): This {
+      jvmArguments.addAll(args)
+      return getThis()
+    }
+
+    fun withEnvironmentVariables(envVars: Map<String, String>): This {
+      environmentVariables.putAll(envVars)
+      return getThis()
+    }
+
+    fun withSubscriptions(args: Iterable<OperationType>): This {
+      progressListenerOperationTypes.addAll(args)
+      return getThis()
+    }
+
+    fun withInitScript(filePrefix: String, initScript: String): This {
       val prefix = if (initScripts.containsKey(filePrefix)) "$filePrefix~${++initScriptNameDedupSuffix}" else filePrefix
-      initScripts.put(prefix, initScript)
+      initScripts[prefix] = initScript
+      return getThis()
     }
 
     abstract fun build(): TargetBuildParameters
   }
 
-  interface TasksAwareBuilder {
-    fun withTasks(vararg args: String): Builder
-    fun withTasks(args: Iterable<String>): Builder
+  abstract class TaskAwareBuilder<This : TaskAwareBuilder<This>> : Builder<This>() {
+
+    protected val tasks = ArrayList<String>()
+
+    fun withTasks(vararg args: String): This {
+      return withTasks(args.asIterable())
+    }
+
+    fun withTasks(args: Iterable<String>): This {
+      tasks.addAll(args)
+      return getThis()
+    }
   }
 
-  class BuildLauncherParametersBuilder : Builder(), TasksAwareBuilder {
-    private val tasks = mutableListOf<String>()
-    override fun withTasks(vararg args: String) = apply { tasks.addAll(args) }
-    override fun withTasks(args: Iterable<String>) = apply { tasks.addAll(args) }
+  class BuildLauncherParametersBuilder : TaskAwareBuilder<BuildLauncherParametersBuilder>() {
+
+    override fun getThis(): BuildLauncherParametersBuilder = this
+
     override fun build(): BuildLauncherParameters {
       return BuildLauncherParameters(tasks, gradleHome, gradleUserHome,
                                      arguments, jvmArguments, environmentVariables, progressListenerOperationTypes, initScripts)
     }
   }
 
-  class TestLauncherParametersBuilder : Builder() {
+  class TestLauncherParametersBuilder : Builder<TestLauncherParametersBuilder>() {
+
+    override fun getThis(): TestLauncherParametersBuilder = this
+
     override fun build(): TestLauncherParameters {
       return TestLauncherParameters(gradleHome, gradleUserHome, arguments, jvmArguments, environmentVariables,
                                     progressListenerOperationTypes, initScripts)
@@ -69,11 +112,10 @@ sealed class TargetBuildParameters : Serializable {
 
   class ModelBuilderParametersBuilder<T>(
     private val modelType: Class<T>
-  ) : Builder(), TasksAwareBuilder {
+  ) : TaskAwareBuilder<ModelBuilderParametersBuilder<T>>() {
 
-    private val tasks = mutableListOf<String>()
-    override fun withTasks(vararg args: String) = apply { tasks.addAll(args) }
-    override fun withTasks(args: Iterable<String>) = apply { tasks.addAll(args) }
+    override fun getThis(): ModelBuilderParametersBuilder<T> = this
+
     override fun build(): ModelBuilderParameters<T> {
       return ModelBuilderParameters(modelType, tasks, gradleHome, gradleUserHome,
                                     arguments, jvmArguments, environmentVariables, progressListenerOperationTypes, initScripts)
@@ -82,11 +124,10 @@ sealed class TargetBuildParameters : Serializable {
 
   class BuildActionParametersBuilder<T>(
     private val action: BuildAction<T>
-  ) : Builder(), TasksAwareBuilder {
+  ) : TaskAwareBuilder<BuildActionParametersBuilder<T>>() {
 
-    private val tasks = mutableListOf<String>()
-    override fun withTasks(vararg args: String) = apply { tasks.addAll(args) }
-    override fun withTasks(args: Iterable<String>) = apply { tasks.addAll(args) }
+    override fun getThis(): BuildActionParametersBuilder<T> = this
+
     override fun build(): BuildActionParameters<T> {
       return BuildActionParameters(action, tasks, gradleHome, gradleUserHome,
                                    arguments, jvmArguments, environmentVariables, progressListenerOperationTypes, initScripts)
@@ -96,11 +137,10 @@ sealed class TargetBuildParameters : Serializable {
   class PhasedBuildActionParametersBuilder<T>(
     private var projectsLoadedAction: BuildAction<T>?,
     private var buildFinishedAction: BuildAction<T>?
-  ) : Builder(), TasksAwareBuilder {
+  ) : TaskAwareBuilder<PhasedBuildActionParametersBuilder<T>>() {
 
-    private val tasks = mutableListOf<String>()
-    override fun withTasks(vararg args: String) = apply { tasks.addAll(args) }
-    override fun withTasks(args: Iterable<String>) = apply { tasks.addAll(args) }
+    override fun getThis(): PhasedBuildActionParametersBuilder<T> = this
+
     override fun build(): PhasedBuildActionParameters<T> {
       return PhasedBuildActionParameters(projectsLoadedAction, buildFinishedAction, tasks, gradleHome, gradleUserHome,
                                          arguments, jvmArguments, environmentVariables, progressListenerOperationTypes, initScripts)

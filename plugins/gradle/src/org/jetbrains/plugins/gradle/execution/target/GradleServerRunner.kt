@@ -43,9 +43,11 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
                                   private val consumerOperationParameters: ConsumerOperationParameters,
                                   private val prepareTaskState: Boolean) {
 
-  fun run(classpathInferer: GradleServerClasspathInferer,
-          targetBuildParametersBuilder: TargetBuildParameters.Builder,
-          resultHandler: ResultHandler<Any?>) {
+  fun run(
+    classpathInferer: GradleServerClasspathInferer,
+    targetBuildParametersBuilder: TargetBuildParameters.Builder<*>,
+    resultHandler: ResultHandler<Any?>
+  ) {
     val project: Project = connection.taskId?.findProject() ?: return
     val progressIndicator = GradleServerProgressIndicator(connection.taskId, connection.taskListener)
     consumerOperationParameters.cancellationToken.addCallback(progressIndicator::cancel)

@@ -16,7 +16,7 @@ internal abstract class AbstractTargetBuildOperation<This : AbstractTargetBuildO
   connection.parameters.connectionParameters
 ) {
 
-  protected abstract val targetBuildParametersBuilder: TargetBuildParameters.Builder
+  protected abstract val targetBuildParametersBuilder: TargetBuildParameters.Builder<*>
 
   protected open val buildActions: List<BuildAction<*>> = emptyList()
 

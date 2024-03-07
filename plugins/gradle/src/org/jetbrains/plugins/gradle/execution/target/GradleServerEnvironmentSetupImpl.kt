@@ -63,9 +63,11 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
   var serverBindingPort: TargetValue<Int>? = null
 
-  fun prepareEnvironment(targetBuildParametersBuilder: TargetBuildParameters.Builder,
-                         consumerOperationParameters: ConsumerOperationParameters,
-                         progressIndicator: GradleServerRunner.GradleServerProgressIndicator): TargetedCommandLine {
+  fun prepareEnvironment(
+    targetBuildParametersBuilder: TargetBuildParameters.Builder<*>,
+    consumerOperationParameters: ConsumerOperationParameters,
+    progressIndicator: GradleServerRunner.GradleServerProgressIndicator
+  ): TargetedCommandLine {
     progressIndicator.checkCanceled()
     initJavaParameters()
 
@@ -303,8 +305,10 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     return targetBuildArguments
   }
 
-  private fun TargetBuildParameters.Builder.build(operationParameters: ConsumerOperationParameters,
-                                                  arguments: List<Pair<String, TargetValue<String>?>>): TargetBuildParameters {
+  private fun TargetBuildParameters.Builder<*>.build(
+    operationParameters: ConsumerOperationParameters,
+    arguments: List<Pair<String, TargetValue<String>?>>
+  ): TargetBuildParameters {
     val resolvedBuildArguments = mutableListOf<String>()
     for ((arg, argValue) in arguments) {
       if (argValue == null) {
@@ -320,7 +324,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     withArguments(resolvedBuildArguments)
     withJvmArguments(operationParameters.jvmArguments ?: emptyList())
     withEnvironmentVariables(operationParameters.environmentVariables ?: emptyMap())
-    (this as? TargetBuildParameters.TasksAwareBuilder)?.withTasks(operationParameters.tasks ?: emptyList())
+    (this as? TargetBuildParameters.TaskAwareBuilder<*>)?.withTasks(operationParameters.tasks ?: emptyList())
     return build()
   }
 
