@@ -431,7 +431,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   public static JvmClassNodeBuilder create(String filePath, ClassReader cr, boolean isGenerated) {
     JvmClassNodeBuilder builder = new JvmClassNodeBuilder(filePath, isGenerated);
     try {
-      cr.accept(builder, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+      cr.accept(builder, ClassReader.SKIP_FRAMES);
     }
     catch (RuntimeException e) {
       throw new RuntimeException("Corrupted .class file: " + filePath, e);
