@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.codegen.signature.AsmTypeFactory
 import org.jetbrains.kotlin.codegen.signature.JvmSignatureWriter
 import org.jetbrains.kotlin.codegen.state.isMostPreciseContravariantArgument
 import org.jetbrains.kotlin.codegen.state.isMostPreciseCovariantArgument
-import org.jetbrains.kotlin.codegen.state.updateArgumentModeFromAnnotations
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.load.kotlin.TypeMappingConfiguration
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
