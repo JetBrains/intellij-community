@@ -160,8 +160,6 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
   }
 
 
-  yieldAndWaitForDumbModeEnd(project)
-
   if (!isPredicateBasedWarmup()) {
     callProjectConfigurators(args) {
       this.runWarmup(project)
