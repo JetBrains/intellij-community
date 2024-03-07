@@ -81,8 +81,8 @@ class InspectionRunner {
                            @NotNull List<? extends PsiElement> elementsInside,
                            @NotNull List<? extends PsiElement> elementsOutside,
                            boolean isVisible,
-                           @NotNull List<Class<?>> acceptingPsiTypes,
-                           // the containing file this tool was called for. In the case of injected context, this will be the injected file.
+                           @NotNull List<? extends Class<?>> acceptingPsiTypes,
+                           // The containing file this tool was called for. In the case of injected context, this will be the injected file.
                            @NotNull PsiFile psiFile) {
     @Override
     public String toString() {
@@ -210,7 +210,7 @@ class InspectionRunner {
         InspectionProfilerDataHolder.saveStats(myPsiFile, init);
       }
       if (myIsOnTheFly && addRedundantSuppressions) {
-        addRedundantSuppressions(init, toolWrappers, redundantContexts, applyIncrementallyCallback, contextFinishedCallback, restrictedInside, restrictedOutside);
+        addRedundantSuppressions(init, toolWrappers, redundantContexts, applyIncrementallyCallback, contextFinishedCallback);
       }
     });
     return ContainerUtil.concat(init, redundantContexts, injectedContexts);
@@ -312,9 +312,7 @@ class InspectionRunner {
                                         @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                         @NotNull List<? super InspectionContext> result,
                                         @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
-                                        @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
-                                        @NotNull List<? extends PsiElement> restrictedInside,
-                                        @NotNull List<? extends PsiElement> restrictedOutside) {
+                                        @NotNull Consumer<? super InspectionContext> contextFinishedCallback) {
     for (InspectionContext context : init) {
       LocalInspectionToolWrapper toolWrapper = context.tool;
       LocalInspectionTool tool = toolWrapper.getTool();

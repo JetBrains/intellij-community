@@ -3,8 +3,10 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public interface InspectListener {
   default void inspectionFinished(long duration, long threadId, int problemsCount, InspectionToolWrapper<?, ?> tool, InspectionKind kind,
                                   @Nullable PsiFile file, Project project) {}
