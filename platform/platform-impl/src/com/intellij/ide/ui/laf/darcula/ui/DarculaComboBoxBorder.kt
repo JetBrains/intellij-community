@@ -90,6 +90,6 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
   private fun getLegacyComboBoxUI(c: Component): DarculaComboBoxUI? {
     val comboBox = c as? JComboBox<*> ?: return null
     val ui = comboBox.ui as? DarculaComboBoxUI ?: return null
-    return if (ui.isNewBorderSupported(comboBox)) null else ui
+    return if (comboBox.border !== comboBox || ui.isNewBorderSupported(comboBox)) null else ui
   }
 }
