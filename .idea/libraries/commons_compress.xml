@@ -1,18 +1,26 @@
 <component name="libraryTable">
   <library name="commons-compress" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-compress:1.25.0">
+    <properties maven-id="org.apache.commons:commons-compress:1.26.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.25.0/commons-compress-1.25.0.jar">
-          <sha256sum>d0ec8014ebbb0749f471803122b21796afddf2e98e194e4374622e5fbaf69f49</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.26.0/commons-compress-1.26.0.jar">
+          <sha256sum>051aceb8bbcc62d0f5b2b8ac72c53767f9c59bfbd050151e65bef6f51c8ed9c9</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/commons-io/commons-io/2.15.1/commons-io-2.15.1.jar">
+          <sha256sum>a58af12ee1b68cfd2ebb0c27caef164f084381a00ec81a48cc275fd7ea54e154</sha256sum>
         </artifact>
       </verification>
+      <exclude>
+        <dependency maven-id="org.apache.commons:commons-lang3" />
+      </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.25.0/commons-compress-1.25.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.26.0/commons-compress-1.26.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.15.1/commons-io-2.15.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.25.0/commons-compress-1.25.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-compress/1.26.0/commons-compress-1.26.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-io/commons-io/2.15.1/commons-io-2.15.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

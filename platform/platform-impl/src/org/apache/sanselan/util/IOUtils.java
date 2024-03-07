@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.apache.sanselan.util;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -13,7 +13,7 @@ import java.io.*;
  *
  * @deprecated For plugin compatibility only, DO NOT USE.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class IOUtils {
 
   public static byte[] getInputStreamBytes(InputStream is) throws IOException {

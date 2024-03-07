@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="compile-testing" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.google.testing.compile:compile-testing:0.16">
+    <properties include-transitive-deps="false" maven-id="com.google.testing.compile:compile-testing:0.21.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/testing/compile/compile-testing/0.16/compile-testing-0.16.jar">
-          <sha256sum>55746fa706fb051a53f61d205eb66ee31e33ed1936d92b323c7001df18ad3acb</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/testing/compile/compile-testing/0.21.0/compile-testing-0.21.0.jar">
+          <sha256sum>da42c0b350c0e5717df91a7e554ee5acbf07f4b87d4d2240589521070b4bce72</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/testing/compile/compile-testing/0.16/compile-testing-0.16.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/testing/compile/compile-testing/0.21.0/compile-testing-0.21.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/testing/compile/compile-testing/0.16/compile-testing-0.16-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/testing/compile/compile-testing/0.21.0/compile-testing-0.21.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
