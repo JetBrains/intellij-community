@@ -12,6 +12,9 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal
 
+/**
+ * This interface isn't supposed to be used from plugins, call methods from [NavigationRequest.Companion] instead.
+ */
 @Internal
 interface NavigationRequests {
 
