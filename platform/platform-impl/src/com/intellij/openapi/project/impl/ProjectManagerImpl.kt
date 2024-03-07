@@ -1271,11 +1271,9 @@ internal suspend inline fun projectInitListeners(crossinline executor: suspend (
     .getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")
   for (adapter in ep.sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
-    if (!isCorePlugin(pluginDescriptor) &&
-        !(pluginDescriptor.pluginId.idString == "com.jetbrains.codeWithMe"
-          && adapter.assignableToClassName == "com.jetbrains.rdserver.unattendedHost.UnattendedHostManager\$ProjectAttachActivity")
-        && !(pluginDescriptor.pluginId.idString == "intellij.rider.plugins.cwm"
-             && adapter.assignableToClassName == "com.jetbrains.rdserver.unattendedHost.UnattendedHostManager\$ProjectAttachActivity")) {
+    val approvedPluginIds = listOf("com.jetbrains.codeWithMe", "intellij.rider.plugins.cwm", "intellij.rider.plugins.clion.radler.cwm")
+    if (!isCorePlugin(pluginDescriptor) && !approvedPluginIds.contains(pluginDescriptor.pluginId.idString)
+          && adapter.assignableToClassName == "com.jetbrains.rdserver.unattendedHost.UnattendedHostManager\$ProjectAttachActivity") {
       LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
       continue
     }
