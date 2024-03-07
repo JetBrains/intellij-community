@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.impl.facade.bek;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class BekBranchMerger {
+  private final static Logger LOG = Logger.getInstance(BekBranchMerger.class);
   @NotNull private final List<? extends BekBranch> myBekBranches;
   @NotNull private final BekEdgeRestrictions myEdgeRestrictions;
   @NotNull private final TimestampGetter myTimestampGetter;
@@ -41,7 +43,7 @@ class BekBranchMerger {
     List<Integer> prepareForInsertPart = bekBranch.getPrepareForInsertPart();
     if (prepareForInsertPart == null) return Long.MAX_VALUE;
 
-    assert !prepareForInsertPart.isEmpty();
+    LOG.assertTrue(!prepareForInsertPart.isEmpty());
     int nodeIndex = prepareForInsertPart.get(0);
     return myTimestampGetter.getTimestamp(nodeIndex);
   }
@@ -55,7 +57,7 @@ class BekBranchMerger {
     }
 
     List<Integer> prepareForInsertPart = selectBranch.getPrepareForInsertPart();
-    assert prepareForInsertPart != null;
+    LOG.assertTrue(prepareForInsertPart != null);
     for (int insertedNode : prepareForInsertPart) {
       myEdgeRestrictions.removeRestriction(insertedNode);
     }

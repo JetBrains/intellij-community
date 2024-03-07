@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.impl.facade.bek;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl;
@@ -12,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public final class BekSorter {
+  private final static Logger LOG = Logger.getInstance(BekSorter.class);
+
   @NotNull
   public static BekIntMap createBekMap(@NotNull LinearGraph permanentGraph,
                                        @NotNull GraphLayoutImpl graphLayout,
@@ -19,7 +22,7 @@ public final class BekSorter {
     BekSorter bekSorter = new BekSorter(permanentGraph, graphLayout, timestampGetter);
 
     List<Integer> result = bekSorter.getResult();
-    assert result.size() == permanentGraph.nodesCount();
+    LOG.assertTrue(result.size() == permanentGraph.nodesCount());
     return createBekIntMap(result);
   }
 
