@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
@@ -10,8 +12,12 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinDiagnosticModCommandFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
@@ -21,13 +27,33 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.types.Variance
 
 object CastExpressionFixFactories {
-    class Input(val typePresentation: String, val typeSourceCode: String) : KotlinApplicatorInput
 
-    private val applicator: KotlinModCommandApplicator<PsiElement, Input> = modCommandApplicator {
-        familyName(KotlinBundle.lazyMessage("fix.cast.expression.family"))
-        actionName { psi, input -> KotlinBundle.message("fix.cast.expression.text", getExpressionShortText(psi), input.typePresentation) }
-        applyTo { psi, input, context, updater ->
-            val expressionToInsert = KtPsiFactory(context.project).createExpressionByPattern("$0 as $1", psi, input.typeSourceCode)
+    data class Input(
+        val typePresentation: String,
+        val typeSourceCode: String,
+    ) : KotlinApplicatorInput
+
+    private val applicator = object : KotlinApplicator.ModCommandBased<PsiElement, Input> {
+
+        override fun getFamilyName(): String = KotlinBundle.message("fix.cast.expression.family")
+
+        override fun getActionName(
+            psi: PsiElement,
+            input: Input,
+        ): String = KotlinBundle.message(
+            "fix.cast.expression.text",
+            getExpressionShortText(psi),
+            input.typePresentation,
+        )
+
+        override fun applyTo(
+            psi: PsiElement,
+            input: Input,
+            context: ActionContext,
+            updater: ModPsiUpdater,
+        ) {
+            val expressionToInsert = KtPsiFactory(context.project)
+                .createExpressionByPattern("$0 as $1", psi, input.typeSourceCode)
             val newExpression = psi.replaced(expressionToInsert)
 
             shortenReferences(newExpression)

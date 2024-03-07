@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -9,14 +11,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -28,33 +23,16 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.defaultValOrVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.ValueArgument
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
-import kotlin.collections.firstOrNull
-import kotlin.collections.forEach
-import kotlin.collections.indexOf
-import kotlin.let
-import kotlin.sequences.firstOrNull
-import kotlin.sequences.map
-import kotlin.takeIf
 
 object ChangeSignatureFixFactory {
 
@@ -63,25 +41,39 @@ object ChangeSignatureFixFactory {
     }
 
     private data class ParameterInfo(val name: String, val type: String)
-    private class Input(
+
+    private data class Input(
         val type: ChangeType,
         val name: String,
         val isConstructor: Boolean,
         val idx: Int,
         val parameterCount: Int,
-        val expectedParameterTypes: Array<ParameterInfo>? = null
+        val expectedParameterTypes: List<ParameterInfo>? = null,
     ) : KotlinApplicatorInput
 
-    private val applicator = applicator<PsiElement, Input> {
-        familyName { KotlinBundle.message("fix.change.signature.family") }
-        actionName(::getActionName)
-        applyTo { psi, input ->
+    private val applicator = object : KotlinApplicator.PsiBased<PsiElement, Input> {
+
+        override fun getFamilyName(): String = KotlinBundle.message("fix.change.signature.family")
+
+        override fun getActionName(
+            psi: PsiElement,
+            input: Input,
+        ): String = ChangeSignatureFixFactory.getActionName(psi, input)
+
+        override fun applyTo(
+            psi: PsiElement,
+            input: Input,
+            project: Project,
+            editor: Editor?,
+        ) {
             val changeInfo = analyzeInModalWindow(psi as KtElement, KotlinBundle.message("fix.change.signature.prepare")) {
                 prepareChangeInfo(psi, input)
-            } ?: return@applyTo
+            } ?: return
+
             KotlinChangeSignatureProcessor(changeInfo.method.project, changeInfo).run()
         }
-        startInWriteAction { false }
+
+        override fun startInWriteAction(): Boolean = false
     }
 
     val addParameterFactory = diagnosticFixFactory(KtFirDiagnostic.TooManyArguments::class, applicator) { diagnostic ->
@@ -399,7 +391,7 @@ object ChangeSignatureFixFactory {
                         KotlinNameSuggester().suggestTypeNames(it).firstOrNull() ?: "param",
                         it.render(position = Variance.IN_VARIANCE)
                     )
-                }?.toTypedArray()
+                },
             )
         )
     }

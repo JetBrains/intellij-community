@@ -2,14 +2,15 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinModCommandApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedModCommand
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactories
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.modCommandApplicator
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -19,18 +20,27 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 object InitializePropertyQuickFixFactories {
 
-    data class AddInitializerInput(val initializerText: String?) : KotlinApplicatorInput
+    data class AddInitializerInput(
+        val initializerText: String?,
+    ) : KotlinApplicatorInput
 
-    private val addInitializerApplicator: KotlinModCommandApplicator<KtProperty, AddInitializerInput> = modCommandApplicator {
-        familyAndActionName(KotlinBundle.lazyMessage("add.initializer"))
+    private val addInitializerApplicator = object : KotlinApplicator.ModCommandBased<KtProperty, AddInitializerInput> {
 
-        applyTo { property, input, context, updater ->
-            val initializer = property.setInitializer(KtPsiFactory(context.project).createExpression(input.initializerText ?: "TODO()"))!!
+        override fun getFamilyName(): String = KotlinBundle.message("add.initializer")
+
+        override fun applyTo(
+            psi: KtProperty,
+            input: AddInitializerInput,
+            context: ActionContext,
+            updater: ModPsiUpdater,
+        ) {
+            val expression = KtPsiFactory(context.project)
+                .createExpression(input.initializerText ?: "TODO()")
+            val initializer = psi.setInitializer(expression)!!
             updater.select(TextRange(initializer.startOffset, initializer.endOffset))
             updater.moveCaretTo(initializer.endOffset)
         }
     }
-
 
     val initializePropertyFactory =
         diagnosticModCommandFixFactories(

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtElement
  * Provide list of ranges on which [KotlinApplicator] is available
  *
  * It should not do some additional checks to verify that  [KotlinApplicator] is applicable
- * as it is responsibility of [KotlinApplicator.isApplicableByPsi]
+ * as it is responsibility of [KotlinApplicator.PsiBased.isApplicableByPsi]
  *
  * No resolve operations should be called inside [getApplicabilityRanges],
  * i.e no [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] or [PsiElement] resolve can be used inside
