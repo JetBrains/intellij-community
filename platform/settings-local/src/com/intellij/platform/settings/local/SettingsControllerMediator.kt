@@ -51,7 +51,7 @@ class SettingsControllerMediator(
     var totalResult = SetResult.inapplicable()
     for (controller in controllers) {
       val result = controller.setItem(key = key, value = value)
-      if (result == SetResult.forbid()) {
+      if (result == SetResult.forbid() || result.value !is Enum<*>) {
         return result
       }
       else if (result == SetResult.done()) {

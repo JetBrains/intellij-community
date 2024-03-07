@@ -244,19 +244,28 @@ private fun serializeWithController(
     val isPropertySkipped = isPropertySkipped(filter = filter, binding = binding, bean = state, rootBinding = rootBinding, isFilterPropertyItself = true)
     val key = SettingDescriptor(key = createSettingKey(componentName, binding), pluginId = pluginId, tags = keyTags, serializer = JsonElementSettingSerializerDescriptor)
     val result = controller.doSetItem(key = key, value = if (isPropertySkipped) null else binding.toJson(state, filter))
-    if (result != SetResult.inapplicable()) {
+    if (isPropertySkipped) {
       continue
     }
 
-    if (isPropertySkipped) {
-      continue
+    var effectiveState = state
+    if (result != SetResult.inapplicable()) {
+      val value = result.value
+      if (value is JsonElement) {
+        // substituted value
+        effectiveState = rootBinding.newInstance()
+        binding.setFromJson(effectiveState, value)
+      }
+      else {
+        continue
+      }
     }
 
     if (element == null) {
       element = Element(rootBinding.tagName)
     }
 
-    binding.serialize(bean = state, parent = element, filter = filter)
+    binding.serialize(bean = effectiveState, parent = element, filter = filter)
   }
   return element
 }
