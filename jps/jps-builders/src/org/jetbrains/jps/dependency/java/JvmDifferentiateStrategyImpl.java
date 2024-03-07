@@ -56,7 +56,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
       else {
         context.affectUsage(usageFactory.apply(id));
       }
-      debug("Affect ", usageKind, " usage owned by node ", id.getNodeName());
+      debug("Affect ", usageKind, " usage owned by node '", id.getNodeName(), "'");
     }
   }
 

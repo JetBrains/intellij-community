@@ -151,6 +151,11 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return container != null? container.getFunctions() : Collections.emptyList();
   }
 
+  public Iterable<KmTypeParameter> getTypeParameters() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? ((KmClass)container).getTypeParameters() : Collections.emptyList();
+  }
+
   @Nullable
   public KmDeclarationContainer getDeclarationContainer() {
     KotlinClassMetadata clsMeta = getClassMetadata();
@@ -192,7 +197,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && functions().unchanged() && properties().unchanged()/*&& !dataChanged()*/;
+      return !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && functions().unchanged() && properties().unchanged()/*&& !dataChanged()*/;
     }
 
     public boolean kindChanged() {
@@ -213,6 +218,10 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     public boolean extraChanged() {
       return myPast.myExtraInt != myExtraInt || !Objects.equals(myPast.myExtraString, myExtraString);
+    }
+
+    public boolean typeParametersVarianceChanged() {
+      return !Iterators.equals(myPast.getTypeParameters(), getTypeParameters(), (p1, p2) -> p1.getVariance() == p2.getVariance());
     }
 
     public Specifier<KmFunction, KmFunctionsDiff> functions() {

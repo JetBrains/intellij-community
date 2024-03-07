@@ -32,9 +32,8 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
 
     if (!addedClass.isPrivate()) {
       // calls to newly added class' constructors may shadow calls to functions named similarly
-      String ktName = getKotlinName(addedClass);
-      debug("Affecting lookup usages for added class ", ktName);
-      affectLookupUsages(context, asIterable(new JvmNodeReferenceID(addedClass.getPackageName())), ktName != null? JvmClass.getShortName(ktName) : addedClass.getShortName(), future, null);
+      debug("Affecting lookup usages for added class ", addedClass.getName());
+      affectClassLookupUsages(context, addedClass, future);
     }
 
     return true;
@@ -50,9 +49,8 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       // this will affect all imports of this class in kotlin sources
       KmDeclarationContainer container = getDeclarationContainer(removedClass);
       if (container == null /*is non-kotlin node*/ || container instanceof KmClass) {
-        String clsName = container != null? ((KmClass)container).getName() : removedClass.getName();
-        debug("Affecting lookup usages for removed class ", clsName);
-        affectLookupUsages(context, asIterable(new JvmNodeReferenceID(removedClass.getPackageName())), JvmClass.getShortName(clsName), present, null);
+        debug("Affecting lookup usages for removed class ", removedClass.getName());
+        affectClassLookupUsages(context, removedClass, present);
       }
     }
 
@@ -126,6 +124,11 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
 
     for (Difference.Change<KotlinMeta, KotlinMeta.Diff> metaChange : diff.metadata(KotlinMeta.class).changed()) {
       KotlinMeta.Diff metaDiff = metaChange.getDiff();
+
+      if (metaDiff.typeParametersVarianceChanged()) {
+        debug("Kotlin class' type parameters' variance changed; affecting class usage ", changedClass.getName());
+        affectSubclasses(context, future, change.getNow().getReferenceID(), true);
+      }
 
       for (Difference.Change<KmFunction, KotlinMeta.KmFunctionsDiff> funChange : metaDiff.functions().changed()) {
         KmFunction changedKmFunction = funChange.getPast();
@@ -272,11 +275,16 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     if (clsMethod.isPrivate()) {
       return;
     }
-    Set<JvmNodeReferenceID> targets = collect(
-      flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), new SmartHashSet<>()
-    );
-    targets.add(cls.getReferenceID());
-    affectLookupUsages(context, targets, getMethodKotlinName(cls, clsMethod), utils, constraint);
+    if (clsMethod.isConstructor()) {
+      affectClassLookupUsages(context, cls, utils);
+    }
+    else {
+      Set<JvmNodeReferenceID> targets = collect(
+        flat(utils.allSupertypes(cls.getReferenceID()), utils.collectSubclassesWithoutMethod(cls.getReferenceID(), clsMethod)), new SmartHashSet<>()
+      );
+      targets.add(cls.getReferenceID());
+      affectLookupUsages(context, targets, getMethodKotlinName(cls, clsMethod), utils, constraint);
+    }
   }
 
   private static final class PropertyDescriptor{
@@ -348,6 +356,11 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       iterator.next();
     }
     return !iterator.hasNext();
+  }
+
+  private void affectClassLookupUsages(DifferentiateContext context, JvmClass cls, Utils utils) {
+    String ktName = getKotlinName(cls);
+    affectLookupUsages(context, asIterable(new JvmNodeReferenceID(cls.getPackageName())), ktName != null? JvmClass.getShortName(ktName) : cls.getShortName(), utils, null);
   }
 
   private void affectMemberLookupUsages(DifferentiateContext context, JvmClass cls, String name, Utils utils) {
