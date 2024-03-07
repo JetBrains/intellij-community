@@ -97,6 +97,7 @@ class GHPRInfoViewModel internal constructor(
     dataProvider.detailsData.reloadDetails()
     dataProvider.stateData.reloadMergeabilityState()
     dataProvider.reviewData.resetPendingReview()
+    dataProvider.reviewData.resetReviewThreads()
     dataProvider.changesData.reloadChanges()
     dataProvider.viewedStateData.reset()
   }
