@@ -59,6 +59,7 @@ internal class CoroutineScopeModel internal constructor(
   }
 
   override fun refreshScopes(dataContext: DataContext?) {
+    LOG.debug("Scope model refresh request")
     val givenDataContext = dataContext?.let { Utils.createAsyncDataContext(it) }
     var earlyDataContextPromise: Promise<DataContext>? = null
     if (givenDataContext == null && EDT.isCurrentThreadEdt()) {
@@ -73,6 +74,7 @@ internal class CoroutineScopeModel internal constructor(
       semaphore.withPermit {
         yield() // dispatch
         runCatching {
+          LOG.debug("Refreshing scopes")
           val effectiveDataContext: DataContext = when {
             givenDataContext != null -> givenDataContext
             earlyDataContextPromise != null -> earlyDataContextPromise.await()
@@ -89,6 +91,7 @@ internal class CoroutineScopeModel internal constructor(
       .then { Utils.createAsyncDataContext(it) }
 
   private fun fireScopesUpdated(scopesSnapshot: ScopesSnapshot) {
+    LOG.debug("Scopes updated")
     listeners.forEach { it.scopesUpdated(scopesSnapshot) }
   }
 

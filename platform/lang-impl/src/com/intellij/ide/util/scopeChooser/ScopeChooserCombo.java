@@ -2,6 +2,7 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -42,6 +43,7 @@ import java.util.Map;
  */
 public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Disposable {
 
+  private static final @NotNull Logger LOG = Logger.getInstance(ScopeChooserCombo.class);
   private Project myProject;
   private @Nullable Condition<? super ScopeDescriptor> myScopeFilter;
   private BrowseListener myBrowseListener;
@@ -83,6 +85,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       throw new IllegalStateException("scope chooser combo already initialized");
     }
 
+    LOG.debug("Initializing scope chooser combo");
     scopeModel = project.getService(ScopeService.class)
       .createModel(EnumSet.of(
         ScopeOption.FROM_SELECTION,
@@ -326,6 +329,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private class MyScopeModelListener implements ScopeModelListener {
     @Override
     public void scopesUpdated(@NotNull ScopesSnapshot scopes) {
+      LOG.debug("Scope chooser combo updated, scheduling EDT update");
       SwingUtilities.invokeLater(() -> {
         ScopeChooserCombo.this.scopes = scopes;
         DefaultComboBoxModel<ScopeDescriptor> model = new DefaultComboBoxModel<>();
@@ -335,6 +339,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         preselectedScope = null;
         var promise = initPromise;
         if (promise != null) {
+          LOG.debug("Scope chooser combo initialized");
           promise.setResult(null);
           initPromise = null;
         }
