@@ -252,7 +252,7 @@ public final class GitRebaseUtils {
   }
 
   public static @NotNull Collection<GitRepository> getRebasingRepositories(@NotNull Project project) {
-    return GitUtil.getRepositoriesInState(project, Repository.State.REBASING);
+    return GitUtil.getRepositoriesInStates(project, Repository.State.REBASING);
   }
 
   public static int getNumberOfCommitsToRebase(@NotNull GitRepository repository, @Nullable String upstream, @Nullable String branch)

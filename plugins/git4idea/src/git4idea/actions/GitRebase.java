@@ -39,7 +39,7 @@ public class GitRebase extends DumbAwareAction {
     if (project == null || !hasGitRepositories(project) || !getRebasingRepositories(project).isEmpty()) {
       presentation.setEnabledAndVisible(false);
     }
-    else if (getRepositoriesInState(project, Repository.State.NORMAL).isEmpty()) {
+    else if (getRepositoriesInStates(project, Repository.State.NORMAL).isEmpty()) {
       presentation.setEnabled(false);
     }
     else {
