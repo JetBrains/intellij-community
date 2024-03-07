@@ -1,6 +1,6 @@
 package com.intellij.tools.ide.metrics.collector
 
-import com.intellij.tools.ide.metrics.collector.meters.calculatePercentile
+import com.intellij.tools.ide.metrics.collector.metrics.calculatePercentile
 import io.kotest.matchers.shouldBe
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality
@@ -8,21 +8,21 @@ import io.opentelemetry.sdk.metrics.internal.data.ImmutableHistogramData
 import io.opentelemetry.sdk.metrics.internal.data.ImmutableHistogramPointData
 import org.junit.jupiter.api.Test
 
+internal fun createHistogramData(boundaries: List<Double>, counts: List<Long>): ImmutableHistogramData {
+  return ImmutableHistogramData.create(
+    AggregationTemporality.DELTA,
+    listOf(createHistogramPointData(boundaries, counts))
+  )
+}
+
+internal fun createHistogramPointData(boundaries: List<Double>, counts: List<Long>): ImmutableHistogramPointData {
+  return ImmutableHistogramPointData.create(0, 0, Attributes.empty(), 100500.0,
+                                            true, Double.NEGATIVE_INFINITY,
+                                            true, Double.POSITIVE_INFINITY,
+                                            boundaries, counts)
+}
+
 class HistogramPercentileTest {
-  private fun createHistogramData(boundaries: List<Double>, counts: List<Long>): ImmutableHistogramData {
-    return ImmutableHistogramData.create(
-      AggregationTemporality.DELTA,
-      listOf(createHistogramPointData(boundaries, counts))
-    )
-  }
-
-  private fun createHistogramPointData(boundaries: List<Double>, counts: List<Long>): ImmutableHistogramPointData {
-    return ImmutableHistogramPointData.create(0, 0, Attributes.empty(), 100500.0,
-                                              true, Double.NEGATIVE_INFINITY,
-                                              true, Double.POSITIVE_INFINITY,
-                                              boundaries, counts)
-  }
-
   @Test
   fun testWhenPercentileIsZero() {
     val histogramData = createHistogramData(arrayListOf(1.0, 2.0, 3.0), arrayListOf(10, 20, 30, 5))
