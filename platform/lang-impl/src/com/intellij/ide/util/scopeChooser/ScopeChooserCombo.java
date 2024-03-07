@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.PredefinedSearchScopeProvider;
@@ -93,6 +94,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         ScopeOption.LIBRARIES,
         ScopeOption.SEARCH_RESULTS
       ));
+    Disposer.register(this, scopeModel);
     for (Map.Entry<ScopeOption, Boolean> entry : postponedOptions.entrySet()) {
       scopeModel.setOption(entry.getKey(), entry.getValue());
     }

@@ -4,6 +4,7 @@ package com.intellij.ide.util.scopeChooser
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.WeighedItem
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ModalityState
@@ -37,6 +38,11 @@ internal class CoroutineScopeModel internal constructor(
   private val listeners = CopyOnWriteArrayList<ScopeModelListener>()
   private val options = mutableSetOf<ScopeOption>().apply { addAll(options) }
   private var filter: (ScopeDescriptor) -> Boolean = { true }
+
+  override fun dispose() {
+    listeners.clear()
+    coroutineScope.cancel()
+  }
 
   override fun setOption(option: ScopeOption, value: Boolean) {
     if (value) {

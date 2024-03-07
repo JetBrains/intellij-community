@@ -8,8 +8,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.job
 import org.jetbrains.concurrency.await
 import java.util.concurrent.CopyOnWriteArrayList
@@ -20,18 +22,9 @@ class ScopeService(
   private val scope: CoroutineScope,
 ) {
 
-  init {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      // Fix "MessageBusImpl is already disposed: (disposed temporarily)" during LightPlatformTestCase
-      (project as? ProjectEx)?.earlyDisposable?.let { disposable ->
-        scope.coroutineContext.job.cancelOnDispose(disposable)
-      }
-    }
-  }
-
   fun createModel(options: Set<ScopeOption>): AbstractScopeModel =
     if (Registry.`is`("coroutine.scope.model", true))
-      CoroutineScopeModel(project, scope, options)
+      CoroutineScopeModel(project, scope.childScope(), options)
     else
       LegacyScopeModel(project, options)
 
@@ -48,6 +41,10 @@ private class LegacyScopeModel(
 
   init {
     delegate.init(project)
+  }
+
+  override fun dispose() {
+    listeners.clear()
   }
 
   override fun addScopeModelListener(listener: ScopeModelListener) {
