@@ -3,7 +3,9 @@ package com.intellij.openapi.components
 
 import com.intellij.configurationStore.SaveSessionProducer
 import com.intellij.openapi.extensions.PluginId
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 interface StateStorage {
   /**
    * You can call this method only once.
@@ -29,8 +31,9 @@ interface StateStorage {
    */
   fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>)
 
-  fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): StateStorageChooserEx.Resolution =
-    StateStorageChooserEx.Resolution.DO
+  fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): StateStorageChooserEx.Resolution {
+    return StateStorageChooserEx.Resolution.DO
+  }
 }
 
 interface StateStorageChooserEx {
