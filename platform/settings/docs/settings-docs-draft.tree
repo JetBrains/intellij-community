@@ -10,4 +10,5 @@
     <toc-element topic="setting-descriptor.md"/>
     <toc-element topic="setting-types.md"/>
     <toc-element topic="bridge-to-old-api.md"/>
+    <toc-element topic="storage-design.md"/>
 </instance-profile>
