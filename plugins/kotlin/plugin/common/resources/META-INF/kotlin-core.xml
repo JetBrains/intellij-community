@@ -7,6 +7,10 @@
             interface="org.jetbrains.kotlin.idea.codeInsight.KotlinAutoImportsFilter"
             dynamic="true"/>
     <extensionPoint
+            qualifiedName="com.intellij.kotlin.autoImportCallableWeigher"
+            interface="org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher"
+            dynamic="true"/>
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.pluginUpdateVerifier"
             interface="org.jetbrains.kotlin.idea.update.PluginUpdateVerifier" 
             dynamic="true"/>

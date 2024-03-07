@@ -2,10 +2,16 @@
 package org.jetbrains.kotlin.idea.actions
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyze
+import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.inspections.dfa.getArrayElementType
 import org.jetbrains.kotlin.idea.intentions.receiverType
@@ -81,7 +87,7 @@ internal abstract class AbstractExpressionWeigher: ExpressionWeigher {
 
 }
 
-internal class CallExpressionWeigher(element: KtNameReferenceExpression?): AbstractExpressionWeigher() {
+internal class CallExpressionWeigher(private val element: KtNameReferenceExpression): AbstractExpressionWeigher() {
 
     private val argumentKotlinTypes: List<KotlinType>
     private val valueArgumentsSize: Int
@@ -162,6 +168,12 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?): Abstr
             return weight
         }
 
+        // apply weighing extensions
+        val namedFunction = DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, callableMemberDescriptor) as? KtNamedFunction
+        if (namedFunction != null) {
+            weight += calculateCallExtensionsWeight(namedFunction)
+        }
+
         val valueParameterDescriptorIterator: MutableIterator<ValueParameterDescriptor> = valueParameters.iterator()
         var valueParameterDescriptor: ValueParameterDescriptor? = null
 
@@ -195,6 +207,23 @@ internal class CallExpressionWeigher(element: KtNameReferenceExpression?): Abstr
         return weight
     }
 
+    /**
+     * Since [ExpressionWeigher]s are executed on EDT in K1 plugin, we have to use [allowAnalysisOnEdt] to be able to perform the [analyze].
+     * With K2 plugin, there will be no such issue.
+     */
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    private fun calculateCallExtensionsWeight(namedFunction: KtNamedFunction): Int {
+        return allowAnalysisOnEdt {
+            analyze(element) {
+                val callableSymbol = namedFunction.getSymbol() as? KtCallableSymbol
+                if (callableSymbol != null) {
+                    with(KotlinAutoImportCallableWeigher) { weigh(callableSymbol, element) }
+                } else {
+                    0
+                }
+            }
+        }
+    }
 }
 
 internal class OperatorExpressionWeigher(element: KtOperationReferenceExpression): AbstractExpressionWeigher() {

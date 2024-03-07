@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.quickfix.ImportFixHelper
 import org.jetbrains.kotlin.name.Name
@@ -31,6 +32,7 @@ interface ExpressionImportWeigher {
             when (element) {
                 is KtNameReferenceExpression -> CallExpressionImportWeigher(
                     token,
+                    element,
                     calculateReceiverTypes(element),
                     calculateValueArgumentTypes(element),
                 )
@@ -120,6 +122,8 @@ internal abstract class AbstractExpressionImportWeigher : ExpressionImportWeighe
 
 internal class CallExpressionImportWeigher(
     override val token: KtLifetimeToken,
+    // the weigher is not saved in any context/state, and weigh() is called when element is still valid
+    private val element: KtNameReferenceExpression,
     private val presentReceiverTypes: List<KtType>,
     private val valueArgumentTypes: List<KtType?>,
 ) : AbstractExpressionImportWeigher(), KtLifetimeOwner {
@@ -162,6 +166,9 @@ internal class CallExpressionImportWeigher(
                 return weight
             }
 
+            // apply weighing extensions
+            weight += calculateCallExtensionsWeight(symbolToBeImported)
+
             // TODO: it does not cover the following cases:
             //  - named parameters
             //  - default value, e.g. `param: Int = ""`
@@ -195,6 +202,10 @@ internal class CallExpressionImportWeigher(
         }
         return weight
     }
+
+    context(KtAnalysisSession)
+    private fun calculateCallExtensionsWeight(symbolToBeImported: KtCallableSymbol): Int =
+        with(KotlinAutoImportCallableWeigher) { weigh(symbolToBeImported, element) }
 }
 
 internal class OperatorExpressionImportWeigher(
