@@ -768,33 +768,29 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitLambdaExpressionRaw(lambdaExpression: JKLambdaExpression) {
-            fun printLambda() {
-                printer.par(ParenthesisKind.CURVED) {
-                    val isMultiStatement = lambdaExpression.statement.statements.size > 1
-                    if (isMultiStatement) printer.println()
-
-                    printer.renderList(lambdaExpression.parameters) { it.accept(this) }
-                    if (lambdaExpression.parameters.isNotEmpty()) {
-                        printer.printWithSurroundingSpaces("->")
-                    }
-
-                    val statement = lambdaExpression.statement
-                    if (statement is JKBlockStatement) {
-                        printer.renderList(statement.block.statements, ::ensureLineBreak) { it.accept(this) }
-                    } else {
-                        statement.accept(this)
-                    }
-
-                    if (isMultiStatement) printer.println()
-                }
-            }
-
             if (lambdaExpression.functionalType.present()) {
+                // print SAM constructor
                 printer.renderType(lambdaExpression.functionalType.type, lambdaExpression)
                 printer.print(" ")
-                printer.par(ParenthesisKind.ROUND, ::printLambda)
-            } else {
-                printLambda()
+            }
+
+            printer.par(ParenthesisKind.CURVED) {
+                val isMultiStatement = lambdaExpression.statement.statements.size > 1
+                if (isMultiStatement) printer.println()
+
+                printer.renderList(lambdaExpression.parameters) { it.accept(this) }
+                if (lambdaExpression.parameters.isNotEmpty()) {
+                    printer.printWithSurroundingSpaces("->")
+                }
+
+                val statement = lambdaExpression.statement
+                if (statement is JKBlockStatement) {
+                    printer.renderList(statement.block.statements, ::ensureLineBreak) { it.accept(this) }
+                } else {
+                    statement.accept(this)
+                }
+
+                if (isMultiStatement) printer.println()
             }
         }
 
