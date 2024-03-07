@@ -25,7 +25,7 @@ internal val ExtractionMetricsScope: Scope = Scope("ExtractionMetricsScope", Pla
 /** Class intentionally named *Perf* (and not a *Performance*) test.
  * That way it will not be ignored during Aggregator run */
 @TestApplication
-class ApplicationMetricsExtractionFromUnitPerformanceTest {
+class ApplicationMetricsExtractionFromUnitPerfTest {
   private val tracer = TelemetryManager.getTracer(ExtractionMetricsScope)
 
   private fun getFullTestName(testInfo: TestInfo, launchName: String) =
