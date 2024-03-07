@@ -1476,7 +1476,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/run-configurations/jvm/kotlin.run-configurations.jvm.iml" filepath="$PROJECT_DIR$/plugins/kotlin/run-configurations/jvm/kotlin.run-configurations.jvm.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/run-configurations/testng/kotlin.run-configurations.testng.iml" filepath="$PROJECT_DIR$/plugins/kotlin/run-configurations/testng/kotlin.run-configurations.testng.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting/kotlin.scripting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting/kotlin.scripting.iml" />
-      <module fileurl="file://$PROJECT_DIR$/community/plugins/kotlin/scripting-plugin/kotlin.scripting-plugin.iml" filepath="$PROJECT_DIR$/community/plugins/kotlin/scripting-plugin/kotlin.scripting-plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting-plugin/kotlin.scripting-plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting-plugin/kotlin.scripting-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting-support/kotlin.scripting-support.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting-support/kotlin.scripting-support.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.searching/base/kotlin.searching.base.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.searching/base/kotlin.searching.base.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.searching/kotlin.searching.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.searching/kotlin.searching.k2.iml" />
