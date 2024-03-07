@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -32,6 +33,7 @@ internal class CreateMethodFromKotlinUsageRequest (
     context (KtAnalysisSession)
     private fun initializeReturnType() {
         val returnJvmType = functionCall.getExpectedJvmType() ?: return
+        (returnJvmType as? JvmReferenceType)?.let { if (it.resolve() == null) return }
         returnType.add(ExpectedKotlinType.createExpectedKotlinType(returnJvmType))
     }
 

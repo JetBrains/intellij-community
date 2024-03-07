@@ -1,13 +1,15 @@
-import kotlin.properties.ReadOnlyProperty
+import kotlin.properties.ReadWriteProperty
 
 // "Create function 'foo'" "true"
 
 
 class A<T>(val t: T) {
-    val x: A<Int> by foo(t, "")
+    fun m() {
+        var x: A<Int> by foo(t, "")
+    }
 
-    private fun foo(t: T, s: String): ReadOnlyProperty<A<T>, A<Int>> {
-        TODO("Not yet implemented")
+    private fun foo(p0: T, string: String): ReadWriteProperty<Any, A<Int>> {
+        <selection>TODO("Not yet implemented")<caret></selection>
     }
 }
 
