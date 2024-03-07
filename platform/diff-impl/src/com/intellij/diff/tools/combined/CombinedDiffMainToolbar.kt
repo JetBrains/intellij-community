@@ -52,6 +52,13 @@ internal class CombinedDiffMainToolbar(
   private val topPanel: JPanel = JPanel(null)
   val component: JComponent = topPanel
 
+  private val openInEditorAction = object : OpenInEditorAction() {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isVisible = false
+    }
+  }
+
   init {
     leftToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, leftToolbarGroup, true)
     leftToolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
@@ -148,6 +155,7 @@ internal class CombinedDiffMainToolbar(
     leftToolbar.updateActionsAsync()
     (rightToolbar as ActionToolbarImpl).reset()
     rightToolbar.updateActionsAsync()
+    openInEditorAction.registerCustomShortcutSet(targetComponent, null)
   }
 
   private fun collectToolbarActions(blockState: BlockState, viewerActions: List<AnAction?>?) {
@@ -170,19 +178,11 @@ internal class CombinedDiffMainToolbar(
       FilesLabelAction(goToChangeAction, leftToolbar.component, blockState),
       CombinedNextDifferenceAction(context),
       CombinedNextBlockAction(context),
-      openInEditorAction,
     )
   }
 
   fun setVerticalSizeReferent(component: JComponent) {
     //diffInfoPanel.setVerticalSizeReferent(component)
-  }
-
-  private val openInEditorAction = object : OpenInEditorAction() {
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.isVisible = false
-    }
   }
 }
 
