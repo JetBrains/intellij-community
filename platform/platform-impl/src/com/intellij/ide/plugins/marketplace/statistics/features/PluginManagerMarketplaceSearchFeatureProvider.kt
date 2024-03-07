@@ -35,7 +35,7 @@ object PluginManagerMarketplaceSearchFeatureProvider {
       IS_SUGGESTED_DATA_KEY.with(query.suggested),
       IS_STAFF_PICKS_DATA_KEY.with(query.staffPicks),
       CUSTOM_REPOSITORY_COUNT_DATA_KEY.with(query.repositories.size),
-      MARKETPLACE_CUSTOM_REPOSITORY_COUNT_DATA_KEY.with(query.repositories.count { it.contains(MarketplaceUrls.pluginManagerHost) })
+      MARKETPLACE_CUSTOM_REPOSITORY_COUNT_DATA_KEY.with(query.repositories.count { it.contains(MarketplaceUrls.getPluginManagerHost()) })
     ))
 
     query.sortBy?.let { add(SORT_BY_DATA_KEY.with(it)) }

@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.marketplace.utils
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
@@ -18,43 +19,38 @@ internal object MarketplaceUrls {
   const val JB_PLUGINS_XML_IDS_FILENAME = "jbPluginsXMLIds.json"
   const val EXTENSIONS_BACKUP_FILENAME = "pluginsFeatures.json"
 
-  private val pluginManagerUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')
-  }
+  @JvmStatic
+  fun getPluginManagerUrl() = service<MarketplaceCustomizationService>().getPluginManagerUrl().trimEnd('/')
+  @JvmStatic
+  fun getPluginManagerHost() = URL(getPluginManagerUrl()).host!!
 
-  val pluginManagerHost: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    URL(pluginManagerUrl).host
-  }
+  private fun getDownloadUrl() = service<MarketplaceCustomizationService>().getPluginDownloadUrl().trimEnd('/')
 
-  private val downloadUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    ApplicationInfoImpl.getShadowInstance().pluginDownloadUrl.trimEnd('/')
-  }
-
-  fun getPluginMetaUrl(externalPluginId: String) = "$pluginManagerUrl/files/$externalPluginId/meta.json"
+  fun getPluginMetaUrl(externalPluginId: String) = "${getPluginManagerUrl()}/files/$externalPluginId/meta.json"
   fun getUpdateMetaUrl(externalPluginId: String, externalUpdateId: String) =
-    "$pluginManagerUrl/files/$externalPluginId/$externalUpdateId/meta.json"
+    "${getPluginManagerUrl()}/files/$externalPluginId/$externalUpdateId/meta.json"
 
-  fun getJBPluginsXmlIdsUrl() = "$pluginManagerUrl/files/$JB_PLUGINS_XML_IDS_FILENAME"
+  fun getJBPluginsXmlIdsUrl() = "${getPluginManagerUrl()}/files/$JB_PLUGINS_XML_IDS_FILENAME"
 
-  fun getPluginsXmlIdsUrl() = "$pluginManagerUrl/files/$FULL_PLUGINS_XML_IDS_FILENAME"
+  fun getPluginsXmlIdsUrl() = "${getPluginManagerUrl()}/files/$FULL_PLUGINS_XML_IDS_FILENAME"
 
-  fun getBrokenPluginsJsonUrl() = "$pluginManagerUrl/files/brokenPlugins.json"
+  fun getBrokenPluginsJsonUrl() = "${getPluginManagerUrl()}/files/brokenPlugins.json"
 
   fun getIdeExtensionsJsonUrl() = Urls.newFromEncoded(
-    "$pluginManagerUrl/files/IDE/extensions.json"
+    "${getPluginManagerUrl()}/files/IDE/extensions.json"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
   fun getFeatureImplUrl(param: Map<String, String>) = Urls.newFromEncoded(
-    "$pluginManagerUrl/feature/getImplementations"
+    "${getPluginManagerUrl()}/feature/getImplementations"
   ).addParameters(param)
 
   fun getSearchAggregationUrl(field: String) = Urls.newFromEncoded(
-    "$pluginManagerUrl/api/search/aggregation/$field"
+    "${getPluginManagerUrl()}/api/search/aggregation/$field"
   ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
-  fun getSearchCompatibleUpdatesUrl() = Urls.newFromEncoded("$pluginManagerUrl/api/search/compatibleUpdates").toExternalForm()
+  fun getSearchCompatibleUpdatesUrl() = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/compatibleUpdates").toExternalForm()
 
-  fun getSearchNearestUpdate() = Urls.newFromEncoded("$pluginManagerUrl/api/search/updates/nearest").toExternalForm()
+  fun getSearchNearestUpdate() = Urls.newFromEncoded("${getPluginManagerUrl()}/api/search/updates/nearest").toExternalForm()
 
   fun getSearchPluginsUrl(query: String, count: Int, includeIncompatible: Boolean): Url {
     val params = mapOf(
@@ -63,24 +59,24 @@ internal object MarketplaceUrls {
       "all" to includeIncompatible.toString()
     )
     return Urls.newFromEncoded(
-      "$pluginManagerUrl/api/search/plugins?$query"
+      "${getPluginManagerUrl()}/api/search/plugins?$query"
     ).addParameters(params)
   }
 
   fun getPluginReviewsUrl(pluginId: PluginId, page: Int): Url {
     val pageValue = if (page == 1) "" else "?page=$page"
-    return Urls.newFromEncoded("$pluginManagerUrl/api/products/intellij/plugins/${pluginId.urlEncode()}/comments$pageValue")
+    return Urls.newFromEncoded("${getPluginManagerUrl()}/api/products/intellij/plugins/${pluginId.urlEncode()}/comments$pageValue")
   }
 
   @JvmStatic
-  fun getPluginHomepage(pluginId: PluginId) = "$pluginManagerUrl/plugin/index?xmlId=${pluginId.urlEncode()}"
+  fun getPluginHomepage(pluginId: PluginId) = "${getPluginManagerUrl()}/plugin/index?xmlId=${pluginId.urlEncode()}"
 
   @JvmStatic
   fun getPluginReviewNoteUrl() = "https://plugins.jetbrains.com/docs/marketplace/reviews-policy.html"
 
   @JvmStatic
   fun getPluginWriteReviewUrl(pluginId: PluginId, version: String? = null) = buildString {
-    append("$pluginManagerUrl/intellij/${pluginId.urlEncode()}/review/new")
+    append("${getPluginManagerUrl()}/intellij/${pluginId.urlEncode()}/review/new")
     append("?build=$IDE_BUILD_FOR_REQUEST")
     version?.let {
       append("&version=$it")
@@ -105,7 +101,7 @@ internal object MarketplaceUrls {
       parameters["channel"] = it
     }
 
-    return Urls.newFromEncoded(downloadUrl)
+    return Urls.newFromEncoded(getDownloadUrl())
       .addParameters(parameters)
       .toExternalForm()
   }
