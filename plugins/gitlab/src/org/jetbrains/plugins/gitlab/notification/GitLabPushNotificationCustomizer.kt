@@ -5,6 +5,7 @@ import com.intellij.dvcs.push.VcsPushOptionValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import git4idea.account.AccountUtil
 import git4idea.account.RepoAndAccount
@@ -13,6 +14,7 @@ import git4idea.push.GitPushNotificationCustomizer
 import git4idea.push.GitPushRepoResult
 import git4idea.push.isSuccessful
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
@@ -30,9 +32,9 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.action.GitLabMergeRequestOpenCreateTabNotificationAction
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
-typealias GitLabRepoAndAccount = RepoAndAccount<GitLabProjectMapping, GitLabAccount>
+private val LOG = logger<GitLabPushNotificationCustomizer>()
 
-class GitLabPushNotificationCustomizer(private val project: Project) : GitPushNotificationCustomizer {
+internal class GitLabPushNotificationCustomizer(private val project: Project) : GitPushNotificationCustomizer {
   private val preferences: GitLabMergeRequestsPreferences = project.service<GitLabMergeRequestsPreferences>()
   private val projectsManager: GitLabProjectsManager = project.service<GitLabProjectsManager>()
   private val defaultAccountHolder: GitLabProjectDefaultAccountHolder = project.service<GitLabProjectDefaultAccountHolder>()
@@ -45,17 +47,26 @@ class GitLabPushNotificationCustomizer(private val project: Project) : GitPushNo
     customParams: Map<String, VcsPushOptionValue>
   ): List<AnAction> {
     if (!pushResult.isSuccessful) return emptyList()
-    val repoAndAccount = selectRepoAndAccount(repository, pushResult) ?: return emptyList()
-    val exists = doesReviewExist(pushResult, repoAndAccount) ?: return emptyList()
-    if (exists) return emptyList()
+    val (projectMapping, account) = findRepoAndAccount(repository, pushResult) ?: return emptyList()
+    try {
+      val exists = doesReviewExist(pushResult, projectMapping, account)
+      if (exists) return emptyList()
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to lookup an existing merge request for $pushResult", e)
+      return emptyList()
+    }
 
     val connection = project.serviceAsync<GitLabProjectConnectionManager>().connectionState.value
-    if (connection?.account != repoAndAccount.account || connection.repo != repoAndAccount.projectMapping) return emptyList()
+    if (connection?.account != account || connection.repo != projectMapping) return emptyList()
 
-    return listOf(GitLabMergeRequestOpenCreateTabNotificationAction(project, repoAndAccount.projectMapping, repoAndAccount.account))
+    return listOf(GitLabMergeRequestOpenCreateTabNotificationAction(project, projectMapping, account))
   }
 
-  private fun selectRepoAndAccount(targetRepository: GitRepository, pushResult: GitPushRepoResult): GitLabRepoAndAccount? {
+  private fun findRepoAndAccount(targetRepository: GitRepository, pushResult: GitPushRepoResult): RepoAndAccount<GitLabProjectMapping, GitLabAccount>? {
     AccountUtil.selectPersistedRepoAndAccount(targetRepository, pushResult, preferences.selectedRepoAndAccount)?.let {
       return it
     }
@@ -66,11 +77,10 @@ class GitLabPushNotificationCustomizer(private val project: Project) : GitPushNo
     return null
   }
 
-  private suspend fun doesReviewExist(pushResult: GitPushRepoResult, repoAndAccount: GitLabRepoAndAccount): Boolean? {
-    val (projectMapping, account) = repoAndAccount
-    val token = accountManager.findCredentials(account) ?: return null
+  private suspend fun doesReviewExist(pushResult: GitPushRepoResult, projectMapping: GitLabProjectMapping, account: GitLabAccount): Boolean {
+    val token = accountManager.findCredentials(account) ?: return false
     val api = apiManager.getClient(account.server, token)
-    val mrBranch = getReviewBranch(api, pushResult, projectMapping) ?: return null
+    val mrBranch = getReviewBranch(api, pushResult, projectMapping) ?: return false
     val mergeRequest = getMergeRequest(api, projectMapping, mrBranch)
 
     return mergeRequest != null
