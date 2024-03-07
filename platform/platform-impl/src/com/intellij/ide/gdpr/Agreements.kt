@@ -54,7 +54,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
       }
     )
 
-    if (ApplicationInfoImpl.getShadowInstance().isEAP) {
+    if (ApplicationInfoImpl.getShadowInstance().isEAP && !ApplicationInfoImpl.getShadowInstanceImpl().isEapLikeRelease) {
       acceptButton(
         text = bundle.getString("userAgreement.dialog.continue"),
         isEnabled = false,

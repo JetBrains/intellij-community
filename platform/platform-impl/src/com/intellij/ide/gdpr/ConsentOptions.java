@@ -116,8 +116,8 @@ public final class ConsentOptions {
   ConsentOptions(IOBackend backend) {
     myBackend = backend;
     myIsEap = () -> {
-      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      return appInfo.isEAP() && appInfo.isVendorJetBrains();
+      ApplicationInfoImpl appInfo = ApplicationInfoImpl.getShadowInstanceImpl();
+      return appInfo.isEAP() && appInfo.isVendorJetBrains() && !appInfo.isEapLikeRelease();
     };
   }
 
@@ -384,6 +384,10 @@ public final class ConsentOptions {
 
       final Version confirmedVersion = confirmedConsent.getVersion();
       final Version defaultVersion = defConsent.getVersion();
+      // for test purpose only
+      if ("true".equalsIgnoreCase(System.getProperty("need.reconfirm.consents"))) {
+        return true;
+      }
       // consider only major version differences
       if (confirmedVersion.isOlder(defaultVersion) && confirmedVersion.getMajor() != defaultVersion.getMajor()) {
         return true;
