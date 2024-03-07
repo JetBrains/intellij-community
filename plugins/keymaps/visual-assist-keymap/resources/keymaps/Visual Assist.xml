@@ -63,4 +63,7 @@
   <action id="PreviousTab" />
   <action id="WD.UploadCurrentRemoteFileAction" />
   <action id="EditorAddCaretPerSelectedLine"/>
+  <action id="SwitchHeaderSource">
+    <keyboard-shortcut first-keystroke="alt O"/>
+  </action>
 </keymap>
