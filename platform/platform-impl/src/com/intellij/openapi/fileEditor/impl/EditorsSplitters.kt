@@ -321,6 +321,10 @@ open class EditorsSplitters internal constructor(
     currentCompositeFlow.value = window?.selectedComposite
   }
 
+  fun openFilesAsync(): Job {
+    return openFilesAsync(true)
+  }
+
   fun openFilesAsync(requestFocus: Boolean): Job {
     return coroutineScope.launch {
       restoreEditors(state = state.getAndSet(null) ?: return@launch,
