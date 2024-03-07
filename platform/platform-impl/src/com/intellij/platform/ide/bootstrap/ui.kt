@@ -274,7 +274,6 @@ fun createBaseLaF(): LookAndFeel {
   // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
   // and scale them based on Xft.dpi value.
   try {
-    @Suppress("SpellCheckingInspection")
     val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
     val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
       .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
