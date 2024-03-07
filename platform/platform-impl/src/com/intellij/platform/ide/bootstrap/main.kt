@@ -21,8 +21,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryConfigurator
-import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.mac.initMacApplication
@@ -33,7 +31,6 @@ import com.intellij.util.*
 import com.intellij.util.io.*
 import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
-import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Toolkit
@@ -233,13 +230,6 @@ fun CoroutineScope.startApplication(
   }
 
   val appRegisteredJob = CompletableDeferred<Unit>()
-
-  launch {
-    val classLoader = AppStarter::class.java.classLoader
-    Class.forName(TelemetryManagerImpl::class.java.name, true, classLoader)
-    Class.forName(OpenTelemetryConfigurator::class.java.name, true, classLoader)
-    Class.forName(OpenTelemetrySdkBuilder::class.java.name, true, classLoader)
-  }
 
   val appLoaded = async {
     val initEventQueueJob = scheduleInitIdeEventQueue(initAwtToolkit = initAwtToolkitJob, isHeadless = isHeadless)
