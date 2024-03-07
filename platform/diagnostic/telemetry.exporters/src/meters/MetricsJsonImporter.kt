@@ -11,6 +11,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.common.InstrumentationScopeInfo
 import io.opentelemetry.sdk.metrics.data.*
+import io.opentelemetry.sdk.metrics.internal.data.ImmutableDoublePointData
 import io.opentelemetry.sdk.metrics.internal.data.ImmutableGaugeData
 import io.opentelemetry.sdk.metrics.internal.data.ImmutableHistogramData
 import io.opentelemetry.sdk.metrics.internal.data.ImmutableHistogramPointData
@@ -35,7 +36,7 @@ class MetricDataDeserializer : JsonDeserializer<MetricData>() {
 
     private fun getEpoch(dataPointNode: JsonNode): Long = dataPointNode.get("epochNanos").asLong()
 
-    private fun getValue(dataPointNode: JsonNode): Long = dataPointNode.get("value").asLong()
+    private fun getValue(dataPointNode: JsonNode): JsonNode = dataPointNode.get("value")
 
     private fun getAttributes(dataPointNode: JsonNode): Attributes = Attributes.builder().apply {
       dataPointNode.get("attributes").fields().forEach { this.put(it.key.toString(), it.value.toString()) }
@@ -47,7 +48,16 @@ class MetricDataDeserializer : JsonDeserializer<MetricData>() {
       val value = getValue(dataPoint)
       val attributes = getAttributes(dataPoint)
 
-      ImmutableLongPointData.create(startEpoch, epoch, attributes, value)
+      ImmutableLongPointData.create(startEpoch, epoch, attributes, value.asLong())
+    }
+
+    private fun getDoublePointsData(pointsNode: JsonNode): List<DoublePointData> = pointsNode.map { dataPoint ->
+      val startEpoch = getStartEpoch(dataPoint)
+      val epoch = getEpoch(dataPoint)
+      val value = getValue(dataPoint)
+      val attributes = getAttributes(dataPoint)
+
+      ImmutableDoublePointData.create(startEpoch, epoch, attributes, value.asDouble())
     }
   }
 
@@ -63,20 +73,32 @@ class MetricDataDeserializer : JsonDeserializer<MetricData>() {
     val points = data.get("points")
 
     return when (MetricDataType.valueOf(type)) {
+      // Long counter
       MetricDataType.LONG_SUM -> {
         val longPoints = getLongPointsData(points)
         val sumData = ImmutableSumData.create(getIsMonotonic(data), getAggregationTemporality(data), longPoints)
 
         ImmutableMetricData.createLongSum(emptyResource, emptyInstrumentationScope, name, description, unit, sumData)
       }
-      MetricDataType.DOUBLE_SUM -> TODO("Double Counter isn't supported yet")
+      // Double counter
+      MetricDataType.DOUBLE_SUM -> {
+        val doublePoints = getDoublePointsData(points)
+        val sumData = ImmutableSumData.create(getIsMonotonic(data), getAggregationTemporality(data), doublePoints)
+
+        ImmutableMetricData.createDoubleSum(emptyResource, emptyInstrumentationScope, name, description, unit, sumData)
+      }
       MetricDataType.LONG_GAUGE -> {
         val longPoints = getLongPointsData(points)
         val gaugeData = ImmutableGaugeData.create(longPoints)
 
         ImmutableMetricData.createLongGauge(emptyResource, emptyInstrumentationScope, name, description, unit, gaugeData)
       }
-      MetricDataType.DOUBLE_GAUGE -> TODO("Double Gauge isn't supported yet")
+      MetricDataType.DOUBLE_GAUGE -> {
+        val doublePoints = getDoublePointsData(points)
+        val gaugeData = ImmutableGaugeData.create(doublePoints)
+
+        ImmutableMetricData.createDoubleGauge(emptyResource, emptyInstrumentationScope, name, description, unit, gaugeData)
+      }
       MetricDataType.SUMMARY -> TODO("Summary isn't supported yet")
       MetricDataType.HISTOGRAM -> {
         val pointsData = points.map { dataPoint ->
