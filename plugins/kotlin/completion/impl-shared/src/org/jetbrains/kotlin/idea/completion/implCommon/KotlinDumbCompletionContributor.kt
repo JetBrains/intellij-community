@@ -10,11 +10,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.patterns.PsiJavaPatterns.elementType
+import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KeywordCompletion
 import org.jetbrains.kotlin.idea.completion.kotlinIdentifierPartPattern
 import org.jetbrains.kotlin.idea.completion.kotlinIdentifierStartPattern
+import org.jetbrains.kotlin.lexer.KtTokens
 
 internal fun isDumbPsiCompletionEnabled(): Boolean {
     return Registry.`is`("kotlin.auto.completion.dumb.mode.use.psi.completion")
@@ -34,11 +37,21 @@ class KotlinDumbCompletionContributor : CompletionContributor(), DumbAware {
 
     private val psiTreeCompletion = PsiTreeCompletion()
 
+    // Copied from the other completion contributors, we do not want to have completion after a number literal.
+    private val AFTER_NUMBER_LITERAL = psiElement().afterLeafSkipping(
+        psiElement().withText(""),
+        psiElement().withElementType(elementType().oneOf(KtTokens.FLOAT_LITERAL, KtTokens.INTEGER_LITERAL))
+    )
+
     override fun fillCompletionVariants(
         parameters: CompletionParameters,
         result: CompletionResultSet
     ) {
         if (!DumbService.isDumb(parameters.position.project) || !isDumbPsiCompletionEnabled()) {
+            return
+        }
+        if (AFTER_NUMBER_LITERAL.accepts(parameters.position)) {
+            result.stopHere()
             return
         }
         val prefix = CompletionUtil.findIdentifierPrefix(

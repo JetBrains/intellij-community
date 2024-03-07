@@ -93,6 +93,21 @@ public class DumbCompletionTestGenerated extends AbstractDumbCompletionTest {
         runTest("../testData/dumb/DetectUsedProperty.kt");
     }
 
+    @TestMetadata("DoNotCompleteInComment.kt")
+    public void testDoNotCompleteInComment() throws Exception {
+        runTest("../testData/dumb/DoNotCompleteInComment.kt");
+    }
+
+    @TestMetadata("DoNotCompleteInString.kt")
+    public void testDoNotCompleteInString() throws Exception {
+        runTest("../testData/dumb/DoNotCompleteInString.kt");
+    }
+
+    @TestMetadata("DoNotCompleteNumber.kt")
+    public void testDoNotCompleteNumber() throws Exception {
+        runTest("../testData/dumb/DoNotCompleteNumber.kt");
+    }
+
     @TestMetadata("DoNotShowExtensionFunctionWithoutReceiver.kt")
     public void testDoNotShowExtensionFunctionWithoutReceiver() throws Exception {
         runTest("../testData/dumb/DoNotShowExtensionFunctionWithoutReceiver.kt");
@@ -191,6 +206,11 @@ public class DumbCompletionTestGenerated extends AbstractDumbCompletionTest {
     @TestMetadata("StdlibDeclarations.kt")
     public void testStdlibDeclarations() throws Exception {
         runTest("../testData/dumb/StdlibDeclarations.kt");
+    }
+
+    @TestMetadata("StringTemplate.kt")
+    public void testStringTemplate() throws Exception {
+        runTest("../testData/dumb/StringTemplate.kt");
     }
 
     @TestMetadata("ValueTypes.kt")

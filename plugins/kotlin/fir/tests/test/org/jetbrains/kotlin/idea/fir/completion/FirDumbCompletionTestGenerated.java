@@ -93,6 +93,21 @@ public class FirDumbCompletionTestGenerated extends AbstractFirDumbCompletionTes
         runTest("../../completion/testData/dumb/DetectUsedProperty.kt");
     }
 
+    @TestMetadata("DoNotCompleteInComment.kt")
+    public void testDoNotCompleteInComment() throws Exception {
+        runTest("../../completion/testData/dumb/DoNotCompleteInComment.kt");
+    }
+
+    @TestMetadata("DoNotCompleteInString.kt")
+    public void testDoNotCompleteInString() throws Exception {
+        runTest("../../completion/testData/dumb/DoNotCompleteInString.kt");
+    }
+
+    @TestMetadata("DoNotCompleteNumber.kt")
+    public void testDoNotCompleteNumber() throws Exception {
+        runTest("../../completion/testData/dumb/DoNotCompleteNumber.kt");
+    }
+
     @TestMetadata("DoNotShowExtensionFunctionWithoutReceiver.kt")
     public void testDoNotShowExtensionFunctionWithoutReceiver() throws Exception {
         runTest("../../completion/testData/dumb/DoNotShowExtensionFunctionWithoutReceiver.kt");
@@ -191,6 +206,11 @@ public class FirDumbCompletionTestGenerated extends AbstractFirDumbCompletionTes
     @TestMetadata("StdlibDeclarations.kt")
     public void testStdlibDeclarations() throws Exception {
         runTest("../../completion/testData/dumb/StdlibDeclarations.kt");
+    }
+
+    @TestMetadata("StringTemplate.kt")
+    public void testStringTemplate() throws Exception {
+        runTest("../../completion/testData/dumb/StringTemplate.kt");
     }
 
     @TestMetadata("ValueTypes.kt")
