@@ -1918,6 +1918,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestKotlinOverloadAndExtensionUsagesSuperClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinOverloadAndExtensionUsagesSuperClass.0.kt")
+                public void testKotlinOverloadAndExtensionUsagesSuperClass() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesSuperClass.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
             public static class TestKotlinOverloadAndExtensionUsagesTopLevel extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -1926,6 +1939,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
                 @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevel.0.kt")
                 public void testKotlinOverloadAndExtensionUsagesTopLevel() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevel.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevelDifferentFiles extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelDifferentFiles.0.kt")
+                public void testKotlinOverloadAndExtensionUsagesTopLevelDifferentFiles() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelDifferentFiles.0.kt");
                 }
             }
 

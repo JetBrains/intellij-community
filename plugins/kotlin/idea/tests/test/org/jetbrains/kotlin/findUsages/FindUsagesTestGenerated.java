@@ -792,9 +792,19 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesSameClass.0.kt");
             }
 
+            @TestMetadata("kotlinOverloadAndExtensionUsagesSuperClass.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesSuperClass() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesSuperClass.0.kt");
+            }
+
             @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevel.0.kt")
             public void testKotlinOverloadAndExtensionUsagesTopLevel() throws Exception {
                 runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevel.0.kt");
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelDifferentFiles.0.kt")
+            public void testKotlinOverloadAndExtensionUsagesTopLevelDifferentFiles() throws Exception {
+                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelDifferentFiles.0.kt");
             }
 
             @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers.0.kt")

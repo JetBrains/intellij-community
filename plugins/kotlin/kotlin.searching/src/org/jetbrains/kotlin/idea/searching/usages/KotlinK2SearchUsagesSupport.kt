@@ -137,12 +137,12 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
                 val candidateContainer = candidateSymbol.getContainingSymbol()
                 val container = declarationSymbol.getContainingSymbol()
-                if (candidateContainer == null && container == null) {
-                    //top level functions should be from the same file
-                    declaration.containingFile == candidateDeclaration.containingFile
-                } else if (candidateContainer != null && container != null) {
-                    //instance functions should be from the same class/function
-                    candidateContainer == container
+                if (candidateContainer == null && container == null) { //top level functions should be from the same package
+                    declaration.containingKtFile.packageFqName == candidateDeclaration.containingKtFile.packageFqName
+                } else if (candidateContainer != null && container != null) { //instance functions should be from the same class/function or same hierarchy
+                    candidateContainer == container || container is KtClassOrObjectSymbol && candidateContainer is KtClassOrObjectSymbol && container.isSubClassOf(
+                        candidateContainer
+                    )
                 } else false
             }
         }
