@@ -80,10 +80,10 @@ import javax.swing.text.html.StyleSheet
  * ### CSS Support
  *
  * Additionally, to CSS properties supported by AWT HTML toolkit, [JBHtmlPane] supports:
- * - `border-radius` through `caption-side` property, e.g.:
+ * - `border-radius`, e.g.:
  *     ```CSS
  *     code {
- *        caption-side /* border-radius */: 8px
+ *        border-radius: 8px
  *     }
  *     ```
  * - `line-height` (`px`, `%`, number), e.g.:

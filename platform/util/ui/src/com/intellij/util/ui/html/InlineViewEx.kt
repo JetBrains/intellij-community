@@ -14,7 +14,7 @@ import javax.swing.text.html.InlineView
 import kotlin.math.max
 
 /**
- * Supports paddings, margins and rounded corners (through `caption-side` CSS property) for inline elements, like `<span>`.
+ * Supports paddings, margins and rounded corners (through `border-radius` CSS property) for inline elements, like `<span>`.
  *
  * Due to limitations of [HTMLDocument], paddings for nested inline elements are not supported and will cause incorrect rendering.
  */
@@ -128,10 +128,10 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
   }
 
   override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String? =
-     element.attributes.getAttribute(HTML.Attribute.TITLE)
+    element.attributes.getAttribute(HTML.Attribute.TITLE)
       ?.asSafely<String>()
       ?.takeIf { it.isNotEmpty() }
-     ?: super.getToolTipText(x, y, allocation)
+    ?: super.getToolTipText(x, y, allocation)
 
   private fun getSibling(parentView: View, curIndex: Int, direction: Int): View? {
     var siblingIndex = curIndex + direction

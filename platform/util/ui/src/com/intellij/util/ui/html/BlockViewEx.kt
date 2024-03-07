@@ -11,7 +11,7 @@ import javax.swing.text.html.BlockView
 import javax.swing.text.html.HTML
 
 /**
- * Supports rounded corners (through `caption-side` CSS property).
+ * Supports rounded corners through `border-radius` property.
  */
 class BlockViewEx(elem: Element, axis: Int) : BlockView(elem, axis) {
 

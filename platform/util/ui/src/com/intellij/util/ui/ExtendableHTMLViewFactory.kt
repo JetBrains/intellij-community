@@ -8,6 +8,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asSafely
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.html.*
+import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -117,14 +118,14 @@ class ExtendableHTMLViewFactory internal constructor(
 
     /**
      * Supports rendering of inline elements, like <span>, with paddings, margins
-     * and rounded corners (through `caption-side` CSS property).
+     * and rounded corners (through `border-radius` CSS property).
      */
     @JvmField
     val INLINE_VIEW_EX: Extension = InlineViewExExtension()
 
     /**
      * Supports rendering of block elements, like <div>,
-     * with rounded corners (through `caption-side` CSS property).
+     * with rounded corners (through `border-radius` CSS property).
      */
     @JvmField
     val BLOCK_VIEW_EX: Extension = BlockViewExExtension()
@@ -404,8 +405,7 @@ class ExtendableHTMLViewFactory internal constructor(
           || attrs.getAttribute(CSS.Attribute.MARGIN_TOP) != null
           || attrs.getAttribute(CSS.Attribute.MARGIN_RIGHT) != null
           || element.attributes.getAttribute(HTML.Attribute.TITLE) != null
-          || attrs.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
-            ?.asSafely<String>()?.endsWith("px") == true
+          || attrs.getAttribute(BORDER_RADIUS)?.asSafely<String>() != null
       ) {
         return InlineViewEx(element)
       }
@@ -417,8 +417,7 @@ class ExtendableHTMLViewFactory internal constructor(
     override fun invoke(element: Element, view: View): View? {
       if (view.javaClass != BlockView::class.java) return null
       val attrs = view.attributes
-      if (attrs.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
-            ?.asSafely<String>()?.endsWith("px") == true
+      if (attrs.getAttribute(BORDER_RADIUS)?.asSafely<String>() != null
           || element.attributes.getAttribute(HTML.Attribute.TITLE) != null
       ) {
         return BlockViewEx(element, (view as BlockView).axis)

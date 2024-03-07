@@ -213,7 +213,7 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
             }
           }
           result.append(getBorderRadius(configuration), defaultBorderRadius) {
-            "caption-side: ${scale(it)}px;"
+            "border-radius: ${scale(it)}px;"
           }
           return result.toString()
         }
@@ -251,10 +251,8 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
         "border-width: ${scale(it)}px;"
       }
 
-      // 'caption-side' is a hack to support 'border-radius'.
-      // See also: com.intellij.util.ui.html.InlineViewEx
       result.append(getBorderRadius(configuration), defaultBorderRadius) {
-        "caption-side: ${scale(it)}px;"
+        "border-radius: ${scale(it)}px;"
       }
 
       return result.toString()
