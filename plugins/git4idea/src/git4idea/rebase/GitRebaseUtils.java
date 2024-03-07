@@ -132,7 +132,7 @@ public final class GitRebaseUtils {
       Repository.State state = repository.getState();
       String repositoryName = getShortRepositoryName(repository);
       String message = switch (state) {
-        case NORMAL -> {
+        case NORMAL, DETACHED -> {
           if (repository.isFresh()) {
             yield GitBundle.message("rebase.notification.not.allowed.empty.repository.message", repositoryName);
           }
@@ -153,10 +153,6 @@ public final class GitRebaseUtils {
         case REVERTING -> new HtmlBuilder()
           .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.first", repositoryName)).br()
           .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.second"))
-          .toString();
-        case DETACHED -> new HtmlBuilder()
-          .append(GitBundle.message("rebase.notification.not.allowed.detached.message.first", repositoryName)).br()
-          .append(GitBundle.message("rebase.notification.not.allowed.detached.message.second"))
           .toString();
       };
       if (message != null) {
