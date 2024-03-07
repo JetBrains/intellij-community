@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.lang.logging.resolve.*
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter

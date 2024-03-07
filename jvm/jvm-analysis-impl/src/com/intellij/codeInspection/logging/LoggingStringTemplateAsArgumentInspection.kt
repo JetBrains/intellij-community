@@ -3,11 +3,12 @@ package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.logging.LoggingUtil.Companion
-import com.intellij.codeInspection.logging.LoggingUtil.Companion.LOG_MATCHERS
-import com.intellij.codeInspection.logging.LoggingUtil.Companion.countPlaceHolders
-import com.intellij.codeInspection.logging.LoggingUtil.Companion.getLoggerType
-import com.intellij.codeInspection.logging.LoggingUtil.Companion.isGuarded
+import com.intellij.lang.logging.resolve.LoggingUtil.Companion
+import com.intellij.lang.logging.resolve.LoggingUtil.Companion.LOG_MATCHERS
+import com.intellij.lang.logging.resolve.LoggingUtil.Companion.countPlaceHolders
+import com.intellij.lang.logging.resolve.LoggingUtil.Companion.getLoggerLevel
+import com.intellij.lang.logging.resolve.LoggingUtil.Companion.getLoggerType
+import com.intellij.lang.logging.resolve.LoggingUtil.Companion.isGuarded
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project

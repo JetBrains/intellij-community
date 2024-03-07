@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection.logging
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.lang.logging.resolve
 
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.SyntheticElement
@@ -8,9 +8,9 @@ import com.siyeh.ig.callMatcher.CallMatcher
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 
-internal const val MAX_BUILDER_LENGTH = 20
+const val MAX_BUILDER_LENGTH = 20
 
-internal fun getLogStringIndex(parameters: List<UParameter>): Int? {
+fun getLogStringIndex(parameters: List<UParameter>): Int? {
   if (parameters.isEmpty()) return null
   if (!TypeUtils.isJavaLangString(parameters[0].type)) {
     if (parameters.size < 2 || !TypeUtils.isJavaLangString(parameters[1].type)) {
@@ -34,7 +34,7 @@ private val SLF4J_HOLDER = object : LoggerTypeSearcher {
   }
 }
 
-internal val LOG4J_LOG_BUILDER_HOLDER = object : LoggerTypeSearcher {
+val LOG4J_LOG_BUILDER_HOLDER = object : LoggerTypeSearcher {
   override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType? {
     var qualifierExpression = getImmediateLoggerQualifier(expression)
     if (qualifierExpression is UReferenceExpression) {
@@ -59,7 +59,7 @@ internal val LOG4J_LOG_BUILDER_HOLDER = object : LoggerTypeSearcher {
 }
 
 
-internal val SLF4J_BUILDER_HOLDER = object : LoggerTypeSearcher {
+val SLF4J_BUILDER_HOLDER = object : LoggerTypeSearcher {
   override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType {
     if (context.log4jAsImplementationForSlf4j) {
       return PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS
@@ -110,15 +110,15 @@ private val AKKA_PLACEHOLDERS = object : LoggerTypeSearcher {
   }
 }
 
-internal val IDEA_PLACEHOLDERS = object : LoggerTypeSearcher {
+val IDEA_PLACEHOLDERS = object : LoggerTypeSearcher {
   override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType? {
     return null
   }
 }
 
-internal class LoggerContext(val log4jAsImplementationForSlf4j: Boolean)
+class LoggerContext(val log4jAsImplementationForSlf4j: Boolean)
 
-internal interface LoggerTypeSearcher {
+interface LoggerTypeSearcher {
   fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType?
 }
 
@@ -130,7 +130,7 @@ private fun getImmediateLoggerQualifier(expression: UCallExpression): UExpressio
   return result
 }
 
-internal val LOGGER_TYPE_SEARCHERS: CallMapper<LoggerTypeSearcher> = CallMapper<LoggerTypeSearcher>()
+val LOGGER_TYPE_SEARCHERS: CallMapper<LoggerTypeSearcher> = CallMapper<LoggerTypeSearcher>()
   .register(CallMatcher.instanceCall(LoggingUtil.SLF4J_LOGGER, "trace", "debug", "info", "warn", "error"), SLF4J_HOLDER)
   .register(CallMatcher.instanceCall(LoggingUtil.IDEA_LOGGER, "trace", "debug", "info", "warn", "error"), IDEA_PLACEHOLDERS)
   .register(CallMatcher.instanceCall(LoggingUtil.SLF4J_EVENT_BUILDER, "log"), SLF4J_BUILDER_HOLDER)
@@ -143,7 +143,7 @@ private val BUILDER_CHAIN = setOf("addKeyValue", "addMarker", "setCause")
 private const val ADD_ARGUMENT = "addArgument"
 private const val SET_MESSAGE = "setMessage"
 
-internal fun findMessageSetterStringArg(node: UCallExpression,
+fun findMessageSetterStringArg(node: UCallExpression,
                                         loggerType: LoggerTypeSearcher?): UExpression? {
   if (loggerType == null) {
     return null
@@ -180,9 +180,9 @@ internal fun findMessageSetterStringArg(node: UCallExpression,
 /**
  * @return The count of additional arguments, or null if it is impossible to count.
  */
-internal fun findAdditionalArgumentCount(node: UCallExpression,
-                                         loggerType: LoggerTypeSearcher,
-                                         allowIntermediateMessage: Boolean): Int? {
+fun findAdditionalArgumentCount(node: UCallExpression,
+                                loggerType: LoggerTypeSearcher,
+                                allowIntermediateMessage: Boolean): Int? {
   if (loggerType != SLF4J_BUILDER_HOLDER) {
     return 0
   }
@@ -213,10 +213,10 @@ internal fun findAdditionalArgumentCount(node: UCallExpression,
   return null
 }
 
-internal enum class PlaceholderLoggerType {
+enum class PlaceholderLoggerType {
   SLF4J, SLF4J_EQUAL_PLACEHOLDERS, LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE, LOG4J_EQUAL_PLACEHOLDERS, AKKA_PLACEHOLDERS
 }
 
-internal enum class PlaceholdersStatus {
+enum class PlaceholdersStatus {
   EXACTLY, PARTIAL, ERROR_TO_PARSE_STRING, EMPTY
 }

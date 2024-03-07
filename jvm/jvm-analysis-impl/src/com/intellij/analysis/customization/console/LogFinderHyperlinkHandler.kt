@@ -7,6 +7,10 @@ import com.intellij.codeInsight.navigation.PsiTargetNavigator
 import com.intellij.codeInspection.logging.*
 import com.intellij.execution.filters.HyperlinkInfoFactory
 import com.intellij.ide.util.EditSourceUtil
+import com.intellij.lang.logging.resolve.LOGGER_TYPE_SEARCHERS
+import com.intellij.lang.logging.resolve.LoggingUtil
+import com.intellij.lang.logging.resolve.findMessageSetterStringArg
+import com.intellij.lang.logging.resolve.getLogStringIndex
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project

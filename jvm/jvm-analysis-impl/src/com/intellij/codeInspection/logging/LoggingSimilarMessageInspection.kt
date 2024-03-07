@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.java.JavaBundle
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.lang.logging.resolve.*
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandQuickFix
 import com.intellij.openapi.module.ModuleUtilCore
