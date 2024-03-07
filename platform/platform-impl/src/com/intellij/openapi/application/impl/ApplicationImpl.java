@@ -167,8 +167,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   @TestOnly
-  ReadMostlyRWLock getRwLock() {
-    return myLock;
+  ThreadingSupport getRwLock() {
+    return getThreadingSupport();
   }
 
   /**
