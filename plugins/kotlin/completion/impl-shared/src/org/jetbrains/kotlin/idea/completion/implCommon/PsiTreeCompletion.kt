@@ -290,7 +290,15 @@ class PsiTreeCompletion {
         }
     }
 
+    private fun shouldSkipCompletion(position: PsiElement): Boolean{
+        if (position.parent is KtOperationReferenceExpression) return true
+        if (position.parent is KtLiteralStringTemplateEntry) return true
+        if (KtPsiUtil.isInComment(position)) return true
+        return false
+    }
+
     fun complete(position: PsiElement, prefixMatcher: PrefixMatcher, consumer: (LookupElement) -> Unit) {
+        if (shouldSkipCompletion(position)) return
         val containingFile = position.containingFile as? KtFile ?: return
         val canUseReceiver = (position.parent as? KtSimpleNameExpression)?.getReceiverExpression() != null
 
