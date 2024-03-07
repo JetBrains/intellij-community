@@ -289,11 +289,11 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val actual = JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input)
 
-    val expected = "<html><div class='content'>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
+    val expected = "<html><head></head><body><div class=\"content\"><p>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
                    "<br>" +
                    "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
                    "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
-                   "</div>"
+                   "</p></div></body></html>"
 
     TestCase.assertEquals(expected, actual)
   }
@@ -309,11 +309,11 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val documentationManager = DocumentationManager.getInstance(myFixture.project)
     JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input) { component ->
-      val expected = "<html><div class='content'>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
+      val expected = "<html><head></head><body><div class=\"content\"><p>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
                      "<br>" +
                      "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
                      "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
-                     "</div>"
+                     "</p></div></body></html>"
       assertEquals(expected, component.decoratedText)
 
       documentationManager.navigateByLink(component, null, "psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)")
@@ -326,7 +326,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
       // Here we check that the covering module (SDK in this case) is rendered in decorated info
       assertTrue(
-        component.decoratedText.contains("<div class=\"bottom\"><icon src=\"AllIcons.Nodes.PpLibFolder\"/>&nbsp;&lt; java 1.7 &gt;</div>"))
+        component.decoratedText.contains("<div class=\"bottom\"><icon src=\"AllIcons.Nodes.PpLibFolder\" />&nbsp;&lt; java 1.7 &gt;</div>"))
       return@getDocumentationText null
     }
   }
