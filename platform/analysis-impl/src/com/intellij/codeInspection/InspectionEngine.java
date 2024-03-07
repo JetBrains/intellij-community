@@ -47,7 +47,7 @@ public final class InspectionEngine {
                                                         boolean isOnTheFly,
                                                         @NotNull LocalInspectionToolSession session,
                                                         @NotNull List<? extends PsiElement> elements,
-                                                        Map<Class<?>, Collection<Class<?>>> targetPsiClasses) {
+                                                        @NotNull Map<Class<?>, Collection<Class<?>>> targetPsiClasses) {
     PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
     // if inspection returned an empty visitor, then it should be skipped
     if (visitor == PsiElementVisitor.EMPTY_VISITOR) return false;
@@ -80,8 +80,8 @@ public final class InspectionEngine {
 
   private static void acceptElements(@NotNull List<? extends PsiElement> elements,
                                      @NotNull PsiElementVisitor elementVisitor,
-                                     Map<Class<?>, Collection<Class<?>>> targetPsiClasses,
-                                     List<Class<?>> acceptingPsiTypes) {
+                                     @NotNull Map<Class<?>, Collection<Class<?>>> targetPsiClasses,
+                                     @NotNull List<? extends Class<?>> acceptingPsiTypes) {
     if (acceptingPsiTypes == InspectionVisitorsOptimizer.ALL_ELEMENTS_VISIT_LIST) {
       for (int i = 0; i < elements.size(); i++) {
         PsiElement element = elements.get(i);
@@ -441,7 +441,7 @@ public final class InspectionEngine {
   }
 
   private static void convertToProblemDescriptors(@NotNull PsiElement element,
-                                                  CommonProblemDescriptor @NotNull [] commonProblemDescriptors,
+                                                  @NotNull CommonProblemDescriptor @NotNull [] commonProblemDescriptors,
                                                   @NotNull List<? super ProblemDescriptor> outDescriptors) {
     for (CommonProblemDescriptor common : commonProblemDescriptors) {
       if (common instanceof ProblemDescriptor) {
@@ -456,9 +456,9 @@ public final class InspectionEngine {
     }
   }
 
-  public static @NotNull List<LocalInspectionToolWrapper> filterToolsApplicableByLanguage(@NotNull Collection<? extends LocalInspectionToolWrapper> tools,
-                                                                                          @NotNull Set<String> elementDialectIdsForRegularTool,
-                                                                                          @NotNull Set<String> elementDialectIdsForWholeFileTool) {
+  public static @NotNull @Unmodifiable List<LocalInspectionToolWrapper> filterToolsApplicableByLanguage(@NotNull Collection<? extends LocalInspectionToolWrapper> tools,
+                                                                                                        @NotNull Set<String> elementDialectIdsForRegularTool,
+                                                                                                        @NotNull Set<String> elementDialectIdsForWholeFileTool) {
     Map<String, Boolean> resultsWithDialects = new HashMap<>();
     Map<String, Boolean> resultsNoDialects = new HashMap<>();
     return ContainerUtil.filter(tools, tool -> {

@@ -110,7 +110,7 @@ public final class InspectionVisitorsOptimizer {
 
   public static @Nullable Set<Class<?>> getVisitorAcceptClasses(
     @NotNull Map<Class<?>, Collection<Class<?>>> targetPsiClasses,
-    @NotNull List<Class<?>> acceptingPsiTypes
+    @NotNull List<? extends Class<?>> acceptingPsiTypes
   ) {
     if (acceptingPsiTypes.size() == 1) {
       return Set.copyOf(targetPsiClasses.getOrDefault(acceptingPsiTypes.get(0), emptyList()));

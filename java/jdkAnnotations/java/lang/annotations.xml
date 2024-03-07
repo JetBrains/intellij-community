@@ -483,7 +483,10 @@
   <item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item name='java.lang.Comparable int compareTo(T)'>
+    <item name='java.lang.ClassValue T computeValue(java.lang.Class&lt;?&gt;) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.Comparable int compareTo(T)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
