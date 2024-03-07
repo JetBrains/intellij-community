@@ -16,7 +16,7 @@ class GraphLayoutImpl(layoutIndex: IntArray,
 
   override fun getOneOfHeadNodeIndex(nodeIndex: Int) = getHeadNodeIndex(getLayoutIndex(nodeIndex))
 
-  fun getHeadNodeIndex(layoutIndex: Int) = headNodeIndex.getInt(getHeadOrder(layoutIndex))
+  private fun getHeadNodeIndex(layoutIndex: Int) = headNodeIndex.getInt(getHeadOrder(layoutIndex))
 
   override fun getHeadNodeIndex() = headNodeIndex
 
