@@ -110,10 +110,13 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
       .$CLASS_CENTERED { text-align: center }
       .$CLASS_GRAYED { color: #909090 }
       hr { 
-         padding: ${spacingAfter + spacingBefore + scale(1)}px 0 0 0; 
-         margin: 0 0 ${spacingAfter + spacingBefore + scale(1)}px 0; 
+         padding: ${scale(1)}px 0 0 0; 
+         margin: ${spacingBefore} 0 ${spacingAfter}px 0; 
          border-bottom: ${scale(1)}px solid $hrColor; 
          width: 100%;
+      }
+      p hr {
+         margin: ${spacingAfter + spacingBefore} 0 ${spacingAfter + spacingBefore}px 0; 
       }
     """.trimIndent()
     return styles
