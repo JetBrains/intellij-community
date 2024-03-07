@@ -128,13 +128,6 @@ internal fun CoroutineScope.scheduleInitAwtToolkit(lockSystemDirsJob: Job, busyT
       initAwtToolkit(busyThread)
     }
   }
-
-  launch(CoroutineName("IdeEventQueue class preloading") + Dispatchers.IO) {
-    val classLoader = AppStarter::class.java.classLoader
-    // preload class not in EDT
-    Class.forName(IdeEventQueue::class.java.name, true, classLoader)
-    Class.forName(AWTExceptionHandler::class.java.name, true, classLoader)
-  }
   return task
 }
 
