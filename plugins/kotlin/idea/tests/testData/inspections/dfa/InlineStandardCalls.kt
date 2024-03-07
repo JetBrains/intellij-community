@@ -17,7 +17,7 @@ fun inlineLetQuestion(x: Int?) {
 
 fun inlineAlso() {
     val x = 5
-    val y = x.also { if (<warning descr="Condition 'it == 5' is always true">it == 5</warning>) <warning descr="[UNUSED_EXPRESSION] The expression is unused">1</warning> else <warning descr="[UNUSED_EXPRESSION] The expression is unused">2</warning> }
+    val y = x.also { if (<warning descr="Condition 'it == 5' is always true">it == 5</warning>) println(1) else println(2) }
     if (<warning descr="Condition 'y == 5' is always true">y == 5</warning>) {}
     true.also { println() }
 }
