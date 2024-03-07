@@ -2,35 +2,49 @@
   <library name="jackson-dataformat-xml" type="repository">
     <properties maven-id="com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.16.1">
       <verification>
-        <artifact url="file://$PROJECT_DIR$/lib/jackson-dataformat-xml-2.16.1.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.16.1/jackson-dataformat-xml-2.16.1.jar">
           <sha256sum>b8e73fa171d1276832abbf20ebb4df597e377405f875ed39808cee9acca3d3ac</sha256sum>
         </artifact>
-        <artifact url="file://$PROJECT_DIR$/lib/jackson-core-2.16.1.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.16.1/jackson-core-2.16.1.jar">
           <sha256sum>f5f8ef90609e64fec82eb908e497dc7d81b2eb983fe509b870292a193cde4dfb</sha256sum>
         </artifact>
-        <artifact url="file://$PROJECT_DIR$/lib/jackson-annotations-2.16.1.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.16.1/jackson-annotations-2.16.1.jar">
           <sha256sum>a4730771e6a495dd3793a42cdb8ce6bddb96c77e15f40c98fd8d9a7ae09e7286</sha256sum>
         </artifact>
-        <artifact url="file://$PROJECT_DIR$/lib/jackson-databind-2.16.1.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.16.1/jackson-databind-2.16.1.jar">
           <sha256sum>baf8a8ebee8f45ef68cdd5e2dd3923b3e296c0937b96ec0b4806aa3a31bccd1d</sha256sum>
         </artifact>
-        <artifact url="file://$PROJECT_DIR$/lib/stax2-api-4.2.1.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2.1/stax2-api-4.2.1.jar">
           <sha256sum>678567e48b51a42c65c699f266539ad3d676d4b1a5b0ad7d89ece8b9d5772579</sha256sum>
         </artifact>
-        <artifact url="file://$PROJECT_DIR$/lib/woodstox-core-6.5.1.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/6.5.1/woodstox-core-6.5.1.jar">
           <sha256sum>c928d60665c6415fb1c39775cf95cfc44f7f4580cf5ab01b1c380ebffd76887f</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/jackson-dataformat-xml-2.16.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/jackson-core-2.16.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/jackson-annotations-2.16.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/jackson-databind-2.16.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/stax2-api-4.2.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/woodstox-core-6.5.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.16.1/jackson-dataformat-xml-2.16.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.16.1/jackson-core-2.16.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.16.1/jackson-annotations-2.16.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.16.1/jackson-databind-2.16.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2.1/stax2-api-4.2.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/6.5.1/woodstox-core-6.5.1.jar!/" />
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.16.1/jackson-dataformat-xml-2.16.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.16.1/jackson-core-2.16.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.16.1/jackson-annotations-2.16.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.16.1/jackson-databind-2.16.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2.1/stax2-api-4.2.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/6.5.1/woodstox-core-6.5.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-xml/2.16.1/jackson-dataformat-xml-2.16.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-core/2.16.1/jackson-core-2.16.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.16.1/jackson-annotations-2.16.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.16.1/jackson-databind-2.16.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2.1/stax2-api-4.2.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/woodstox/woodstox-core/6.5.1/woodstox-core-6.5.1-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
