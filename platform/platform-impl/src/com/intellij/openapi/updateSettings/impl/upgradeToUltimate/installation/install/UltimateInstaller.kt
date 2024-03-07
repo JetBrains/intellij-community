@@ -42,11 +42,13 @@ internal abstract class UltimateInstaller(
 
   fun download(link: String, buildInfo: BuildInfo, indicator: ProgressIndicator, suggestedIde: SuggestedIde): DownloadResult {
     showHint(IdeBundle.message("plugins.advertiser.try.ultimate.download.started.balloon", suggestedIde.name))
-    val downloadPath = updateTempDirectory.resolve("${buildInfo.version}$postfix")
+    val buildNumber = buildInfo.number.asString()
+    val downloadPath = updateTempDirectory.resolve("$buildNumber$postfix")
 
     try {
       HttpRequests.request(link).saveToFile(downloadPath.toFile(), indicator)
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       deleteInBackground(downloadPath)
       throw e
     }
@@ -57,17 +59,14 @@ internal abstract class UltimateInstaller(
   fun install(downloadResult: DownloadResult): InstallationResult? {
     return try {
       installUltimate(downloadResult)
-    } finally {
+    }
+    finally {
       deleteInBackground(downloadResult.downloadPath)
     }
   }
 
   fun generateDownloadLink(buildInfo: BuildInfo, suggestedIde: SuggestedIde): String {
-    val version = if (Registry.`is`("ide.try.ultimate.use.eap")) {
-      buildInfo.number.components.joinToString(".")
-    }
-    else buildInfo.version
-
+    val version = if (Registry.`is`("ide.try.ultimate.use.eap")) buildInfo.number.asStringWithoutProductCodeAndSnapshot() else buildInfo.version
     return "${suggestedIde.baseDownloadUrl}-$version$postfix"
   }
 
@@ -139,8 +138,8 @@ internal data class DownloadResult(
   val buildVersion: String,
   val suggestedIde: SuggestedIde,
 )
+
 internal data class InstallationResult(
   val appPath: Path,
   val suggestedIde: SuggestedIde,
 )
-
