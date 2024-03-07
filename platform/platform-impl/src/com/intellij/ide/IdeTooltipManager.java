@@ -721,8 +721,7 @@ public class IdeTooltipManager implements Disposable {
     JBHtmlPaneStyleConfiguration styleConfiguration = new JBHtmlPaneStyleConfiguration();
     JBHtmlPaneConfiguration paneConfiguration = new JBHtmlPaneConfiguration(
       Collections.emptyMap(), url -> null, icon -> null,
-      color -> Collections.singletonList(
-        StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}")),
+      color -> StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}"),
       null, Collections.singletonList(
       (elem, view) -> {
         AttributeSet attrs = elem.getAttributes();

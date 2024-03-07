@@ -16,7 +16,7 @@ data class JBHtmlPaneConfiguration(
   val keyboardActions: Map<KeyStroke, ActionListener> = emptyMap(),
   val imageResolverFactory: (JBHtmlPane) -> Dictionary<URL, Image>? = { null },
   val iconResolver: (String) -> Icon? = { null },
-  val additionalStyleSheetProvider: (backgroundColor: Color) -> List<StyleSheet> = { emptyList() },
+  val customStyleSheetProvider: (backgroundColor: Color) -> StyleSheet? = { null },
   val fontResolver: CSSFontResolver? = null,
   val extensions: List<ExtendableHTMLViewFactory.Extension> = emptyList()
 )

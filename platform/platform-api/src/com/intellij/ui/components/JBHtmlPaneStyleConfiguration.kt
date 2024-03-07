@@ -16,9 +16,9 @@ data class JBHtmlPaneStyleConfiguration(
   val enableCodeBlocksBackground: Boolean = true,
   val useFontLigaturesInCode: Boolean = false,
   /** Unscaled */
-  val spaceBeforeParagraph: Int = Companion.defaultSpaceBeforeParagraph,
+  val spaceBeforeParagraph: Int = defaultSpaceBeforeParagraph,
   /** Unscaled */
-  val spaceAfterParagraph: Int = Companion.defaultSpaceAfterParagraph,
+  val spaceAfterParagraph: Int = defaultSpaceAfterParagraph,
   val controlStyleOverrides: ControlStyleOverrides? = null,
 ) {
   override fun equals(other: Any?): Boolean =

@@ -405,7 +405,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       super(
         QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.getColorsScheme(), true),
         new JBHtmlPaneConfiguration(Collections.emptyMap(), pane -> IMAGE_MANAGER.getImageProvider(),
-                                    url -> null, bg -> Collections.singletonList(getStyleSheet(editor)),
+                                    url -> null, bg -> getStyleSheet(editor),
                                     EditorCssFontResolver.getInstance(editor), Collections.emptyList())
       );
       if (trackMemory) {

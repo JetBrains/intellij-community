@@ -104,8 +104,9 @@ import javax.swing.text.html.StyleSheet
  *
  */
 @Suppress("LeakingThis")
-open class JBHtmlPane(private val myStyleConfiguration: JBHtmlPaneStyleConfiguration,
-                      private val myPaneConfiguration: JBHtmlPaneConfiguration
+open class JBHtmlPane(
+  private val myStyleConfiguration: JBHtmlPaneStyleConfiguration,
+  private val myPaneConfiguration: JBHtmlPaneConfiguration
 ) : JEditorPane(), Disposable {
 
 
@@ -187,8 +188,8 @@ open class JBHtmlPane(private val myStyleConfiguration: JBHtmlPaneStyleConfigura
       .also { myCurrentDefaultStyleSheet = it }
     val background = background
     newStyleSheet.addStyleSheet(getStyleSheet(background, myStyleConfiguration))
-    for (styleSheet in myPaneConfiguration.additionalStyleSheetProvider(background)) {
-      newStyleSheet.addStyleSheet(styleSheet)
+    myPaneConfiguration.customStyleSheetProvider(background)?.let {
+      newStyleSheet.addStyleSheet(it)
     }
     editorStyleSheet.addStyleSheet(newStyleSheet)
   }

@@ -62,7 +62,7 @@ object DocumentationHtmlUtil {
   }
 
   @JvmStatic
-  fun getDocumentationPaneAdditionalCssRules(): List<StyleSheet> {
+  fun getDocumentationPaneAdditionalCssRules(): StyleSheet {
     val linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED)
     val borderColor = ColorUtil.toHtmlColor(UIUtil.getTooltipSeparatorColor())
     val sectionColor = ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR)
@@ -102,6 +102,6 @@ object DocumentationHtmlUtil {
         .$CLASS_SECTIONS { padding: 0 ${contentInnerPadding - 2}px 0 ${contentInnerPadding - 2}px 0; border-spacing: 0; }
         .$CLASS_SECTION { color: $sectionColor; padding-right: 4px; white-space: nowrap; }
       """.trimIndent()
-    return listOf(StyleSheetUtil.loadStyleSheet(result))
+    return StyleSheetUtil.loadStyleSheet(result)
   }
 }
