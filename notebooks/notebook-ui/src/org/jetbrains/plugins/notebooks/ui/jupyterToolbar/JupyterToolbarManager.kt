@@ -18,10 +18,11 @@ import javax.swing.Timer
 class JupyterToolbarManager(
   private val editor: EditorImpl,
   private val panel: JPanel,
-  private val actionGroupId: String
+  private val actionGroupId: String,
+  private val firstLine: Int = 0
 ) {  // PY-66455
   private var toolbar: JupyterToolbar? = null
-  private var hideToolbarTimer = Timer(5000) { hideToolBar() }
+  private var hideToolbarTimer = Timer(TOOLBAR_HIDE_DELAY) { hideToolBar() }
   private var mouseEnteredTbFlag = false
 
   init {
@@ -88,7 +89,7 @@ class JupyterToolbarManager(
   private fun showToolbar() {
     if (toolbar == null) {
       val actionGroup = createActionGroup() ?: return
-      toolbar = JupyterToolbar(actionGroup).apply {
+      toolbar = JupyterToolbar(actionGroup, firstLine).apply {
         targetComponent = editor.contentComponent
       }
     }
@@ -120,6 +121,9 @@ class JupyterToolbarManager(
   }
 
   companion object {
+    private val DEFAULT_Y_OFFSET = JBUIScale.scale(-10)
+    private const val TOOLBAR_HIDE_DELAY = 3000
+
     fun calculateToolbarBounds(
       editor: EditorImpl,
       panel: JPanel,
@@ -127,7 +131,7 @@ class JupyterToolbarManager(
       extraYOffset: Int = 0
     ) : Rectangle {
       val xOffset = (panel.width - toolbar.width) / 2
-      val yOffset = JBUIScale.scale(-14) + extraYOffset
+      val yOffset = DEFAULT_Y_OFFSET + extraYOffset
 
       val editorComponent = editor.contentComponent
       val panelLocationInEditor = SwingUtilities.convertPoint(panel, Point(0, 0), editorComponent)
