@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.*
@@ -120,6 +120,9 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
 
   private fun createCombinedViewer(initialFocusRequest: Boolean): CombinedDiffViewer? {
     val context = model.context
+    if (!DiffUtil.isUserDataFlagSet(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, context)) {
+      context.putUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, initialFocusRequest)
+    }
     val blocks = model.requests.toList()
     val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
     if (blocks.isEmpty()) return null
@@ -131,7 +134,6 @@ class CombinedDiffComponentProcessorImpl(val model: CombinedDiffModel,
     return CombinedDiffViewer(context, MyBlockListener(), blockState, mainUi.getUiState()).also { viewer ->
       Disposer.register(disposable, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_KEY, viewer)
-      context.putUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, initialFocusRequest)
       mainUi.setContent(viewer, blockState)
     }
   }
