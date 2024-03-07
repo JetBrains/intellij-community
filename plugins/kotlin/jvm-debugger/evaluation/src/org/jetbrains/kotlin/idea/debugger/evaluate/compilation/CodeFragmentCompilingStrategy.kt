@@ -25,7 +25,7 @@ abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
     abstract fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile>
 
     abstract fun onSuccess()
-    abstract fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
+    abstract fun processError(e: Throwable, codeFragment: KtCodeFragment, otherFiles: List<KtFile>, executionContext: ExecutionContext)
     abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
     abstract fun beforeRunningFallback()
     abstract fun beforeAnalyzingCodeFragment()
@@ -52,7 +52,7 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         )
     }
 
-    override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+    override fun processError(e: Throwable, codeFragment: KtCodeFragment, otherFiles: List<KtFile>, executionContext: ExecutionContext) {
         KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
             StatisticsEvaluator.OLD,
@@ -120,7 +120,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         )
     }
 
-    override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+    override fun processError(e: Throwable, codeFragment: KtCodeFragment, otherFiles: List<KtFile>, executionContext: ExecutionContext) {
         KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
             StatisticsEvaluator.IR,
@@ -131,7 +131,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
             throw e
         }
         if (isApplicationInternalMode()) {
-            reportErrorWithAttachments(executionContext, codeFragment, e)
+            reportErrorWithAttachments(executionContext, codeFragment, e, prepareFilesToCompile(otherFiles))
         }
     }
 
@@ -152,5 +152,11 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
 
     override fun beforeAnalyzingCodeFragment() {
         codeFragment.putCopyableUserData(CodeFragmentUtils.USED_FOR_COMPILATION_IN_IR_EVALUATOR, true)
+    }
+
+    private fun prepareFilesToCompile(files: List<KtFile>) = buildList<Pair<String, String>> {
+        for (file in files) {
+            add(file.name to file.text)
+        }
     }
 }
