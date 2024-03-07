@@ -1053,16 +1053,6 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/fromSmart/EnumEntries.kt");
             }
 
-            @TestMetadata("JavaStaticMethods.kt")
-            public void testJavaStaticMethods() throws Exception {
-                runTest("../testData/basic/common/fromSmart/JavaStaticMethods.kt");
-            }
-
-            @TestMetadata("JavaStaticMethods2.kt")
-            public void testJavaStaticMethods2() throws Exception {
-                runTest("../testData/basic/common/fromSmart/JavaStaticMethods2.kt");
-            }
-
             @TestMetadata("MultipleArgs.kt")
             public void testMultipleArgs() throws Exception {
                 runTest("../testData/basic/common/fromSmart/MultipleArgs.kt");
@@ -2367,36 +2357,6 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             public void testImportsFromObjectNoDuplicates() throws Exception {
                 runTest("../testData/basic/common/staticMembers/ImportsFromObjectNoDuplicates.kt");
             }
-
-            @TestMetadata("JavaStaticFields.kt")
-            public void testJavaStaticFields() throws Exception {
-                runTest("../testData/basic/common/staticMembers/JavaStaticFields.kt");
-            }
-
-            @TestMetadata("JavaStaticFieldsFromImports.kt")
-            public void testJavaStaticFieldsFromImports() throws Exception {
-                runTest("../testData/basic/common/staticMembers/JavaStaticFieldsFromImports.kt");
-            }
-
-            @TestMetadata("JavaStaticMethods.kt")
-            public void testJavaStaticMethods() throws Exception {
-                runTest("../testData/basic/common/staticMembers/JavaStaticMethods.kt");
-            }
-
-            @TestMetadata("JavaStaticMethodsFromImports.kt")
-            public void testJavaStaticMethodsFromImports() throws Exception {
-                runTest("../testData/basic/common/staticMembers/JavaStaticMethodsFromImports.kt");
-            }
-
-            @TestMetadata("JavaStaticMethodsNoDuplicates.kt")
-            public void testJavaStaticMethodsNoDuplicates() throws Exception {
-                runTest("../testData/basic/common/staticMembers/JavaStaticMethodsNoDuplicates.kt");
-            }
-
-            @TestMetadata("JavaStaticMethodsNoDuplicatesFromBases.kt")
-            public void testJavaStaticMethodsNoDuplicatesFromBases() throws Exception {
-                runTest("../testData/basic/common/staticMembers/JavaStaticMethodsNoDuplicatesFromBases.kt");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -3133,11 +3093,6 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/NestedClassesOnDefaultObjectLiteral.kt");
             }
 
-            @TestMetadata("NoAutoInsertionOfNotImported.kt")
-            public void testNoAutoInsertionOfNotImported() throws Exception {
-                runTest("../testData/basic/common/NoAutoInsertionOfNotImported.kt");
-            }
-
             @TestMetadata("NoClassNameDuplication.kt")
             public void testNoClassNameDuplication() throws Exception {
                 runTest("../testData/basic/common/NoClassNameDuplication.kt");
@@ -3241,11 +3196,6 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("PreferLessParameters.kt")
             public void testPreferLessParameters() throws Exception {
                 runTest("../testData/basic/common/PreferLessParameters.kt");
-            }
-
-            @TestMetadata("PrivatesInSecondPressCompletion.kt")
-            public void testPrivatesInSecondPressCompletion() throws Exception {
-                runTest("../testData/basic/common/PrivatesInSecondPressCompletion.kt");
             }
 
             @TestMetadata("ProtectedExtensionMethod.kt")
@@ -3570,11 +3520,6 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
             @TestMetadata("nonSealedClassInWhen.kt")
             public void testNonSealedClassInWhen() throws Exception {
                 runTest("../testData/basic/common/when/nonSealedClassInWhen.kt");
-            }
-
-            @TestMetadata("nonSealedClassInWhen2.kt")
-            public void testNonSealedClassInWhen2() throws Exception {
-                runTest("../testData/basic/common/when/nonSealedClassInWhen2.kt");
             }
 
             @TestMetadata("nonSealedClassWithTypeArgs.kt")
