@@ -49,7 +49,7 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
   }
 
   public static @NotNull <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull @NlsActions.ActionText String text, @Nullable String originalActionId) {
-    return setNavigateAction(info, text, originalActionId, null);
+    return setNavigateAction(info, text, originalActionId, info.getIcon());
   }
 
   public static @NotNull <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull @NlsActions.ActionText String text,

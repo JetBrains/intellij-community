@@ -102,8 +102,7 @@ class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
             KotlinBundle.message("highlighter.action.text.go.to.actual.declarations"),
-            IdeActions.ACTION_GOTO_IMPLEMENTATION,
-            gutter.icon
+            IdeActions.ACTION_GOTO_IMPLEMENTATION
         )
         result.add(lineMarkerInfo)
 
@@ -162,8 +161,7 @@ class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
             KotlinBundle.message("highlighter.action.text.go.to.expected.declaration"),
-            null,
-            gutter.icon
+            null
         )
         result.add(lineMarkerInfo)
         return true

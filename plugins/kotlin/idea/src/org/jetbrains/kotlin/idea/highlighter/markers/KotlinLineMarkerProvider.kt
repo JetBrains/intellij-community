@@ -184,8 +184,7 @@ private fun collectSuperDeclarationMarkers(declaration: KtDeclaration, result: L
             KotlinBundle.message("highlighter.action.text.go.to.super.method")
         else
             KotlinBundle.message("highlighter.action.text.go.to.super.property"),
-        IdeActions.ACTION_GOTO_SUPER,
-        gutter.icon
+        IdeActions.ACTION_GOTO_SUPER
     )
     result.add(lineMarkerInfo)
 }
@@ -218,8 +217,7 @@ private fun collectInheritedClassMarker(element: KtClass, result: LineMarkerInfo
             KotlinBundle.message("highlighter.action.text.go.to.implementations")
         else
             KotlinBundle.message("highlighter.action.text.go.to.subclasses"),
-        IdeActions.ACTION_GOTO_IMPLEMENTATION,
-        gutter.icon
+        IdeActions.ACTION_GOTO_IMPLEMENTATION
     )
     result.add(lineMarkerInfo)
 }
@@ -258,8 +256,7 @@ private fun collectOverriddenPropertyAccessors(
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
             KotlinBundle.message("highlighter.action.text.go.to.overridden.properties"),
-            IdeActions.ACTION_GOTO_IMPLEMENTATION,
-            gutter.icon
+            IdeActions.ACTION_GOTO_IMPLEMENTATION
         )
 
         result.add(lineMarkerInfo)
@@ -308,8 +305,7 @@ private fun collectActualMarkers(
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
         KotlinBundle.message("highlighter.action.text.go.to.actual.declarations"),
-        IdeActions.ACTION_GOTO_IMPLEMENTATION,
-        gutter.icon
+        IdeActions.ACTION_GOTO_IMPLEMENTATION
     )
     result.add(lineMarkerInfo)
 }
@@ -337,8 +333,7 @@ private fun collectExpectedMarkers(
     NavigateAction.setNavigateAction(
         lineMarkerInfo,
         KotlinBundle.message("highlighter.action.text.go.to.expected.declaration"),
-        null,
-        gutter.icon
+        null
     )
     result.add(lineMarkerInfo)
 }
@@ -379,8 +374,7 @@ private fun collectOverriddenFunctions(functions: Collection<KtNamedFunction>, r
         NavigateAction.setNavigateAction(
             lineMarkerInfo,
             KotlinBundle.message("highlighter.action.text.go.to.overridden.methods"),
-            IdeActions.ACTION_GOTO_IMPLEMENTATION,
-            gutter.icon
+            IdeActions.ACTION_GOTO_IMPLEMENTATION
         )
 
         result.add(lineMarkerInfo)
