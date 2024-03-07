@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -332,7 +332,7 @@ class ExtendableHTMLViewFactory internal constructor(
           }
         }
 
-        override fun getToolTipText(x: Float, y: Float, allocation: Shape) =
+        override fun getToolTipText(x: Float, y: Float, allocation: Shape): String? =
           super.getElement().attributes.getAttribute(HTML.Attribute.ALT) as? String
 
         override fun paint(g: Graphics, a: Shape) {

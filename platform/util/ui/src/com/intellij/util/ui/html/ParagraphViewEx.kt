@@ -68,7 +68,7 @@ open class ParagraphViewEx(elem: Element) : ParagraphView(elem) {
     return ParagraphRow(element)
   }
 
-  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String =
+  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String? =
     element.attributes.getAttribute(HTML.Attribute.TITLE)
       ?.asSafely<String>()
       ?.takeIf { it.isNotEmpty() }

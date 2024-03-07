@@ -56,7 +56,7 @@ class BlockViewEx(elem: Element, axis: Int) : BlockView(elem, axis) {
     painter.bg = bg
   }
 
-  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String =
+  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String? =
     element.attributes.getAttribute(HTML.Attribute.TITLE)
       ?.asSafely<String>()
       ?.takeIf { it.isNotEmpty() }
