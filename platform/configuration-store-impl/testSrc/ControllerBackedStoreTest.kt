@@ -367,6 +367,55 @@ class ControllerBackedStoreTest {
     assertThat(Json.encodeToString(saved)).isEqualTo("""{"foo":"newValue","bar":"test2"}""")
   }
 
+
+  @Suppress("unused")
+  @Test
+  fun substitute_value_on_set() = runBlocking<Unit>(Dispatchers.Default) {
+    data class TestState(var foo: String = "", var bar: String = "")
+
+    val store = createStore(object : DelegatedSettingsController {
+      override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> = GetResult.inapplicable()
+
+      override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult {
+        if (key.key == "TestState.foo") {
+          return SetResult.substituted(JsonPrimitive("overridden"))
+        }
+        else {
+          return SetResult.inapplicable()
+        }
+      }
+    })
+
+    @State(name = "TestState", storages = [Storage(value = TEST_COMPONENT_FILE_NAME)], allowLoadInTests = true)
+    class TestComponent : SerializablePersistentStateComponent<TestState>(TestState()) {
+      override fun noStateLoaded() {
+        loadState(TestState())
+      }
+    }
+
+    val component = TestComponent()
+    store.initComponent(component = component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+
+    assertThat(component.state.foo).isEmpty()
+
+    component.state.foo = "newValue"
+    store.save(forceSavingAllSettings = true)
+    assertThat(component.state.foo).isEqualTo("newValue")
+
+    // but the new value on disk
+    assertThat(JDOMUtil.load(appConfig.resolve(TEST_COMPONENT_FILE_NAME))).isEqualTo("""
+      <application>
+        <component name="TestState">
+          <option name="foo" value="overridden" />
+        </component>
+      </application>
+    """.trimIndent())
+
+    store.reloadStates(setOf("TestState"))
+    // and after reload, the new value is applied to the component
+    assertThat(component.state.foo).isEqualTo("overridden")
+  }
+
   @Suppress("unused")
   @Test
   fun cache_storage() = runBlocking<Unit>(Dispatchers.Default) {

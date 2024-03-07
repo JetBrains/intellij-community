@@ -3,6 +3,8 @@ package com.intellij.platform.settings
 
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.xmlb.SettingsInternalApi
+import kotlinx.serialization.json.JsonElement
 import org.jetbrains.annotations.ApiStatus.*
 import java.nio.file.Path
 import java.util.*
@@ -61,15 +63,18 @@ value class GetResult<out T : Any?> @PublishedApi internal constructor(@Publishe
 
 @Internal
 @JvmInline
-value class SetResult @PublishedApi internal constructor(@PublishedApi internal val value: Any?) {
+value class SetResult @PublishedApi internal constructor(@Internal @SettingsInternalApi val value: Any?) {
   companion object {
     fun inapplicable(): SetResult = SetResult(SetResultResolution.INAPPLICABLE)
 
     fun forbid(): SetResult = SetResult(SetResultResolution.FORBID)
 
     fun done(): SetResult = SetResult(SetResultResolution.DONE)
+
+    fun substituted(value: JsonElement): SetResult = SetResult(value)
   }
 
+  @OptIn(SettingsInternalApi::class)
   override fun toString(): String = "SetResult($value)"
 }
 
