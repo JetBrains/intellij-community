@@ -64,6 +64,6 @@
     <orderEntry type="module" module-name="kotlin.base.indices" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
     <orderEntry type="module" module-name="kotlin.ide" />
-    <orderEntry type="module" module-name="kotlin.jsr223"/>
+    <orderEntry type="module" module-name="kotlin.jsr223" />
   </component>
 </module>
