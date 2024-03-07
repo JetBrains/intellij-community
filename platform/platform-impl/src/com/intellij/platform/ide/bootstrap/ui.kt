@@ -19,11 +19,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.ui.*
+import com.intellij.ui.AppUIUtil
+import com.intellij.ui.IconManager
 import com.intellij.ui.icons.CoreIconManager
+import com.intellij.ui.isWindowIconAlreadyExternallySet
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.concurrency.SynchronizedClearableLazy
+import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
@@ -133,19 +134,6 @@ internal fun CoroutineScope.scheduleInitAwtToolkit(lockSystemDirsJob: Job, busyT
     // preload class not in EDT
     Class.forName(IdeEventQueue::class.java.name, true, classLoader)
     Class.forName(AWTExceptionHandler::class.java.name, true, classLoader)
-  }
-  launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
-    val classLoader = AppStarter::class.java.classLoader
-    // preload class not in EDT
-    Class.forName(LookAndFeelThemeAdapter::class.java.name, true, classLoader)
-    if (SystemInfoRt.isWindows) {
-      Class.forName(IdeaLaf::class.java.name, true, classLoader)
-    }
-    Class.forName(JBUIScale::class.java.name, true, classLoader)
-    Class.forName(JreHiDpiUtil::class.java.name, true, classLoader)
-    Class.forName(SynchronizedClearableLazy::class.java.name, true, classLoader)
-    Class.forName(ScaleContext::class.java.name, true, classLoader)
-    Class.forName(StartupUiUtil::class.java.name, true, classLoader)
   }
   return task
 }
