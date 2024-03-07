@@ -18,11 +18,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.terminal.TerminalUtil
-import java.util.concurrent.CopyOnWriteArrayList
 
 class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSession) {
-  private val listeners: MutableList<TerminalPromptModelListener> = CopyOnWriteArrayList()
   private val renderer: TerminalPromptRenderer = BuiltInPromptRenderer(session)
   private val document: DocumentEx
     get() = editor.document
@@ -50,7 +47,6 @@ class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSe
         runInEdt {
           updatePrompt(updatedInfo)
           promptRenderingInfo = updatedInfo
-          listeners.forEach { it.promptStateUpdated(updatedInfo) }
         }
       }
     })
@@ -80,10 +76,6 @@ class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSe
       editor.markupModel.addRangeHighlighter(highlighting.startOffset, highlighting.endOffset, HighlighterLayer.SYNTAX,
                                              highlighting.textAttributesProvider.getTextAttributes(), HighlighterTargetArea.EXACT_RANGE)
     }
-  }
-
-  fun addListener(listener: TerminalPromptModelListener, disposable: Disposable) {
-    TerminalUtil.addItem(listeners, listener, disposable)
   }
 
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
@@ -118,10 +110,6 @@ class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSe
   companion object {
     val KEY: Key<TerminalPromptModel> = Key.create("TerminalPromptModel")
   }
-}
-
-interface TerminalPromptModelListener {
-  fun promptStateUpdated(renderingInfo: PromptRenderingInfo)
 }
 
 data class PromptRenderingInfo(val text: @NlsSafe String, val highlightings: List<HighlightingInfo>)
