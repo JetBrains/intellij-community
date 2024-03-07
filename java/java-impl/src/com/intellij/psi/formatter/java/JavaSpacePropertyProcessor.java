@@ -1001,7 +1001,12 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private boolean shouldHandleAsSimpleLambda(PsiLambdaExpression lambda) {
-    return mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !lambda.textContains('\n');
+    PsiElement body = lambda.getBody();
+    boolean isSimpleLambda = mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !lambda.textContains('\n');
+    if (body instanceof PsiCodeBlock block) {
+      return isSimpleLambda && shouldAddNewLineWhenBodyIsPresented(block);
+    }
+    return isSimpleLambda;
   }
 
   @Override
