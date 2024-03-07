@@ -52,6 +52,10 @@ fun HistogramData.standardDeviation(): Double {
   return frequencies.standardDeviation().toDouble()
 }
 
+/**
+ * Median Absolute Deviation (MAD)
+ * @see mad(java.lang.Iterable<java.lang.Double>)
+ **/
 fun HistogramData.mad(): Double {
   val frequencies = mutableListOf<Double>()
   this.points.forEach { point ->

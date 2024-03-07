@@ -1,5 +1,6 @@
 package com.intellij.tools.ide.metrics.collector
 
+import com.intellij.tools.ide.metrics.collector.metrics.mad
 import com.intellij.tools.ide.metrics.collector.metrics.median
 import com.intellij.tools.ide.metrics.collector.metrics.standardDeviation
 import io.kotest.matchers.shouldBe
@@ -69,5 +70,25 @@ class HistogramStatisticsTest {
   fun testUnevenDistributionStandardDeviation() {
     val histogramData = createHistogramData(listOf(10.0, 20.0, 30.0), listOf(20, 80, 100, 0))
     histogramData.standardDeviation() shouldBe 6
+  }
+
+  // Median Absolute Deviation (MAD)
+
+  @Test
+  fun testSingleBucketMad() {
+    val histogramData = createHistogramData(listOf(10.0), listOf(50, 0))
+    histogramData.mad() shouldBe 0.0
+  }
+
+  @Test
+  fun testEvenDistributionMad() {
+    val histogramData = createHistogramData(listOf(10.0, 20.0, 30.0, 40.0), listOf(25, 25, 25, 25, 0))
+    histogramData.mad() shouldBe 10.0
+  }
+
+  @Test
+  fun testUnevenDistributionMad() {
+    val histogramData = createHistogramData(listOf(10.0, 20.0, 30.0), listOf(20, 80, 100, 0))
+    histogramData.mad() shouldBe 5.0
   }
 }
