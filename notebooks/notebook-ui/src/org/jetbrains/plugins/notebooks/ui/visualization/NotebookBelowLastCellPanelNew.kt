@@ -13,7 +13,6 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JPanel
 
-
 class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayout()) {
   private var toolbar: JupyterToolbar? = null
 
@@ -27,7 +26,9 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
   fun initialize() {
     // this toolbar is special - persistent and unique
     val actionGroup = createActionGroup() ?: return
-    toolbar = JupyterToolbar(actionGroup, editor.contentComponent)
+    toolbar = JupyterToolbar(actionGroup).apply {
+      targetComponent = editor.contentComponent
+    }
     add(toolbar)
 
     toolbar?.let {
@@ -64,9 +65,9 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
   private fun calculateToolbarBounds(): Rectangle {
     val toolbarPreferredSize = toolbar?.preferredSize ?: Dimension(0, 0)
     val newBounds = JupyterToolbarManager.calculateToolbarBounds(editor,
-                                                                           this,
-                                                                            toolbarPreferredSize,
-                                                                            extraYOffset = 30)
+                                                                 this,
+                                                                 toolbarPreferredSize,
+                                                                 extraYOffset = 30)
     return newBounds
   }
 

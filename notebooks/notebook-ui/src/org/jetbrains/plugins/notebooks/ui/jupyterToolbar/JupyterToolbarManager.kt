@@ -37,7 +37,6 @@ class JupyterToolbarManager(
       }
 
       override fun mouseExited(e: MouseEvent) {
-        println("panel mouseEntered")
         if (!mouseEnteredTbFlag) {
           hideToolbarTimer.restart()
         }
@@ -89,7 +88,9 @@ class JupyterToolbarManager(
   private fun showToolbar() {
     if (toolbar == null) {
       val actionGroup = createActionGroup() ?: return
-      toolbar = JupyterToolbar(actionGroup, editor.contentComponent)
+      toolbar = JupyterToolbar(actionGroup).apply {
+        targetComponent = editor.contentComponent
+      }
     }
     JupyterToolbarVisibilityManager.requestToolbarDisplay(this)
     editor.contentComponent.add(toolbar, 0)

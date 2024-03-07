@@ -78,7 +78,7 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
 
   init {
     add(child)
-    border = if (resizable) ResizeHandlebarUpdater.invisibleResizeBorder else null
+    border = if (resizable) CollapsingComponentBorder(editor) else null
     isSeen = true
     isOpaque = false
   }
