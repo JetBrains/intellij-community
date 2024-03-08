@@ -106,7 +106,9 @@ final class ServiceViewTreeUi implements ServiceViewUi {
 
   @Override
   public void setMasterComponent(@NotNull JComponent component, @NotNull ServiceViewActionProvider actionProvider) {
-    myMasterPanel.add(ScrollPaneFactory.createScrollPane(component, SideBorder.TOP), BorderLayout.CENTER);
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(component, true);
+    ScrollableContentBorder.setup(scrollPane, Side.TOP);
+    myMasterPanel.add(scrollPane, BorderLayout.CENTER);
 
     myMasterActionToolbar = actionProvider.createMasterComponentToolbar(component);
     myMasterPanel.add(ServiceViewUIUtils.wrapServicesAligned(myMasterActionToolbar), BorderLayout.NORTH);
