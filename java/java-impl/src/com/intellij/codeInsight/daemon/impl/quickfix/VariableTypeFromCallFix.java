@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -12,7 +12,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.JavaElementKind;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -90,7 +89,7 @@ public final class VariableTypeFromCallFix implements IntentionAction {
       final PsiType parameterType = substitutor.substitute(formalParamType);
       if (parameterType.isAssignableFrom(expressionType)) continue;
 
-      final PsiExpression qualifierExpression = methodCall.getMethodExpression().getQualifierExpression();
+      final PsiExpression qualifierExpression =  PsiUtil.skipParenthesizedExprDown(methodCall.getMethodExpression().getQualifierExpression());
       if (qualifierExpression instanceof PsiReferenceExpression) {
         final PsiElement resolved = ((PsiReferenceExpression)qualifierExpression).resolve();
         if (resolved instanceof PsiVariable) {
@@ -99,7 +98,7 @@ public final class VariableTypeFromCallFix implements IntentionAction {
           final Project project = expression.getProject();
           final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
           if (varClass != null) {
-            final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(varClass.getTypeParameters(),
+            PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(varClass.getTypeParameters(),
                                                                                    parameters,
                                                                                    expressions, PsiSubstitutor.EMPTY, resolved,
                                                                                    DefaultParameterTypeInferencePolicy.INSTANCE);
@@ -107,18 +106,27 @@ public final class VariableTypeFromCallFix implements IntentionAction {
                                      t -> t != null && t.equalsToText(CommonClassNames.JAVA_LANG_VOID))) {
               continue;
             }
-            final PsiType appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(
+            PsiType appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(
               JavaPsiFacade.getElementFactory(project).createType(varClass, psiSubstitutor));
             if (!varType.equals(appropriateVarType)) {
               PsiMethodCallExpression methodCallCopy = (PsiMethodCallExpression)methodCall.copy();
-              PsiElement castedQualifier =
-                AddTypeCastFix.addTypeCast(project, methodCallCopy.getMethodExpression().getQualifierExpression(), appropriateVarType);
-              PsiMethodCallExpression castedMethodCallCopy = PsiTreeUtil.getParentOfType(castedQualifier, PsiMethodCallExpression.class);
-              //only qualifier is considered, so it is necessary to check that it doesn't change a return type of the whole method,
+              AddTypeCastFix.addTypeCast(project, methodCallCopy.getMethodExpression().getQualifierExpression(), appropriateVarType);
+              //it is necessary to check that it doesn't change a return type of the whole method,
               //otherwise it can lead to broken code
-              if (castedMethodCallCopy != null && castedMethodCallCopy.getType() != null &&
-                  !castedMethodCallCopy.getType().equals(methodCall.getType())) {
-                continue;
+              if (methodCallCopy.getType() != null && !methodCallCopy.getType().equals(methodCall.getType())) {
+                PsiMethod resolvedMethod = methodCall.resolveMethod();
+                if(resolvedMethod ==null) continue;
+                PsiType returnMethodType = resolvedMethod.getReturnType();
+                if (!(PsiUtil.resolveClassInClassTypeOnly(returnMethodType) instanceof PsiTypeParameter returnTypeParameter)) {
+                  continue;
+                }
+                PsiType oldReturnType = methodCall.getType();
+                psiSubstitutor = psiSubstitutor.put(returnTypeParameter, oldReturnType);
+                appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(
+                  JavaPsiFacade.getElementFactory(project).createType(varClass, psiSubstitutor));
+                if (varType.equals(appropriateVarType)) {
+                  continue;
+                }
               }
               actions.add(new VariableTypeFromCallFix(appropriateVarType, (PsiVariable)resolved));
               break;
