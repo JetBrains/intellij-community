@@ -3,6 +3,7 @@ package com.intellij.testFramework
 
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
@@ -14,13 +15,46 @@ import com.intellij.util.application
 import kotlinx.coroutines.*
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.time.DurationUnit.SECONDS
 import kotlin.time.toDuration
 
 object DumbModeTestUtils {
-  class EternalTaskShutdownToken internal constructor(private val dumbTask: Job) : AutoCloseable {
+  private val projectsWithEternalDumbTask = ConcurrentHashMap<Project, MutableSet<EternalTaskShutdownToken>>()
+
+  private fun registerEternalDumbTask(project: Project, eternalTask: EternalTaskShutdownToken) {
+    synchronized(projectsWithEternalDumbTask) {
+      projectsWithEternalDumbTask
+        .getOrPut(project) { CopyOnWriteArraySet() }
+        .add(eternalTask)
+    }
+  }
+
+  private fun unregisterEternalDumbTask(eternalTask: EternalTaskShutdownToken) {
+    synchronized(projectsWithEternalDumbTask) {
+      val entriesToModify = projectsWithEternalDumbTask.entries.filter { e -> e.value.contains(eternalTask) }
+      entriesToModify.forEach { (project, tasks) ->
+        tasks.remove(eternalTask)
+        if (tasks.isEmpty()) {
+          projectsWithEternalDumbTask.remove(project)
+        }
+      }
+    }
+  }
+
+  class EternalTaskShutdownToken private constructor(private val dumbTask: Job) : AutoCloseable {
     override fun close() {
+      unregisterEternalDumbTask(this)
       dumbTask.cancel(null)
+    }
+
+    companion object {
+      fun newInstance(project: Project, dumbTask: Job): EternalTaskShutdownToken {
+        return EternalTaskShutdownToken(dumbTask).also {
+          registerEternalDumbTask(project, it)
+        }
+      }
     }
   }
 
@@ -47,7 +81,7 @@ object DumbModeTestUtils {
         }
       }
       assertTrue("Dumb mode didn't start", DumbService.isDumb(project))
-      return EternalTaskShutdownToken(finishDumbTask)
+      return EternalTaskShutdownToken.newInstance(project, finishDumbTask)
     }
     catch (t: Throwable) {
       finishDumbTask.complete(true)
@@ -72,7 +106,7 @@ object DumbModeTestUtils {
   @JvmStatic
   fun endEternalDumbModeTaskAndWaitForSmartMode(project: Project, task: EternalTaskShutdownToken) {
     endEternalDumbModeTask(task)
-    waitForSmartMode(project)
+    waitForSmartMode(project, ignoreEternalTasks = true /* there can be nested eternal tasks */)
   }
 
   /**
@@ -113,7 +147,12 @@ object DumbModeTestUtils {
    * Can be invoked from any thread (even from EDT).
    */
   @JvmStatic
-  fun waitForSmartMode(project: Project) {
+  fun waitForSmartMode(project: Project, ignoreEternalTasks: Boolean = false) {
+    if (ignoreEternalTasks && !projectsWithEternalDumbTask[project].isNullOrEmpty()) {
+      thisLogger().info("Don't wait for smart mode, because eternal task is in progress")
+      return
+    }
+
     if (application.isDispatchThread) {
       PlatformTestUtil.waitWithEventsDispatching("Dumb mode didn't finish", { !DumbService.isDumb(project) }, 10)
     }
