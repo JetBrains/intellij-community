@@ -69,7 +69,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -2603,7 +2602,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     if (!myMouseDragStarted) {
-      var point = new RelativePoint(e).getPoint(myEditorComponent);
+      var point = convertPoint(e.getComponent(), e.getPoint(), myEditorComponent);
       var sensitivity = Registry.intValue("editor.drag.sensitivity", 5, 0, 25);
       myMouseDragStarted = myLastMousePressedPoint == null
                            || !myLastPressedOnGutter // Small drags aren't a problem in the editor, only on the gutter.
@@ -2792,6 +2791,33 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingTimer.start(dx, dy);
       onSubstantialDrag(e);
     }
+  }
+
+  private static @NotNull Point convertPoint(@NotNull Component from, @NotNull Point point, @NotNull Component to) {
+    // Can't just use RelativePoint or SwingUtilities.convertPoint because some tests create just the editor without a root pane.
+    var result = new Point(point);
+    var fromTopParent = from;
+    for (var c = from.getParent(); c != null; c = c.getParent()) {
+      fromTopParent = c;
+      if (c.getParent() == null) {
+        break;
+      }
+      result.translate(c.getX(), c.getY());
+    }
+    var toTopParent = to;
+    var toOffset = new Point(0, 0);
+    for (var c = to.getParent(); c != null; c = c.getParent()) {
+      toTopParent = c;
+      if (c.getParent() == null) {
+        break;
+      }
+      toOffset.translate(c.getX(), c.getY());
+    }
+    if (fromTopParent != toTopParent) {
+      throw new IllegalArgumentException("Components don't have a common parent: " + from + " and " + to);
+    }
+    result.translate(-toOffset.x, -toOffset.y);
+    return result;
   }
 
   @NotNull
@@ -4156,9 +4182,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = createEditorMouseEvent(e);
       myLastPressWasAtBlockInlay = false;
       myLastMousePressedLocation = event.getLogicalPosition();
-      myLastMousePressedPoint = new RelativePoint(event.getMouseEvent()).getPoint(myEditorComponent);
+      myLastMousePressedPoint = convertPoint(e.getComponent(), e.getPoint(), myEditorComponent);
       myLastPressedOnGutter = e.getSource() == myGutterComponent;
-      var lastPressedPointOnGutter = SwingUtilities.convertPoint(myEditorComponent, myLastMousePressedPoint, myGutterComponent);
+      var lastPressedPointOnGutter = convertPoint(myEditorComponent, myLastMousePressedPoint, myGutterComponent);
       myLastPressedOnGutterIcon = myGutterComponent.getGutterRenderer(lastPressedPointOnGutter) != null;
       myCaretStateBeforeLastPress = isToggleCaretEvent(e) ? myCaretModel.getCaretsAndSelections() : Collections.emptyList();
       myCurrentDragIsSubstantial = false;
@@ -5498,11 +5524,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           if (size >= MIN_FONT_SIZE) {
             if (isWheelFontChangePersistent) {
               setFontSize(UISettingsUtils.getInstance().scaleFontSize(size),
-                          SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
+                          convertPoint(this, e.getPoint(), getViewport()));
               adjustGlobalFontSize(size);
             }
             else {
-              setFontSize(size, SwingUtilities.convertPoint(this, e.getPoint(), getViewport()));
+              setFontSize(size, convertPoint(this, e.getPoint(), getViewport()));
             }
           }
           return;
