@@ -24,12 +24,16 @@ import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -73,32 +77,26 @@ public final class SimplifyOptionalCallChainsInspection extends AbstractBaseJava
       CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "isEmpty").parameterCount(0)
     );
 
+  private static final List<ChainSimplificationCase<?>> ourCases = List.of(
+    new IfPresentFoldedCase(),
+    new MapUnwrappingCase(),
+    new OrElseNonNullCase(OrElseType.OrElse),
+    new OrElseNonNullCase(OrElseType.OrElseGet),
+    new FlipPresentOrEmptyCase(true),
+    new FlipPresentOrEmptyCase(false),
+    new OrElseReturnCase(OrElseType.OrElse),
+    new OrElseReturnCase(OrElseType.OrElseGet),
+    new RewrappingCase(RewrappingCase.Type.OptionalGet),
+    new RewrappingCase(RewrappingCase.Type.OrElseNull),
+    new MapOrElseCase(OrElseType.OrElseGet),
+    new MapOrElseCase(OrElseType.OrElse),
+    new OptionalOfNullableOrElseNullCase(),
+    new OptionalOfNullableStringCase()
+  );
 
-  private static final CallMapper<OptionalSimplificationFix> ourMapper;
-
-  static {
-    List<ChainSimplificationCase<?>> cases = Arrays.asList(
-      new IfPresentFoldedCase(),
-      new MapUnwrappingCase(),
-      new OrElseNonNullCase(OrElseType.OrElse),
-      new OrElseNonNullCase(OrElseType.OrElseGet),
-      new FlipPresentOrEmptyCase(true),
-      new FlipPresentOrEmptyCase(false),
-      new OrElseReturnCase(OrElseType.OrElse),
-      new OrElseReturnCase(OrElseType.OrElseGet),
-      new RewrappingCase(RewrappingCase.Type.OptionalGet),
-      new RewrappingCase(RewrappingCase.Type.OrElseNull),
-      new MapOrElseCase(OrElseType.OrElseGet),
-      new MapOrElseCase(OrElseType.OrElse),
-      new OptionalOfNullableOrElseNullCase(),
-      new OptionalOfNullableStringCase()
-    );
-    ourMapper = new CallMapper<>();
-    for (ChainSimplificationCase<?> theCase : cases) {
-      CallHandler<OptionalSimplificationFix> handler = CallHandler.of(theCase.getMatcher(), theCase);
-      ourMapper.register(handler);
-    }
-  }
+  private static final CallMapper<OptionalSimplificationFix> ourMapper =
+    StreamEx.of(ourCases).map(theCase -> CallHandler.of(theCase.getMatcher(), theCase)).foldLeft(
+      new CallMapper<>(), CallMapper::register);
 
   @Override
   public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
