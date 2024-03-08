@@ -48,9 +48,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * Renders editor contents.
- */
+
 public final class EditorPainter implements TextDrawingCallback {
   private static final Color CARET_LIGHT = Gray._255;
   private static final Color CARET_DARK = Gray._0;

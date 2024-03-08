@@ -48,6 +48,7 @@ class EditorCell(
     _visible = true
     if (view == null) {
       view = viewFactory()
+      gutterAction?.let { view?.setGutterAction(it) }
     }
   }
 

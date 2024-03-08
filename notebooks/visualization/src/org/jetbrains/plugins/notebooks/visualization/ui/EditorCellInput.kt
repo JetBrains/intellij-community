@@ -85,7 +85,6 @@ internal class EditorCellInput(
       inputController?.let { controller -> Disposer.dispose(controller.inlay) }
       folding.bindTo(actualController)
     }
-    updateGutterIcons()
     return actualController
   }
 
