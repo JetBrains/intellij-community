@@ -80,11 +80,12 @@ interface Driver : AutoCloseable {
   fun exitApplication()
 
   /**
-   * Screenshots and saves images of application windows to the test output folder.
+   * Takes a screenshot and saves it to the specified output folder.
    *
-   * @param outFolder name of the test output folder relative to logs directory
+   * @param outFolder the folder where the screenshot will be saved
+   * @return the path of the saved screenshot or null if the screenshot could not be taken
    */
-  fun takeScreenshot(outFolder: String?)
+  fun takeScreenshot(outFolder: String?): String?
 
   /**
    * @return new remote proxy for a [Remote] application service interface

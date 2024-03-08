@@ -50,8 +50,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     invoker.exit()
   }
 
-  override fun takeScreenshot(outFolder: String?) {
-    invoker.takeScreenshot(outFolder)
+  override fun takeScreenshot(outFolder: String?): String? {
+    return invoker.takeScreenshot(outFolder)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -302,10 +302,6 @@ internal class DriverImpl(host: JmxHost?) : Driver {
     return try {
       this.code()
     }
-    catch (t: Throwable) {
-      invoker.takeScreenshot("driverError")
-      throw t
-    }
     finally {
       if (currentValue != null) {
         sessionHolder.set(currentValue)
@@ -378,7 +374,7 @@ interface Invoker : AutoCloseable {
 
   fun cleanup(sessionId: Int)
 
-  fun takeScreenshot(folder: String?)
+  fun takeScreenshot(folder: String?): String?
 }
 
 class DriverCallException(message: String, e: Throwable) : RuntimeException(message, e)

@@ -111,10 +111,12 @@ internal fun takeScreenshotOfAllWindowsBlocking(childFolder: String? = null) {
   runBlocking { takeScreenshotOfAllWindows(childFolder) }
 }
 
-internal fun takeFullScreenshot(childFolder: String? = null) {
+internal fun takeFullScreenshot(childFolder: String? = null): String {
   var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
   screenshotPath = getNextFolder(screenshotPath)
-  takeScreenshotWithAwtRobot(screenshotPath.resolve("full_screen.png").absolutePath, "png")
+  val screenshotPathWithFile = screenshotPath.resolve("full_screen.png")
+  takeScreenshotWithAwtRobot(screenshotPathWithFile.absolutePath, "png")
+  return screenshotPathWithFile.absolutePath
 }
 
 internal suspend fun takeScreenshotOfAllWindows(childFolder: String? = null) {

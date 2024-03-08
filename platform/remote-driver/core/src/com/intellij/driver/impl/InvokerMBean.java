@@ -23,7 +23,7 @@ public interface InvokerMBean {
 
   void cleanup(int sessionId);
 
-  void takeScreenshot(@Nullable String outFolder);
+  String takeScreenshot(@Nullable String outFolder);
 
   @NotNull Ref putAdhocReference(@NotNull Object item);
 }

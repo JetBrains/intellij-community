@@ -19,6 +19,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.util.ExceptionUtil;
+import java.util.function.Function;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.context.Context;
@@ -56,13 +57,13 @@ public class Invoker implements InvokerMBean {
   private final Map<String, WeakReference<Object>> adhocReferenceMap = new ConcurrentHashMap<>();
 
   private final ClearableLazyValue<IJTracer> tracer;
-  private final Consumer<String> screenshotAction;
+  private final Function<String, String> screenshotAction;
   private final String refIdPrefix;
   private final Supplier<? extends Context> timedContextSupplier;
 
   public Invoker(@NotNull String refIdPrefix, @NotNull Supplier<? extends IJTracer> tracerSupplier,
                  @NotNull Supplier<? extends Context> timedContextSupplier,
-                 @NotNull Consumer<String> screenshotAction) {
+                 @NotNull Function<String, String> screenshotAction) {
     this.refIdPrefix = refIdPrefix;
     this.timedContextSupplier = timedContextSupplier;
     this.tracer = new ClearableLazyValue<>() {
@@ -557,8 +558,8 @@ public class Invoker implements InvokerMBean {
   }
 
   @Override
-  public void takeScreenshot(@Nullable String outFolder) {
-    this.screenshotAction.accept(outFolder);
+  public String takeScreenshot(@Nullable String outFolder) {
+    return this.screenshotAction.apply(outFolder);
   }
 
   interface Session {
