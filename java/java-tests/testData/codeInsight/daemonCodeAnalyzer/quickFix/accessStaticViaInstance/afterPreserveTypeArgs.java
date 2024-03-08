@@ -1,4 +1,4 @@
-// "Access static 'Bug.right(B)' via class 'Bug' reference" "true-preview"
+// "Qualify static 'right(B)' call with reference to class 'Bug'" "true-preview"
 
 class Bug<A, B> {
     public A getLeft() {

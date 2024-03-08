@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -71,9 +71,10 @@ public class AccessStaticViaInstanceFix extends PsiBasedModCommandAction<PsiRefe
   private static @IntentionName String calcText(PsiMember member, PsiSubstitutor substitutor) {
     PsiClass aClass = member.getContainingClass();
     if (aClass == null) return "";
-    return QuickFixBundle.message("access.static.via.class.reference.text",
+    return QuickFixBundle.message(member instanceof PsiMethod
+                                  ? "access.static.method.via.class.reference.text"
+                                  : "access.static.field.via.class.reference.text",
                                   HighlightMessageUtil.getSymbolName(member, substitutor, PsiFormatUtilBase.SHOW_TYPE),
-                                  HighlightUtil.formatClass(aClass, false),
                                   HighlightUtil.formatClass(aClass, false));
   }
 

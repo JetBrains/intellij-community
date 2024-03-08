@@ -1,4 +1,4 @@
-// "Access static 'AClass.getA()' via class 'AClass' reference" "true-preview"
+// "Qualify static 'getA()' call with reference to class 'AClass'" "true-preview"
 
 class AClass
 {
