@@ -4,8 +4,23 @@ package com.intellij.openapi.vcs.update
 import com.intellij.openapi.util.Clock
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.util.text.DateFormatUtil
+import com.intellij.util.xmlb.jdomToJson
+import com.intellij.util.xmlb.jsonDomToXml
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
+
+@Internal
+@Serializable
+data class UpdateInfoState(
+  @NonNls val date: String? = null,
+  @NonNls val actionInfo: String? = null,
+  @NonNls val fileInfo: String? = null,
+)
 
 internal class UpdateInfo {
   var fileInformation: UpdatedFiles? = null
@@ -24,25 +39,23 @@ internal class UpdateInfo {
 
   constructor()
 
-  fun writeExternal(element: Element) {
-    if (fileInformation == null) {
-      return
-    }
+  fun writeExternal(): UpdateInfoState? {
+    val fileInformation = fileInformation?.takeIf { !it.isEmpty } ?: return null
 
-    element.setAttribute(DATE_ATTR, date)
-    element.setAttribute(ACTION_INFO_ATTRIBUTE_NAME, actionInfo!!.actionName)
-    val filesElement = Element(FILE_INFO_ELEMENTS)
-    fileInformation!!.writeExternal(filesElement)
-    element.addContent(filesElement)
+    val fileElement = Element(FILE_INFO_ELEMENTS)
+    fileInformation.writeExternal(fileElement)
+
+    return UpdateInfoState(
+      date = date,
+      actionInfo = actionInfo?.actionName,
+      fileInfo = Json.encodeToString(jdomToJson(fileElement)),
+    )
   }
 
-  fun readExternal(element: Element) {
-    date = element.getAttributeValue(DATE_ATTR)
-    val fileInfoElement = element.getChild(FILE_INFO_ELEMENTS) ?: return
-
-    val actionInfoName = element.getAttributeValue(ACTION_INFO_ATTRIBUTE_NAME)
-
-    actionInfo = getActionInfoByName(actionInfoName) ?: return
+  fun readExternal(state: UpdateInfoState) {
+    date = state.date
+    val fileInfoElement = state.fileInfo?.let { s -> (Json.parseToJsonElement(s) as? JsonObject)?.let { jsonDomToXml(it) } } ?: return
+    actionInfo = getActionInfoByName(state.actionInfo) ?: return
 
     val updatedFiles = UpdatedFiles.create()
     updatedFiles.readExternal(fileInfoElement)
@@ -56,11 +69,9 @@ internal class UpdateInfo {
     get() = fileInformation == null || fileInformation!!.isEmpty
 }
 
-private const val DATE_ATTR: @NonNls String = "date"
 private const val FILE_INFO_ELEMENTS: @NonNls String = "UpdatedFiles"
-private const val ACTION_INFO_ATTRIBUTE_NAME: @NonNls String = "ActionInfo"
 
-private fun getActionInfoByName(actionInfoName: String): ActionInfo? {
+private fun getActionInfoByName(actionInfoName: String?): ActionInfo? {
   return when {
     ActionInfo.UPDATE.actionName == actionInfoName -> ActionInfo.UPDATE
     ActionInfo.STATUS.actionName == actionInfoName -> ActionInfo.STATUS

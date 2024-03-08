@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jdom.Element;
@@ -17,8 +16,8 @@ import java.util.List;
  * @see UpdateEnvironment#fillGroups
  * @see UpdateEnvironment#updateDirectories
  */
-public final class UpdatedFiles implements JDOMExternalizable {
-  private final List<FileGroup> myGroups = new ArrayList<>();
+public final class UpdatedFiles {
+  private final List<FileGroup> groups = new ArrayList<>();
 
   private UpdatedFiles() {
   }
@@ -26,22 +25,20 @@ public final class UpdatedFiles implements JDOMExternalizable {
   public FileGroup registerGroup(FileGroup fileGroup) {
     FileGroup existing = getGroupById(fileGroup.getId());
     if (existing != null) return existing;
-    myGroups.add(fileGroup);
+    groups.add(fileGroup);
     return fileGroup;
   }
 
-  @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    FileGroup.writeGroupsToElement(myGroups, element);
+    FileGroup.writeGroupsToElement(groups, element);
   }
 
-  @Override
   public void readExternal(Element element) throws InvalidDataException {
-    FileGroup.readGroupsFromElement(myGroups, element);
+    FileGroup.readGroupsFromElement(groups, element);
   }
 
   public boolean isEmpty() {
-    for (FileGroup fileGroup : myGroups) {
+    for (FileGroup fileGroup : groups) {
       if (!fileGroup.isEmpty()) return false;
     }
     return true;
@@ -50,7 +47,7 @@ public final class UpdatedFiles implements JDOMExternalizable {
 
   public FileGroup getGroupById(String id) {
     if (id == null) return null;
-    return findByIdIn(myGroups, id);
+    return findByIdIn(groups, id);
   }
 
   private static FileGroup findByIdIn(List<? extends FileGroup> groups, String id) {
@@ -63,7 +60,7 @@ public final class UpdatedFiles implements JDOMExternalizable {
   }
 
   public List<FileGroup> getTopLevelGroups() {
-    return myGroups;
+    return groups;
   }
 
   public static UpdatedFiles create() {
@@ -94,6 +91,6 @@ public final class UpdatedFiles implements JDOMExternalizable {
 
   @Override
   public String toString() {
-    return myGroups.toString();
+    return groups.toString();
   }
 }

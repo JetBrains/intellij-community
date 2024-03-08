@@ -10,11 +10,10 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
-import org.jdom.Element
 
 @State(name = "RestoreUpdateTree", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 @Service(Service.Level.PROJECT)
-class RestoreUpdateTree : PersistentStateComponent<Element> {
+class RestoreUpdateTree : PersistentStateComponent<UpdateInfoState> {
   private var updateInfo: UpdateInfo? = null
 
   companion object {
@@ -43,16 +42,11 @@ class RestoreUpdateTree : PersistentStateComponent<Element> {
     }
   }
 
-  override fun getState(): Element {
-    val element = Element("state")
-    val updateInfo = updateInfo
-    if (updateInfo != null && !updateInfo.isEmpty) {
-      updateInfo.writeExternal(element)
-    }
-    return element
+  override fun getState(): UpdateInfoState {
+    return updateInfo?.writeExternal() ?: UpdateInfoState()
   }
 
-  override fun loadState(state: Element) {
+  override fun loadState(state: UpdateInfoState) {
     val updateInfo = UpdateInfo()
     updateInfo.readExternal(state)
     this.updateInfo = if (updateInfo.isEmpty) null else updateInfo
