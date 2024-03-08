@@ -75,6 +75,9 @@ data class JBHtmlPaneStyleConfiguration(
 
     @JvmStatic
     val defaultSpaceAfterParagraph: Int get() = 4
+
+    @JvmStatic
+    val editorColorClassPrefix: String = "editor-color-"
   }
 
 }

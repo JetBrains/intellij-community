@@ -26,12 +26,10 @@ import java.awt.Graphics
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.beans.PropertyChangeEvent
+import java.util.*
 import javax.swing.JEditorPane
 import javax.swing.KeyStroke
-import javax.swing.text.Document
-import javax.swing.text.EditorKit
-import javax.swing.text.StyledDocument
-import javax.swing.text.View
+import javax.swing.text.*
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
@@ -101,6 +99,11 @@ import javax.swing.text.html.StyleSheet
  *        padding: 5px;
  *        margin: 0px 2px 1px 2px;
  *     }
+ *     ```
+ * - elements with class `editor-color-*` are styled according to the attributes from
+ *   current editor color scheme, e.g.:
+ *     ```HTML
+ *     <span class='editor-color-DEFAULT_CONSTANT'>constant</span>
  *     ```
  *
  */
@@ -189,6 +192,7 @@ open class JBHtmlPane(
       .also { myCurrentDefaultStyleSheet = it }
     val background = background
     newStyleSheet.addStyleSheet(getStyleSheet(background, myStyleConfiguration))
+    newStyleSheet.addStyleSheet(EditorColorsSchemeStyleProvider(myStyleConfiguration.colorScheme))
     myPaneConfiguration.customStyleSheetProvider(background)?.let {
       newStyleSheet.addStyleSheet(it)
     }
@@ -528,7 +532,8 @@ open class JBHtmlPane(
             }
             if (codePoint == '<'.code) {
               readTagStart()
-            } else {
+            }
+            else {
               result.append(tagBuffer)
               return
             }
