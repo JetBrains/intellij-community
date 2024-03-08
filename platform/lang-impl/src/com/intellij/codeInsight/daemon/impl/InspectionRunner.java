@@ -154,7 +154,7 @@ class InspectionRunner {
           }
           tool.inspectionStarted(session, myIsOnTheFly);
 
-          List<Class<?>> acceptingPsiTypes = InspectionVisitorsOptimizer.getAcceptingPsiTypes(visitor);
+          List<Class<?>> acceptingPsiTypes = InspectionVisitorOptimizer.getAcceptingPsiTypes(visitor);
           List<? extends PsiElement> sortedInside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeInside : restrictedInside);
           List<? extends PsiElement> outside = toolWrapper.runForWholeFile() ? wholeOutside : restrictedOutside;
           InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, outside, true, acceptingPsiTypes, myPsiFile);
@@ -386,9 +386,9 @@ class InspectionRunner {
    */
   private static void processContext(@NotNull InspectionContext context) {
     List<? extends PsiElement> elements = context.isVisible() ? context.elementsInside() : context.elementsOutside();
-    Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
+    Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorOptimizer.getTargetPsiClasses(elements);
     InspectionProblemHolder holder = context.holder;
-    if (context.acceptingPsiTypes == InspectionVisitorsOptimizer.ALL_ELEMENTS_VISIT_LIST) {
+    if (context.acceptingPsiTypes == InspectionVisitorOptimizer.ALL_ELEMENTS_VISIT_LIST) {
       if (LOG.isTraceEnabled()) {
         LOG.trace("processContext: " + context + "; elements(" + elements.size() + "): " + StringUtil.join( elements, e->e+"("+e.getClass()+")", ", ") + "; accepts: all");
       }
@@ -399,7 +399,7 @@ class InspectionRunner {
       }
     }
     else {
-      Set<Class<?>> accepts = InspectionVisitorsOptimizer.getVisitorAcceptClasses(targetPsiClasses, context.acceptingPsiTypes);
+      Set<Class<?>> accepts = InspectionVisitorOptimizer.getVisitorAcceptClasses(targetPsiClasses, context.acceptingPsiTypes);
       if (LOG.isTraceEnabled()) {
         LOG.trace("processContext: " + context + "; elements(" + elements.size() + "): " + StringUtil.join( elements, e->e+"("+e.getClass()+")", ", ") + "; accepts=" + accepts+"; targetPsiClasses="+targetPsiClasses);
       }
