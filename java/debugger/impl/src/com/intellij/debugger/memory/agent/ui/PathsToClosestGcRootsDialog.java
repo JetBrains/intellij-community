@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent.ui;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import com.intellij.debugger.JavaDebuggerBundle;
 
 import javax.swing.tree.TreeNode;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PathsToClosestGcRootsDialog extends MemoryAgentDialog {
   public PathsToClosestGcRootsDialog(@NotNull Project project,
@@ -76,7 +78,11 @@ public class PathsToClosestGcRootsDialog extends MemoryAgentDialog {
   }
 
   private static boolean isInTopSubTree(@NotNull TreeNode node) {
+    Set<TreeNode> visited = new HashSet<>();
     while (node.getParent() != null) {
+      if (!visited.add(node) || visited.size() > 10) { // stop expanding if recursion detected or we're too deep
+        return false;
+      }
       if (node != node.getParent().getChildAt(0)) {
         return false;
       }
