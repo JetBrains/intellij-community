@@ -73,6 +73,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     generateK2NavigationTests()
     generateK2DebuggerTests()
     generateK2HighlighterTests()
+    generateK2GradleBuildScriptHighlighterTests()
     generateK2RefactoringsTests()
     generateK2SearchTests()
     generateK2RefIndexTests()

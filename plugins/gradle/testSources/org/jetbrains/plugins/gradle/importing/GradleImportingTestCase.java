@@ -107,7 +107,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   private int deprecationTextLineCount = 0;
 
   @Override
-  public void setUp() throws Exception {
+  protected void setUp() throws Exception {
     assumeThat(gradleVersion, versionMatcherRule.getMatcher());
     myProjectSettings = new GradleProjectSettings().withQualifiedModuleNames();
 

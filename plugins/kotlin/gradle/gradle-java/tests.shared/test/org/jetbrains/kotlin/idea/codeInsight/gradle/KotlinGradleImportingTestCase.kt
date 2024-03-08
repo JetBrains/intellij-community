@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -29,12 +30,14 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBinary
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestData
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import com.intellij.openapi.module.Module
 import org.junit.Assume
 import org.junit.runners.Parameterized
 import java.io.ByteArrayInputStream
@@ -53,8 +56,14 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
     protected open fun clearTextFromMarkup(text: String): String = text
 
     protected open fun testDataDirectory(): File {
-        val baseDir = IDEA_TEST_DATA_DIR.resolve("gradle/${testDataDirName()}")
-        return File(baseDir, getTestName(true).substringBefore("_").substringBefore(" "))
+        val clazz = this::class.java
+        return getTestData(clazz)?.toString()?.let {
+            val test = getTestDataFileName(clazz, getName()) ?: error("No @TestMetadata for ${clazz.name}")
+            File(it, test)
+        } ?: run {
+            val baseDir = IDEA_TEST_DATA_DIR.resolve("gradle/${testDataDirName()}")
+            File(baseDir, getTestName(true).substringBefore("_").substringBefore(" "))
+        }
     }
 
     protected val importStatusCollector = ImportStatusCollector()
@@ -342,14 +351,11 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
         const val LATEST_STABLE_GRADLE_PLUGIN_VERSION = "1.3.70"
 
-        val SUPPORTED_GRADLE_VERSIONS = arrayOf("5.6.4", "6.0.1", "6.7.1", "7.6", "8.6")
+        val SUPPORTED_GRADLE_VERSIONS = arrayOf("5.6.4", "6.0.1", "6.7.1", "7.6")
 
         // https://kotlinlang.org/docs/gradle-configure-project.html#targeting-the-jvm
         val GRADLE_TO_KGP_VERSION = mapOf(
-            "5.6.4" to "1.3.70",
-            "6.0.1" to "1.3.70",
-            "6.7.1" to "1.7.22",
-            "7.6" to "1.9.10",
+            "7.6.4" to "1.9.10",
             "8.6" to "1.9.20"
         )
 

@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionT
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
+import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractGradleBuildFileHighlightingTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
@@ -160,6 +161,8 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
 import org.jetbrains.uast.test.kotlin.comparison.*
+import org.junit.Test
+import org.junit.runners.Parameterized
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK1Tests()
@@ -174,6 +177,23 @@ fun generateK1Tests(isUpToDateCheck: Boolean = false) {
 
 private fun assembleWorkspace(): TWorkspace = workspace {
     val excludedFirPrecondition = fun(name: String) = !name.endsWith(".fir.kt") && !name.endsWith(".fir.kts")
+
+    testGroup("gradle/gradle-java/tests.k1", testDataPath = "../../../idea/tests/testData") {
+        testClass<AbstractGradleBuildFileHighlightingTest> {
+            model(
+                "gradle/highlighting/gradle8",
+                pattern = DIRECTORY,
+                isRecursive = false,
+                setUpStatements = listOf("gradleVersion = \"8.6\";")
+            )
+            model(
+                "gradle/highlighting/gradle7",
+                pattern = DIRECTORY,
+                isRecursive = false,
+                setUpStatements = listOf("gradleVersion = \"7.6.4\";")
+            )
+        }
+    }
 
     testGroup("jvm-debugger/test") {
         listOf(

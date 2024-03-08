@@ -73,7 +73,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected @Nullable WSLDistribution myWSLDistribution;
 
   @Override
-  public void setUp() throws Exception {
+  protected void setUp() throws Exception {
     super.setUp();
     setUpFixtures();
     myProject = myTestFixture.getProject();
