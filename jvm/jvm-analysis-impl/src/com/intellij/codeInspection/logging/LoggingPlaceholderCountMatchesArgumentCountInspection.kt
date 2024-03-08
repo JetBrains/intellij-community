@@ -7,7 +7,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.lang.logging.resolve.*
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
@@ -50,13 +49,6 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
     private val holder: ProblemsHolder,
   ) : AbstractUastNonRecursiveVisitor() {
 
-    private fun hasBridgeFromSlf4jToLog4j2(element: UElement): Boolean {
-      val file = element.getContainingUFile() ?: return true
-      val sourcePsi = file.sourcePsi
-      val project = sourcePsi.project
-      return JavaLibraryUtil.hasLibraryClass(project, LoggingUtil.LOG_4_J_LOGGER)
-    }
-
     override fun visitCallExpression(node: UCallExpression): Boolean {
       val searcher = LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return true
 
@@ -65,25 +57,93 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return true
 
       val log4jAsImplementationForSlf4j = when (slf4jToLog4J2Type) {
-        Slf4jToLog4J2Type.AUTO -> hasBridgeFromSlf4jToLog4j2(node)
+        Slf4jToLog4J2Type.AUTO -> LoggingUtil.hasBridgeFromSlf4jToLog4j2(node)
         Slf4jToLog4J2Type.YES -> true
         Slf4jToLog4J2Type.NO -> false
       }
       val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return true
 
-      val method = node.resolveToUElement() as? UMethod ?: return true
+      val context = getPlaceHolderCountContext(node, searcher, loggerType) ?: return true
+
+      val parts = collectParts(context.logStringArgument) ?: return true
+
+      val placeholderCountHolder = solvePlaceholderCount(loggerType, context.argumentCount, parts)
+      if (placeholderCountHolder.status == PlaceholdersStatus.EMPTY) {
+        return true
+      }
+      if (placeholderCountHolder.status == PlaceholdersStatus.ERROR_TO_PARSE_STRING) {
+        registerProblem(holder, context.logStringArgument, Result(context.argumentCount, 0, ResultType.INCORRECT_STRING))
+        return true
+      }
+
+      var finalArgumentCount = context.argumentCount
+
+      val resultType = when (loggerType) {
+        PlaceholderLoggerType.SLF4J -> { //according to the reference, an exception should not have a placeholder
+          finalArgumentCount = if (context.lastArgumentIsException) finalArgumentCount - 1 else finalArgumentCount
+          if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {
+            if (placeholderCountHolder.count <= finalArgumentCount) ResultType.SUCCESS else ResultType.PARTIAL_PLACE_HOLDER_MISMATCH
+          }
+          else {
+            if (placeholderCountHolder.count == finalArgumentCount) ResultType.SUCCESS else ResultType.PLACE_HOLDER_MISMATCH
+          }
+        }
+        PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS, PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS, PlaceholderLoggerType.AKKA_PLACEHOLDERS -> {
+          if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {
+            if (placeholderCountHolder.count <= finalArgumentCount) ResultType.SUCCESS else ResultType.PARTIAL_PLACE_HOLDER_MISMATCH
+          }
+          else {
+            if (placeholderCountHolder.count == finalArgumentCount) ResultType.SUCCESS else ResultType.PLACE_HOLDER_MISMATCH
+          }
+        }
+        PlaceholderLoggerType.LOG4J_OLD_STYLE,
+        PlaceholderLoggerType.LOG4J_FORMATTED_STYLE -> { // if there is more than one argument and the last argument is an exception, but there is a placeholder for
+          // the exception, then the stack trace won't be logged.
+          val type: ResultType
+          if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {
+            type = if ((placeholderCountHolder.count <= finalArgumentCount && (!context.lastArgumentIsException || finalArgumentCount > 1)) || (context.lastArgumentIsException && placeholderCountHolder.count <= finalArgumentCount - 1) || //consider the most general case
+                       (context.lastArgumentIsSupplier && (placeholderCountHolder.count <= finalArgumentCount))) ResultType.SUCCESS
+            else ResultType.PARTIAL_PLACE_HOLDER_MISMATCH
+          }
+          else {
+            type = if ((placeholderCountHolder.count == finalArgumentCount && (!context.lastArgumentIsException || finalArgumentCount > 1)) || (context.lastArgumentIsException && placeholderCountHolder.count == finalArgumentCount - 1) || //consider the most general case
+                       (context.lastArgumentIsSupplier && (placeholderCountHolder.count == finalArgumentCount || placeholderCountHolder.count == finalArgumentCount - 1))) ResultType.SUCCESS
+            else ResultType.PLACE_HOLDER_MISMATCH
+          }
+          finalArgumentCount = if (context.lastArgumentIsException) finalArgumentCount - 1 else finalArgumentCount
+          type
+        }
+      }
+
+      if (resultType == ResultType.SUCCESS) {
+        return true
+      }
+
+      registerProblem(holder, context.logStringArgument, Result(finalArgumentCount, placeholderCountHolder.count, resultType))
+
+      return true
+    }
+
+    private fun getPlaceHolderCountContext(
+      node: UCallExpression,
+      searcher: LoggerTypeSearcher,
+      loggerType: PlaceholderLoggerType
+    ): PlaceholderCountContext? {
+      val method = node.resolveToUElement() as? UMethod ?: return null
+      val arguments = node.valueArguments
       val parameters = method.uastParameters
+
       var argumentCount: Int?
       val logStringArgument: UExpression?
       var lastArgumentIsException = false
       var lastArgumentIsSupplier = false
       if (parameters.isEmpty() || arguments.isEmpty()) {
         //try to find String somewhere else
-        logStringArgument = findMessageSetterStringArg(node, searcher) ?: return true
-        argumentCount = findAdditionalArgumentCount(node, searcher, true) ?: return true
+        logStringArgument = findMessageSetterStringArg(node, searcher) ?: return null
+        argumentCount = findAdditionalArgumentCount(node, searcher, true) ?: return null
       }
       else {
-        val index = getLogStringIndex(parameters) ?: return true
+        val index = getLogStringIndex(parameters) ?: return null
 
         argumentCount = arguments.size - index
         lastArgumentIsException = hasThrowableType(arguments[arguments.size - 1])
@@ -93,70 +153,14 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
           val argument = arguments[index]
           val argumentType = argument.getExpressionType()
           if (argumentType is PsiArrayType) {
-            return true
+            return null
           }
         }
-        val additionalArgumentCount: Int = findAdditionalArgumentCount(node, searcher, false) ?: return true
+        val additionalArgumentCount: Int = findAdditionalArgumentCount(node, searcher, false) ?: return null
         argumentCount += additionalArgumentCount
         logStringArgument = arguments[index - 1]
       }
-
-      val parts = collectParts(logStringArgument) ?: return true
-
-      val placeholderCountHolder = solvePlaceholderCount(loggerType, argumentCount, parts)
-      if (placeholderCountHolder.status == PlaceholdersStatus.EMPTY) {
-        return true
-      }
-      if (placeholderCountHolder.status == PlaceholdersStatus.ERROR_TO_PARSE_STRING) {
-        registerProblem(holder, logStringArgument, Result(argumentCount, 0, ResultType.INCORRECT_STRING))
-        return true
-      }
-
-
-      val resultType = when (loggerType) {
-        PlaceholderLoggerType.SLF4J -> { //according to the reference, an exception should not have a placeholder
-          argumentCount = if (lastArgumentIsException) argumentCount - 1 else argumentCount
-          if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {
-            if (placeholderCountHolder.count <= argumentCount) ResultType.SUCCESS else ResultType.PARTIAL_PLACE_HOLDER_MISMATCH
-          }
-          else {
-            if (placeholderCountHolder.count == argumentCount) ResultType.SUCCESS else ResultType.PLACE_HOLDER_MISMATCH
-          }
-        }
-        PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS, PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS, PlaceholderLoggerType.AKKA_PLACEHOLDERS -> {
-          if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {
-            if (placeholderCountHolder.count <= argumentCount) ResultType.SUCCESS else ResultType.PARTIAL_PLACE_HOLDER_MISMATCH
-          }
-          else {
-            if (placeholderCountHolder.count == argumentCount) ResultType.SUCCESS else ResultType.PLACE_HOLDER_MISMATCH
-          }
-        }
-        PlaceholderLoggerType.LOG4J_OLD_STYLE,
-        PlaceholderLoggerType.LOG4J_FORMATTED_STYLE -> { // if there is more than one argument and the last argument is an exception, but there is a placeholder for
-          // the exception, then the stack trace won't be logged.
-          val type: ResultType
-          if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {
-            type = if ((placeholderCountHolder.count <= argumentCount && (!lastArgumentIsException || argumentCount > 1)) || (lastArgumentIsException && placeholderCountHolder.count <= argumentCount - 1) || //consider the most general case
-                       (lastArgumentIsSupplier && (placeholderCountHolder.count <= argumentCount))) ResultType.SUCCESS
-            else ResultType.PARTIAL_PLACE_HOLDER_MISMATCH
-          }
-          else {
-            type = if ((placeholderCountHolder.count == argumentCount && (!lastArgumentIsException || argumentCount > 1)) || (lastArgumentIsException && placeholderCountHolder.count == argumentCount - 1) || //consider the most general case
-                       (lastArgumentIsSupplier && (placeholderCountHolder.count == argumentCount || placeholderCountHolder.count == argumentCount - 1))) ResultType.SUCCESS
-            else ResultType.PLACE_HOLDER_MISMATCH
-          }
-          argumentCount = if (lastArgumentIsException) argumentCount - 1 else argumentCount
-          type
-        }
-      }
-
-      if (resultType == ResultType.SUCCESS) {
-        return true
-      }
-
-      registerProblem(holder, logStringArgument, Result(argumentCount, placeholderCountHolder.count, resultType))
-
-      return true
+      return PlaceholderCountContext(argumentCount, logStringArgument, lastArgumentIsException, lastArgumentIsSupplier)
     }
 
 
@@ -311,6 +315,8 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
 
   private data class Result(val argumentCount: Int, val placeholderCount: Int, val result: ResultType)
+
+  private data class PlaceholderCountContext(val argumentCount: Int, val logStringArgument: UExpression, val lastArgumentIsException: Boolean, val lastArgumentIsSupplier: Boolean)
 }
 
 internal fun hasThrowableType(lastArgument: UExpression): Boolean {
