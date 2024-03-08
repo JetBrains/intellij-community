@@ -91,7 +91,7 @@ object ReplaceWithAnnotationAnalyzer {
         val scope = buildScope(resolutionFacade, replaceWith, symbolDescriptor) ?: return null
 
         val typeResolver = resolutionFacade.getFrontendService(TypeResolver::class.java)
-        val bindingTrace = BindingTraceContext()
+        val bindingTrace = BindingTraceContext(resolutionFacade.project)
         typeResolver.resolvePossiblyBareType(TypeResolutionContext(scope, bindingTrace, false, true, false), typeReference)
 
         val typesToQualify = ArrayList<Pair<KtNameReferenceExpression, FqName>>()
