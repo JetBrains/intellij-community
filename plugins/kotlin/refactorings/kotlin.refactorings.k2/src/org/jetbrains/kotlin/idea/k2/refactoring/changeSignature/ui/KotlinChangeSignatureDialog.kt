@@ -177,7 +177,7 @@ internal class KotlinChangeSignatureDialog(
             parameterInfos = parametersWithReceiverInFirstPosition,
             receiver = receiverInfo,
             aNewVisibility = myVisibilityPanel.visibility ?: methodDescriptor.visibility,
-            newReturnTypeInfo = KotlinTypeInfo((myReturnTypeCodeFragment as KtTypeCodeFragment).getCanonicalText(forPreview), callable)
+            newReturnTypeInfo = KotlinTypeInfo((myReturnTypeCodeFragment as? KtTypeCodeFragment)?.getCanonicalText(forPreview), callable)
         )
     }
 

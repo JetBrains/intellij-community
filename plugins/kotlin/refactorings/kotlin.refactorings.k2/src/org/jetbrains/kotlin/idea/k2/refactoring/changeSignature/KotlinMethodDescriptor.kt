@@ -72,7 +72,7 @@ class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
                     ?.valueParameters?.forEach { p ->
                         val parameterInfo = KotlinParameterInfo(
                             params.size, KotlinTypeInfo(p.getReturnKtType().render(position = Variance.INVARIANT), callable),
-                            p.name!!,
+                            p.name ?: "",
                             p.valOrVarKeyword.toValVar(),
                             p.defaultValue, p.defaultValue != null, p.defaultValue, callable
                         )

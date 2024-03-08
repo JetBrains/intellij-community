@@ -24,7 +24,7 @@ class KotlinChangeInfo(
 
     private val oldNameToParameterIndex: Map<String, Int> = HashMap<String, Int>().apply {
         val parameters = (methodDescriptor.method as? KtCallableDeclaration)?.valueParameters
-        parameters?.indices?.forEach { i -> this[parameters[i].name!!] = i }
+        parameters?.indices?.forEach { i -> this[parameters[i].name ?: ""] = i }
     }
 
     override fun getOldParameterIndex(oldParameterName: String): Int? {
