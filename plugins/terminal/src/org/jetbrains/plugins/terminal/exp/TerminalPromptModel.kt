@@ -51,6 +51,10 @@ class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSe
       }
     })
 
+    // Used in TerminalPromptFileViewProvider
+    editor.virtualFile.putUserData(KEY, this)
+    editor.virtualFile.putUserData(BlockTerminalSession.KEY, session)
+
     editor.caretModel.addCaretListener(PreventMoveToPromptListener())
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(document) { /* do nothing */ }
 

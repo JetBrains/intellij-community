@@ -1,21 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.sh
 
-import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.Strings
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.sh.ShLanguage
 import com.intellij.sh.psi.ShCommandsList
+import com.intellij.sh.psi.ShFileElementType
 import com.intellij.sh.psi.ShSimpleCommand
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
 abstract class BaseShSupport : TerminalShellSupport {
-  override val promptLanguage: Language
-    get() = ShLanguage.INSTANCE
+  override val promptContentElementType: IElementType
+    get() = ShFileElementType.INSTANCE
 
   override val lineContinuationChar: Char = '\\'
 

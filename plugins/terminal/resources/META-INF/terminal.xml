@@ -79,6 +79,11 @@
     <inline.completion.provider implementation="org.jetbrains.plugins.terminal.exp.TerminalInlineCompletionProvider"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackSurvey"/>
 
+    <fileType name="Terminal Prompt" language="Terminal Prompt" extensions="prompt" fieldName="INSTANCE"
+              implementationClass="org.jetbrains.plugins.terminal.exp.TerminalPromptFileType"/>
+    <lang.fileViewProviderFactory language="Terminal Prompt"
+                                  implementationClass="org.jetbrains.plugins.terminal.exp.TerminalPromptFileViewProviderFactory"/>
+
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
                         serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>

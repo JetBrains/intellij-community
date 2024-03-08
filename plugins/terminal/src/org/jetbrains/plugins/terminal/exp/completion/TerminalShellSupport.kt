@@ -1,15 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.completion
 
-import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
+import com.intellij.psi.tree.IElementType
 import com.intellij.util.KeyedLazyInstanceEP
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.util.ShellType
 
+@ApiStatus.Internal
 interface TerminalShellSupport {
-  val promptLanguage: Language
+  val promptContentElementType: IElementType
 
   /**
    * The character that used to continue the command on the next line.

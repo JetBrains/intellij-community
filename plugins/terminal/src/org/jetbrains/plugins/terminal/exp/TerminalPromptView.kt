@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -20,6 +19,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
+import org.jetbrains.plugins.terminal.exp.*
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
 import java.awt.Color
@@ -102,9 +102,7 @@ class TerminalPromptView(
   }
 
   private fun createPromptTextField(session: BlockTerminalSession): LanguageTextField {
-    val language = TerminalShellSupport.findByShellType(session.shellIntegration.shellType)?.promptLanguage
-                   ?: PlainTextLanguage.INSTANCE
-    val textField = object : LanguageTextField(language, project, "", false) {
+    val textField = object : LanguageTextField(TerminalPromptLanguage, project, "", false) {
       override fun setBackground(bg: Color?) {
         // do nothing to not set background to editor in super method
       }
