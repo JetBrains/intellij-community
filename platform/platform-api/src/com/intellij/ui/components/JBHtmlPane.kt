@@ -259,48 +259,29 @@ open class JBHtmlPane(
   }
 
   /**
-   * Transpiler performs some simple lexing to understand where are tags, attributes and text.
-   *
-   * For performance reasons, all the following actions are applied in a single run:
-   * - Add `<wbr>` after `.` if surrounded by letters
-   * - Add `<wbr>` after `]`, `)` or `/` followed by a char or digit
-   * - Remove empty <p> before some tags - workaround for Swing html renderer not removing empty paragraphs before non-inline tags
-   * - Replace `<blockquote>\\s*<pre>` with [JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_PREFIX]
-   * - Replace `</pre>\\s*</blockquote>` with [JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_SUFFIX]
-   * - Replace `<pre><code>` with [JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_PREFIX]
-   * - Replace `</code></pre>` with [JBHtmlPaneStyleSheetRulesProvider.CODE_BLOCK_SUFFIX]
-   * - Expand `<shortcut raw|actionId="*"/>` tag into a sequence of `<kbd>` tags
+   * Transpiler pane input to fit to limited AWT HTML toolkit support.
    */
   @Suppress("HardCodedStringLiteral")
   private fun transpileHtmlPaneInput(text: @Nls String): @Nls String {
     val document = Jsoup.parse(text)
-    document.traverse(NodeVisitor { node, depth ->
+    document.traverse(NodeVisitor { node, _ ->
       when (node) {
         is TextNode -> {
           transpileTextNode(node)
         }
         is Element -> {
-          transpileElement(node)
+          when {
+            node.nameIs("p") -> transpileParagraph(node)
+            node.nameIs("shortcut") -> transpileShortcut(node)
+            node.nameIs("blockquote") -> transpileBlockquote(node)
+            node.nameIs("pre") -> transpilePre(node)
+            node.nameIs("icon") -> transpileIcon(node)
+          }
         }
       }
     })
     document.outputSettings().prettyPrint(false)
     return document.html()
-  }
-
-  private fun transpileElement(node: Element) {
-    if (node.nameIs("p")) {
-      transpileParagraph(node)
-    }
-    else if (node.nameIs("shortcut")) {
-      transpileShortcutElement(node)
-    }
-    else if (node.nameIs("blockquote")) {
-      transpileBlockquote(node)
-    }
-    else if (node.nameIs("pre")) {
-      transpilePre(node)
-    }
   }
 
   /**
@@ -319,7 +300,7 @@ open class JBHtmlPane(
   /**
    * Expand `<shortcut raw|actionId="*"/>` tag into a sequence of `<kbd>` tags
    */
-  private fun transpileShortcutElement(node: Element) {
+  private fun transpileShortcut(node: Element) {
     val actionId = node.attributes().getIgnoreCase("actionid")
       .takeIf { it.isNotEmpty() }
     val raw = node.attributes().getIgnoreCase("raw")
@@ -356,7 +337,7 @@ open class JBHtmlPane(
   }
 
   /**
-   * - Replace `<pre><code>(...)</code></pre>` with [JBHtmlPaneStyleSheetRulesProvider.buildCodeBlock]
+   * Replace `<pre><code>(...)</code></pre>` with [JBHtmlPaneStyleSheetRulesProvider.buildCodeBlock]
    */
   private fun transpilePre(node: Element) {
     if (node.childNodeSize() != 1) return
@@ -370,7 +351,7 @@ open class JBHtmlPane(
   }
 
   /**
-   * - Replace `<blockquote>\\s*<pre>(...)</pre>\\s*</blockquote>` with [JBHtmlPaneStyleSheetRulesProvider.buildCodeBlock]
+   * Replace `<blockquote>\\s*<pre>(...)</pre>\\s*</blockquote>` with [JBHtmlPaneStyleSheetRulesProvider.buildCodeBlock]
    */
   private fun transpileBlockquote(node: Element) {
     if (node.childNodeSize() > 3 || node.childNodeSize() < 1) return
@@ -393,6 +374,14 @@ open class JBHtmlPane(
       }
       node.replaceWith(buildCodeBlock(preNodes))
     }
+  }
+
+  /**
+   * Move icon children to parent node
+   */
+  private fun transpileIcon(node: Element) {
+    node.parent()
+      ?.insertChildren(node.siblingIndex() + 1, node.childNodes())
   }
 
   /**
