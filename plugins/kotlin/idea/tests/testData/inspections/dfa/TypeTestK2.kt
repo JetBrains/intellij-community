@@ -1,9 +1,9 @@
 // WITH_STDLIB
 fun unrelatedTypes(obj : Any) {
     if (obj is X) {
-        // Diffeence with K1: no 'USELESS_IS_CHECK' warning
-        if (obj is Y) { }
-        if (obj !is Y) { }
+        // Difference with K1: no 'USELESS_IS_CHECK' warning, hence we report it, as it's useful
+        if (<warning descr="Condition 'obj is Y' is always false">obj is Y</warning>) { }
+        if (<warning descr="Condition 'obj !is Y' is always true">obj !is Y</warning>) { }
     }
 }
 fun nullableTypes(obj : Any?) {
@@ -14,8 +14,8 @@ fun nullableTypes(obj : Any?) {
     }
 }
 fun nothing(obj : Any) {
-    // Diffeence with K1: no 'USELESS_IS_CHECK' warning
-    if (obj is Nothing) {}
+    // Difference with K1: no 'USELESS_IS_CHECK' warning, hence we report it, as it's useful
+    if (<warning descr="Condition 'obj is Nothing' is always false">obj is Nothing</warning>) {}
 }
 fun testAny(obj : Any) {
     if (obj is Int) {}

@@ -24,7 +24,6 @@ import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.siblings
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -37,11 +36,9 @@ import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
-import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
@@ -316,14 +313,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         if (cv != ConstantValue.FALSE && cv != ConstantValue.TRUE) return true
         if (cv == ConstantValue.TRUE && isLastCondition(condition)) return true
         if (condition.textLength == 0) return true
-        if (condition is KtWhenConditionIsPattern) {
-            val redundantIs = analyze(condition) {
-                val leftType = condition.parentOfType<KtWhenExpression>()?.subjectExpression?.getKtType() ?: return false
-                val rightType = condition.typeReference?.getKtType() ?: return false
-                uselessTypeCheck(leftType, rightType)
-            }
-            if (redundantIs) return true
-        }
         return isCompilationWarning(condition)
     }
 
@@ -574,7 +563,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             val kotlinType = expression.getKtType() ?: return false
             when (value) {
                 ConstantValue.TRUE -> {
-                    if (isUselessIsCheck(expression)) return true
+                    //if (isUselessIsCheck(expression)) return true
                     if (isAndOrConditionWithNothingOperand(expression, KtTokens.OROR)) return true
                     if (isSmartCastNecessary(expression, true)) return true
                     if (isPairingConditionInWhen(expression)) return true
@@ -582,7 +571,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 }
 
                 ConstantValue.FALSE -> {
-                    if (isUselessIsCheck(expression)) return true
+                    //if (isUselessIsCheck(expression)) return true
                     if (isAndOrConditionWithNothingOperand(expression, KtTokens.ANDAND)) return true
                     if (isSmartCastNecessary(expression, false)) return true
                     if (isAssertion(parent, false)) return true
@@ -673,19 +662,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             }
             return !expression.isUsedAsExpression()
         }
-
-        context(KtAnalysisSession)
-        private fun isUselessIsCheck(expression: KtExpression): Boolean {
-            if (expression !is KtIsExpression) return false
-            val leftType = expression.leftHandSide.getKotlinType() ?: return false
-            val rightType = expression.typeReference?.getKtType() ?: return false
-            return uselessTypeCheck(leftType, rightType)
-        }
-
-        context(KtAnalysisSession)
-        private fun uselessTypeCheck(leftType: KtType, rightType: KtType) =
-            leftType.isSubTypeOf(rightType) || (!leftType.isPossiblySubTypeOf(rightType) && !rightType.isPossiblySubTypeOf(leftType))
-                    || rightType.isNothing
 
         context(KtAnalysisSession)
         private fun isZero(expression: KtExpression?): Boolean {

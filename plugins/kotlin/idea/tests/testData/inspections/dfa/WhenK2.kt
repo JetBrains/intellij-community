@@ -47,8 +47,8 @@ fun whenIs(obj : Any?) {
     }
     if (obj is X) {
         when(obj) {
-            // Diffeence with K1: no 'USELESS_IS_CHECK' warning
-            is Y -> {}
+            // Difference with K1: no 'USELESS_IS_CHECK' warning, hence we report DFA warning, as it's useful
+            <warning descr="'when' branch is never reachable">is Y</warning> -> {}
         }
     }
 }
