@@ -387,12 +387,16 @@ class LoggingUtil {
       val sourcePsi = guardedCondition.sourcePsi ?: return emptyList()
       return CachedValuesManager.getManager(sourcePsi.project).getCachedValue(sourcePsi, CachedValueProvider {
         val emptyResult = CachedValueProvider.Result.create(listOf<UCallExpression>(), PsiModificationTracker.MODIFICATION_COUNT)
-        val qualifier = when (val guarded = sourcePsi.toUElementOfType<UExpression>()) {
+        val guarded = sourcePsi.toUElementOfType<UExpression>()
+        val qualifier = when (guarded) {
+          is USimpleNameReferenceExpression -> {
+            ((guarded.uastParent as? UQualifiedReferenceExpression)?.receiver as? UResolvable)?.resolveToUElement()
+          }
           is UQualifiedReferenceExpression -> {
-            (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+            (guarded.receiver as? UResolvable)?.resolveToUElement()
           }
           is UCallExpression -> {
-            (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+            (guarded.receiver as? UResolvable)?.resolveToUElement()
           }
           else -> {
             null
@@ -401,7 +405,7 @@ class LoggingUtil {
         if (qualifier == null) {
           return@CachedValueProvider emptyResult
         }
-        val uIfExpression = guardedCondition.getParentOfType<UIfExpression>()
+        val uIfExpression = guarded?.getParentOfType<UIfExpression>()
         if (uIfExpression == null) {
           return@CachedValueProvider emptyResult
         }
