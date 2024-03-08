@@ -33,7 +33,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
-import com.intellij.openapi.editor.impl.inspections.actions.TrafficLightGroup;
+import com.intellij.openapi.editor.impl.inspector.InspectionsGroup;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -191,7 +191,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     TrafficLightAction trafficLightAction = new TrafficLightAction();
     populateInspectionWidgetActionsFromExtensions();
-    DefaultActionGroup actions = new DefaultActionGroup(inspectionWidgetActions, new TrafficLightGroup(() -> analyzerStatus, editor), trafficLightAction, navigateGroup);
+    DefaultActionGroup actions = new DefaultActionGroup(inspectionWidgetActions, new InspectionsGroup(() -> analyzerStatus, editor), trafficLightAction, navigateGroup);
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {

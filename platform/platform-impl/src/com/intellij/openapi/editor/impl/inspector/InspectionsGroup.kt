@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl.inspections.actions
+package com.intellij.openapi.editor.impl.inspector
 
 import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
+import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -27,17 +28,17 @@ import java.awt.event.MouseEvent
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: EditorImpl) : DefaultActionGroup() {
+class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: EditorImpl) : DefaultActionGroup() {
   companion object {
     val INSPECTION_TYPED_ERROR = DataKey.create<StatusItem>("INSPECTION_TYPED_ERROR")
   }
 
   private val actionList = mutableListOf<InspectionAction>()
-  private var base: BaseAction? = null
-  private var settingAction: SettingAction = SettingAction()
+  private var base: InspectionsBaseAction? = null
+  private var myInspectionsSettingAction: InspectionsSettingAction = InspectionsSettingAction()
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    if (!Registry.`is`("ide.redesigned.inspector", false)) return emptyArray()
+    if (!Registry.`is`("ide.redesigned.inspector", false) || PowerSaveMode.isEnabled()) return emptyArray()
 
     val presentation = e?.presentation ?: return emptyArray()
 
@@ -48,10 +49,12 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
     val newStatus: List<StatusItem> = analyzerStatus.expandedStatus
     val newIcon: Icon = analyzerStatus.icon
 
-    val bla = if (newStatus.size == 1) newStatus.first() else null
+    /*    val bla = if (newStatus.size == 1) newStatus.first() else null
 
-/*    println("${analyzerStatus.analyzingType} ${analyzerStatus.icon} ${newStatus.isEmpty()} isTextStatus: ${analyzerStatus.isTextStatus()} showNavigation: " +
-            "${analyzerStatus.showNavigation} ${bla?.text} ${bla?.detailsText}")*/
+        println("${analyzerStatus.analyzingType} ${analyzerStatus.icon} ${newStatus.isEmpty()} isTextStatus: ${analyzerStatus.isTextStatus()} showNavigation: " +
+                "${analyzerStatus.showNavigation} ${bla?.text} ${bla?.detailsText}")*/
+
+  //TODO  PowerSaveMode.isEnabled()
 
     if (!analyzerStatus.showNavigation) {
       val item = if (newStatus.isEmpty()) StatusItem("", newIcon) else newStatus.first()
@@ -60,10 +63,10 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
         it.title = analyzerStatus.title
         it.description = analyzerStatus.details
         it
-      } ?: BaseAction(item, editor, analyzerStatus.title, analyzerStatus.details)
+      } ?: InspectionsBaseAction(item, editor, analyzerStatus.title, analyzerStatus.details)
       base = action
 
-      return arrayOf(action, settingAction)
+      return arrayOf(action, myInspectionsSettingAction)
     }
 
     val arr = mutableListOf<AnAction>()
@@ -80,12 +83,18 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
         actionList.add(action)
         action
       })
+
+
     }
-    arr.add(settingAction)
+    arr.add(myInspectionsSettingAction)
     return arr.toTypedArray()
   }
 
-  private class SettingAction() : DumbAwareAction(), CustomComponentAction {
+  private class InspectionsSettingAction() : DumbAwareAction(), CustomComponentAction {
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
+    }
 
     override fun createCustomComponent(presentation: Presentation, place: String): ActionButton {
       return object : ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
@@ -100,6 +109,10 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
       }
     }
 
+    override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+      component.font = com.intellij.util.ui.JBFont.small()
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       TODO("Not yet implemented")
     }
@@ -109,7 +122,7 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
     }
   }
 
-  private open class BaseAction(var item: StatusItem, val editor: EditorImpl, var title: @Nls String? = null, var description: @Nls String? = null, var actionLink: Link? = null) : DumbAwareAction(), CustomComponentAction {
+  private open class InspectionsBaseAction(var item: StatusItem, val editor: EditorImpl, var title: @Nls String? = null, var description: @Nls String? = null, var actionLink: Link? = null) : DumbAwareAction(), CustomComponentAction {
     companion object {
       private val ICON_TEXT_COLOR: ColorKey = ColorKey.createColorKey("ActionButton.iconTextForeground",
                                                                       UIUtil.getContextHelpForeground())
@@ -124,6 +137,7 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
     }
 
     override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
+      component.font = com.intellij.util.ui.JBFont.small()
       component.setForeground(JBColor.lazy { (editor.colorsScheme.getColor(ICON_TEXT_COLOR) ?: ICON_TEXT_COLOR.defaultColor) })
     }
 
@@ -132,7 +146,6 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
 
         init {
           border = JBUI.Borders.empty()
-          font = com.intellij.util.ui.JBFont.small()
           setForeground(JBColor.lazy { (editor.colorsScheme.getColor(ICON_TEXT_COLOR) ?: ICON_TEXT_COLOR.defaultColor) })
         }
 
@@ -173,7 +186,7 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
 
   private data class Link(val text: @Nls String, val action: () -> Unit)
 
-  private class InspectionAction(item: StatusItem, editor: EditorImpl, actionLink: Link? = null) : BaseAction(item, editor, actionLink = actionLink) {
+  private class InspectionAction(item: StatusItem, editor: EditorImpl, actionLink: Link? = null) : InspectionsBaseAction(item, editor, actionLink = actionLink) {
     companion object{
       private val leftRight = DaemonBundle.message("iw.inspection.next.previous", convertSC("Left Click"), convertSC("Right Click"))
 
@@ -235,9 +248,9 @@ class TrafficLightGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Ed
 
       val nextKey = getShortcut(nextActionId)
       val prevKey = getShortcut(previousActionId)
-      val allTypes = DaemonBundle.message("iw.inspection.all.types", convertSC(nextKey), convertSC( prevKey ))
+      val allTypes = DaemonBundle.message("iw.inspection.all.types", convertSC(nextKey), convertSC(prevKey ))
 
-      description = "<html>${leftRight}<p>${allTypes}</html>"
+      description = "<html>$leftRight<p>${allTypes}</html><p>"
     }
 
     protected fun getShortcut(id: String): String {
