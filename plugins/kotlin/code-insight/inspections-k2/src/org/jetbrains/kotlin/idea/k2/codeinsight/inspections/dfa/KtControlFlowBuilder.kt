@@ -1275,7 +1275,6 @@ class KtControlFlowBuilder(val factory:DfaValueFactory, val context:KtExpression
             val exprType = realExpr.getKotlinType()
             val declaredType = when (val desc = dfVar.descriptor) {
                 is KtVariableDescriptor -> desc.pointer.restoreSymbol()?.returnType
-                //is KtLambdaSpecialVariableDescriptor -> desc.type
                 else -> null
             }
             addImplicitConversion(declaredType, exprType)
