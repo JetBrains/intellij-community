@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.logging;
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
@@ -38,7 +37,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 /**
  * @author Bas Leijdekkers
  */
-public final class StringConcatenationArgumentToLogCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
+public final class StringConcatenationArgumentToLogCallInspection extends BaseInspection {
 
   @NonNls
   private static final Set<String> logNames = new HashSet<>();
