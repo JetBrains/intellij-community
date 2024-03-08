@@ -253,6 +253,27 @@ object UpdateChecker {
   fun getInternalPluginUpdates(
     buildNumber: BuildNumber? = null,
     indicator: ProgressIndicator? = null,
+  ) = getInternalPluginUpdates(
+    buildNumber = buildNumber,
+    indicator = indicator,
+    updateablePluginsMap = null
+  )
+
+  /**
+   * When [buildNumber] is null, returns new versions of plugins compatible with the current IDE version,
+   * otherwise, returns versions compatible with the specified build.
+   *
+   * When [updateablePluginsMap] is null, checks updates for the currently installed plugins in that IDE.
+   * Otherwise, checks the updates against these plugins that might not be installed or compatible with the current IDE
+   *
+   * [updateablePluginsMap] is an updateable map, meaning that plugins that have updates will be removed from it.
+   */
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
+  fun getInternalPluginUpdates(
+    buildNumber: BuildNumber? = null,
+    indicator: ProgressIndicator? = null,
     updateablePluginsMap: MutableMap<PluginId, IdeaPluginDescriptor?>? = null,
   ): InternalPluginResults {
     indicator?.text = IdeBundle.message("updates.checking.plugins")
