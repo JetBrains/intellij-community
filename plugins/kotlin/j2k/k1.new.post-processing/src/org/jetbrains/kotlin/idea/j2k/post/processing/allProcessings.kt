@@ -41,10 +41,6 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         Errors.UNSAFE_INFIX_CALL,
         Errors.UNSAFE_OPERATOR_CALL
     ),
-    diagnosticBasedProcessing(
-        RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),
-        Errors.NON_FINAL_MEMBER_IN_FINAL_CLASS, Errors.NON_FINAL_MEMBER_IN_OBJECT
-    ),
     exposedVisibilityDiagnosticBasedProcessing(
         ChangeVisibilityOnExposureFactory,
         Errors.EXPOSED_FUNCTION_RETURN_TYPE,
