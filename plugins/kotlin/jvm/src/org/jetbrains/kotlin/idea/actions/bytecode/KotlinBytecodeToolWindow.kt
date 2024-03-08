@@ -23,13 +23,18 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.components.*
+import org.jetbrains.kotlin.analysis.api.components.KtCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KtCompiledFile
+import org.jetbrains.kotlin.analysis.api.components.KtCompilerTarget
+import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.analysis.api.descriptors.components.STUB_UNBOUND_IR_SYMBOLS
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
-import org.jetbrains.kotlin.idea.base.codeInsight.compiler.*
+import org.jetbrains.kotlin.idea.base.codeInsight.compiler.ClassFileOrigins
+import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
+import org.jetbrains.kotlin.idea.base.codeInsight.compiler.OriginTracingClassBuilderFactory
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -39,6 +44,9 @@ import org.jetbrains.kotlin.idea.internal.KotlinJvmDecompilerFacade
 import org.jetbrains.kotlin.idea.util.LongRunningReadTask
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.Label
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.util.Textifier
 import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor
 import java.awt.BorderLayout
 import java.awt.FlowLayout
@@ -66,6 +74,7 @@ class KotlinBytecodeToolWindow(
     private val enableInline: JCheckBox
     private val enableOptimization: JCheckBox
     private val enableAssertions: JCheckBox
+    private val showOffsets: JCheckBox
     private val decompile: JButton
     private val jvmTargets: JComboBox<String>
 
@@ -125,7 +134,7 @@ class KotlinBytecodeToolWindow(
 
             configuration.languageVersionSettings = ktFile.languageVersionSettings
 
-            return getBytecodeForFile(ktFile, configuration)
+            return getBytecodeForFile(ktFile, configuration, showOffsets.isSelected)
         }
 
         override fun onResultReady(requestInfo: Location, result: BytecodeGenerationResult?) {
@@ -178,6 +187,7 @@ class KotlinBytecodeToolWindow(
         /*TODO: try to extract default parameter from compiler options*/
         enableInline = JCheckBox(KotlinJvmBundle.message("checkbox.text.inline"), true)
         enableOptimization = JCheckBox(KotlinJvmBundle.message("checkbox.text.optimization"), true)
+        showOffsets = JCheckBox(KotlinJvmBundle.message("checkbox.text.offsets"), false)
         enableAssertions = JCheckBox(KotlinJvmBundle.message("checkbox.text.assertions"), true)
         jvmTargets = ComboBox(JvmTarget.supportedValues().map { it.description }.toTypedArray())
 
@@ -207,6 +217,7 @@ class KotlinBytecodeToolWindow(
 
             add(enableInline)
             add(enableOptimization)
+            add(showOffsets)
             add(enableAssertions)
 
             add(JLabel(KotlinJvmBundle.message("bytecode.toolwindow.label.jvm.target")))
@@ -239,7 +250,7 @@ class KotlinBytecodeToolWindow(
             Computable<LongRunningReadTask<*, *>> { UpdateBytecodeToolWindowTask() }
         ).start()
 
-        listOfNotNull(enableInline, enableOptimization, enableAssertions).forEach { checkBox ->
+        listOfNotNull(enableInline, enableOptimization, enableAssertions, showOffsets).forEach { checkBox ->
             checkBox.addActionListener {
                 updateToolWindowOnOptionChange()
             }
@@ -274,7 +285,11 @@ class KotlinBytecodeToolWindow(
                 "No Kotlin source file is opened.\n" +
                 "*/"
 
-        fun getBytecodeForFile(ktFile: KtFile, configuration: CompilerConfiguration): BytecodeGenerationResult = analyze(ktFile) {
+        fun getBytecodeForFile(
+            ktFile: KtFile,
+            configuration: CompilerConfiguration,
+            showOffsets: Boolean
+        ): BytecodeGenerationResult = analyze(ktFile) {
             val (result, classFileOrigins) = try {
                 compileSingleFile(ktFile, configuration)
                     ?: return BytecodeGenerationResult.Error(KotlinJvmBundle.message("cannot.compile.0.to.bytecode", ktFile.name))
@@ -295,8 +310,14 @@ class KotlinBytecodeToolWindow(
                         writer.append(outputFile.path)
                         writer.append(" =================\n")
 
-                        val classReader = ClassReader(outputFile.content)
-                        val traceVisitor = TraceClassVisitor(printWriter)
+                        var offset = 0
+                        val classReader = object: ClassReader(outputFile.content) {
+                            override fun readBytecodeInstructionOffset(bytecodeOffset: Int) {
+                                offset = bytecodeOffset
+                            }
+                        }
+                        val textifier = if(showOffsets) TextifierWithOffsets { offset } else Textifier()
+                        val traceVisitor = TraceClassVisitor(null, textifier, printWriter)
                         classReader.accept(traceVisitor, 0)
 
                         writer.append("\n\n")
@@ -436,5 +457,50 @@ class KotlinBytecodeToolWindow(
                 return out.toString().replace("\r", "")
             }
         }
+    }
+}
+
+private class TextifierWithOffsets(val offsetFn: () -> Int) : Textifier(Opcodes.ASM9) {
+    override fun visitInsn(opcode: Int) {
+        printOffset()
+        super.visitInsn(opcode)
+    }
+
+    override fun visitIntInsn(opcode: Int, operand: Int) {
+        printOffset()
+        super.visitIntInsn(opcode, operand)
+    }
+
+    override fun visitVarInsn(opcode: Int, varIndex: Int) {
+        printOffset()
+        super.visitVarInsn(opcode, varIndex)
+    }
+
+    override fun visitTypeInsn(opcode: Int, type: String?) {
+        printOffset()
+        super.visitTypeInsn(opcode, type)
+    }
+
+    override fun visitFieldInsn(opcode: Int, owner: String?, name: String?, descriptor: String?) {
+        printOffset()
+        super.visitFieldInsn(opcode, owner, name, descriptor)
+    }
+
+    override fun visitMethodInsn(opcode: Int, owner: String?, name: String?, descriptor: String?, isInterface: Boolean) {
+        printOffset()
+        super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
+    }
+
+    override fun visitJumpInsn(opcode: Int, label: Label?) {
+        printOffset()
+        super.visitJumpInsn(opcode, label)
+    }
+
+    private fun printOffset() {
+        text.add("[${offsetFn()}]")
+    }
+
+    override fun createTextifier(): Textifier {
+        return TextifierWithOffsets(offsetFn)
     }
 }
