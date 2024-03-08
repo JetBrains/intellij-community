@@ -60,7 +60,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       }
       val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return true
 
-      val context = getPlaceHolderCountContext(node, searcher, loggerType) ?: return true
+      val context = getPlaceholderCountContext(node, searcher, loggerType) ?: return true
 
       val parts = collectParts(context.logStringArgument) ?: return true
 

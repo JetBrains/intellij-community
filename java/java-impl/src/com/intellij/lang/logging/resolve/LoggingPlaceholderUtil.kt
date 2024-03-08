@@ -340,11 +340,12 @@ private fun couldBeThrowableSupplier(loggerType: PlaceholderLoggerType, lastPara
   return throwable.isConvertibleFrom(functionalReturnType)
 }
 
-fun getPlaceHolderCountContext(
+fun getPlaceholderCountContext(
   node: UCallExpression,
   searcher: LoggerTypeSearcher,
   loggerType: PlaceholderLoggerType
 ): PlaceholderCountContext? {
+  // TODO : rewrite it in a way, that context stores references to the uelement
   val method = node.resolveToUElement() as? UMethod ?: return null
   val arguments = node.valueArguments
   val parameters = method.uastParameters

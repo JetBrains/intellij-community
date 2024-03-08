@@ -36,7 +36,36 @@ class JvmLoggerFormatSymbolReferenceProvider : PsiSymbolReferenceProvider {
 }
 
 fun getLogArgumentReferences(literalExpression: ULiteralExpression): List<PsiSymbolReference> {
-  val callExpression = literalExpression.getParentOfType<UCallExpression>()
+  val node = literalExpression.getParentOfType<UCallExpression>() ?: return emptyList()
+  val searcher = LOGGER_RESOLVE_TYPE_SEARCHERS.mapFirst(node) ?: return emptyList()
+
+  val arguments = node.valueArguments
+
+  if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return emptyList()
+
+  val log4jAsImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(node)
+  val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return emptyList()
+
+  val context = getPlaceholderCountContext(node, searcher, loggerType) ?: return emptyList()
+
+  val parts = collectParts(context.logStringArgument) ?: return emptyList()
+
+  if (parts.size > 1) {
+    return emptyList()
+  }
+
+  val placeholderCountHolder = solvePlaceholderCount(loggerType, context.argumentCount, parts)
+
+  var finalArgumentCount = context.argumentCount
+
+  when (loggerType) {
+    PlaceholderLoggerType.SLF4J ->  {
+
+    }
+    else -> {
+
+    }
+  }
 
   return listOf()
 }
