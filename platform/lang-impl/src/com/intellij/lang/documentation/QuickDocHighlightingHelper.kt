@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.applyIf
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.xml.util.XmlStringUtil
@@ -57,7 +58,8 @@ object QuickDocHighlightingHelper {
   @RequiresReadLock
   fun StringBuilder.appendStyledCodeBlock(project: Project, language: Language?, code: @NlsSafe CharSequence): @NlsSafe StringBuilder =
     append(CODE_BLOCK_PREFIX)
-      .appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfCodeBlocksEnabled(), code, true)
+      .appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfCodeBlocksEnabled(), code,
+                             isForRenderedDoc = true, trim = true)
       .append(CODE_BLOCK_SUFFIX)
 
   @JvmStatic
@@ -93,7 +95,7 @@ object QuickDocHighlightingHelper {
     append(INLINE_CODE_PREFIX)
       .appendHighlightedCode(
         project, language, DocumentationSettings.getInlineCodeHighlightingMode() == InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING, code,
-        true)
+        isForRenderedDoc = true, trim = false)
       .append(INLINE_CODE_SUFFIX)
 
   /**
@@ -116,7 +118,7 @@ object QuickDocHighlightingHelper {
   @JvmStatic
   @RequiresReadLock
   fun StringBuilder.appendStyledCodeFragment(project: Project, language: Language, @NlsSafe code: String): StringBuilder =
-    appendHighlightedCode(project, language, true, code, false)
+    appendHighlightedCode(project, language, true, code, isForRenderedDoc = false, trim = false)
 
   /**
    * This method should be used when generating links to PsiElements.
@@ -187,7 +189,8 @@ object QuickDocHighlightingHelper {
   @JvmStatic
   @RequiresReadLock
   fun StringBuilder.appendStyledSignatureFragment(project: Project, language: Language?, code: String): StringBuilder =
-    appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), code, false)
+    appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), code,
+                          isForRenderedDoc = false, trim = false)
 
   /**
    * Returns an HTML fragment containing [contents] colored according to [textAttributes].
@@ -319,15 +322,16 @@ object QuickDocHighlightingHelper {
   )
 
   private fun StringBuilder.appendHighlightedCode(project: Project, language: Language?, doHighlighting: Boolean,
-                                                  code: CharSequence, isForRenderedDoc: Boolean): StringBuilder {
-    val processedCode = code.toString().trim('\n', '\r').replace(' ', ' ').trimEnd()
+                                                  code: CharSequence, isForRenderedDoc: Boolean, trim: Boolean): StringBuilder {
+    val processedCode = code.toString().trim('\n', '\r').replace(' ', ' ')
+      .applyIf(trim) { trimEnd() }
     if (language != null && doHighlighting) {
       HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
         this, project, language, processedCode,
-        DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
+        trim, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
     }
     else {
-      append(XmlStringUtil.escapeString(processedCode.trimIndent()))
+      append(XmlStringUtil.escapeString(processedCode.applyIf(trim) { trimIndent() }))
     }
     return this
   }
