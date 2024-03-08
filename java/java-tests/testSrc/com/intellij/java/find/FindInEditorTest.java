@@ -24,10 +24,12 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.opentest4j.AssertionFailedError;
 
 import java.awt.*;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 
 public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
   private LivePreviewController myLivePreviewController;
@@ -342,5 +344,52 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
     finally {
       EditorFactory.getInstance().releaseEditor(editor);
     }
+  }
+
+  public void testSearchAreaUnion() {
+    SearchResults.SearchArea emptyArea = new SearchResults.SearchArea(new int[]{}, new int[]{});
+    SearchResults.SearchArea area1 = new SearchResults.SearchArea(new int[]{10, 90}, new int[]{30, 95});
+    SearchResults.SearchArea area2 = new SearchResults.SearchArea(new int[]{5, 25}, new int[]{15, 45});
+    SearchResults.SearchArea area3 = new SearchResults.SearchArea(new int[]{5, 10, 85}, new int[]{6, 12, 90});
+
+    assertSameSearchAreas(area1.union(area1), area1);
+    assertSameSearchAreas(area2.union(area2), area2);
+    assertSameSearchAreas(area3.union(area3), area3);
+
+    assertSameSearchAreas(area1.union(area2), area2.union(area1));
+    assertSameSearchAreas(area1.union(area3), area3.union(area1));
+    assertSameSearchAreas(area2.union(area3), area3.union(area2));
+
+    assertSameSearchAreas(new SearchResults.SearchArea(new int[]{5, 90}, new int[]{45, 95}),
+                          area1.union(area2));
+    assertSameSearchAreas(new SearchResults.SearchArea(new int[]{5, 10, 85}, new int[]{6, 30, 95}),
+                          area1.union(area3));
+    assertSameSearchAreas(new SearchResults.SearchArea(new int[]{5, 25, 85}, new int[]{15, 45, 90}),
+                          area2.union(area3));
+
+    assertSameSearchAreas(new SearchResults.SearchArea(new int[]{5, 85}, new int[]{45, 95}),
+                          area1.union(area2).union(area3));
+
+    assertSameSearchAreas(emptyArea, emptyArea.union(emptyArea));
+    assertSameSearchAreas(area1, emptyArea.union(area1));
+    assertSameSearchAreas(area1, area1.union(emptyArea));
+  }
+
+  private static void assertSameSearchAreas(SearchResults.SearchArea expected,
+                                            SearchResults.SearchArea actual) {
+    if (Arrays.equals(expected.startOffsets(), actual.startOffsets()) &&
+        Arrays.equals(expected.endOffsets(), actual.endOffsets())) {
+      return;
+    }
+
+    throw new AssertionFailedError(null,
+                                   "startOffsets:\n" +
+                                   StringUtil.join(expected.startOffsets(), "\n") +
+                                   "\n\nendOffsets:\n" +
+                                   StringUtil.join(expected.endOffsets(), "\n"),
+                                   "startOffsets:\n" +
+                                   StringUtil.join(actual.startOffsets(), "\n") +
+                                   "\n\nendOffsets:\n" +
+                                   StringUtil.join(actual.endOffsets(), "\n"));
   }
 }
