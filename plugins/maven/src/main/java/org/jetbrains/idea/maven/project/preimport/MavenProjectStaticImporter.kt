@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.PRE
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFileOrDirectory
 import com.intellij.openapi.vfs.isFile
@@ -157,6 +158,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       val meditationJob = launch {
         tree.forEachProject {
           launch {
+            resolveBuildModel(it)
             resolveDependencies(it)
             resolveDirectories(it)
             applyChangesToProject(it)
@@ -176,6 +178,12 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     return@async null
 
 
+  }
+
+  private fun resolveBuildModel(projectData: MavenProjectData) {
+    val template = projectData.mavenModel.build.finalName ?: "${'$'}{project.artifactId}-${'$'}{project.version}"
+    projectData.mavenModel.build.finalName = resolveProperty(projectData, template)
+                                             ?: "${projectData.mavenId.artifactId}-${projectData.mavenId.version}" // fallback if we cannnot resolve property by any reason
   }
 
 
@@ -209,7 +217,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       }
 
       val parentId = project.parentId
-      if (parentId == null) {
+      if (parentId == null || parentId.isUnknown()) {
         myDeferred.complete(project)
         return@async project
       }
@@ -221,7 +229,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       else {
         val mavenId = project.mavenId
         var ancestorId = project.parentId
-        while (ancestorId != null) {
+        while (ancestorId != null && !ancestorId.isUnknown()) {
           if (ancestorId == mavenId) {
             throw RuntimeException("Cyclic dependency found: $mavenId")
           }
@@ -231,11 +239,20 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
 
       val parentInterpolated = interpolate(parentInReactor, tree, interpolatedCache).await()
+      if (project.mavenModel.build.finalName == null) {
+        project.mavenModel.build.finalName = StringUtil.nullize(parentInterpolated.mavenModel.build.finalName)
+      }
       project.resolvedDependencyManagement.putAll(parentInterpolated.resolvedDependencyManagement)
       parentInterpolated.plugins.forEach { (id, plugin) ->
         project.plugins.putIfAbsent(id, plugin)
       }
-      project.properties.putAll(parentInterpolated.properties)
+
+
+
+      applyParentProperties(parentInterpolated, project)
+
+
+
       project.dependencyManagement.forEach {
         val version = it.version
         if (version == null) return@forEach
@@ -261,9 +278,21 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
   }
 
+  private fun applyParentProperties(parentInterpolated: MavenProjectData,
+                                    project: MavenProjectData) {
+
+    parentInterpolated.properties.forEach {
+      project.properties.putIfAbsent(it.key, it.value)
+    }
+    parentInterpolated.mavenId.groupId?.let { project.properties.put("project.parent.groupId", it) }
+    parentInterpolated.mavenId.artifactId?.let { project.properties.put("project.parent.artifactId", it) }
+    parentInterpolated.mavenId.version?.let { project.properties.put("project.parent.version", it) }
+    parentInterpolated.mavenId.version?.let { project.properties.put("project.parent.version", it) }
+    parentInterpolated.properties["project.basedir"]?.let { project.properties.put("project.parent.basedir", it) }
+    parentInterpolated.properties["project.baseUri"]?.let { project.properties.put("project.parent.baseUri", it) }
+  }
+
   private fun resolveDependencies(project: MavenProjectData) {
-
-
     project.declaredDependencies.forEach {
       val version = it.version
       if (version == null) {
@@ -379,8 +408,9 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
                      MavenJDOMUtil.findChildValueByPath(rootModel, "version", parent.mavenId.version))
     val parentFolder = file.parent.toNioPath()
     mavenModel.mavenId = id
-    mavenModel.name = file.parent.name
-    mavenModel.build.finalName = file.parent.name
+    mavenModel.name = MavenJDOMUtil.findChildValueByPath(rootModel, "name", id.artifactId)
+    mavenModel.build.finalName = MavenJDOMUtil.findChildValueByPath(rootModel, "build.finalName")
+
     mavenModel.modules = rootModel.getChildrenText("modules", "module")
     mavenModel.packaging = rootModel.getChildTextTrim("packaging") ?: "jar"
 
@@ -404,6 +434,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
 
     return MavenProjectData(mavenProject, mavenModel, rootModel).apply {
+      val mavenProjectData = this;
       this.plugins.putAll(plugins)
       this.dependencyManagement.addAll(dependencyManagement)
       this.declaredDependencies.addAll(declaredDependencies)
@@ -415,6 +446,10 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
         this["project.basedir"] = basedir
         this["project.baseUri"] = baseUri
+        this["project.artifactId"] = mavenProjectData.mavenId.artifactId ?: ""
+        this["project.groupId"] = mavenProjectData.mavenId.groupId ?: ""
+        this["project.version"] = mavenProjectData.mavenId.version ?: ""
+        this["project.name"] = mavenProjectData.mavenModel.name ?: ""
         putAll(properties)
       }
     }
@@ -428,7 +463,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     mavenModel.mavenId.version?.let { modelMap.put("version", it) }
     modelMap["build.outputDirectory"] = mavenModel.build.outputDirectory
     modelMap["build.testOutputDirectory"] = mavenModel.build.testOutputDirectory
-    modelMap["build.finalName"] = mavenModel.build.finalName
+    //modelMap["build.finalName"] = mavenModel.build.finalName
     modelMap["build.directory"] = mavenModel.build.directory
     val result = MavenProjectReaderResult(mavenModel, modelMap, MavenExplicitProfiles.NONE, mutableListOf())
     mavenProject.updateFromReaderResult(result, MavenProjectsManager.getInstance(project).generalSettings, false)
@@ -635,4 +670,6 @@ private fun trimVersion(id: MavenId) = MavenId(id.groupId, id.artifactId, null)
 private fun extractId(e: Element): MavenId = MavenId(e.getChildTextTrim("groupId"),
                                                      e.getChildTextTrim("artifactId"),
                                                      e.getChildTextTrim("version"))
+
+private fun MavenId.isUnknown() = artifactId == null && version == null && groupId == null
 
