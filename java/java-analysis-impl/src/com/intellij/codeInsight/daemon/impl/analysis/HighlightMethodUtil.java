@@ -547,20 +547,11 @@ public final class HighlightMethodUtil {
     }
   }
 
-  private static void registerStaticMethodQualifierFixes(@NotNull PsiMethodCallExpression methodCall, @Nullable HighlightInfo.Builder info) {
+  private static void registerStaticMethodQualifierFixes(@NotNull PsiMethodCallExpression methodCall, @NotNull HighlightInfo.Builder info) {
     TextRange methodExpressionRange = methodCall.getMethodExpression().getTextRange();
-    IntentionAction action2 = QuickFixFactory.getInstance().createStaticImportMethodFix(methodCall);
-    if (info != null) {
-      info.registerFix(action2, null, null, methodExpressionRange, null);
-    }
-    IntentionAction action1 = QuickFixFactory.getInstance().createQualifyStaticMethodCallFix(methodCall);
-    if (info != null) {
-      info.registerFix(action1, null, null, methodExpressionRange, null);
-    }
-    IntentionAction action = QuickFixFactory.getInstance().addMethodQualifierFix(methodCall);
-    if (info != null) {
-      info.registerFix(action, null, null, methodExpressionRange, null);
-    }
+    info.registerFix(QuickFixFactory.getInstance().createStaticImportMethodFix(methodCall), null, null, methodExpressionRange, null);
+    info.registerFix(QuickFixFactory.getInstance().createQualifyStaticMethodCallFix(methodCall), null, null, methodExpressionRange, null);
+    info.registerFix(QuickFixFactory.getInstance().addMethodQualifierFix(methodCall), null, null, methodExpressionRange, null);
   }
 
   /**
