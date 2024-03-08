@@ -149,6 +149,12 @@ class ActionsCollectorImpl : ActionsCollector() {
                event: AnActionEvent?,
                customDataProvider: (MutableList<EventPair<*>>) -> Unit) {
       if (action == null) return
+
+      val isDumb = project?.let { DumbService.isDumb(project) }
+      val isLookupActive = project?.getServiceIfCreated(LookupManager::class.java)
+        ?.let { event?.dataContext?.getData(CommonDataKeys.HOST_EDITOR) }
+        ?.let { LookupManager.getActiveLookup(it) } != null
+
       eventId.log(project) {
         val info = getPluginInfo(action.javaClass)
         add(EventFields.PluginInfoFromInstance.with(action))
@@ -158,17 +164,16 @@ class ActionsCollectorImpl : ActionsCollector() {
           }
           addAll(actionEventData(event))
           if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
-            val lookupManagerWasCreated = project?.getServiceIfCreated(LookupManager::class.java) != null
-            val isLookupActive = lookupManagerWasCreated && event.dataContext.getData(CommonDataKeys.HOST_EDITOR)?.let { LookupManager.getActiveLookup(it) } != null
             add(ActionsEventLogGroup.LOOKUP_ACTIVE.with(isLookupActive))
           }
         }
-        if (project != null && !project.isDisposed) {
-          add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)))
+        if (project != null && isDumb != null) {
+          add(ActionsEventLogGroup.DUMB.with(isDumb))
         }
         customDataProvider(this)
         addActionClass(this, action, info)
       }
+
       if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
         FeatureUsageTracker.getInstance().triggerFeatureUsedByAction(getActionId(action))
       }
