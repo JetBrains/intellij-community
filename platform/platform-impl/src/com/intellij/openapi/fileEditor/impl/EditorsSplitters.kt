@@ -321,6 +321,7 @@ open class EditorsSplitters internal constructor(
     currentCompositeFlow.value = window?.selectedComposite
   }
 
+  @Deprecated("Use openFilesAsync(Boolean) instead", ReplaceWith("openFilesAsync(true)"))
   fun openFilesAsync(): Job {
     return openFilesAsync(true)
   }
