@@ -11,7 +11,7 @@ public interface InspectListener {
   default void inspectionFinished(long duration, long threadId, int problemsCount, InspectionToolWrapper<?, ?> tool, InspectionKind kind,
                                   @Nullable PsiFile file, Project project) {}
 
-  default void activityFinished(long duration, long threadId, ActivityKind activityKind, Project project) {}
+  default void activityFinished(long duration, long threadId, String activityKind, Project project) {}
 
   default void fileAnalyzed(PsiFile file, Project project) {}
 
@@ -24,10 +24,4 @@ public interface InspectListener {
     GLOBAL
   }
 
-  enum ActivityKind {
-    REFERENCE_SEARCH,
-    GLOBAL_POST_RUN_ACTIVITIES,
-    EXTERNAL_TOOLS_CONFIGURATION,
-    EXTERNAL_TOOLS_EXECUTION
-  }
 }
