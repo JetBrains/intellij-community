@@ -69,6 +69,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       PlatformUtils.RIDER_PREFIX -> RuntimeModuleId.module("intellij.rider.frontend")
       PlatformUtils.GOIDE_PREFIX -> RuntimeModuleId.module("intellij.goland.frontend")
       PlatformUtils.CLION_PREFIX -> RuntimeModuleId.module("intellij.clion.ide.frontend")
+      PlatformUtils.PHP_PREFIX -> RuntimeModuleId.module("intellij.phpstorm.frontend")
       else -> RuntimeModuleId.module("intellij.cwm.guest")
     }
   }
