@@ -13,51 +13,68 @@ class GradleGroovyScriptRunConfigurationProducerTest : GradleGroovyScriptRunConf
       DeclarationWithMethod(methodCall = "getTasks().create", taskName = "nameGetTasksCreate"),
       DeclarationWithMethod(methodCall = "project.tasks.create", taskName = "nameProjectTasksCreate"),
       DeclarationWithMethod(methodCall = "getProject().getTasks().create", taskName = "nameGetProjectGetTasksCreate"),
-      DeclarationWithMethod(methodCall = "$tasksVariableName.create", taskName = "nameVarTasksCreate"),
+      DeclarationWithMethod(methodCall = "myTasks.create", taskName = "nameMyTasksCreate"),
 
       DeclarationWithMethod(methodCall = "project.task", taskName = "nameProjectTask"),
       DeclarationWithMethod(methodCall = "getProject().task", taskName = "nameGetProjectTask"),
-      DeclarationWithMethod(methodCall = "$projectVariableName.task", taskName = "nameVarProjectTask"),
+      DeclarationWithMethod(methodCall = "myProject.task", taskName = "nameMyProjectTask"),
     )
 
     val taskNameNoParentheses = "nameTaskNoParentheses"
     val buildFile = createBuildFile {
-      addVariables()
-      declaredWithMethods.forEach {
-        withTaskDeclaringMethod(it.methodCall, it.taskName)
-      }
-      withPostfix{
+      withPostfix {
+        code("def myProject = getProject()")
+        code("def myTasks = myProject.getTasks()")
+        for ((methodCall, taskName) in declaredWithMethods) {
+          call(methodCall, taskName) {
+            call("doFirst") {
+              code("println", "$taskName task created with $methodCall")
+            }
+          }
+        }
         call("task $taskNameNoParentheses") {
-          callPrintln(taskNameNoParentheses)
+          call("doFirst") {
+            code("println('$taskNameNoParentheses task created as task taskName')")
+          }
         }
       }
     }
+    importProject()
 
     val expectedTaskNames = declaredWithMethods
       .map(DeclarationWithMethod::taskName)
       .toMutableSet()
       .apply { add(taskNameNoParentheses) }
-    val taskDataMap = importAndGetTaskData(buildFile)
+    val taskDataMap = getTaskData(buildFile)
     assertAllTasksHaveConfiguration(expectedTaskNames, taskDataMap)
   }
 
-  @TargetVersions("4.9+")
   @Test
+  @TargetVersions("4.9+")
   fun `test tasks registering`() {
     val declaredWithMethods = listOf(
       DeclarationWithMethod(methodCall = "tasks.register", taskName = "nameTasksRegister"),
       DeclarationWithMethod(methodCall = "getTasks().register", taskName = "nameGetTasksRegister"),
       DeclarationWithMethod(methodCall = "project.tasks.register", taskName = "nameProjectTasksRegister"),
-      DeclarationWithMethod(methodCall = "$projectVariableName.getTasks().register", taskName = "nameVarProjectGetTasksRegister"),
-      DeclarationWithMethod(methodCall = "$tasksVariableName.register", taskName = "nameVarTasksRegister"),
+      DeclarationWithMethod(methodCall = "myProject.getTasks().register", taskName = "nameVarProjectGetTasksRegister"),
+      DeclarationWithMethod(methodCall = "myTasks.register", taskName = "nameVarTasksRegister"),
     )
+
     val buildFile = createBuildFile {
-      addVariables()
-      declaredWithMethods.forEach {
-        withTaskDeclaringMethod(it.methodCall, it.taskName)
+      withPostfix {
+        code("def myProject = getProject()")
+        code("def myTasks = myProject.getTasks()")
+        for ((methodCall, taskName) in declaredWithMethods) {
+          call(methodCall, taskName) {
+            call("doFirst") {
+              code("println", "$taskName task created with $methodCall")
+            }
+          }
+        }
       }
     }
-    val taskDataMap = importAndGetTaskData(buildFile)
+    importProject()
+    val taskDataMap = getTaskData(buildFile)
     val expectedTaskNames = declaredWithMethods.map(DeclarationWithMethod::taskName).toSet()
     assertAllTasksHaveConfiguration(expectedTaskNames, taskDataMap)
   }

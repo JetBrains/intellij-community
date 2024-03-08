@@ -9,52 +9,23 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.gradle.execution.test.producer.GradleRunConfigurationProducerTestCase
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 
 abstract class GradleGroovyScriptRunConfigurationProducerTestCase : GradleRunConfigurationProducerTestCase() {
-
-  protected val tasksVariableName = "myTasks"
-  protected val projectVariableName = "myProject"
 
   protected class TaskData(
     val name: String,
     val nameElement: LeafPsiElement
   )
 
-  protected class DeclarationWithMethod(
+  protected data class DeclarationWithMethod(
     val methodCall: String,
     val taskName: String
   )
 
-  protected fun TestGradleBuildScriptBuilder.addVariables() {
-    addPostfix("def $projectVariableName = getProject()")
-    addPostfix("def $tasksVariableName = $projectVariableName.getTasks()")
-  }
-
-  protected fun TestGradleBuildScriptBuilder.withTaskDeclaringMethod(
-    method: String,
-    taskName: String
-  ) {
-    withPostfix {
-      val arguments = listOfNotNull(argument(taskName))
-      call(method, arguments) {
-        callPrintln(taskName)
-      }
-    }
-  }
-
-  protected fun ScriptTreeBuilder.callPrintln(taskName: String) {
-    call("doFirst") {
-      code("println('$taskName task created with tasks.create')")
-    }
-  }
-
-  protected open fun importAndGetTaskData(
+  protected open fun getTaskData(
     buildScriptFile: VirtualFile
   ): Map<String, TaskData> = runReadActionAndWait {
-    importProject()
     val psiManager = PsiManager.getInstance(myProject)
     val psiFile = psiManager.findFile(buildScriptFile)!!
     val leafs = PsiTreeUtil.findChildrenOfType(psiFile, LeafPsiElement::class.java)
@@ -71,12 +42,9 @@ abstract class GradleGroovyScriptRunConfigurationProducerTestCase : GradleRunCon
     assertTrue("The set of task names extracted from build script is different to expected",
                expectedTaskNames == taskDataMap.keys)
     for (taskName in expectedTaskNames) {
-      assertProducerSupportsTask(taskDataMap[taskName]!!)
+      val task = taskDataMap[taskName]!!
+      verifyRunConfigurationProducer(expectedSettings = task.name, task.nameElement)
     }
-  }
-
-  private fun assertProducerSupportsTask(task: TaskData) {
-    verifyRunConfigurationProducer(expectedSettings = task.name, task.nameElement)
   }
 
   private fun verifyRunConfigurationProducer(
