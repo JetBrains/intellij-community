@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
@@ -73,7 +74,23 @@ data class BuildOptions(
         add(MAC_SIGN_STEP)
         add(MAC_NOTARIZE_STEP)
       }
-    }
+    },
+  /**
+   * If `true`, write all compilation messages into a separate file (`compilation.log`).
+   */
+  var compilationLogEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true),
+  val logDir: Path? = System.getProperty("intellij.build.log.root")?.let { Path.of(it) },
+
+  /**
+   * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
+   */
+  val pathToCompiledClassesArchive: Path? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE)?.let { Path.of(it) },
+
+  /**
+   * Path to a metadata file containing urls with compiled classes of the project modules inside.
+   * Metadata is a [org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata] serialized into JSON format.
+   */
+  val pathToCompiledClassesArchivesMetadata: String? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA),
 ) {
   companion object {
     /**
@@ -315,17 +332,6 @@ data class BuildOptions(
   var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin", "20").toLong()
 
   /**
-   * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
-   */
-  var pathToCompiledClassesArchive: Path? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE)?.let { Path.of(it) }
-
-  /**
-   * Path to a metadata file containing urls with compiled classes of the project modules inside.
-   * Metadata is a [org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata] serialized into JSON format.
-   */
-  var pathToCompiledClassesArchivesMetadata: String? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA)
-
-  /**
    * If `true`, the project modules will be compiled incrementally.
    */
   var incrementalCompilation: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false)
@@ -345,13 +351,6 @@ data class BuildOptions(
    * Use [BuildContext.buildNumber] to get the actual build number in build scripts.
    */
   var buildNumber: String? = System.getProperty("build.number")
-
-  var logPath: String? = System.getProperty("intellij.build.log.root")
-
-  /**
-   * If `true`, write all compilation messages into a separate file (`compilation.log`).
-   */
-  var compilationLogEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
 
   /**
    * If `true`, the build is running as a unit test.

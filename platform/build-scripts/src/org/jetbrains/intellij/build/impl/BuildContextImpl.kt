@@ -67,7 +67,7 @@ class BuildContextImpl(
     }
     else {
       val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(options.buildDateInSeconds), ZoneOffset.UTC)
-      // .SNAPSHOT suffix is required for a remote dev + IDE built from sources scenario, IJI-1603
+      // .SNAPSHOT suffix is required for a remote dev + IDE built from a sources scenario, IJI-1603
       "$baseBuildNumber.${pluginDateFormat.format(buildDate)}.SNAPSHOT"
     }
   }
@@ -122,17 +122,19 @@ class BuildContextImpl(
   companion object {
     suspend fun createContext(
       projectHome: Path,
-                              productProperties: ProductProperties,
-                              setupTracer: Boolean = true,
-                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                              options: BuildOptions = BuildOptions(),
+      productProperties: ProductProperties,
+      setupTracer: Boolean = true,
+      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+      options: BuildOptions = BuildOptions(),
     ): BuildContext {
       val compilationContext = CompilationContextImpl.createCompilationContext(
         projectHome = projectHome,
         setupTracer = setupTracer,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome,
-                                                                  productProperties = productProperties,
-                                                                  buildOptions = options),
+        buildOutputRootEvaluator = createBuildOutputRootEvaluator(
+          projectHome = projectHome,
+          productProperties = productProperties,
+          buildOptions = options
+        ),
         options = options,
       )
       return createContext(compilationContext = compilationContext,
@@ -248,11 +250,15 @@ class BuildContextImpl(
   ): BuildContext {
     val projectHomeForCustomizersAsString = projectHomeForCustomizers.invariantSeparatorsPathString
     val sourceOptions = this.options
-    val options = sourceOptions.copy()
-    if (options.useCompiledClassesFromProjectOutput) {
+    val options = if (options.useCompiledClassesFromProjectOutput) {
       // compiled classes are already reused
-      options.pathToCompiledClassesArchivesMetadata = null
-      options.pathToCompiledClassesArchive = null
+      sourceOptions.copy(
+        pathToCompiledClassesArchive = null,
+        pathToCompiledClassesArchivesMetadata = null,
+      )
+    }
+    else {
+      sourceOptions.copy()
     }
     options.targetArch = sourceOptions.targetArch
     options.targetOs = sourceOptions.targetOs

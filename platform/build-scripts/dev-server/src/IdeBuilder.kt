@@ -354,6 +354,8 @@ private suspend fun createBuildContext(
           useCompiledClassesFromProjectOutput = true,
           cleanOutDir = false,
           outRootDir = runDir,
+          compilationLogEnabled = false,
+          logDir = null,
         )
         options.setTargetOsAndArchToCurrent()
         options.buildStepsToSkip += listOf(

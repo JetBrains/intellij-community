@@ -65,8 +65,7 @@ fun createCompilationContextBlocking(projectHome: Path,
 suspend fun createCompilationContext(projectHome: Path,
                                      defaultOutputRoot: Path,
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
-  val logDir = options.logPath?.let { Path.of(it) }
-               ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
+  val logDir = options.logDir ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
   JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
   return CompilationContextImpl.createCompilationContext(projectHome = projectHome,
                                                          setupTracer = false,
@@ -81,7 +80,7 @@ internal fun computeBuildPaths(options: BuildOptions,
   projectHome: Path,
 ): BuildPaths {
   val buildOut = options.outRootDir ?: buildOutputRootEvaluator(project)
-  val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
+  val logDir = options.logDir ?: buildOut.resolve("log")
   val result = BuildPaths(
     communityHomeDirRoot = COMMUNITY_ROOT,
     buildOutputDir = buildOut,
