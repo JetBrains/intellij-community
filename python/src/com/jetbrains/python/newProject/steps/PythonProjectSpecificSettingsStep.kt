@@ -88,12 +88,12 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
 
   override fun createBasePanel(): JPanel {
     val projectGenerator = myProjectGenerator
-    if (projectGenerator !is PythonProjectGenerator<*>) return super.createBasePanel()
     if (projectGenerator is PythonPromoProjectGenerator) {
       myCreateButton.isEnabled = false
       myLocationField = TextFieldWithBrowseButton()
       return projectGenerator.createPromoPanel()
     }
+    if (projectGenerator !is PythonProjectGenerator<*>) return super.createBasePanel()
 
     val nextProjectName = myProjectDirectory.get()
     projectName.set(nextProjectName.nameWithoutExtension)
