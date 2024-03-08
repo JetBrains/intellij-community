@@ -2,7 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -19,14 +19,8 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.*;
+import java.util.function.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -77,7 +71,7 @@ public abstract class Decompressor {
                || te.isDirectory()
                || te.isSymbolicLink())) /* skipping unsupported */;
       if (te == null) return null;
-      if (!SystemInfoRt.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName(), te.getSize());
+      if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName(), te.getSize());
       // UNIX permissions are ignored on Windows
       if (te.isSymbolicLink()) return new Entry(te.getName(), Entry.Type.SYMLINK, 0, te.getLinkName(), te.getSize());
       return new Entry(te.getName(), te.isDirectory(), te.getSize());
@@ -168,7 +162,7 @@ public abstract class Decompressor {
 
       @Override
       protected void openStream() throws IOException {
-        myZip = new org.apache.commons.compress.archivers.zip.ZipFile.Builder().setSeekableByteChannel(Files.newByteChannel(mySource)).get();
+        myZip = new org.apache.commons.compress.archivers.zip.ZipFile(Files.newByteChannel(mySource));
         myEntries = myZip.getEntries();
       }
 
@@ -177,7 +171,7 @@ public abstract class Decompressor {
         myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
         if (myEntry == null) return null;
         int platform = myEntry.getPlatform();
-        if (SystemInfoRt.isWindows) {
+        if (SystemInfo.isWindows) {
           // UNIX permissions are ignored on Windows
           if (platform == ZipArchiveEntry.PLATFORM_UNIX) {
             return new Entry(myEntry.getName(), type(myEntry), 0, myZip.getUnixSymlink(myEntry), myEntry.getSize());
@@ -503,7 +497,7 @@ public abstract class Decompressor {
   }
 
   private static void setAttributes(int mode, Path outputFile) throws IOException {
-    if (SystemInfoRt.isWindows) {
+    if (SystemInfo.isWindows) {
       DosFileAttributeView attrs = Files.getFileAttributeView(outputFile, DosFileAttributeView.class);
       if (attrs != null) {
         if ((mode & Entry.DOS_READ_ONLY) != 0) attrs.setReadOnly(true);
