@@ -51,7 +51,7 @@ public class ConfigurationContext {
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized;
   private boolean myMultipleSelection;
-  private Ref<RunnerAndConfigurationSettings> myExistingConfiguration;
+  private volatile Ref<RunnerAndConfigurationSettings> myExistingConfiguration;
   private final Module myModule;
   private final RunConfiguration myRuntimeConfiguration;
   private final DataContext myDataContext;
@@ -252,25 +252,27 @@ public class ConfigurationContext {
    * @return an existing configuration, or null if none was found.
    */
   public @Nullable RunnerAndConfigurationSettings findExisting() {
-    if (myExistingConfiguration != null) {
-      RunnerAndConfigurationSettings configuration = myExistingConfiguration.get();
+    Ref<RunnerAndConfigurationSettings> existingRef = myExistingConfiguration;
+    if (existingRef != null) {
+      RunnerAndConfigurationSettings configuration = existingRef.get();
       if (configuration == null || !Registry.is("suggest.all.run.configurations.from.context") || configuration.equals(myConfiguration)) {
         return configuration;
       }
     }
-    myExistingConfiguration = new Ref<>();
     Location<? extends PsiElement> location = getLocation();
     if (location == null) {
+      myExistingConfiguration = Ref.create(null);
       return null;
     }
 
-    final PsiElement psiElement = location.getPsiElement();
+    PsiElement psiElement = location.getPsiElement();
     if (!psiElement.isValid()) {
+      myExistingConfiguration = Ref.create(null);
       return null;
     }
 
     if (MultipleRunLocationsProvider.findAlternativeLocations(location) != null) {
-      myExistingConfiguration.set(null);
+      myExistingConfiguration = Ref.create(null);
       return null;
     }
 
@@ -290,8 +292,9 @@ public class ConfigurationContext {
         existingConfigurations.add(new ExistingConfiguration(configuration, producer));
       }
     }
-    myExistingConfiguration.set(findPreferredConfiguration(existingConfigurations, psiElement));
-    return myExistingConfiguration.get();
+    RunnerAndConfigurationSettings preferred = findPreferredConfiguration(existingConfigurations, psiElement);
+    myExistingConfiguration = Ref.create(preferred);
+    return preferred;
   }
 
   private @Nullable RunnerAndConfigurationSettings findPreferredConfiguration(@NotNull List<ExistingConfiguration> existingConfigurations,
