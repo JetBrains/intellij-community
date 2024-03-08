@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -64,9 +64,9 @@ public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
     addTypeCast(context.project(), expression, myType);
   }
 
-  public static PsiElement addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
+  public static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
     PsiExpression typeCast = createCastExpression(originalExpression, project, type);
-    return originalExpression.replace(Objects.requireNonNull(typeCast));
+    originalExpression.replace(Objects.requireNonNull(typeCast));
   }
 
   private static String tryConvertNumericLiteral(PsiElement expr, @NotNull PsiType type) {

@@ -109,17 +109,10 @@ public final class VariableTypeFromCallFix implements IntentionAction {
             PsiType appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(
               JavaPsiFacade.getElementFactory(project).createType(varClass, psiSubstitutor));
             if (!varType.equals(appropriateVarType)) {
-              PsiMethodCallExpression methodCallCopy = (PsiMethodCallExpression)methodCall.copy();
-              AddTypeCastFix.addTypeCast(project, methodCallCopy.getMethodExpression().getQualifierExpression(), appropriateVarType);
-              //it is necessary to check that it doesn't change a return type of the whole method,
-              //otherwise it can lead to broken code
-              if (methodCallCopy.getType() != null && !methodCallCopy.getType().equals(methodCall.getType())) {
-                PsiMethod resolvedMethod = methodCall.resolveMethod();
-                if(resolvedMethod ==null) continue;
-                PsiType returnMethodType = resolvedMethod.getReturnType();
-                if (!(PsiUtil.resolveClassInClassTypeOnly(returnMethodType) instanceof PsiTypeParameter returnTypeParameter)) {
-                  continue;
-                }
+              PsiMethod resolvedMethod = methodCall.resolveMethod();
+              if (resolvedMethod == null) continue;
+              PsiType returnMethodType = resolvedMethod.getReturnType();
+              if ((PsiUtil.resolveClassInClassTypeOnly(returnMethodType) instanceof PsiTypeParameter returnTypeParameter)) {
                 PsiType oldReturnType = methodCall.getType();
                 psiSubstitutor = psiSubstitutor.put(returnTypeParameter, oldReturnType);
                 appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(
