@@ -20,6 +20,7 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 
 import java.util.ArrayList;
@@ -34,32 +35,36 @@ import java.util.stream.Stream;
  *
  * @author Tagir Valeev
  */
-public class CallMapper<T> {
+public final class CallMapper<T> {
   private final Map<String, List<CallHandler<T>>> myMap = new LinkedHashMap<>();
 
   public CallMapper() {}
 
   @SafeVarargs
-  public CallMapper(CallHandler<T>... handlers) {
+  public CallMapper(@NotNull CallHandler<T> @NotNull ... handlers) {
     for (CallHandler<T> handler : handlers) {
       register(handler);
     }
   }
 
-  public CallMapper<T> register(CallHandler<T> handler) {
+  @Contract("_ -> this")
+  public CallMapper<T> register(@NotNull CallHandler<T> handler) {
     handler.matcher().names().forEach(name -> myMap.computeIfAbsent(name, k -> new ArrayList<>()).add(handler));
     return this;
   }
 
-  public CallMapper<T> register(CallMatcher matcher, Function<? super PsiMethodCallExpression, ? extends T> handler) {
+  @Contract("_,_ -> this")
+  public CallMapper<T> register(@NotNull CallMatcher matcher, @NotNull Function<? super PsiMethodCallExpression, ? extends T> handler) {
     return register(CallHandler.of(matcher, handler));
   }
 
-  public CallMapper<T> register(CallMatcher matcher, T value) {
+  @Contract("_,_ -> this")
+  public CallMapper<T> register(@NotNull CallMatcher matcher, T value) {
     return register(CallHandler.of(matcher, call -> value));
   }
 
-  public CallMapper<T> registerAll(List<? extends CallHandler<T>> handlers) {
+  @Contract("_ -> this")
+  public CallMapper<T> registerAll(@NotNull List<? extends CallHandler<T>> handlers) {
     handlers.forEach(this::register);
     return this;
   }
