@@ -43,23 +43,6 @@ import java.util.stream.Collectors;
 
 public final class InspectionEngine {
   private static final Logger LOG = Logger.getInstance(InspectionEngine.class);
-  private static boolean createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
-                                                        @NotNull ProblemsHolder holder,
-                                                        boolean isOnTheFly,
-                                                        @NotNull LocalInspectionToolSession session,
-                                                        @NotNull List<? extends PsiElement> elements,
-                                                        @NotNull Map<Class<?>, Collection<Class<?>>> targetPsiClasses) {
-    PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
-    // if inspection returned an empty visitor, then it should be skipped
-    if (visitor == PsiElementVisitor.EMPTY_VISITOR) return false;
-
-    List<Class<?>> acceptingPsiTypes = InspectionVisitorOptimizer.getAcceptingPsiTypes(visitor);
-
-    tool.inspectionStarted(session, isOnTheFly);
-    acceptElements(elements, visitor, targetPsiClasses, acceptingPsiTypes);
-    tool.inspectionFinished(session, holder);
-    return true;
-  }
 
   public static @NotNull PsiElementVisitor createVisitor(@NotNull LocalInspectionTool tool,
                                                          @NotNull ProblemsHolder holder,
@@ -77,33 +60,6 @@ public final class InspectionEngine {
       LOG.error("The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive: " + tool);
     }
     return visitor;
-  }
-
-  private static void acceptElements(@NotNull List<? extends PsiElement> elements,
-                                     @NotNull PsiElementVisitor elementVisitor,
-                                     @NotNull Map<Class<?>, Collection<Class<?>>> targetPsiClasses,
-                                     @NotNull List<? extends Class<?>> acceptingPsiTypes) {
-    if (acceptingPsiTypes == InspectionVisitorOptimizer.ALL_ELEMENTS_VISIT_LIST) {
-      for (int i = 0; i < elements.size(); i++) {
-        PsiElement element = elements.get(i);
-        element.accept(elementVisitor);
-        ProgressManager.checkCanceled();
-      }
-    }
-    else {
-      Set<Class<?>> accepts = InspectionVisitorOptimizer.getVisitorAcceptClasses(targetPsiClasses, acceptingPsiTypes);
-      if (accepts == null || accepts.isEmpty()) {
-        return; // nothing to visit in this run
-      }
-
-      for (int i = 0; i < elements.size(); i++) {
-        PsiElement element = elements.get(i);
-        if (accepts.contains(element.getClass())) {
-          element.accept(elementVisitor);
-          ProgressManager.checkCanceled();
-        }
-      }
-    }
   }
 
   /**
@@ -289,10 +245,9 @@ public final class InspectionEngine {
     withSession(psiFile, restrictRange, restrictRange, HighlightSeverity.INFORMATION, isOnTheFly, session -> {
       List<LocalInspectionToolWrapper> applicableTools = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds, elementDialectIds);
 
-      Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorOptimizer.getTargetPsiClasses(elements);
+      InspectionVisitorOptimizer inspectionVisitorsOptimizer = new InspectionVisitorOptimizer(elements);
 
-      final @Nullable var inspectionListener =
-        isOnTheFly ? null : psiFile.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
+      InspectListener inspectionListener = isOnTheFly ? null : psiFile.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
 
       Processor<LocalInspectionToolWrapper> processor = toolWrapper -> {
         ProblemsHolder holder = new ProblemsHolder(InspectionManager.getInstance(psiFile.getProject()), psiFile, isOnTheFly) {
@@ -317,7 +272,19 @@ public final class InspectionEngine {
 
         try {
           long inspectionStartTime = System.nanoTime();
-          boolean inspectionWasRun = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, targetPsiClasses);
+          boolean inspectionWasRun;
+          PsiElementVisitor visitor = createVisitor(tool, holder, isOnTheFly, session);
+          // if inspection returned an empty visitor, then it should be skipped
+          if (visitor == PsiElementVisitor.EMPTY_VISITOR) {
+            inspectionWasRun = false;
+          }
+          else {
+            inspectionWasRun = true;
+            tool.inspectionStarted(session, isOnTheFly);
+            inspectionVisitorsOptimizer.acceptElements(elements, visitor);
+            tool.inspectionFinished(session, holder);
+          }
+
           long inspectionDuration = TimeoutUtil.getDurationMillis(inspectionStartTime);
 
           if (inspectionListener != null && inspectionWasRun) {
