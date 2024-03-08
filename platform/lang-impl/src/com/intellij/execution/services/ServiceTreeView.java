@@ -231,6 +231,7 @@ final class ServiceTreeView extends ServiceView {
     if (myLastSelection != null) {
       ServiceViewDescriptor descriptor = myLastSelection.getViewDescriptor();
       onViewSelected(descriptor);
+      myUi.setDetailsComponentVisible(descriptor.isContentPartVisible());
       myUi.setDetailsComponent(descriptor.getContentComponent());
     }
     else {
@@ -293,6 +294,9 @@ final class ServiceTreeView extends ServiceView {
     if (newDescriptor != null) {
       newDescriptor.onNodeSelected(ContainerUtil.map(selected, ServiceViewItem::getValue));
     }
+    if (newDescriptor != null) {
+      myUi.setDetailsComponentVisible(newDescriptor.isContentPartVisible());
+    }
     myUi.setDetailsComponent(newDescriptor == null ? null : newDescriptor.getContentComponent());
   }
 
@@ -334,6 +338,9 @@ final class ServiceTreeView extends ServiceView {
         if (mySelected && (updatedItem == null || !updatedItem.isRemoved())) {
           ServiceViewDescriptor descriptor = newSelection == null || (newSelection.isRemoved() && updatedItem == null) ?
                                              null : newSelection.getViewDescriptor();
+          if (descriptor != null) {
+            myUi.setDetailsComponentVisible(descriptor.isContentPartVisible());
+          }
           myUi.setDetailsComponent(descriptor == null ? null : descriptor.getContentComponent());
         }
       }

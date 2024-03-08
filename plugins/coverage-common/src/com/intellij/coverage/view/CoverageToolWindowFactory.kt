@@ -3,6 +3,7 @@ package com.intellij.coverage.view
 
 import com.intellij.coverage.CoverageBundle
 import com.intellij.coverage.actions.ExternalReportImportManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -13,7 +14,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 
-class CoverageToolWindowFactory : ToolWindowFactory {
+class CoverageToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val manager = toolWindow.contentManager
     manager.addContentManagerListener(object : ContentManagerListener {

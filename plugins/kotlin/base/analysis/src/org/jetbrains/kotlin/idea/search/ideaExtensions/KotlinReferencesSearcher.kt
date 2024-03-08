@@ -34,20 +34,22 @@ import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ExpectActualSupport
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KOTLIN_NAMED_ARGUMENT_SEARCH_CONTEXT
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.getClassNameForCompanionObject
 import org.jetbrains.kotlin.idea.search.effectiveSearchScope
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions.Companion.Empty
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions.Companion.calculateEffectiveScope
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
+import org.jetbrains.kotlin.idea.search.usagesSearch.operators.DestructuringDeclarationReferenceSearcher
 import org.jetbrains.kotlin.idea.search.usagesSearch.operators.OperatorReferenceSearcher
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.concurrent.Callable
@@ -327,16 +329,15 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 }
 
                 is KtProperty -> {
-                    if (element.isExpectDeclaration()) {
-                        val declaration = ExpectActualSupport.getInstance(element.project).actualsForExpected(element)
-                            .firstOrNull { it is KtProperty && getLightClassPropertyMethods(it).allDeclarations.isNotEmpty() }
-                        if (declaration != null) {
-                            searchLightElements(declaration)
-                        }
-                        return
+                    val propertyAccessors = if (element.isExpectDeclaration()) {
+                        ExpectActualSupport.getInstance(element.project)
+                            .actualsForExpected(element)
+                            .filterIsInstance<KtProperty>()
+                            .map { getLightClassPropertyMethods(it) }
+                    } else listOfNotNull(getLightClassPropertyMethods(element))
+                    propertyAccessors.forEach { propertyAccessor ->
+                        propertyAccessor.allDeclarations.forEach(::searchNamedElement)
                     }
-                    val propertyDeclarations = getLightClassPropertyMethods(element).allDeclarations
-                    propertyDeclarations.forEach(::searchNamedElement)
                     processStaticsFromCompanionObject(element)
                 }
 
@@ -398,14 +399,14 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
         @RequiresReadLock
         private fun processKtClassOrObject(element: KtClassOrObject) {
-            val className = element.name ?: return
-            val lightClass = element.toLightClass() ?: if (element.isExpectDeclaration()) {
+            if (element.name == null) return
+            val lightClasses = (if (element.isExpectDeclaration()) {
                 ExpectActualSupport.getInstance(element.project)
                     .actualsForExpected(element)
-                    .mapNotNull { (it as? KtClassOrObject)?.toLightClass() }.firstOrNull()
-            } else null ?: return
+                    .mapNotNull { (it as? KtClassOrObject)?.toLightClass() }
+            } else listOfNotNull(element.toLightClass()))
 
-            searchNamedElement(lightClass, className)
+            lightClasses.forEach(::searchNamedElement)
 
             if (element is KtObjectDeclaration && element.isCompanion()) {
                 getLightFieldForCompanionObject(element)?.let(::searchNamedElement)
@@ -431,12 +432,21 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 when (val element = elementPointer.element) {
                     is KtParameter -> {
                         val componentMethodName = element.dataClassComponentMethodName ?: return@Callable
-                        val containingClass = element.getStrictParentOfType<KtClassOrObject>()?.toLightClass() ?: return@Callable
-                        searchDataClassComponentUsages(
-                            containingClass = containingClass,
-                            componentMethodName = componentMethodName,
-                            kotlinOptions = kotlinOptions
-                        )
+
+                        searchNamedElement(element, componentMethodName)
+
+                        if (kotlinOptions.searchForComponentConventions) {
+                            val componentIndex = element.parameterIndex()
+                            val searcher = DestructuringDeclarationReferenceSearcher(
+                                element,
+                                componentIndex + 1,
+                                queryParameters.effectiveSearchScope,
+                                consumer,
+                                queryParameters.optimizer,
+                                kotlinOptions
+                            )
+                            longTasks.add { searcher.run() }
+                        }
                     }
 
                     is KtLightParameter -> {

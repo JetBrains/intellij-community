@@ -113,7 +113,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
         LocalHistoryLesson(),
         CodeFormatLesson(ls("CodeFormat.java.sample"), true),
         ParameterInfoLesson(ls("ParameterInfo.java.sample")),
-        QuickPopupsLesson(ls("QuickPopups.java.sample")),
+        QuickPopupsLesson(ls("QuickPopups.java.sample"), "viewing-reference-information.html#inline-quick-documentation"),
         JavaEditorCodingAssistanceLesson(ls("EditorCodingAssistance.java.sample")),
       )
     },

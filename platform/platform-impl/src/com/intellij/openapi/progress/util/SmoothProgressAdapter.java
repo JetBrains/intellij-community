@@ -21,6 +21,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * Use {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking} or
+ * {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}.
+ * </p>
+ */
 public final class SmoothProgressAdapter extends AbstractProgressIndicatorExBase implements ProgressIndicatorEx, WrappedProgressIndicator,
                                                                                             StandardProgressIndicator {
   private static final int SHOW_DELAY = 500;

@@ -42,7 +42,6 @@ import java.awt.event.*
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
-import java.util.function.Predicate
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.KeyStroke
@@ -357,25 +356,6 @@ object ActionUtil {
         }
       }
     }
-  }
-
-  @JvmStatic
-  fun recursiveContainsAction(group: ActionGroup, action: AnAction): Boolean {
-    return anyActionFromGroupMatches(group, true, Predicate.isEqual(action))
-  }
-
-  @JvmStatic
-  fun anyActionFromGroupMatches(group: ActionGroup, processPopupSubGroups: Boolean,
-                                condition: Predicate<in AnAction?>): Boolean {
-    for (child in group.getChildren(null)) {
-      if (condition.test(child)) return true
-      if (child is ActionGroup) {
-        if ((processPopupSubGroups || !child.isPopup) && anyActionFromGroupMatches(child, processPopupSubGroups, condition)) {
-          return true
-        }
-      }
-    }
-    return false
   }
 
   /**

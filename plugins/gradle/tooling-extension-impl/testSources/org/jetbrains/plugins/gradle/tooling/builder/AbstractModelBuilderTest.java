@@ -5,8 +5,8 @@ import com.amazon.ion.IonType;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass;
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass;
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -25,10 +25,12 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
+import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -57,6 +59,8 @@ public abstract class AbstractModelBuilderTest {
 
   @Rule public TestName name = new TestName();
   @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
+  @Rule public TargetJavaVersionWatcher myTargetJavaVersionWatcher = new TargetJavaVersionWatcher();
+
   @ClassRule public static final ApplicationRule ourApplicationRule = new ApplicationRule();
 
   protected final @NotNull GradleVersion gradleVersion;
@@ -102,7 +106,7 @@ public abstract class AbstractModelBuilderTest {
   }
 
   private void setUpGradleJvmHomePath() {
-    gradleJvmHomePath = GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion);
+    gradleJvmHomePath = GradleJvmResolver.resolveGradleJvmHomePath(gradleVersion, myTargetJavaVersionWatcher.getRestriction());
   }
 
   private void setUpTemporaryTestDirectory() {
@@ -131,15 +135,15 @@ public abstract class AbstractModelBuilderTest {
     }
   }
 
-  public @NotNull AllModels fetchAllModels(Class<?>... projectModels) {
-    return fetchAllModels(GradleClassProjectModelProvider.createAll(projectModels));
+  public @NotNull GradleIdeaModelHolder runBuildAction(Class<?>... projectModels) {
+    return runBuildAction(GradleClassProjectModelProvider.createAll(projectModels));
   }
 
-  public @NotNull AllModels fetchAllModels(ProjectImportModelProvider... modelProviders) {
-    return fetchAllModels(Arrays.asList(modelProviders));
+  public @NotNull GradleIdeaModelHolder runBuildAction(ProjectImportModelProvider... modelProviders) {
+    return runBuildAction(Arrays.asList(modelProviders));
   }
 
-  private @NotNull AllModels fetchAllModels(@NotNull List<? extends ProjectImportModelProvider> modelProviders) {
+  private @NotNull GradleIdeaModelHolder runBuildAction(@NotNull List<? extends ProjectImportModelProvider> modelProviders) {
     GradleModelFetchAction buildAction = new GradleModelFetchAction()
       .addProjectImportModelProviders(GradleClassBuildModelProvider.createAll(IdeaProject.class))
       .addProjectImportModelProviders(modelProviders);
@@ -157,16 +161,18 @@ public abstract class AbstractModelBuilderTest {
     ((DefaultGradleConnector)connector).daemonMaxIdleTime(getDaemonMaxIdleTimeSeconds(), TimeUnit.SECONDS);
 
     try (ProjectConnection connection = connector.connect()) {
-      AllModels allModels = connection.action(buildAction)
+      GradleModelHolderState state = connection.action(buildAction)
         .setStandardError(System.err)
         .setStandardOutput(System.out)
         .setJavaHome(new File(gradleJvmHomePath))
         .withArguments(executionSettings.getArguments())
         .setJvmArguments(executionSettings.getJvmArguments())
         .run();
+      Assert.assertNotNull(state);
 
-      Assert.assertNotNull(allModels);
-      return allModels;
+      GradleIdeaModelHolder models = new GradleIdeaModelHolder();
+      models.addState(state);
+      return models;
     }
   }
 

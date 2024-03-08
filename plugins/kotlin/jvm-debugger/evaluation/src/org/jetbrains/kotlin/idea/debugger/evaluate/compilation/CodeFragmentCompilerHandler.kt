@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.getResolutionFacadeForCodeFragment
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
 import java.util.concurrent.ExecutionException
 
@@ -27,6 +28,7 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
         bindingContext: BindingContext,
         executionContext: ExecutionContext
     ): CodeFragmentCompiler.CompilationResult {
+        var filesToCompileExceptCodeFragment: List<KtFile> = emptyList()
         return try {
             val result = strategy.stats.startAndMeasureAnalysisUnderReadAction {
                 val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
@@ -35,6 +37,7 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
                 Pair(analysis.bindingContext, filesToCompile)
             }
             val (newBindingContext, filesToCompile) = result.getOrThrow()
+            filesToCompileExceptCodeFragment = filesToCompile.filter { it !== codeFragment }
             CodeFragmentCompiler(executionContext).compile(codeFragment, filesToCompile, strategy, newBindingContext, moduleDescriptor)
                 .also {
                     strategy.onSuccess()
@@ -44,7 +47,7 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
             if (exceptionToReport == null) {
                 throw e
             }
-            strategy.processError(exceptionToReport, codeFragment, executionContext)
+            strategy.processError(exceptionToReport, codeFragment, filesToCompileExceptCodeFragment, executionContext)
             val fallback = strategy.getFallbackStrategy()
             if (fallback != null) {
                 strategy.beforeRunningFallback()

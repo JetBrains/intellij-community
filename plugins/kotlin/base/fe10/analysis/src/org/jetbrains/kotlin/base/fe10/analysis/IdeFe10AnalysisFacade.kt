@@ -97,7 +97,7 @@ internal class IdeFe10AnalysisFacade(private val project: Project) : Fe10Analysi
         val kotlinCacheService = KotlinCacheService.getInstance(project)
 
         if (elements.size == 1) {
-            kotlinCacheService.getResolutionFacade(elements.single())
+            return kotlinCacheService.getResolutionFacade(elements.single())
         }
 
         val files = elements

@@ -35,31 +35,30 @@ document.addEventListener("click", function (e) {
   }
 })
 
-const FilterClasses = {
-  Raw: "bg-raw-filter",
-  Analyzed: "bg-analyzed-filter",
+function updateBackgrounds(e, elementClasses, bgClass) {
+  let selected = e.target.selectedOptions[0].value
+  for (const clazz of elementClasses.filter(val => val !== selected)) {
+    removeClassForElements(clazz, bgClass, false)
+  }
+  addClassForElements(selected, bgClass, true)
 }
 
-function updateFilters(e) {
-  let selectedValue = e.target.selectedOptions[0].value
-  if (selectedValue === "no") {
-    changeBGColor(FilterClasses.Analyzed, "transparent")
-    changeBGColor(FilterClasses.Raw, "transparent")
-  } else if (selectedValue === "raw") {
-    changeBGColor(FilterClasses.Analyzed, "transparent")
-    changeBGColor(FilterClasses.Raw, "#FF3B305B")
-  } else if (selectedValue === "analyzed") {
-    changeBGColor(FilterClasses.Raw, "transparent")
-    changeBGColor(FilterClasses.Analyzed, "#FF3B305B")
+document.getElementById("wrong-filters").onchange = (e) => updateBackgrounds(e,
+  ["raw-filter", "analyzed-filter"], "bg-filters-skipped")
+document.getElementById("model-skipped").onchange = (e) => updateBackgrounds(e,
+  ["trigger-skipped", "filter-skipped"], "bg-model-skipped")
+
+function removeClassForElements(elementsClassName, classToAdd) {
+  let tokens = document.getElementsByClassName(elementsClassName)
+  for (const token of tokens) {
+    token.classList.remove(classToAdd)
   }
 }
 
-document.getElementById("wrong-filters").onchange = updateFilters;
-
-function changeBGColor(className, color) {
-  let tokens = document.getElementsByClassName(className);
-  for(i = 0; i < tokens.length; i++) {
-    tokens[i].style.backgroundColor = color;
+function addClassForElements(elementClass, classToAdd) {
+  let tokens = document.getElementsByClassName(elementClass)
+  for (const token of tokens) {
+    token.classList.add(classToAdd)
   }
 }
 
@@ -157,7 +156,8 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
       }
     }
   }
-  addTriggerModelBlock(popup, lookup)
+  addRelevanceModelBlock(popup, lookup, "trigger")
+  addRelevanceModelBlock(popup, lookup, "filter")
   addDiagnosticsBlock("RAW SUGGESTIONS", "raw_proposals", popup, lookup)
   addDiagnosticsBlock("RAW FILTERED", "raw_filtered", popup, lookup)
   addDiagnosticsBlock("ANALYZED SUGGESTIONS", "analyzed_proposals", popup, lookup)
@@ -185,12 +185,13 @@ function addSuggestions(sessionDiv, popup, lookup) {
   }
 }
 
-function addTriggerModelBlock(popup, lookup) {
-  if (!("trigger_score" in lookup["additionalInfo"] && "trigger_decision" in lookup["additionalInfo"])) return
+function addRelevanceModelBlock(popup, lookup, relevanceMode) {
+  if (!(`${relevanceMode}_score` in lookup["additionalInfo"] && `${relevanceMode}_decision` in lookup["additionalInfo"])) return
   let addInfo = lookup["additionalInfo"]
-  let triggerModelResults = document.createElement("DIV")
-  triggerModelResults.innerHTML = "Trigger model score: " + addInfo["trigger_score"] + ", decision: " + addInfo["trigger_decision"]
-  popup.appendChild(triggerModelResults)
+  let relevanceModelResults = document.createElement("DIV")
+  relevanceModelResults.innerHTML = `${relevanceMode} model score:` + addInfo[`${relevanceMode}_score`]
+    + ", decision: " + addInfo[`${relevanceMode}_decision`]
+  popup.appendChild(relevanceModelResults)
 }
 
 // thanks to AI Assistant

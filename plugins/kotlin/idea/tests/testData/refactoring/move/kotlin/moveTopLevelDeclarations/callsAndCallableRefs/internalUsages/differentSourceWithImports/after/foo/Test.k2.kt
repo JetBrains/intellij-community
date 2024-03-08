@@ -1,7 +1,6 @@
 package foo
 
 import foo.O.objectExtensionMember2
-import foo.O.objectMember2
 
 fun test() {
     A().classMember()
@@ -23,7 +22,7 @@ fun test() {
     A()::classExtension
     A::classExtension
     O::objectMember1
-    ::objectMember2
+    O::objectMember2
     O::objectExtension
     A.Companion::companionMember
     (A)::companionMember

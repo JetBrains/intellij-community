@@ -4,7 +4,7 @@ package com.intellij.ide.startup.importSettings.transfer.backend
 import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -31,7 +31,9 @@ class TransferSettingsDataProvider(val providers: List<TransferSettingsProvider>
   suspend fun hasDataToImport(): Boolean =
     coroutineScope {
       val result: Boolean = providers.map { provider ->
-        async { logger.runAndLogException { provider.hasDataToImport() } ?: false }::await.asFlow()
+        async {
+          logger.runAndLogException { provider.isAvailable() && provider.hasDataToImport() } ?: false
+        }::await.asFlow()
       }.merge().firstOrNull { it } ?: false
 
       coroutineContext.job.cancelChildren()
@@ -47,7 +49,10 @@ class TransferSettingsDataProvider(val providers: List<TransferSettingsProvider>
     baseIdeVersions.addAll(newBase)
 
     ideVersions.addAll(newBase.filterIsInstance<IdeVersion>())
-    ideVersions.sortByDescending { it.lastUsed }
+    ideVersions.sortWith(
+      compareBy<IdeVersion> { it.sortKey }
+        .thenComparing(compareByDescending { it.lastUsed })
+    )
     TransferSettingsCollector.logIdeVersionsFound(ideVersions)
 
     failedIdeVersions.addAll(newBase.filterIsInstance<FailedIdeVersion>())
@@ -72,6 +77,7 @@ private class TransferSettingsDataProviderSession(private val providers: List<Tr
 
       try {
         val startTime = System.nanoTime().nanoseconds
+        @Suppress("SSBasedInspection") // we are ok with Steam API because of parallelStream
         val result = provider.getIdeVersions(skipIds ?: emptyList()).stream()
         val endTime = System.nanoTime().nanoseconds
         TransferSettingsCollector.logPerformanceMeasured(

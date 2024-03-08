@@ -230,6 +230,18 @@
             description="Insert constructor parenthesis on class autocompletion"
             defaultValue="false"
             restartRequired="false"/>
+    <registryKey
+            key="kotlin.auto.completion.dumb.mode.use.psi.completion"
+            description="Use PSI based completion when indexing"
+            defaultValue="true"
+            restartRequired="false"/>
+    <completion.contributor
+            language="kotlin"
+            id="KotlinDumbCompletionContributor"
+            order="first, after KotlinCompletionContributor"
+            implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinDumbCompletionContributor"/>
+    <codeInsight.wordCompletionFilter language="kotlin"
+                                      implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.KotlinWordCompletionFilter"/>
 
     <registryKey key="kotlin.create.sealed.templates.enabled"
                  defaultValue="false"
@@ -427,6 +439,10 @@
     <registryKey key="kotlin.multiline.function.parameters.info"
                  description="Activates the mode of line-by-line display of the function parameters info, if there are more than three of them"
                  defaultValue="false" />
+
+    <registryKey key="kotlin.copy.paste.allow.import.of.nested.declarations"
+                 description="Allows the copy-paste processor to import nested declarations (enum values, static Java members, etc.) if they were imported in the original source."
+                 defaultValue="true" />
   </extensions>
 
   <!-- Tips and Tricks -->

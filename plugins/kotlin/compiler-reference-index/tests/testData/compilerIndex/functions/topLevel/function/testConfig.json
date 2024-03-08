@@ -4,6 +4,8 @@
         "Doo.kt",
         "Foo.kt",
         "JavaClass.java",
-        "Main.kt"
+        "JavaImport.java",
+        "Main.kt",
+        "import.kt"
     ]
 }

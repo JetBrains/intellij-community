@@ -65,6 +65,8 @@ public final class PathManager {
   private static String ourLogPath;
   private static Path ourStartupScriptDir;
   private static Path ourOriginalConfigDir;
+  private static Path ourOriginalSystemDir;
+  private static Path ourOriginalLogDir;
 
   // IDE installation paths
 
@@ -607,6 +609,8 @@ public final class PathManager {
         PathCustomizer.CustomPaths paths = ((PathCustomizer)customizer).customizePaths();
         if (paths != null) {
           ourOriginalConfigDir = getConfigDir();
+          ourOriginalSystemDir = getSystemDir();
+          ourOriginalLogDir = getLogDir();
           if (paths.configPath != null) System.setProperty(PROPERTY_CONFIG_PATH, paths.configPath);
           if (paths.systemPath != null) System.setProperty(PROPERTY_SYSTEM_PATH, paths.systemPath);
           if (paths.pluginsPath != null) System.setProperty(PROPERTY_PLUGINS_PATH, paths.pluginsPath);
@@ -633,6 +637,22 @@ public final class PathManager {
   @ApiStatus.Internal
   public static @NotNull Path getOriginalConfigDir() {
     return ourOriginalConfigDir != null ? ourOriginalConfigDir : getConfigDir();
+  }
+
+  /**
+   * Return original value of the system path ignoring possible customizations made by {@link PathCustomizer}.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Path getOriginalSystemDir() {
+    return ourOriginalSystemDir != null ? ourOriginalSystemDir : getSystemDir();
+  }
+
+  /**
+   * Return original value of the log path ignoring possible customizations made by {@link PathCustomizer}.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Path getOriginalLogDir() {
+    return ourOriginalLogDir != null ? ourOriginalLogDir : getLogDir();
   }
 
   @Contract("null -> null")

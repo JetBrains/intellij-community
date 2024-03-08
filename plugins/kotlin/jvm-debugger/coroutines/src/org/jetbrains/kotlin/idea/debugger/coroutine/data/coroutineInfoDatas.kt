@@ -3,7 +3,9 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.SuspendContext
 import com.sun.jdi.ThreadReference
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData.Companion.DEFAULT_COROUTINE_NAME
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData.Companion.DEFAULT_COROUTINE_STATE
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineInfo
@@ -23,6 +25,9 @@ abstract class CoroutineInfoData(val descriptor: CoroutineDescriptor) {
     fun isCreated() = descriptor.state == State.CREATED
 
     fun isRunning() = descriptor.state == State.RUNNING
+    
+    fun isRunningOnCurrentThread(suspendContext: SuspendContext) =
+        activeThread == suspendContext.thread?.threadReference
 
     companion object {
         const val DEFAULT_COROUTINE_NAME = "coroutine"

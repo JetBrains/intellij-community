@@ -27,6 +27,10 @@ public interface ServiceViewDescriptor {
     return null;
   }
 
+  default boolean isContentPartVisible() {
+    return true;
+  }
+
   default @NotNull ItemPresentation getContentPresentation() {
     return getPresentation();
   }

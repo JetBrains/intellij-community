@@ -21,7 +21,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.TypeConstraints.*;
 
@@ -154,7 +157,7 @@ public sealed interface TypeConstraint permits TypeConstraint.Constrained, TypeC
   /**
    * @return a {@link DfType} that represents any object that satisfies this constraint, or null (nullability is unknown)
    */
-  default DfType asDfType() {
+  default @NotNull DfType asDfType() {
     return this == BOTTOM ? DfType.BOTTOM :
            DfTypes.customObject(this, DfaNullability.UNKNOWN, Mutability.UNKNOWN, null, DfType.BOTTOM);
   }

@@ -7,6 +7,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * Use {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking} or
+ * {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}.
+ * </p>
+ */
 public final class DispatchThreadProgressWindow extends ProgressWindow {
   private long myLastPumpEventsTime;
   private static final int PUMP_INTERVAL = SystemInfo.isWindows ? 100 : 500;

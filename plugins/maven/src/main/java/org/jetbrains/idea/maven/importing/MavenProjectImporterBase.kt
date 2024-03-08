@@ -11,11 +11,13 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.ExtensionImporter
 import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.ExtensionImporter.CountAndTime
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
+import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -46,7 +48,10 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
     override fun perform(project: Project,
                          embeddersManager: MavenEmbeddersManager,
                          indicator: ProgressIndicator) {
-      doRefreshFiles(myFiles)
+      val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
+      cs.launch {
+        doRefreshFiles(myFiles)
+      }
     }
   }
 

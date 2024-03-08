@@ -5714,9 +5714,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   /**
    * There is no point to show the editor fragment hint if the sticky panel shows the same line.
+   * They also shouldn't be shown for non-local client ids, they will be handled there locally.
    */
   @ApiStatus.Internal
   public boolean shouldSuppressEditorFragmentHint(int hintStartLogicalLine) {
+    if (!ClientId.isCurrentlyUnderLocalId()) {
+      return true;
+    }
     if (myStickyLinesPanel != null) {
       return myStickyLinesPanel.suppressHintForLine(hintStartLogicalLine);
     }

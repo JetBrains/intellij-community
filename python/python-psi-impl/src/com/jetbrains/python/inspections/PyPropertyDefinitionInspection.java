@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import static com.jetbrains.python.codeInsight.typing.PyProtocolsKt.isProtocol;
+
 /**
  * Checks that arguments to property() and @property and friends are ok.
  * <br/>
@@ -276,6 +278,11 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
       if (callable instanceof PyFunction function) {
 
         if (PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
+          return;
+        }
+
+        PyClass containingClass = function.getContainingClass();
+        if (containingClass != null && isProtocol(containingClass, myTypeEvalContext)) {
           return;
         }
 

@@ -32,12 +32,10 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getDefaultModuleTypeId;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.BUILD_SRC_NAME;
 
 /**
@@ -83,7 +81,7 @@ public final class GradleBuildSrcProjectsResolver {
     List<String> jvmOptions = new SmartList<>();
     // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
     // to avoid spawning of the second gradle daemon
-    BuildEnvironment mainBuildEnvironment = myResolverContext.getModels().getBuildEnvironment();
+    BuildEnvironment mainBuildEnvironment = myResolverContext.getBuildEnvironment();
     if (mainBuildEnvironment != null) {
       jvmOptions.addAll(mainBuildEnvironment.getJava().getJvmArguments());
     }
@@ -91,8 +89,7 @@ public final class GradleBuildSrcProjectsResolver {
       jvmOptions.addAll(myMainBuildExecutionSettings.getJvmArguments());
     }
 
-    Stream<Build> builds = new ToolingModelsProviderImpl(myResolverContext.getModels()).builds();
-    builds.forEach(build -> {
+    for (Build build : myResolverContext.getAllBuilds()) {
       String buildPath = FileUtil.toSystemIndependentName(build.getBuildIdentifier().getRootDir().getPath());
 
       GradleExecutionSettings buildSrcProjectSettings;
@@ -142,7 +139,7 @@ public final class GradleBuildSrcProjectsResolver {
                             index.includedModulesPaths(),
                             buildSrcResolverCtx,
                             myProjectResolver.getProjectDataFunction(buildSrcResolverCtx, myResolverChain, true));
-    });
+    }
   }
 
   @NotNull

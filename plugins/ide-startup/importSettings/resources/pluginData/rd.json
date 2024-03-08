@@ -40,6 +40,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "bungcip.better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
+  },
+  {
     "vsCodeId": "christian-kohler.npm-intellisense",
     "ideaName": "npm Intellisense",
     "builtIn": true
@@ -168,6 +173,11 @@
     "vsCodeId": "GitHub.vscode-pull-request-github",
     "ideaName": "GitHub Pull Requests and Issues",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "GitLab.gitlab-workflow",
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql",
@@ -483,6 +493,16 @@
     "vsCodeId": "Vue.volar",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue"
+  },
+  {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
+    "builtIn": true
   },
   {
     "vsCodeId": "YclepticStudios.unity-snippets",

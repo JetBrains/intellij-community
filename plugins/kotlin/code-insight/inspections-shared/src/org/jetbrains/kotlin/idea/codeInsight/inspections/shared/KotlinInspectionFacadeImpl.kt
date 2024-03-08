@@ -3,14 +3,9 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
-import org.jetbrains.kotlin.psi.KtClassBody
-import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 
 class KotlinInspectionFacadeImpl : KotlinInspectionFacade {
     override val simplifyNegatedBinaryExpression: AbstractApplicabilityBasedInspection<KtPrefixExpression>
         get() = SimplifyNegatedBinaryExpressionInspection()
-
-    override val sortModifiers: AbstractApplicabilityBasedInspection<KtModifierList>
-        get() = SortModifiersInspection()
 }

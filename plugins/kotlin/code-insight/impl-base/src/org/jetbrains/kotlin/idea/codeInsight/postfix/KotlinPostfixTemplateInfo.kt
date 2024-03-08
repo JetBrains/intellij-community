@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
+@TestOnly
 object KotlinPostfixTemplateInfo {
     /**
      * In tests only one expression should be suggested, so in case there are many of them, save relevant items.

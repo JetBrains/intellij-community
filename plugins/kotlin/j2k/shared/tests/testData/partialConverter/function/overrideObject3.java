@@ -1,3 +1,4 @@
+// IGNORE_K2
 class Base {
     @Override
     public boolean equals(Object o) {

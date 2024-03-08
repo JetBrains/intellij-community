@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.name.ClassId
 
 internal class KotlinForPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("for", provider)
 
-@Suppress("SpellCheckingInspection")
 internal class KotlinIterPostfixTemplate(provider: KotlinPostfixTemplateProvider) : AbstractKotlinForPostfixTemplate("iter", provider)
 
 @Suppress("SpellCheckingInspection")
@@ -59,6 +58,7 @@ internal class KotlinForWithIndexPostfixTemplate(
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
+@Suppress("SpellCheckingInspection")
 internal class KotlinForReversedPostfixTemplate(
     provider: KotlinPostfixTemplateProvider
 ) : AbstractKotlinForPostfixTemplate(

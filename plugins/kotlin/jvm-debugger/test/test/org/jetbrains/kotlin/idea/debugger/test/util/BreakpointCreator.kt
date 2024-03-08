@@ -50,7 +50,7 @@ internal class BreakpointCreator(
         val kotlinFieldBreakpointType = findBreakpointType(KotlinFieldBreakpointType::class.java)
         val virtualFile = file.virtualFile
 
-        val runnable = {
+        runReadAction {
             var offset = -1
             while (true) {
                 val fileText = document.text
@@ -97,12 +97,6 @@ internal class BreakpointCreator(
                     else -> throw AssertionError("Cannot create breakpoint at line ${lineIndex + 1}")
                 }
             }
-        }
-
-        if (!SwingUtilities.isEventDispatchThread()) {
-            DebuggerInvocationUtil.invokeAndWait(project, runnable, ModalityState.defaultModalityState())
-        } else {
-            runnable.invoke()
         }
     }
 
@@ -156,7 +150,7 @@ internal class BreakpointCreator(
         val sourceFile = sourceFiles.singleOrNull()
             ?: error("Single source file should be found: name = $fileName, sourceFiles = $sourceFiles")
 
-        val runnable = Runnable {
+        runReadAction {
             val psiSourceFile = PsiManager.getInstance(project).findFile(sourceFile)
                 ?: error("Psi file not found for $sourceFile")
 
@@ -166,8 +160,6 @@ internal class BreakpointCreator(
             val lineNumber = document.getLineNumber(index)
             action(psiSourceFile, lineNumber)
         }
-
-        DebuggerInvocationUtil.invokeAndWait(project, runnable, ModalityState.defaultModalityState())
     }
 
     private fun createFunctionBreakpoint(breakpointManager: XBreakpointManager, file: PsiFile, lineIndex: Int, fromLibrary: Boolean) {
@@ -229,24 +221,25 @@ internal class BreakpointCreator(
         virtualFile: VirtualFile,
         lambdaOrdinal: Int? = null,
         conditionalReturn: Boolean = false,
-    ): Breakpoint<out JavaBreakpointProperties<*>>? {
-        if (!breakpointType.canPutAt(virtualFile, lineIndex, project)) return null
-        val xBreakpoint = runWriteAction {
-            val properties = breakpointType.createBreakpointProperties(virtualFile, lineIndex)
-            if (properties is JavaLineBreakpointProperties) {
-                properties.encodedInlinePosition =
-                  if (lambdaOrdinal == null && !conditionalReturn) null
-                  else JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal ?: -1, conditionalReturn)
-            }
+    ): Breakpoint<out JavaBreakpointProperties<*>>? = runReadAction {
+        if (!breakpointType.canPutAt(virtualFile, lineIndex, project)) return@runReadAction null
 
+        val properties = breakpointType.createBreakpointProperties(virtualFile, lineIndex)
+        if (properties is JavaLineBreakpointProperties) {
+            properties.encodedInlinePosition =
+              if (lambdaOrdinal == null && !conditionalReturn) null
+              else JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal ?: -1, conditionalReturn)
+        }
+
+        val xBreakpoint =
             breakpointManager.addLineBreakpoint(
                 breakpointType,
                 virtualFile.url,
                 lineIndex,
                 properties
             )
-        }
-        return BreakpointManager.getJavaBreakpoint(xBreakpoint)
+
+        BreakpointManager.getJavaBreakpoint(xBreakpoint)
     }
 
     @Suppress("UNCHECKED_CAST")

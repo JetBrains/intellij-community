@@ -6,16 +6,11 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasicApiData
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
+import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceQuickDocStyles.LINK_TOP_MARGIN
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
-
-private val DOWNLOADS_ICON = HtmlChunk.tag("icon")
-  .attr("src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Download")
-private val LIKES_ICON = HtmlChunk.tag("icon")
-  .attr(".src", "com.intellij.python.community.impl.huggingFace.PythonCommunityImplHuggingFaceIcons.Like")
 
 
 class HuggingFaceHtmlBuilder(
@@ -34,13 +29,10 @@ class HuggingFaceHtmlBuilder(
       .setClass(HuggingFaceQuickDocStyles.HF_CONTENT_CLASS)
       .child(HtmlChunk.raw(convertedHtml))
 
-    val invisibleSpan = createInvisibleSpan(convertedHtml)
-
     val bodyChunk = HtmlChunk.tag("body")
       .children(
         cardHeaderChunk,
         wrappedBodyContent,
-        invisibleSpan
       )
 
     val htmlContent = HtmlChunk.tag("html").children(headChunk, bodyChunk)
@@ -49,12 +41,13 @@ class HuggingFaceHtmlBuilder(
   }
 
   private fun generateCardHeader(modelInfo: HuggingFaceEntityBasicApiData): HtmlChunk {
-    val modelNameWithIconRow = HtmlChunk.tag("h1")
-      .attr("style", "white-space: nowrap; word-break: keep-all;")
+    val cardTitle = modelInfo.itemId.replace("-", HuggingFaceQuickDocStyles.NBHP)
+
+    val modelNameWithIconRow = HtmlChunk.tag("h3")
       .children(
-        HtmlChunk.raw(modelInfo.itemId.replace("-", HuggingFaceQuickDocStyles.NBHP)),
-        HtmlChunk.nbsp(),
-        HtmlChunk.text(HuggingFaceConstants.HF_EMOJI)
+        HtmlChunk.raw(cardTitle),
+        // HtmlChunk.nbsp(2),
+        // LOGO_ICON
       )
 
     // modelPurpose chunk is not applicable for datasets
@@ -62,11 +55,10 @@ class HuggingFaceHtmlBuilder(
       @NlsSafe val modelPurpose = modelInfo.pipelineTag
       listOf(HtmlChunk.text(modelPurpose), HtmlChunk.nbsp(2))
     } else {
-      emptyList()
+      listOf(HtmlChunk.text(PyHuggingFaceBundle.message("python.hugging.face.dataset")), HtmlChunk.nbsp(2))
     }
 
-    val modelInfoRow = HtmlChunk.span()
-      .setClass(HuggingFaceQuickDocStyles.HF_GRAYED_CLASS)
+    val modelInfoRow = DocumentationMarkup.GRAYED_ELEMENT
       .children(
         *conditionalChunks.toTypedArray(),
         HtmlChunk.text(PyHuggingFaceBundle.message("updated.0", modelInfo.humanReadableLastUpdated())),
@@ -91,34 +83,26 @@ class HuggingFaceHtmlBuilder(
         DocumentationMarkup.EXTERNAL_LINK_ICON
       )
       .wrapWith("p")
+      .style("margin-top: ${LINK_TOP_MARGIN}px;") // compensate h3 tag bottom margin
 
-
-    val headerContainer = HtmlChunk.div()
-      .setClass(DocumentationMarkup.CLASS_DEFINITION)
-      .style("min-width: 1000px; ")
-      .children(
-        modelNameWithIconRow,
-        modelInfoRow,
-        linkRow,
-      )
+      val headerContainer = HtmlChunk.div()
+        .setClass(DocumentationMarkup.CLASS_DEFINITION)
+        .children(
+          modelNameWithIconRow,
+          modelInfoRow,
+          linkRow,
+        )
     return headerContainer
   }
 
-  private fun createInvisibleSpan(convertedHtml: String): HtmlChunk {
-    // artificially increase content length, if it's too little
-    // is needed to get an adequate popup width
-    val htmlTagRegex = "<[^>]*>".toRegex()
-    val contentWithoutHtmlTags = convertedHtml.replace(htmlTagRegex, "")
-    val contentLength = contentWithoutHtmlTags.count()
-
-    val invisibleSpanLength = (800 - contentLength) / 8
-
-    return when {
-      invisibleSpanLength < 0 -> HtmlChunk.empty()
-      else -> {
-        @NlsSafe val invisibleSpan = HtmlChunk.nbsp(invisibleSpanLength)
-        return invisibleSpan
-      }
-    }
+  companion object {
+    private val DOWNLOADS_ICON = HtmlChunk.tag("icon")
+      // .attr("src", "com.intellij.python.community.impl.huggingFace.icons.PythonCommunityImplHuggingFaceIcons.Download")
+      .attr("src", "AllIcons.Actions.Download")
+    private val LIKES_ICON = HtmlChunk.tag("icon")
+      // .attr(".src", "com.intellij.python.community.impl.huggingFace.icons.PythonCommunityImplHuggingFaceIcons.Like")
+      .attr(".src", "AllIcons.Toolwindows.ToolWindowFavorites")
+    //private val LOGO_ICON = HtmlChunk.tag("icon")
+    //  .attr(".src", "/com/intellij/python/community/impl/huggingFace/icons/logo.svg")
   }
 }

@@ -7,11 +7,16 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.vcs.log.VcsLogCommitSelection;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
+import com.intellij.vcs.log.ui.table.VcsLogCommitSelectionUtils;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class VcsLogCreatePatchActionProvider implements AnActionExtensionProvider {
   private final boolean mySilentClipboard;
@@ -44,17 +49,37 @@ public class VcsLogCreatePatchActionProvider implements AnActionExtensionProvide
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    e.getPresentation().setEnabled(changes != null && changes.length > 0);
+    e.getPresentation().setEnabled(isEnabled(e));
+  }
+
+  private static boolean isEnabled(@NotNull AnActionEvent e) {
+    if (e.getData(ChangesBrowserBase.DATA_KEY) != null) {
+      Change[] changes = e.getData(VcsDataKeys.CHANGES);
+      return changes != null && changes.length > 0;
+    }
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    return selection != null && VcsLogCommitSelectionUtils.isNotEmpty(selection);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    if (changes == null) return;
     String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
-    CreatePatchFromChangesAction.createPatch(e.getProject(), commitMessage, Arrays.asList(changes), mySilentClipboard);
+
+    if (e.getData(ChangesBrowserBase.DATA_KEY) != null) {
+      Change[] changes = e.getData(VcsDataKeys.CHANGES);
+      if (changes == null) return;
+      CreatePatchFromChangesAction.createPatch(e.getProject(), commitMessage, Arrays.asList(changes), mySilentClipboard);
+      return;
+    }
+
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (selection == null) return;
+
+    selection.requestFullDetails(details -> {
+      List<Change> changes = VcsLogUtil.collectChanges(details);
+      CreatePatchFromChangesAction.createPatch(e.getProject(), commitMessage, changes, mySilentClipboard);
+    });
   }
 }

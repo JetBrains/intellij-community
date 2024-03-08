@@ -3,7 +3,7 @@ package com.intellij.ide.startup.importSettings.fus
 
 import com.intellij.ide.startup.importSettings.*
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.PatchedKeymap
 import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.mappings.VisualStudioPluginsMapping

@@ -7,11 +7,11 @@ import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.javac.Iterators;
 
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
@@ -480,7 +480,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
   public boolean processRemovedMethods(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, Iterable<JvmMethod> removed, Utils future, Utils present) {
     JvmClass changedClass = change.getPast();
     debug("Processing removed methods: ");
-    Iterators.Provider<Boolean> extendsLibraryClass = Utils.lazyValue(() -> {
+    Supplier<Boolean> extendsLibraryClass = Utils.lazyValue(() -> {
       return future.inheritsFromLibraryClass(changedClass);
     });
     for (JvmMethod removedMethod : removed) {
@@ -764,7 +764,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     JVMFlags removedFlags = diff.getRemovedFlags();
 
     if (!changedField.isPrivate() && changedField.isInlinable() && changedField.getValue() != null) { // if the field was a compile-time constant
-      boolean harmful = !isEmpty(filter(List.of(addedFlags, removedFlags), f -> f.isStatic() || f.isFinal()));
+      boolean harmful = find(List.of(addedFlags, removedFlags), f -> f.isStatic() || f.isFinal()) != null;
       if (harmful || diff.valueChanged() || diff.accessRestricted()) {
         if (context.getParams().isProcessConstantsIncrementally()) {
           debug("Potentially inlined field changed its access or value => affecting field usages and static member import usages");
@@ -935,20 +935,6 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       );
     }
     return true;
-  }
-
-  private void affectSubclasses(DifferentiateContext context, Utils utils, ReferenceID fromClass, boolean affectUsages) {
-    debug("Affecting subclasses of class: ", fromClass, "; with usages affection: ", affectUsages);
-    for (ReferenceID cl : utils.withAllSubclasses(fromClass)) {
-      affectNodeSources(context, cl, "Affecting source file: ");
-      if (affectUsages) {
-        String nodeName = utils.getNodeName(cl);
-        if (nodeName != null) {
-          context.affectUsage(new ClassUsage(nodeName));
-          debug("Affect usage of class ", nodeName);
-        }
-      }
-    }
   }
 
   private boolean affectOnNonIncrementalChange(DifferentiateContext context, JvmNodeReferenceID owner, Proto proto, Utils utils) {

@@ -92,7 +92,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
                                        Registry.`is`("ide.recent.files.speed.search.camel.case"))
     addChangeListener {
       if (myComponent.project.isDisposed) {
-        myComponent.myPopup?.cancel()
+        myComponent.popup?.cancel()
       }
       else {
         val isPopupActive = isPopupActive

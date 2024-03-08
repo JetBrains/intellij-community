@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
@@ -341,7 +342,7 @@ internal val KtCompiledFile.internalClassName: String
 
 private fun computeInternalClassName(path: String): String {
     require(path.endsWith(".class", ignoreCase = true))
-    return path.dropLast(".class".length).replace('/', '.')
+    return path.dropLast(".class".length).internalNameToFqn()
 }
 
 internal class CodeFragmentCompilationStats {

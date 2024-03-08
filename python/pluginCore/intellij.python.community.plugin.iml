@@ -8,6 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.community_only" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.communityOnly" scope="RUNTIME" />
   </component>
 </module>

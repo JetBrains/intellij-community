@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -41,14 +40,12 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class CachedNumberConstructorCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  static final Set<String> cachedNumberTypes = new HashSet<>();
-
-  static {
-    cachedNumberTypes.add(CommonClassNames.JAVA_LANG_LONG);
-    cachedNumberTypes.add(CommonClassNames.JAVA_LANG_BYTE);
-    cachedNumberTypes.add(CommonClassNames.JAVA_LANG_INTEGER);
-    cachedNumberTypes.add(CommonClassNames.JAVA_LANG_SHORT);
-  }
+  static final Set<String> cachedNumberTypes = Set.of(
+    CommonClassNames.JAVA_LANG_LONG,
+    CommonClassNames.JAVA_LANG_BYTE,
+    CommonClassNames.JAVA_LANG_INTEGER,
+    CommonClassNames.JAVA_LANG_SHORT
+  );
 
   @SuppressWarnings("PublicField")
   public boolean ignoreStringArguments = false;
@@ -58,7 +55,8 @@ public final class CachedNumberConstructorCallInspection extends BaseInspection 
 
   @Override
   @NotNull
-  public String buildErrorString(Object... infos) { return InspectionGadgetsBundle.message(
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
       "cached.number.constructor.call.problem.descriptor");
   }
 
@@ -100,7 +98,7 @@ public final class CachedNumberConstructorCallInspection extends BaseInspection 
     @Override
     @NotNull
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", className+".valueOf()");
+      return CommonQuickFixBundle.message("fix.replace.with.x", className + ".valueOf()");
     }
 
     @NotNull

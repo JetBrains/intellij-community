@@ -9,9 +9,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 internal abstract class ProjectIndexableFilesFilterFactory {
   abstract fun create(project: Project): ProjectIndexableFilesFilter
-  fun createHealthCheck(project: Project, filter: ProjectIndexableFilesFilter): ProjectIndexableFilesFilterHealthCheck {
-    return ProjectIndexableFilesFilterHealthCheck(project, filter)
-  }
 }
 
 internal abstract class ProjectIndexableFilesFilter(protected val project: Project, val checkAllExpectedIndexableFilesDuringHealthcheck: Boolean) : IdFilter() {

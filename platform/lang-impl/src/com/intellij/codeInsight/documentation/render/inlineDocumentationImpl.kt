@@ -31,23 +31,3 @@ internal fun findInlineDocumentation(file: PsiFile, textRange: TextRange): Inlin
     it.findInlineDocumentation(file, textRange)
   }
 }
-
-@NlsSafe
-const val START_TIP_PREFIX = "<tip>"
-
-@NlsSafe
-const val END_TIP_SUFFIX = "</tip>"
-
-internal fun unwrapTipsText(text: @Nls String): @Nls String {
-  if (!text.startsWith(START_TIP_PREFIX) || !text.endsWith(END_TIP_SUFFIX)) error("Invalid text: $text")
-  return text.substring(START_TIP_PREFIX.length, text.length - END_TIP_SUFFIX.length)
-}
-
-internal fun createAdditionalStylesForTips(editor: Editor): String {
-  val attributes = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.DOC_TIPS_SHORTCUT) ?: return ""
-  val background = ColorUtil.toHtmlColor(attributes.backgroundColor ?: return "")
-  val foreground = ColorUtil.toHtmlColor(attributes.foregroundColor ?: return "")
-
-  // BOLD redefine is not working well: "b {font-weight: normal; color: #000000} " +
-  return ".shortcut {font-weight: bold; color: $foreground; background-color: $background}"
-}

@@ -46,10 +46,11 @@ internal class GHPRToolWindowTabComponentFactory(
 
   override fun createReviewListComponent(cs: CoroutineScope, projectVm: GHPRToolWindowProjectViewModel): JComponent {
     val ghostUser = projectVm.dataContext.securityService.ghostUser
+    val currentUser = projectVm.dataContext.securityService.currentUser
     val listVm = projectVm.listVm
     val listModel = cs.scopedDelegatingListModel(listVm.listModel)
     val list = GHPRListComponentFactory(projectVm.dataContext.interactionState, listModel)
-      .create(listVm.avatarIconsProvider, ghostUser)
+      .create(listVm.avatarIconsProvider, ghostUser, currentUser)
 
     GHPRStatisticsCollector.logListOpened(project)
     return GHPRListPanelFactory(project, listVm)
@@ -80,7 +81,7 @@ internal class GHPRToolWindowTabComponentFactory(
       }
 
       override fun removeListDataListener(l: ListDataListener) {
-        delegate.addListDataListener(l)
+        delegate.removeListDataListener(l)
         listeners.remove(l)
       }
     }

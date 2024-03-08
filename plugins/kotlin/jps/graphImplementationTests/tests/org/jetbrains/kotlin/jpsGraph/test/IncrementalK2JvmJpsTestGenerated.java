@@ -612,6 +612,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("pureKotlin/renameFileWithFunctionOverload/");
         }
 
+        @TestMetadata("renameFileWithFunctionOverloadAndCreateConflict")
+        public void testRenameFileWithFunctionOverloadAndCreateConflict() throws Exception {
+            runTest("pureKotlin/renameFileWithFunctionOverloadAndCreateConflict/");
+        }
+
         @TestMetadata("returnTypeChanged")
         public void testReturnTypeChanged() throws Exception {
             runTest("pureKotlin/returnTypeChanged/");

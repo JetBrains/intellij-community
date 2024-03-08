@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -8,6 +8,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.asSafely
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.html.*
+import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -117,14 +118,14 @@ class ExtendableHTMLViewFactory internal constructor(
 
     /**
      * Supports rendering of inline elements, like <span>, with paddings, margins
-     * and rounded corners (through `caption-side` CSS property).
+     * and rounded corners (through `border-radius` CSS property).
      */
     @JvmField
     val INLINE_VIEW_EX: Extension = InlineViewExExtension()
 
     /**
      * Supports rendering of block elements, like <div>,
-     * with rounded corners (through `caption-side` CSS property).
+     * with rounded corners (through `border-radius` CSS property).
      */
     @JvmField
     val BLOCK_VIEW_EX: Extension = BlockViewExExtension()
@@ -161,6 +162,12 @@ class ExtendableHTMLViewFactory internal constructor(
      */
     @JvmField
     val WBR_SUPPORT: Extension = WbrSupportExtension()
+
+    /**
+     * Adds support for `<hr>` rendering as block view
+     */
+    @JvmField
+    val BLOCK_HR_SUPPORT: Extension = BlockHrSupportExtension()
 
     private class IconsExtension(private val existingIconsProvider: (key: String) -> Icon?) : Extension {
 
@@ -332,7 +339,7 @@ class ExtendableHTMLViewFactory internal constructor(
           }
         }
 
-        override fun getToolTipText(x: Float, y: Float, allocation: Shape) =
+        override fun getToolTipText(x: Float, y: Float, allocation: Shape): String? =
           super.getElement().attributes.getAttribute(HTML.Attribute.ALT) as? String
 
         override fun paint(g: Graphics, a: Shape) {
@@ -403,8 +410,9 @@ class ExtendableHTMLViewFactory internal constructor(
           || attrs.getAttribute(CSS.Attribute.MARGIN_LEFT) != null
           || attrs.getAttribute(CSS.Attribute.MARGIN_TOP) != null
           || attrs.getAttribute(CSS.Attribute.MARGIN_RIGHT) != null
-          || attrs.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
-            ?.asSafely<String>()?.endsWith("px") == true) {
+          || element.attributes.getAttribute(HTML.Attribute.TITLE) != null
+          || attrs.getAttribute(BORDER_RADIUS)?.asSafely<String>() != null
+      ) {
         return InlineViewEx(element)
       }
       return null
@@ -415,8 +423,9 @@ class ExtendableHTMLViewFactory internal constructor(
     override fun invoke(element: Element, view: View): View? {
       if (view.javaClass != BlockView::class.java) return null
       val attrs = view.attributes
-      if (attrs.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
-          ?.asSafely<String>()?.endsWith("px") == true) {
+      if (attrs.getAttribute(BORDER_RADIUS)?.asSafely<String>() != null
+          || element.attributes.getAttribute(HTML.Attribute.TITLE) != null
+      ) {
         return BlockViewEx(element, (view as BlockView).axis)
       }
       return null
@@ -427,7 +436,10 @@ class ExtendableHTMLViewFactory internal constructor(
     override fun invoke(element: Element, view: View): View? {
       if (view.javaClass != ParagraphView::class.java) return null
       val attrs = view.attributes
-      if (attrs.getAttribute(CSS.Attribute.LINE_HEIGHT) != null) {
+      if (
+        attrs.getAttribute(CSS.Attribute.LINE_HEIGHT) != null
+        || element.attributes.getAttribute(HTML.Attribute.TITLE) != null
+      ) {
         return ParagraphViewEx(element)
       }
       return null
@@ -452,6 +464,18 @@ class ExtendableHTMLViewFactory internal constructor(
         WbrView(elem)
       else
         null
+  }
+
+  private class BlockHrSupportExtension : Extension {
+    override fun invoke(elem: Element, defaultView: View): View? {
+      val attrs = elem.attributes
+      return if (attrs.getAttribute(AbstractDocument.ElementNameAttribute) == null &&
+                 attrs.getAttribute(StyleConstants.NameAttribute) === HTML.Tag.HR) {
+        (elem as AbstractDocument.AbstractElement).addAttribute(HTML.Tag.HR, SimpleAttributeSet())
+        HRViewEx(elem, View.Y_AXIS)
+      } else
+        null
+    }
   }
 }
 

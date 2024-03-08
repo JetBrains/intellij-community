@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
@@ -13,7 +15,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedModCommand
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
 import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
@@ -59,24 +62,37 @@ object WrapWithSafeLetCallFixFactories {
      *  `isImplicitInvokeCallToMemberProperty` controls the behavior when hoisting up the nullable expression. It should be set to true
      *  if the call is to a invocable member property.
      */
-    private val applicator: KotlinModCommandApplicator<KtExpression, Input> = modCommandApplicator {
-        familyAndActionName(KotlinBundle.lazyMessage("wrap.with.let.call"))
-        applyTo { targetExpression, input, _, updater ->
+    private val applicator = object : KotlinApplicator.ModCommandBased<KtExpression, Input> {
+
+        override fun getFamilyName(): String = KotlinBundle.message("wrap.with.let.call")
+
+        override fun applyTo(
+            psi: KtExpression,
+            input: Input,
+            context: ActionContext,
+            updater: ModPsiUpdater,
+        ) {
             val nullableExpression =
                 input.nullableExpressionPointer.element?.let<KtExpression, KtExpression?>(updater::getWritable) ?: return@applyTo
-            if (!nullableExpression.parents.contains(targetExpression)) {
+            if (!nullableExpression.parents.contains(psi)) {
                 LOG.warn(
                     "Unexpected input for WrapWithSafeLetCall. Nullable expression '${nullableExpression.text}' should be a descendant" +
-                            " of '${targetExpression.text}'."
+                            " of '${psi.text}'."
                 )
-                return@applyTo
+                return
             }
+
             val suggestedVariableName = input.suggestedVariableName
-            val psiFactory = KtPsiFactory(targetExpression.project)
+            val psiFactory = KtPsiFactory(psi.project)
 
             fun getNewExpression(nullableExpressionText: String, expressionUnderLetText: String): KtExpression {
                 return when (suggestedVariableName) {
-                    StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier -> psiFactory.createExpressionByPattern("$0?.let { $1 }", nullableExpressionText, expressionUnderLetText)
+                    StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier -> psiFactory.createExpressionByPattern(
+                        "$0?.let { $1 }",
+                        nullableExpressionText,
+                        expressionUnderLetText
+                    )
+
                     else -> psiFactory.createExpressionByPattern(
                         "$0?.let { $1 -> $2 }",
                         nullableExpressionText,
@@ -119,11 +135,11 @@ object WrapWithSafeLetCallFixFactories {
                             prefix = " "
                         ) { it.text }
                     }"
-                if (qualifiedExpression == targetExpression) {
-                    targetExpression.replace(getNewExpression(nullableExpressionText, newInvokeCallText))
+                if (qualifiedExpression == psi) {
+                    psi.replace(getNewExpression(nullableExpressionText, newInvokeCallText))
                 } else {
                     qualifiedExpression.replace(psiFactory.createExpression(newInvokeCallText))
-                    targetExpression.replace(getNewExpression(nullableExpressionText, targetExpression.text))
+                    psi.replace(getNewExpression(nullableExpressionText, psi.text))
                 }
 
             } else {
@@ -132,7 +148,7 @@ object WrapWithSafeLetCallFixFactories {
                     else -> nullableExpression.text
                 }
                 nullableExpression.replace(psiFactory.createExpression(suggestedVariableName))
-                targetExpression.replace(getNewExpression(nullableExpressionText, targetExpression.text))
+                psi.replace(getNewExpression(nullableExpressionText, psi.text))
             }
         }
     }

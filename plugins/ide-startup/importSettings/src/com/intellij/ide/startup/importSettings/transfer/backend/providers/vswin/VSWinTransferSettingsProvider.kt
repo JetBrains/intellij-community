@@ -8,7 +8,7 @@ import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector
 import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
 import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
 import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSParser
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHiveDetourFileNotFoundException
@@ -160,6 +160,7 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
       )
 
       // Finally, IdeVersion
+      val isExperimental = !hive.rootSuffix.isNullOrBlank()
       val l = IdeVersion(
         transferableIdeId,
         hive.transferableVersion(),
@@ -171,7 +172,8 @@ class VSWinTransferSettingsProvider : TransferSettingsProvider {
         lastUsed = hive.lastUsage,
         settingsInit = { VSParser(hive).settings },
 
-        provider = this
+        provider = this,
+        sortKey = if (isExperimental) 1 else 0
       )
 
       val res4 = convertTimeFn(timeFn() - start)

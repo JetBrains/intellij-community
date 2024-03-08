@@ -194,8 +194,8 @@
     },
 
     "SegmentedButton": {
-      "selectedStartBorderColor": "Gray9",
-      "selectedEndBorderColor": "Gray9",
+      "selectedStartBorderColor": "Gray8",
+      "selectedEndBorderColor": "Gray8",
       "selectedButtonColor": "Gray14",
       "focusedSelectedButtonColor": "Blue11"
     },
@@ -218,7 +218,8 @@
         "backgroundOpacity": 7
       },
       "Block": {
-        "backgroundOpacity": 100,
+        "backgroundColor": "Gray5",
+        "backgroundOpacity": 4,
         "borderColor":"Gray12",
         "EditorPane": {
           "backgroundColor": "Gray5",
@@ -226,6 +227,11 @@
           "borderColor": "Gray12"
         }
       }
+    },
+
+    "Shortcut": {
+      "backgroundOpacity": 0,
+      "borderColor":"Gray8"
     },
 
     "ComboPopup.border": {
@@ -690,7 +696,8 @@
         "DragAndDrop" : {
           "stripeBackground" : "Gray13",
           "buttonDropBackground": "Blue11",
-          "buttonDropBorderColor": "Blue7"
+          "buttonDropBorderColor": "Blue7",
+          "buttonFloatingBackground": "Gray11"
         }
       },
       "Stripe": {

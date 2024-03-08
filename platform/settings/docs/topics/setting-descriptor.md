@@ -11,7 +11,7 @@ and two optional ones:
  * serializer (`SettingSerializerDescriptor`)
 
 The key provided is not the final effective key. The plugin ID is automatically and implicitly prepended to it. 
-The concept of a component name does not exist. 
+The concept of a component name does not exist.
 
 There is no need for you to use a special group for your plugin settings. The implicitly prepended plugin ID forms this implicit group.
 
@@ -25,6 +25,26 @@ The Settings Controller will determine the appropriate serialization format base
 * [Kotlin serialization](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/serialization-guide.md) is utilized. 
   The setting values class must be annotated with `kotlinx.serialization.Serializable`. 
 * You should always specify default values.
+
+## Tags
+
+The implementation of a settings controller can significantly vary. Therefore, tags should be considered more as hints rather than fixed instructions.
+
+> Why term "tag" and not "attribute" is used?
+> * An attribute often has a value, but a tag does not.
+> * A tag is typically used to categorize or label items.
+> * We don't use a tag with an enum field like `RoamingType`, but rather a simple tag, which is more concise.
+> * Multiple tags can be added in any circumstance, so there's no worry that conflicting tags might be specified to the same setting.
+
+### Remote Dev
+
+[//]: # (when remote dev will add tags, list it here and explain usage)
+
+Remote Dev can introduce tag like "Merge Strategy" — merge to a client or host.
+
+### Settings Sync
+
+Settings Sync can introduce tag "Category" — to implement selective sync.
 
 ## Mutability
 Mutability — we cannot enforce read-write on compile time.

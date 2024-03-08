@@ -18,6 +18,7 @@
 
 
   <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
 
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
@@ -297,6 +298,7 @@
     <renamePsiElementProcessor implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFileProcessor" order="first"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenameUnsupportedExpressionProcessor"/>
+    <renameHandler implementation="com.jetbrains.python.refactoring.rename.PyMemberInplaceRenameHandler"/>
 
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyContainingFileRenamerFactory"/>
     <automaticRenamerFactory implementation="com.jetbrains.python.refactoring.rename.PyInheritorRenameFactory"/>

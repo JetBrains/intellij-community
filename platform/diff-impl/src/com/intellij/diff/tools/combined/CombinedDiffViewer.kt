@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ScrollingModelImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.removeUserData
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.JBColor
@@ -169,7 +170,7 @@ class CombinedDiffViewer(
       newViewer.init()
 
       updateDiffInfo(blockState.currentBlock)
-      val requestFocus = DiffUtil.isUserDataFlagSet(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, context)
+      val requestFocus = context.removeUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST) == true
       if (requestFocus && blockState.currentBlock == blockId) {
         requestFocusInDiffViewer(blockId)
       }

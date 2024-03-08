@@ -23,7 +23,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
-import com.pty4j.windows.WinPtyException;
+import com.pty4j.windows.winpty.WinPtyException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;

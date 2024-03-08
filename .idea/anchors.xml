@@ -3,6 +3,7 @@
   <component name="KotlinIdeAnchorService">
     <option name="moduleNameToAnchorName">
       <map>
+        <entry key="amper.frontend" value="intellij.amper.parser.classpath" />
         <entry key="kotlin-script-runtime" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.allopen-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api-providers" value="kotlin.util.compiler-classpath" />

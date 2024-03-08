@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
+import com.intellij.openapi.editor.impl.inspections.actions.TrafficLightGroup;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -190,7 +191,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     TrafficLightAction trafficLightAction = new TrafficLightAction();
     populateInspectionWidgetActionsFromExtensions();
-    DefaultActionGroup actions = new DefaultActionGroup(inspectionWidgetActions, trafficLightAction, navigateGroup);
+    DefaultActionGroup actions = new DefaultActionGroup(inspectionWidgetActions, new TrafficLightGroup(() -> analyzerStatus, editor), trafficLightAction, navigateGroup);
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
@@ -215,6 +216,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                                                @NotNull String place,
                                                                @NotNull Presentation presentation,
                                                                Supplier<? extends @NotNull Dimension> minimumSize) {
+        if (Registry.is("ide.redesigned.inspector", false)) return super.createTextButton(action, place, presentation, minimumSize);
+
         ActionButtonWithText button = super.createTextButton(action, place, presentation, minimumSize);
         JBColor color = JBColor.lazy(() -> {
           return ObjectUtils.notNull(editor.getColorsScheme().getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor());
@@ -228,6 +231,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                                        @NotNull String place,
                                                        @NotNull Presentation presentation,
                                                        Supplier<? extends @NotNull Dimension> minimumSize) {
+        if (Registry.is("ide.redesigned.inspector", false)) return super.createIconButton(action, place, presentation, minimumSize);
+
         return new ActionButton(action, presentation, place, minimumSize) {
           @Override
           public void updateIcon() {
@@ -245,6 +250,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
           @Override
           public @NotNull Dimension getPreferredSize() {
+
             Icon icon = getIcon();
             Dimension size = new Dimension(icon.getIconWidth(), icon.getIconHeight());
 
@@ -269,7 +275,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       }
 
-      @Override
+/*      @Override
       protected Dimension updatePreferredSize(Dimension preferredSize) {
         return preferredSize;
       }
@@ -277,7 +283,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       @Override
       protected Dimension updateMinimumSize(Dimension minimumSize) {
         return minimumSize;
-      }
+      }*/
     };
 
     statusToolbar.setMiniMode(true);
@@ -456,7 +462,17 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private @NotNull AnAction createAction(@NotNull String id, @NotNull Icon icon) {
     AnAction delegate = ActionManager.getInstance().getAction(id);
-    AnAction result = new MarkupModelDelegateAction(delegate);
+    AnAction result = new MarkupModelDelegateAction(delegate){
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        if(Registry.is("ide.redesigned.inspector", false)) {
+          e.getPresentation().setEnabledAndVisible(false);
+          return;
+        }
+        e.getPresentation().setEnabledAndVisible(true);
+        super.update(e);
+      }
+    };
     result.getTemplatePresentation().setIcon(icon);
     return result;
   }
@@ -1515,6 +1531,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
+
+      if(Registry.is("ide.redesigned.inspector", false)) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+
       List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
       Icon newIcon = analyzerStatus.getIcon();
 
@@ -1905,7 +1927,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private final class MarkupModelDelegateAction extends AnActionWrapper {
+  private class MarkupModelDelegateAction extends AnActionWrapper {
 
     MarkupModelDelegateAction(@NotNull AnAction delegate) {
       super(delegate);

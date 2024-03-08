@@ -5,15 +5,18 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.java.testFramework.fixtures.MultiModuleProjectDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @NeedsIndex.SmartMode(reason = "Provider method completion is not supported in the dumb mode")
 public class ProviderMethodCompletionTest extends LightFixtureCompletionTestCase {
@@ -33,60 +36,59 @@ public class ProviderMethodCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testNonModuleClass() {
-    doTest("src/org/jetbrains/providers/SimpleClass.java", "private",
-           "protected");
+    doTest("src/org/jetbrains/providers/SimpleClass.java", Set.of("private",
+                                                                  "protected"));
   }
 
   public void testSimpleProvider() {
-    doTest("src/org/jetbrains/providers/MyProviderImpl.java", "provider",
-           "private",
-           "protected");
-  }
-
-  public void testWithRecord() {
-    doTest("src/org/jetbrains/providers/MyRecord.java", "provider",
-           "private",
-           "protected");
+    doTest("src/org/jetbrains/providers/MyProviderImpl.java", Set.of("provider",
+                                                                     "private",
+                                                                     "protected"));
   }
 
   public void testWithProvider() {
-    doTest("src/org/jetbrains/providers/WithProvider.java", "private",
-           "protected");
+    doTest("src/org/jetbrains/providers/WithProvider.java", Set.of("private",
+                                                                   "protected"));
   }
 
   public void testSubClass() {
-    doTest("src/org/jetbrains/providers/MySuperClass.java", "provider",
-           "private",
-           "protected");
+    doTest("src/org/jetbrains/providers/MySuperClass.java", Set.of("provider",
+                                                                   "private",
+                                                                   "protected"));
   }
 
   public void testWrongPlace() {
-    doTest("src/org/jetbrains/providers/WrongPlace.java", "process", "program");
+    doTest("src/org/jetbrains/providers/WrongPlace.java", Set.of("process", "program"));
   }
 
   public void testWrongPlace2() {
-    doTest("src/org/jetbrains/providers/WrongPlace2.java");
+    doTest("src/org/jetbrains/providers/WrongPlace2.java", Set.of());
   }
 
-  private void doTest(String path, String... names) {
+  private void doTest(String path, Set<String> names) {
     VirtualFile file = getModule().getModuleFile().getParent().findFileByRelativePath(path);
     myFixture.configureFromExistingVirtualFile(file);
-    myFixture.completeBasic();
+    List<LookupElement> items = Arrays.asList(myFixture.completeBasic());
 
-    if (names.length != 0) {
-      assertStringItems(names);
+    if (!names.isEmpty()) {
+      // contains
+      List<String> currentNames = ContainerUtil.map(items, LookupElement::getLookupString);
+      assertTrue(currentNames + " should contains all " + names, currentNames.containsAll(names));
+      // not contains
+      if (!names.contains("provider")) {
+        assertTrue("lookup items shouldn't contain a 'provider' element",
+                   items.stream().map(LookupElement::getLookupString).noneMatch(name -> "provider".equals(name)));
+      }
 
-      Optional<LookupElement> item = getLookup().getItems().stream().filter(le -> "provider".equals(le.getLookupString())).findFirst();
+      Optional<LookupElement> item = items.stream().filter(le -> "provider".equals(le.getLookupString())).findFirst();
       if (item.isPresent()) {
         myFixture.getLookup().setCurrentItem(item.get());
         myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR);
       }
     }
     else {
-      LookupImpl lookup = getLookup();
-      if (lookup != null) {
-        assertStringItems(names);
-      }
+      assertTrue("lookup items shouldn't contain a 'provider' element",
+                 items.stream().map(LookupElement::getLookupString).noneMatch(name -> "provider".equals(name)));
     }
     checkResultByFile("after/" + path);
   }

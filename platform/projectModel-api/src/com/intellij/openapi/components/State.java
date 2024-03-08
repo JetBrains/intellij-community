@@ -11,7 +11,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.function.Supplier;
 
 /**
- * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">Persisting States</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html">Persisting State of Components (IntelliJ Platform Docs)</a>
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface State {

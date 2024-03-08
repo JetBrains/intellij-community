@@ -380,7 +380,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     val parentFolder = file.parent.toNioPath()
     mavenModel.mavenId = id
     mavenModel.name = file.parent.name
-    mavenModel.build.finalName = file.parent.name
+    mavenModel.build.finalName = "${id.artifactId}-${id.version}"
     mavenModel.modules = rootModel.getChildrenText("modules", "module")
     mavenModel.packaging = rootModel.getChildTextTrim("packaging") ?: "jar"
 

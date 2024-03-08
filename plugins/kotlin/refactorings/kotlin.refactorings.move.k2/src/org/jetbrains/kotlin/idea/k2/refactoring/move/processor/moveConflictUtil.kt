@@ -34,8 +34,8 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
  */
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal fun findAllMoveConflicts(
-    descriptor: K2MoveDescriptor.Members,
-    usages: List<MoveRenameUsageInfo>
+  descriptor: K2MoveDescriptor.Declarations,
+  usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> = allowAnalysisOnEdt {
     val (fakeTarget, oldToNewMap) = descriptor.createCopyTarget()
     MultiMap<PsiElement, String>().apply {
@@ -48,12 +48,12 @@ internal fun findAllMoveConflicts(
  * Creates a non-physical file that contains the moved elements with all references retargeted.
  * This non-physical file can be used to analyze for conflicts without modifying the file on the disk.
  */
-private fun K2MoveDescriptor.Members.createCopyTarget(): Pair<KtFile, Map<PsiElement, PsiElement>> {
+private fun K2MoveDescriptor.Declarations.createCopyTarget(): Pair<KtFile, Map<PsiElement, PsiElement>> {
     /** Collects physical to non-physical usage-infos. */
     fun KtFile.collectOldToNewUsageInfos(oldToNewMap: Map<PsiElement, PsiElement>): List<Pair<K2MoveRenameUsageInfo, K2MoveRenameUsageInfo>> {
         return collectDescendantsOfType<KtSimpleNameExpression>().mapNotNull { refExpr ->
             val usageInfo = refExpr.internalUsageInfo
-            val referencedElement = (usageInfo as? MoveRenameUsageInfo)?.referencedElement ?: return@mapNotNull null
+            val referencedElement = (usageInfo as? K2MoveRenameUsageInfo.Source)?.referencedElement ?: return@mapNotNull null
             val newReferencedElement = oldToNewMap[referencedElement] ?: referencedElement
             if (!newReferencedElement.isValid || newReferencedElement !is PsiNamedElement) return@mapNotNull null
             usageInfo to usageInfo.refresh(refExpr, newReferencedElement)

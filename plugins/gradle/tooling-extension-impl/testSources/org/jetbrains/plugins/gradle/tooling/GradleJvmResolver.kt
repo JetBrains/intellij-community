@@ -15,23 +15,34 @@ import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 
-class GradleJvmResolver(private val gradleVersion: GradleVersion) {
+class GradleJvmResolver(
+  private val gradleVersion: GradleVersion,
+  private val versionRestriction: VersionRestriction
+) {
 
   private val sdkType = JavaSdk.getInstance()
 
   private fun isSdkSupported(versionString: String): Boolean {
     val javaVersion = JavaVersion.tryParse(versionString) ?: return false
+    return isSdkSupported(javaVersion)
+  }
+
+  private fun isSdkSupported(javaVersion: JavaVersion): Boolean {
     return GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)
            && GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
+           && isJavaSupportedByGradleToolingApi(gradleVersion, javaVersion)
+           && !versionRestriction.isRestricted(gradleVersion, javaVersion)
   }
 
   private fun throwSdkNotFoundException(): Nothing {
     val supportedJavaVersions = GradleJvmSupportMatrix.getSupportedJavaVersions(gradleVersion)
+    val restrictedJavaVersions = supportedJavaVersions.filter { isSdkSupported(it) }
     val suggestedJavaHomePaths = sdkType.suggestHomePaths().sortedWith(NaturalComparator.INSTANCE)
     throw AssertionError("""
       |Cannot find JDK for $gradleVersion.
       |Please, research JDK restrictions or discuss it with test author, and install JDK manually.
-      |Supported JDKs for current restrictions: $supportedJavaVersions
+      |Supported JDKs for current Gradle version: $supportedJavaVersions
+      |Supported JDKs for current restrictions: $restrictedJavaVersions
       |Checked paths: [
         ${suggestedJavaHomePaths.joinToString("\n") { "|  $it" }}
       |]
@@ -69,6 +80,16 @@ class GradleJvmResolver(private val gradleVersion: GradleVersion) {
     return homePath
   }
 
+  private fun isJavaSupportedByGradleToolingApi(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
+    // https://github.com/gradle/gradle/issues/9339
+    if (gradleVersion >= GRADLE_5_6 && gradleVersion < GRADLE_7_2) {
+      if (javaVersion.feature < 11) {
+        return false
+      }
+    }
+    return true
+  }
+
   private fun findSdkInTable(): Sdk? {
     val table = ProjectJdkTable.getInstance()
     return ReadAction.compute(ThrowableComputable { table.allJdks })
@@ -103,16 +124,31 @@ class GradleJvmResolver(private val gradleVersion: GradleVersion) {
     return sdk
   }
 
+  fun interface VersionRestriction {
+
+    fun isRestricted(gradleVersion: GradleVersion, source: JavaVersion): Boolean
+
+    companion object {
+      @JvmField
+      val NO = VersionRestriction { _, _ -> false }
+    }
+  }
+
   companion object {
+    private val GRADLE_5_6 = GradleVersion.version("5.6")
+    private val GRADLE_7_2 = GradleVersion.version("7.2")
 
     @JvmStatic
     fun resolveGradleJvm(gradleVersion: GradleVersion, parentDisposable: Disposable): Sdk {
-      return GradleJvmResolver(gradleVersion).resolveGradleJvmImpl(parentDisposable)
+      return GradleJvmResolver(gradleVersion, VersionRestriction.NO)
+        .resolveGradleJvmImpl(parentDisposable)
     }
 
     @JvmStatic
-    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion): String {
-      return GradleJvmResolver(gradleVersion).resolveGradleJvmHomePathImpl()
+    @JvmOverloads
+    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion, versionRestriction: VersionRestriction = VersionRestriction.NO): String {
+      return GradleJvmResolver(gradleVersion, versionRestriction)
+        .resolveGradleJvmHomePathImpl()
     }
   }
 }

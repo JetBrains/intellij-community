@@ -26,9 +26,29 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Provides styles and scripts required to style JCEF browser's scrollbars.
- *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/jcef.html">Embedded Browser (JCEF) (IntelliJ Platform Docs)</a>
+ * Provides tools for JCEF browser scrollbars styling.
+ * <p>
+ * By default, CEF browser gets scrollbars that look like native for the OS.
+ * To bring into a CEF-based application scrollbars with Look and Feel like IntelliJ UI an action is required.
+ * <p>
+ * This utility class offers two ways to style the browser scrollbars accordingly.
+ *   <ol>
+ *     <li>
+ *       (Prefered)Use WebKit scrollbar facilities. JBCefScrollbarsHelper class has {@link JBCefScrollbarsHelper#buildScrollbarsStyle()}
+ *       method. This method returns CSS code to be integrated into the web page in order to style all scrollbars on the page according to
+ *       the current colour scheme. Impossible to have overlay (semi-transparent) scrollbars.
+ *     </li>
+ *     <li>
+ *       Employ a third-party library - <a href="https://kingsora.github.io/OverlayScrollbars/">OverlayScrollbars</a>.
+ *       It makes possible to have overlay scrollbars. It requires to integrate into the page:
+ *     <ul>
+ *       <li>The library JS source code(see {@link JBCefScrollbarsHelper#getOverlayScrollbarsSourceJS()})</li>
+ *       <li>The library CSS code(see {@link JBCefScrollbarsHelper#getOverlayScrollbarsSourceCSS()})</li>
+ *       <li>CSS code for styling scrollbars according current IntelliJ color scheme
+ *       (see {@link JBCefScrollbarsHelper#getOverlayScrollbarStyle()})</li>
+ *     </ul>
+ *     </li>
+ *   <ol/>
  */
 public final class JBCefScrollbarsHelper {
   private static final LazyInitializer.LazyValue<@NotNull String> OVERLAY_SCROLLBARS_CSS = LazyInitializer.create(() -> {
@@ -42,41 +62,11 @@ public final class JBCefScrollbarsHelper {
   private static final String TRANSPARENT_CSS_COLOR = "rgba(0, 0, 0, 0.0)";
 
   /**
-   * Returns the content of the OverlayScrollbars library's CSS.
+   * Returns <a href="https://developer.chrome.com/docs/css-ui/scrollbar-styling">scrollbars CSS code</a>
+   * adapting the browser scrollbars look and feel to the IDE.
    * <p>
-   * It must be included on the page to use <a href="https://kingsora.github.io/OverlayScrollbars/">OverlayScrollbars</a>.
-   *
-   * @see JBCefScrollbarsHelper#getOverlayScrollbarsSourceJS()
-   * @see JBCefScrollbarsHelper#buildScrollbarsStyle()
-   */
-  public static @NotNull String getOverlayScrollbarsSourceCSS() {
-    return OVERLAY_SCROLLBARS_CSS.get();
-  }
-
-  /**
-   * Returns the content of the OverlayScrollbars library's JavaScript.
-   * <p>
-   * It must be included on the page to use <a href="https://kingsora.github.io/OverlayScrollbars/">OverlayScrollbars</a>.
-   * After loading the script, it must be installed on the page:
-   * <pre><code>
-   * const overlayScrollbars = OverlayScrollbars(document.getElementById('view_port'), {});
-   * </code></pre>
-   * The example above installs the scrollbar on the {@code view_port} element.
-   * To install it for other elements or use more advanced options, see the OverlayScrollbars documentation.
-   *
-   * @see JBCefScrollbarsHelper#getOverlayScrollbarsSourceCSS()
-   * @see JBCefScrollbarsHelper#buildScrollbarsStyle()
-   */
-  public static @NotNull String getOverlayScrollbarsSourceJS() {
-    return OVERLAY_SCROLLBARS_JS.get();
-  }
-
-  /**
-   * Returns the styles adapting <a href="https://kingsora.github.io/OverlayScrollbars/">OverlayScrollbars</a> look and feel to the IDE.
-   * It must be included in the page styles.
-   *
-   * @see JBCefScrollbarsHelper#getOverlayScrollbarsSourceCSS()
-   * @see JBCefScrollbarsHelper#getOverlayScrollbarsSourceJS()
+   * This styling is based on <a href="https://developer.chrome.com/docs/css-ui/scrollbar-styling">WebKit scrollbar styling</a> facilities
+   * and doesn't require using third party libraries.
    */
   public static @NotNull String buildScrollbarsStyle() {
     final String transparent = "rgba(0, 0, 0, 0)";
@@ -167,9 +157,50 @@ public final class JBCefScrollbarsHelper {
   }
 
   /**
-   * Returns the styles adapting scrollbars look and feel to the IDE.
-   * It doesn't use any external library.
-   * It must be included in the page styles.
+   * Returns the content of the OverlayScrollbars library CSS code.
+   * <p>
+   * This code is to be integrated into the page to use <a href="https://kingsora.github.io/OverlayScrollbars/">OverlayScrollbars</a>.
+   * <p>
+   * To be used along with {@link JBCefScrollbarsHelper#getOverlayScrollbarsSourceJS()}.
+   *
+   * @see JBCefScrollbarsHelper#getOverlayScrollbarsSourceJS()
+   * @see JBCefScrollbarsHelper#buildScrollbarsStyle()
+   */
+  public static @NotNull String getOverlayScrollbarsSourceCSS() {
+    return OVERLAY_SCROLLBARS_CSS.get();
+  }
+
+  /**
+   * Returns OverlayScrollbars library JavaScript code.
+   * <p>
+   * This code is to be integrated into the page to use <a href="https://kingsora.github.io/OverlayScrollbars/">OverlayScrollbars</a>.
+   * <p>
+   * To apply the scrollbars styles to an HTML element, some initialization is needed.
+   * It could look like:
+   * <pre><code>
+   * const overlayScrollbars = OverlayScrollbars(document.getElementById('view_port'), {});
+   * </code></pre>
+   * The example applies the scrollbar style to {@code view_port} element.
+   * Check OverlayScrollbars documentation for more examples.
+   * <p>
+   * To be used along with {@link JBCefScrollbarsHelper#getOverlayScrollbarsSourceCSS()}.
+   *
+   * @see JBCefScrollbarsHelper#getOverlayScrollbarsSourceCSS()
+   * @see JBCefScrollbarsHelper#buildScrollbarsStyle()
+   */
+  public static @NotNull String getOverlayScrollbarsSourceJS() {
+    return OVERLAY_SCROLLBARS_JS.get();
+  }
+
+  /**
+   * Returns the styles adapting <a href="https://kingsora.github.io/OverlayScrollbars/">OverlayScrollbars</a> look and feel to the IDE.
+   * It must be included in the page along with {@link JBCefScrollbarsHelper#getOverlayScrollbarsSourceJS()} and
+   * {@link JBCefScrollbarsHelper#getOverlayScrollbarsSourceCSS()}.
+   * <p>
+   * Check  <a href="https://kingsora.github.io/OverlayScrollbars/">OverlayScrollbars page</a> for manuals and instructions.
+   *
+   * @see JBCefScrollbarsHelper#getOverlayScrollbarsSourceCSS()
+   * @see JBCefScrollbarsHelper#getOverlayScrollbarsSourceJS()
    */
   public static @NotNull String getOverlayScrollbarStyle() {
     var trackColor = getCssColor(ScrollBarPainter.TRACK_OPAQUE_BACKGROUND);

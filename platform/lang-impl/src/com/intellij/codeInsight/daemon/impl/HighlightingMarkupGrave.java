@@ -456,7 +456,7 @@ public class HighlightingMarkupGrave {
     }
   }
 
-  static boolean isZombieMarkup(@NotNull RangeMarker highlighter) {
+  public static boolean isZombieMarkup(@NotNull RangeMarker highlighter) {
     return highlighter.getUserData(IS_ZOMBIE) != null;
   }
 

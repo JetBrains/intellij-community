@@ -259,7 +259,7 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
       detailsSplitter.setSecondComponent(state ? detailsContentPanel : null);
     });
     myShowDetailsAction.setEnabled(false);
-    myChangesBrowser.addToolbarSeparator();
+    myChangesBrowser.addToolbarAction(Separator.getInstance());
     myChangesBrowser.addToolbarAction(myShowDetailsAction);
 
     JBSplitter splitter = new OnePixelSplitter(TREE_SPLITTER_PROPORTION, 0.5f);

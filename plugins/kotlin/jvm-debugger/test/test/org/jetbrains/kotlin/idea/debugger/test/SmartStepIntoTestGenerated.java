@@ -178,6 +178,11 @@ public class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
         runTest("testData/smartStepInto/libraryFun.kt");
     }
 
+    @TestMetadata("libraryFunReference.kt")
+    public void testLibraryFunReference() throws Exception {
+        runTest("testData/smartStepInto/libraryFunReference.kt");
+    }
+
     @TestMetadata("methodReference.kt")
     public void testMethodReference() throws Exception {
         runTest("testData/smartStepInto/methodReference.kt");

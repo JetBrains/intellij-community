@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.project.impl.P3SupportInstaller
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.bootstrap.initMarketplace
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
@@ -60,6 +61,7 @@ internal fun mainImpl(rawArgs: Array<String>,
     addBootstrapTiming("properties loading", startupTimings)
     PathManager.customizePaths()
     addBootstrapTiming("customizePaths", startupTimings)
+    P3SupportInstaller.seal()
 
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {

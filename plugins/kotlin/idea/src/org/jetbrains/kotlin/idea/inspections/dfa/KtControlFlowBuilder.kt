@@ -256,7 +256,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun processCallableReference(expr: KtCallableReferenceExpression) {
         processExpression(expr.receiverExpression)
-        addInstruction(KotlinCallableReferenceInstruction(expr))
+        addInstruction(KotlinCallableReferenceInstruction(expr, expr.getKotlinType().toDfType()))
     }
 
     private fun processThisExpression(expr: KtThisExpression) {

@@ -46,6 +46,14 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * Use {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking} or
+ * {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}.
+ * </p>
+ */
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, TitledIndicator, ProgressIndicatorWithDelayedPresentation, Disposable,
                                                                      ModalContextProjectLocator {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);

@@ -1,3 +1,5 @@
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.tools.ide.metrics.collector.telemetry
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,26 +10,28 @@ import java.nio.file.Path
 const val TOTAL_TEST_TIMER_NAME: String = "test"
 const val DEFAULT_SPAN_NAME: String = "performance_test"
 
-data class MetricWithAttributes(val metric: Metric,
-                                val attributes: MutableList<Metric> = mutableListOf())
+data class MetricWithAttributes(
+  @JvmField val metric: Metric,
+  @JvmField val attributes: MutableList<Metric> = mutableListOf(),
+)
 
 private val logger = logger<OpentelemetryJsonParser>()
 
 /**
  * Reports duration of `nameSpan` and all its children spans.
- * Replaces the names with an alias, if one was passed.
+ * Replaces the names with an alias if one was passed.
  * Besides, all attributes are reported as counters.
  * If there are multiple values with the same name:
  * 1. They will be re-numbered `<value>_1`, `<value>_2`, etc. and the sum will be recorded as `<value>`.
  * 2. In the sum value, mean value and standard deviation of attribute value will be recorded
- * 2a. If attribute ends with `#max`, in sum the max of max will be recorded
+ * 2a. If attribute ends with `#max`, in a sum the max of max will be recorded
  * 3a. If attribute ends with `#mean_value`, the mean value of mean values will be recorded
  */
 fun getMetricsFromSpanAndChildren(file: Path,
                                   filter: SpanFilter,
                                   metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor(),
                                   aliases: Map<String, String> = mapOf()): List<Metric> {
-  val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file).toList().map {
+  val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file).map {
     val name = aliases.getOrDefault(it.name, it.name)
     if (name != it.name) {
       return@map it.copy(name = name)
@@ -55,11 +59,10 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: St
   val betweenSpanProcessor = SpanInfoProcessor()
   val spanElements = OpentelemetryJsonParser(SpanFilter.containsNameIn(listOf(fromSpanName, toSpanName))).getSpanElements(file)
   val spanToMetricMap = spanElements
-    .map { betweenSpanProcessor.process(it) }
-    .filterNotNull()
+    .mapNotNull { betweenSpanProcessor.process(it) }
     .groupBy { it.name }
-  val fromSpanMetrics = spanToMetricMap[fromSpanName] ?: throw IllegalStateException("Spans $fromSpanName is null")
-  val toSpanMetrics = spanToMetricMap[toSpanName] ?: throw IllegalStateException("Spans $toSpanName is null")
+  val fromSpanMetrics = spanToMetricMap.get(fromSpanName) ?: throw IllegalStateException("Spans $fromSpanName is null")
+  val toSpanMetrics = spanToMetricMap.get(toSpanName) ?: throw IllegalStateException("Spans $toSpanName is null")
   assert(toSpanMetrics.size >= fromSpanMetrics.size) {
     "Size of toSpans (${toSpanMetrics.size}) must be >= size of fromSpans(${fromSpanMetrics.size})"
   }
@@ -81,11 +84,11 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: St
   return combineMetrics(mapOf(name to metrics))
 }
 
-fun getSpansMetricsMap(file: Path, spanFilter: SpanFilter = SpanFilter { true }): Map<String, List<MetricWithAttributes>> {
+fun getSpansMetricsMap(file: Path, spanFilter: SpanFilter = SpanFilter.any()): Map<String, List<MetricWithAttributes>> {
   val spanElements = OpentelemetryJsonParser(spanFilter).getSpanElements(file)
   val metricSpanProcessor = MetricSpanProcessor()
-  val spanToMetricMap = spanElements.map { metricSpanProcessor.process(it) }
-    .filterNotNull()
+  val spanToMetricMap = spanElements
+    .mapNotNull { metricSpanProcessor.process(it) }
     .groupBy { it.metric.id.name }
   return spanToMetricMap
 }
@@ -94,7 +97,7 @@ fun getSpansMetricsMap(file: Path, spanFilter: SpanFilter = SpanFilter { true })
  * Returns timestamp of event defined as com.intellij.diagnostic.StartUpMeasurer.getCurrentTime
  */
 fun getStartupTimestampMs(file: Path): Long {
-  val spanElements = OpentelemetryJsonParserWithChildrenFiltering(SpanFilter.nameEquals("bootstrap"), SpanFilter { _ -> false })
+  val spanElements = OpentelemetryJsonParserWithChildrenFiltering(SpanFilter.nameEquals("bootstrap"), SpanFilter.none())
     .getSpanElements(file).filter { it.name == "bootstrap" }.toList()
   if (spanElements.size != 1) throw IllegalStateException("Unexpected number of \"bootstrap\" spans: ${spanElements.size}")
   return spanElements[0].startTimestamp
@@ -104,7 +107,10 @@ fun getMetricsForStartup(file: Path): List<Metric> {
   val spansToPublish = listOf("bootstrap", "startApplication", "ProjectImpl container")
   val spansSuffixesToIgnore = listOf(": scheduled", ": completing")
   val filter = SpanFilter.containsNameIn(spansToPublish)
-  val childFilter = SpanFilter { span -> spansSuffixesToIgnore.none { span.name.endsWith(it) } }
+  val childFilter = SpanFilter(
+    filter = { span -> spansSuffixesToIgnore.none { span.name.endsWith(it) } },
+    rawFilter = { span -> spansSuffixesToIgnore.none { span.operationName.endsWith(it) } },
+  )
 
   val spanElements = OpentelemetryJsonParserWithChildrenFiltering(filter, childFilter).getSpanElements(file)
   val startTime = spanElements.first { it.name == "bootstrap" }.startTimestamp
@@ -123,7 +129,7 @@ fun getMetricsForStartup(file: Path): List<Metric> {
 
 private fun combineMetrics(metrics: Map<String, List<MetricWithAttributes>>): List<Metric> {
   val result = mutableListOf<Metric>()
-  metrics.forEach { entry ->
+  for (entry in metrics) {
     if (entry.value.size == 1) {
       val metric = entry.value.first()
       result.addAll(getAttributes(entry.key, metric))
@@ -133,8 +139,8 @@ private fun combineMetrics(metrics: Map<String, List<MetricWithAttributes>>): Li
     }
     else {
       var counter = 1
-      val mediumAttributes: MutableMap<String, MutableList<Long>> = mutableMapOf()
-      entry.value.forEach { metric ->
+      val mediumAttributes = mutableMapOf<String, MutableList<Long>>()
+      for (metric in entry.value) {
         val value = metric.metric.value
         val spanUpdatedName = entry.key + "_$counter"
         result.add(Metric.newDuration(spanUpdatedName, value))
@@ -143,7 +149,7 @@ private fun combineMetrics(metrics: Map<String, List<MetricWithAttributes>>): Li
           val key = it.id.name
           val collection = mediumAttributes.getOrDefault(key, mutableListOf())
           collection.add(it.value)
-          mediumAttributes[key] = collection
+          mediumAttributes.put(key, collection)
         }
         counter++
       }

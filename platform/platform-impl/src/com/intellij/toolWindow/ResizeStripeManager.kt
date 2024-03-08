@@ -7,9 +7,13 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splittable
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButton
@@ -42,13 +46,14 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   init {
     myComponent.addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
-        val action = ToolWindowShowNamesAction()
-        val group = object : ActionGroup() {
-          override fun getChildren(e: AnActionEvent?) = arrayOf(action)
+        if (enabled()) {
+          val action = ToolWindowShowNamesAction()
+          val group = object : ActionGroup() {
+            override fun getChildren(e: AnActionEvent?) = arrayOf(action)
+          }
+          val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group)
+          popupMenu.component.show(component, x, y)
         }
-        //group = DefaultActionGroup(action) // XXX
-        val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group)
-        popupMenu.component.show(component, x, y)
       }
     })
   }
@@ -170,7 +175,23 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   }
 
   companion object {
-    fun isShowNames(): Boolean = UISettings.getInstance().showToolWindowsNames
+    private var myKeyListener: RegistryValueListener? = null
+
+    fun enabled(): Boolean {
+      if (myKeyListener == null) {
+        myKeyListener = object : RegistryValueListener {
+          override fun afterValueChanged(value: RegistryValue) {
+            if (!value.asBoolean()) {
+              setShowNames(false)
+            }
+          }
+        }
+        Registry.get("toolwindow.enable.show.names").addListener(myKeyListener!!, ApplicationManager.getApplication())
+      }
+      return Registry.`is`("toolwindow.enable.show.names", false)
+    }
+
+    fun isShowNames(): Boolean = enabled() && UISettings.getInstance().showToolWindowsNames
 
     fun setShowNames(value: Boolean) {
       UISettings.getInstance().showToolWindowsNames = value

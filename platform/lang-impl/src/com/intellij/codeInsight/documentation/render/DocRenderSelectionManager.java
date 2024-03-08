@@ -16,7 +16,7 @@ final class DocRenderSelectionManager implements CaretListener, SelectionListene
 
   private final Editor myEditor;
 
-  private DocRenderer.EditorPane myPaneWithSelection;
+  private DocRenderer.EditorInlineHtmlPane myPaneWithSelection;
   private boolean mySkipSelectionEvents;
 
   DocRenderSelectionManager(Editor editor) {
@@ -31,7 +31,7 @@ final class DocRenderSelectionManager implements CaretListener, SelectionListene
     myEditor.putUserData(OUR_KEY, null);
   }
 
-  void setPaneWithSelection(DocRenderer.EditorPane pane) {
+  void setPaneWithSelection(DocRenderer.EditorInlineHtmlPane pane) {
     if (pane != myPaneWithSelection) {
       if (myPaneWithSelection != null) {
         myPaneWithSelection.removeSelection();
@@ -69,7 +69,7 @@ final class DocRenderSelectionManager implements CaretListener, SelectionListene
     if (!mySkipSelectionEvents) setPaneWithSelection(null);
   }
 
-  public static @Nullable DocRenderer.EditorPane getPaneWithSelection(@NotNull Editor editor) {
+  public static @Nullable DocRenderer.EditorInlineHtmlPane getPaneWithSelection(@NotNull Editor editor) {
     DocRenderSelectionManager selectionManager = editor.getUserData(OUR_KEY);
     return selectionManager == null ? null : selectionManager.myPaneWithSelection;
   }

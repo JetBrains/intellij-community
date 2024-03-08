@@ -3,14 +3,15 @@ package com.intellij.platform.ml.embeddings.search.services
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 
-@Service(Service.Level.PROJECT)
-class EmbeddingIndexSettingsImpl(project: Project) : EmbeddingIndexSettings {
+@Service(Service.Level.APP)
+class EmbeddingIndexSettingsImpl : EmbeddingIndexSettings {
+  override val shouldIndexActions: Boolean
+    get() = mutex.read { clientSettings.any { it.shouldIndexActions } }
   override val shouldIndexFiles: Boolean
     get() = mutex.read { clientSettings.any { it.shouldIndexFiles } }
   override val shouldIndexClasses: Boolean
@@ -18,7 +19,7 @@ class EmbeddingIndexSettingsImpl(project: Project) : EmbeddingIndexSettings {
   override val shouldIndexSymbols: Boolean
     get() = mutex.read { clientSettings.any { it.shouldIndexSymbols } }
 
-  val shouldIndexAnything: Boolean
+  val shouldIndexAnythingFileBased: Boolean
     get() = mutex.read { shouldIndexFiles || shouldIndexClasses || shouldIndexSymbols }
 
   private val mutex = ReentrantReadWriteLock()
@@ -29,11 +30,12 @@ class EmbeddingIndexSettingsImpl(project: Project) : EmbeddingIndexSettings {
     clientSettings.add(settings)
   }
 
+  @Suppress("unused")
   fun unregisterClientSettings(settings: EmbeddingIndexSettings) = mutex.write {
     clientSettings.remove(settings)
   }
 
   companion object {
-    fun getInstance(project: Project): EmbeddingIndexSettingsImpl = project.service()
+    fun getInstance(): EmbeddingIndexSettingsImpl = service()
   }
 }

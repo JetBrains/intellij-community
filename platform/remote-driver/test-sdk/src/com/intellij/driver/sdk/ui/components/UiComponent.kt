@@ -16,23 +16,19 @@ import kotlin.time.Duration.Companion.seconds
 
 
 data class ComponentData(val xpath: String,
-                         val cached: Boolean,
                          val driver: Driver,
                          val robotService: RobotService,
                          val parentSearchContext: SearchContext,
                          val foundComponent: Component?)
 
 open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
-  private val cachedComponent: Component by lazy {
-    data.foundComponent ?: findThisComponent()
-  }
-
+  private var cachedComponent: Component? = null
   val component: Component
-    get() = if (data.cached) {
-      cachedComponent
-    } else {
-      findThisComponent()
-    }
+    get() = data.foundComponent ?: cachedComponent?.takeIf { it.isShowing() } ?: findThisComponent().apply { cachedComponent = this }
+
+  fun setFocus() {
+    robotService.robot.focus(this.component)
+  }
 
   private fun findThisComponent(): Component {
     waitFor(DEFAULT_FIND_TIMEOUT_SECONDS.seconds,
@@ -144,5 +140,9 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   fun moveMouse(point: Point) {
     robotService.robot.moveMouse(component, point)
+  }
+
+  fun hasFocus(): Boolean {
+    return component.isFocusOwner()
   }
 }

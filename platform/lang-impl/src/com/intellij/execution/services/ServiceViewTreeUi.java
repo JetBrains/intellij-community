@@ -196,6 +196,11 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     });
   }
 
+  @Override
+  public void setDetailsComponentVisible(boolean visible) {
+    myDetailsPanel.setVisible(visible);
+  }
+
   @Nullable
   @Override
   public JComponent getDetailsComponent() {
@@ -204,6 +209,11 @@ final class ServiceViewTreeUi implements ServiceViewUi {
 
     Component component = myContentComponentPanel.getComponent(0);
     return component == myMessagePanel ? null : (JComponent)component;
+  }
+
+  @Override
+  public void setSplitOrientation(boolean verticalSplit) {
+    mySplitter.setOrientation(verticalSplit);
   }
 
   private static class NavBarWrapper extends JPanel {

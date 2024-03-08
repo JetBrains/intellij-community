@@ -51,7 +51,7 @@ internal class TargetModelBuilder<T>(connection: TargetProjectConnection, privat
               handler.onComplete(result as T?)
             }
 
-            override fun onFailure(e: GradleConnectionException?) {
+            override fun onFailure(e: GradleConnectionException) {
               connection.putUserData(BUILD_ENVIRONMENT_REQUEST_FAILURE_KEY, e)
               handler.onFailure(e)
             }

@@ -3935,6 +3935,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/commentAhead.kt");
             }
 
+            @TestMetadata("noTypeMatch.kt")
+            public void testNoTypeMatch() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/noTypeMatch.kt");
+            }
+
+            @TestMetadata("nullabilityDiff.kt")
+            public void testNullabilityDiff() throws Exception {
+                runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/nullabilityDiff.kt");
+            }
+
             @TestMetadata("protectedOpenVar.kt")
             public void testProtectedOpenVar() throws Exception {
                 runTest("testData/inspectionsLocal/canBePrimaryConstructorProperty/protectedOpenVar.kt");

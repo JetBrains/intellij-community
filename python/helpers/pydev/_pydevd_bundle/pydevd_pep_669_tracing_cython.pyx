@@ -283,7 +283,6 @@ def py_start_callback(code, instruction_offset):
             if result:
                 flag, breakpoint, new_frame, bp_type = result
                 if flag:
-                    print(result)
                     result = py_db.plugin.suspend(py_db, thread, frame, bp_type)
                     if result:
                         frame = result
@@ -408,6 +407,7 @@ def py_line_callback(code, line_number):
                             and not py_db.in_project_scope(filename)):
                         # ignore library files while stepping
                         return monitoring.DISABLE
+                    stop = step_cmd != CMD_STEP_OVER
 
             if stop:
                 py_db.set_suspend(

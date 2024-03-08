@@ -41,8 +41,8 @@ abstract class GradleDependencySourcesImportingTestCase : GradleImportingTestCas
 
   override fun tearDown() {
     runAll(
-      { super.tearDown() },
       { GradleSystemSettings.getInstance().apply { isDownloadSources = false; gradleVmOptions = null } },
+      { super.tearDown() }
     )
   }
 

@@ -1,24 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.*;
 
 import java.io.File;
@@ -28,14 +26,10 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class PsiUtil {
-  private static final Key<Boolean> IDEA_PROJECT = Key.create("idea.internal.inspections.enabled");
   private static final @NonNls String IDE_PROJECT_MARKER_CLASS = JBList.class.getName();
   private static final @NonNls String[] IDEA_PROJECT_MARKER_FILES = {
     "idea.iml", "community-main.iml", "intellij.idea.community.main.iml", "intellij.idea.ultimate.main.iml"
   };
-  private static final List<String> IDEA_PROJECT_MARKER_MODULE_NAMES = List.of("intellij.idea.community.main",
-                                                                               "intellij.platform.commercial",
-                                                                               "intellij.android.studio.integration");
 
   private PsiUtil() { }
 
@@ -102,17 +96,7 @@ public final class PsiUtil {
   }
 
   public static boolean isIdeaProject(@Nullable Project project) {
-    if (project == null) {
-      return false;
-    }
-
-    Boolean flag = project.getUserData(IDEA_PROJECT);
-    if (flag == null) {
-      flag = checkIdeaProject(project);
-      project.putUserData(IDEA_PROJECT, flag);
-    }
-
-    return flag;
+    return ProjectIconsAccessor.isIdeaProject(project);
   }
 
   @Nullable
@@ -166,20 +150,6 @@ public final class PsiUtil {
     });
   }
 
-  @TestOnly
-  public static void markAsIdeaProject(@NotNull Project project, boolean value) {
-    project.putUserData(IDEA_PROJECT, value);
-  }
-
-  private static boolean checkIdeaProject(@NotNull Project project) {
-    for (String moduleName : IDEA_PROJECT_MARKER_MODULE_NAMES) {
-      if (ModuleManager.getInstance(project).findModuleByName(moduleName) != null) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public static boolean isPluginXmlPsiElement(@NotNull PsiElement element) {
     return isPluginProject(element.getProject()) && DescriptorUtil.isPluginXml(element.getContainingFile());
   }
@@ -190,5 +160,4 @@ public final class PsiUtil {
     }
     return false;
   }
-
 }

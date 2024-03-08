@@ -1,10 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl.session
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ml.*
+import com.intellij.platform.ml.Feature.Companion.toCompactString
 import com.intellij.platform.ml.impl.DescriptionComputer
 import com.intellij.platform.ml.impl.FeatureSelector
 import com.intellij.platform.ml.impl.LevelTiers
+import com.intellij.platform.ml.impl.MLTask
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.model.MLModel
 import org.jetbrains.annotations.ApiStatus
@@ -21,8 +25,9 @@ class RootCollector<M : MLModel<P>, P : Any> private constructor(
   levelsTiers: List<LevelTiers>,
   usedFeaturesSelectors: PerTier<FeatureSelector>,
   override val levelDescriptor: LevelDescriptor,
-  override val levelPositioning: LevelPositioning
-) : NestableStructureCollector<SessionTree.ComplexRoot<M, DescribedTierData, P>, M, P>(usedFeaturesSelectors) {
+  override val levelPositioning: LevelPositioning,
+  mlTask: MLTask<P>
+) : NestableStructureCollector<SessionTree.ComplexRoot<M, DescribedTierData, P>, M, P>(usedFeaturesSelectors, mlTask) {
 
   init {
     validateSuperiorCollector(initializationCallParameters, callParameters.first(), levelsTiers, levelMainEnvironment, levelAdditionalTiers, mlModel, notUsedFeaturesSelectors)
@@ -36,7 +41,7 @@ class RootCollector<M : MLModel<P>, P : Any> private constructor(
   companion object {
     suspend fun <M : MLModel<P>, P : Any> build(
       initializationCallParameters: Environment,
-      callParameters: List<Set<Tier<*>>>,
+      mlTask: MLTask<P>,
       descriptionComputer: DescriptionComputer,
       notUsedFeaturesSelectors: PerTier<FeatureFilter>,
       levelMainEnvironment: Environment,
@@ -44,11 +49,11 @@ class RootCollector<M : MLModel<P>, P : Any> private constructor(
       mlModel: M,
       apiPlatform: MLApiPlatform,
       levelsTiers: List<LevelTiers>,
-      usedFeaturesSelectors: PerTier<FeatureSelector>
+      usedFeaturesSelectors: PerTier<FeatureSelector>,
     ): RootCollector<M, P> {
-      val levelDescriptor = LevelDescriptor(apiPlatform, descriptionComputer, mlModel.knownFeatures, notUsedFeaturesSelectors)
-      val levelPositioning = LevelPositioning.superior(initializationCallParameters, callParameters, levelsTiers, levelMainEnvironment, levelDescriptor, levelAdditionalTiers)
-      return RootCollector(initializationCallParameters, callParameters, notUsedFeaturesSelectors, levelMainEnvironment, levelAdditionalTiers, mlModel, levelsTiers, usedFeaturesSelectors, levelDescriptor, levelPositioning)
+      val levelDescriptor = LevelDescriptor(apiPlatform, descriptionComputer, mlModel.knownFeatures, notUsedFeaturesSelectors, mlTask)
+      val levelPositioning = LevelPositioning.superior(initializationCallParameters, mlTask.callParameters, levelsTiers, levelMainEnvironment, levelDescriptor, levelAdditionalTiers)
+      return RootCollector(initializationCallParameters, mlTask.callParameters, notUsedFeaturesSelectors, levelMainEnvironment, levelAdditionalTiers, mlModel, levelsTiers, usedFeaturesSelectors, levelDescriptor, levelPositioning, mlTask)
     }
   }
 }
@@ -64,8 +69,9 @@ class SolitaryLeafCollector<M : MLModel<P>, P : Any> private constructor(
   levelScheme: LevelTiers,
   usedFeaturesSelectors: PerTier<FeatureSelector>,
   override val levelDescriptor: LevelDescriptor,
-  override val levelPositioning: LevelPositioning
-) : PredictionCollector<SessionTree.SolitaryLeaf<M, DescribedTierData, P>, M, P>(usedFeaturesSelectors) {
+  override val levelPositioning: LevelPositioning,
+  mlTask: MLTask<P>,
+) : PredictionCollector<SessionTree.SolitaryLeaf<M, DescribedTierData, P>, M, P>(usedFeaturesSelectors, mlTask) {
 
   init {
     validateSuperiorCollector(initializationCallParameters, callParameters.first(), listOf(levelScheme), levelMainEnvironment, levelAdditionalTiers, mlModel, notUsedFeaturesSelectors)
@@ -78,7 +84,7 @@ class SolitaryLeafCollector<M : MLModel<P>, P : Any> private constructor(
   companion object {
     suspend fun <M : MLModel<P>, P : Any> build(
       initializationCallParameters: Environment,
-      callParameters: List<Set<Tier<*>>>,
+      mlTask: MLTask<P>,
       descriptionComputer: DescriptionComputer,
       notUsedFeaturesSelectors: PerTier<FeatureFilter>,
       levelMainEnvironment: Environment,
@@ -86,12 +92,12 @@ class SolitaryLeafCollector<M : MLModel<P>, P : Any> private constructor(
       mlModel: M,
       apiPlatform: MLApiPlatform,
       levelScheme: LevelTiers,
-      usedFeaturesSelectors: PerTier<FeatureSelector>
+      usedFeaturesSelectors: PerTier<FeatureSelector>,
     ): SolitaryLeafCollector<M, P> {
-      val levelDescriptor = LevelDescriptor(apiPlatform, descriptionComputer, mlModel.knownFeatures, notUsedFeaturesSelectors)
-      val levelPositioning = LevelPositioning.superior(initializationCallParameters, callParameters, listOf(levelScheme), levelMainEnvironment,
+      val levelDescriptor = LevelDescriptor(apiPlatform, descriptionComputer, mlModel.knownFeatures, notUsedFeaturesSelectors, mlTask)
+      val levelPositioning = LevelPositioning.superior(initializationCallParameters, mlTask.callParameters, listOf(levelScheme), levelMainEnvironment,
                                                        levelDescriptor, levelAdditionalTiers)
-      return SolitaryLeafCollector(initializationCallParameters, callParameters, notUsedFeaturesSelectors, levelMainEnvironment, levelAdditionalTiers, mlModel, levelScheme, usedFeaturesSelectors, levelDescriptor, levelPositioning)
+      return SolitaryLeafCollector(initializationCallParameters, mlTask.callParameters, notUsedFeaturesSelectors, levelMainEnvironment, levelAdditionalTiers, mlModel, levelScheme, usedFeaturesSelectors, levelDescriptor, levelPositioning, mlTask)
     }
   }
 }
@@ -100,8 +106,9 @@ class SolitaryLeafCollector<M : MLModel<P>, P : Any> private constructor(
 class BranchingCollector<M : MLModel<P>, P : Any>(
   override val levelDescriptor: LevelDescriptor,
   override val levelPositioning: LevelPositioning,
-  usedFeaturesSelectors: PerTier<FeatureSelector>
-) : NestableStructureCollector<SessionTree.Branching<M, DescribedTierData, P>, M, P>(usedFeaturesSelectors) {
+  usedFeaturesSelectors: PerTier<FeatureSelector>,
+  mlTask: MLTask<P>,
+) : NestableStructureCollector<SessionTree.Branching<M, DescribedTierData, P>, M, P>(usedFeaturesSelectors, mlTask) {
   override fun createTree(thisLevel: DescribedLevel,
                           collectedNestedStructureTrees: List<DescribedSessionTree<M, P>>): SessionTree.Branching<M, DescribedTierData, P> {
     return SessionTree.Branching(thisLevel, collectedNestedStructureTrees)
@@ -110,7 +117,8 @@ class BranchingCollector<M : MLModel<P>, P : Any>(
 
 @ApiStatus.Internal
 abstract class PredictionCollector<T : SessionTree.PredictionContainer<M, DescribedTierData, P>, M : MLModel<P>, P : Any>(
-  private val usedFeaturesSelectors: PerTier<FeatureSelector>
+  private val usedFeaturesSelectors: PerTier<FeatureSelector>,
+  private val mlTask: MLTask<P>,
 ) : StructureCollector<T, M, P>() {
   private var predictionSubmitted = false
   private var submittedPrediction: P? = null
@@ -127,7 +135,35 @@ abstract class PredictionCollector<T : SessionTree.PredictionContainer<M, Descri
     require(!predictionSubmitted)
     submittedPrediction = prediction
     predictionSubmitted = true
+    thisLogger().debug {
+      "[${mlTask.name}] Prediction collected for task ${mlTask.name}\n" +
+      "\tPrediction value: $prediction\n" +
+      "\tDescription:\n" +
+      levelPositioning.levels.withIndex().flatMap { it.value.prettyPrinted(it.index) }.withIndent().joinToString("\n")
+    }
     submitTreeToHandlers(createTree(levelPositioning.thisLevel, submittedPrediction))
+  }
+
+  private fun DescribedLevel.prettyPrinted(index: Int): List<String> {
+    return listOf("================ LEVEL #$index ================") +
+           listOf("Main:") +
+           mainInstances.map { (instance, description) -> listOf("* ${instance.tier}").withIndent() + description.description.prettyPrinted().withIndent(2) }.flatten() +
+           listOf("Additional:") +
+           additionalInstances.map { (instance, description) -> listOf("* ${instance.tier}").withIndent() + description.description.prettyPrinted().withIndent(2) }.flatten() +
+           listOf("Call parameters: ${this.callParameters.tiers}")
+  }
+
+  private fun DescriptionPartition.prettyPrinted(): List<String> {
+    return listOf(
+      "declared, used: ${this.declared.used.map { it.toCompactString() }}",
+      "declared, not used: ${this.declared.notUsed.map { it.toCompactString() }}",
+      "non declared, used: ${this.nonDeclared.used.map { it.toCompactString() }}",
+      "non declared, not used: ${this.nonDeclared.notUsed.map { it.toCompactString() }}"
+    )
+  }
+
+  private fun List<String>.withIndent(n: Int = 1): List<String> {
+    return map { "\t".repeat(n) + it }
   }
 
   private fun PerTierInstance<DescribedTierData>.extractDescriptionForModel(): PerTier<Set<Feature>> {
@@ -151,8 +187,9 @@ abstract class PredictionCollector<T : SessionTree.PredictionContainer<M, Descri
 class LeafCollector<M : MLModel<P>, P : Any>(
   override val levelDescriptor: LevelDescriptor,
   override val levelPositioning: LevelPositioning,
-  usedFeaturesSelectors: PerTier<FeatureSelector>
-) : PredictionCollector<SessionTree.Leaf<M, DescribedTierData, P>, M, P>(usedFeaturesSelectors) {
+  usedFeaturesSelectors: PerTier<FeatureSelector>,
+  mlTask: MLTask<P>,
+) : PredictionCollector<SessionTree.Leaf<M, DescribedTierData, P>, M, P>(usedFeaturesSelectors, mlTask) {
 
   override fun createTree(thisLevel: DescribedLevel, prediction: P?): SessionTree.Leaf<M, DescribedTierData, P> {
     return SessionTree.Leaf(levelPositioning.thisLevel, prediction)
@@ -255,7 +292,8 @@ sealed class StructureCollector<T : DescribedSessionTree<M, P>, M : MLModel<P>, 
 
 @ApiStatus.Internal
 abstract class NestableStructureCollector<T : DescribedChildrenContainer<M, P>, M : MLModel<P>, P : Any>(
-  private val usedFeaturesSelectors: PerTier<FeatureSelector>
+  private val usedFeaturesSelectors: PerTier<FeatureSelector>,
+  private val mlTask: MLTask<P>
 ) : StructureCollector<T, M, P>() {
   private val nestedSessionsStructures: MutableList<CompletableFuture<DescribedSessionTree<M, P>>> = mutableListOf()
   private var nestingFinished = false
@@ -264,7 +302,8 @@ abstract class NestableStructureCollector<T : DescribedChildrenContainer<M, P>, 
     verifyNestedLevelEnvironment(levelMainEnvironment, levelAdditionalTiers)
     return BranchingCollector<M, P>(levelDescriptor,
                                     levelPositioning.nestNextLevel(callParameters, levelMainEnvironment, levelAdditionalTiers, levelDescriptor),
-                                    usedFeaturesSelectors)
+                                    usedFeaturesSelectors,
+                                    mlTask)
       .also { it.trackCollectedStructure() }
   }
 
@@ -273,7 +312,8 @@ abstract class NestableStructureCollector<T : DescribedChildrenContainer<M, P>, 
     return LeafCollector<M, P>(
       levelDescriptor,
       levelPositioning.nestNextLevel(callParameters, levelMainEnvironment, levelAdditionalTiers, levelDescriptor),
-      usedFeaturesSelectors
+      usedFeaturesSelectors,
+      mlTask
     ).also { it.trackCollectedStructure() }
   }
 

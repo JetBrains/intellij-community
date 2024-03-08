@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fe10.testGenerator
 
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractAddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest53
@@ -150,6 +151,7 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.JAVA
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_JAVA
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
@@ -157,7 +159,6 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.WS_KTS
-import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 import org.jetbrains.uast.test.kotlin.comparison.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
@@ -458,11 +459,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractHighlightingTest>(commonSuite = false) {
-            model("highlighter", pattern = Patterns.KT_OR_JAVA)
+            model("highlighter", pattern = KT_OR_JAVA)
         }
 
         testClass<AbstractK1HighlightingMetaInfoTest> {
-            model("highlighterMetaInfo", pattern = Patterns.KT_OR_KTS)
+            model("highlighterMetaInfo", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractDslHighlighterTest> {
@@ -996,7 +997,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("repl/completion")
         }
 
-        val inlayHintsFileRegexp = forRegex("^([^_]\\w+)\\.kt$")
+        val inlayHintsFileRegexp = Patterns.forRegex("^([^_]\\w+)\\.kt$")
 
         testClass<AbstractKotlinArgumentsHintsProviderTest> {
             model("codeInsight/hints/arguments", pattern = inlayHintsFileRegexp)
@@ -1194,6 +1195,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("smart")
         }
 
+        testClass<AbstractDumbCompletionTest> {
+            model("dumb")
+        }
+
         testClass<AbstractKeywordCompletionTest> {
             model("keywords", isRecursive = false, pattern = KT.withPrecondition(excludedFirPrecondition))
         }
@@ -1267,7 +1272,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
-        testClass<AbstractPartialConverterTest> {
+        testClass<AbstractNewJavaToKotlinConverterPartialTest> {
             model("partialConverter", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
@@ -1419,7 +1424,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     }
 
     testGroup("idea/tests",  testDataPath = "../../code-insight/postfix-templates/testData") {
-        testClass<AbstractK1PostfixTemplateTest> {
+        testClass<AbstractK1PostfixTemplateTest>(indexingMode = listOf(IndexingMode.DUMB_EMPTY_INDEX, IndexingMode.SMART)) {
             model("expansion/oldTestData", pattern = KT_WITHOUT_DOTS, passTestDataPath = false)
         }
     }

@@ -2,10 +2,10 @@
 package com.intellij.collaboration.ui.codereview.review
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.popup.awaitClose
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.actions.IncrementalFindAction
@@ -23,7 +23,6 @@ import com.intellij.vcsUtil.showAbove
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -38,7 +37,7 @@ import javax.swing.JPanel
 abstract class CodeReviewSubmitPopupHandler<VM : CodeReviewSubmitViewModel> {
   suspend fun show(vm: VM, parentComponent: Component, above: Boolean = false) {
     withContext(Dispatchers.Main) {
-      val container = createPopupComponent(vm)
+      val container = createPopupComponent(vm, errorPresenter)
       val popup = createPopup(container)
 
       if (above) {
@@ -53,7 +52,7 @@ abstract class CodeReviewSubmitPopupHandler<VM : CodeReviewSubmitViewModel> {
 
   suspend fun show(vm: VM, project: Project) {
     withContext(Dispatchers.Main) {
-      val container = createPopupComponent(vm)
+      val container = createPopupComponent(vm, errorPresenter)
       val popup = createPopup(container)
 
       popup.showCenteredInCurrentWindow(project)
@@ -79,7 +78,9 @@ abstract class CodeReviewSubmitPopupHandler<VM : CodeReviewSubmitViewModel> {
 
   protected abstract fun CoroutineScope.createActionsComponent(vm: VM): JComponent
 
-  private fun CoroutineScope.createPopupComponent(vm: VM): ComponentContainer {
+  protected abstract val errorPresenter: ErrorStatusPresenter<Throwable>
+
+  private fun CoroutineScope.createPopupComponent(vm: VM, errorPresenter: ErrorStatusPresenter<Throwable>): ComponentContainer {
     val cs = this
     return object : ComponentContainer {
       private val editor = createEditor(vm.text)
@@ -106,11 +107,7 @@ abstract class CodeReviewSubmitPopupHandler<VM : CodeReviewSubmitViewModel> {
           add(titleActions, HorizontalLayout.RIGHT)
         }
 
-        val errorPanel = SimpleHtmlPane().apply {
-          bindTextIn(cs, vm.error.map { CollaborationToolsBundle.message("review.comment.placeholder") + "\n" + it?.localizedMessage })
-          bindVisibilityIn(cs, vm.error.map { it != null })
-        }
-
+        val errorPanel = ErrorStatusPanelFactory.create(cs, vm.error, errorPresenter, ErrorStatusPanelFactory.Alignment.LEFT)
         val buttonsPanel = createActionsComponent(vm)
 
         return JPanel(MigLayout(LC().insets("12").fill().flowY().noGrid().hideMode(3))).apply {

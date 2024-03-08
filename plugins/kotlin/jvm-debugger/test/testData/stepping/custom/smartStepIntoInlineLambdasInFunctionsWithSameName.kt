@@ -4,9 +4,9 @@ package smartStepIntoInlineLambdasInFunctionsWithSameName
 fun foo(x: Int) {
     val l = listOf(1)
 
-    // SMART_STEP_INTO_BY_INDEX: 2
+    // SMART_STEP_INTO_BY_INDEX: 1
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 2
+    // SMART_STEP_INTO_BY_INDEX: 1
     // RESUME: 1
     //Breakpoint!
     l.forEach {
@@ -20,9 +20,9 @@ fun foo(x: Int) {
 suspend fun foo(x: Int, y: Int) {
     val l = listOf(1)
 
-    // SMART_STEP_INTO_BY_INDEX: 2
+    // SMART_STEP_INTO_BY_INDEX: 1
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 2
+    // SMART_STEP_INTO_BY_INDEX: 1
     // RESUME: 1
     //Breakpoint!
     l.forEach {

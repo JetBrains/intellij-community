@@ -17,8 +17,6 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import java.io.File
 import java.nio.file.Path
@@ -51,17 +49,12 @@ object DocumentationChecker : TestFeature<DocumentationCheckerConfig> {
 
     override fun KotlinMppTestsContext.beforeTestExecution() {
         val config = testConfiguration.getConfiguration(DocumentationChecker)
-        if (config.downloadSources) {
-            GradleSystemSettings.getInstance().isDownloadSources = true
-        }
+        GradleSystemSettings.getInstance().isDownloadSources = config.downloadSources
         carets.clear()
     }
 
     override fun KotlinMppTestsContext.afterTestExecution() {
-        val config = testConfiguration.getConfiguration(DocumentationChecker)
-        if (config.downloadSources) {
-            GradleSystemSettings.getInstance().isDownloadSources = false
-        }
+        GradleSystemSettings.getInstance().isDownloadSources = false
     }
 
     override fun preprocessFile(origin: File, text: String) =

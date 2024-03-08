@@ -5,7 +5,6 @@ import foo.J
 import foo.JConstr
 import foo.O
 import foo.O.objectExtensionMember2
-import foo.O.objectMember2
 import foo.Y
 import foo.YConstr
 import foo.classExtension
@@ -33,7 +32,7 @@ fun test() {
     A()::classExtension
     A::classExtension
     O::objectMember1
-    ::objectMember2
+    O::objectMember2
     O::objectExtension
     A.Companion::companionMember
     (A)::companionMember

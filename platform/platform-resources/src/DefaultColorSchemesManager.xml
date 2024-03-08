@@ -281,7 +281,8 @@
       <option name="DOC_TIPS_SHORTCUT">
         <value>
           <option name="FOREGROUND" value="6e6e6e"/>
-          <option name="BACKGROUND" value="f2f2f2"/>
+          <option name="EFFECT_COLOR" value="A8ADBD" />
+          <option name="EFFECT_TYPE" value="0" />
         </value>
       </option>
       <option name="DEFAULT_DOC_COMMENT_TAG_VALUE">
@@ -1191,6 +1192,24 @@
             <option name="BACKGROUND" value="CFEFC6" />
           </value>
         </option>
+        <option name="BLOCK_TERMINAL_COMMAND">
+          <value>
+            <option name="FOREGROUND" value="000000" />
+            <option name="FONT_TYPE" value="1"/>
+          </value>
+        </option>
+        <option name="BLOCK_TERMINAL_SEARCH_ENTRY">
+          <value>
+            <option name="FOREGROUND" value="000000" />
+            <option name="BACKGROUND" value="FFEA00" />
+          </value>
+        </option>
+        <option name="BLOCK_TERMINAL_CURRENT_SEARCH_ENTRY">
+          <value>
+            <option name="FOREGROUND" value="000000"/>
+            <option name="BACKGROUND" value="FF941A"/>
+          </value>
+        </option>
         <option name="BLOCK_TERMINAL_BLACK">
           <value>
             <option name="FOREGROUND" value="0" />
@@ -1762,6 +1781,24 @@
           <option name="BACKGROUND" value="40503C" />
         </value>
       </option>
+      <option name="BLOCK_TERMINAL_COMMAND">
+        <value>
+          <option name="FOREGROUND" value="FFFFFF" />
+          <option name="FONT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="BLOCK_TERMINAL_SEARCH_ENTRY">
+        <value>
+          <option name="FOREGROUND" value="000000" />
+          <option name="BACKGROUND" value="FFEA00" />
+        </value>
+      </option>
+      <option name="BLOCK_TERMINAL_CURRENT_SEARCH_ENTRY">
+        <value>
+          <option name="FOREGROUND" value="000000"/>
+          <option name="BACKGROUND" value="FF941A"/>
+        </value>
+      </option>
       <option name="BLOCK_TERMINAL_BLACK">
         <value>
           <option name="FOREGROUND" value="0" />
@@ -1987,7 +2024,8 @@
       <option name="DOC_TIPS_SHORTCUT">
         <value>
           <option name="FOREGROUND" value="afb1b3"/>
-          <option name="BACKGROUND" value="3c3f41"/>
+          <option name="EFFECT_COLOR" value="6F737A" />
+          <option name="EFFECT_TYPE" value="0" />
         </value>
       </option>
       <option name="DEFAULT_DOC_MARKUP">
@@ -2828,7 +2866,7 @@
           <option name="FOREGROUND" value="9d527c" />
         </value>
       </option>
-      
+
       <option name="BREADCRUMBS_DEFAULT">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>

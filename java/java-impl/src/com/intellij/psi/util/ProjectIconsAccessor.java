@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,6 +18,7 @@ import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.ULiteralExpression;
 import org.jetbrains.uast.UPolyadicExpression;
@@ -41,7 +44,12 @@ public final class ProjectIconsAccessor {
   private static final int ICON_MAX_SIZE = 2 * 1024 * 1024; // 2Kb
 
   private static final List<String> ICON_EXTENSIONS = List.of("png", "ico", "bmp", "gif", "jpg", "svg");
+  private static final Key<Boolean> IDEA_PROJECT = Key.create("idea.internal.inspections.enabled");
+  private static final List<String> IDEA_PROJECT_MARKER_MODULE_NAMES = List.of("intellij.idea.community.main",
+                                                                               "intellij.platform.commercial",
+                                                                               "intellij.android.studio.integration");
 
+  @NotNull
   private final Project project;
 
   private final Cache<String, Pair<Long, Icon>> iconCache = Caffeine.newBuilder().maximumSize(500).build();
@@ -150,11 +158,29 @@ public final class ProjectIconsAccessor {
   }
 
   public static boolean isIdeaProject(@Nullable Project project) {
-    if (project == null) return false;
-    VirtualFile baseDir = project.getBaseDir();
-    //has copy in devkit plugin: org.jetbrains.idea.devkit.util.PsiUtil.isIntelliJBasedDir
-    return baseDir != null && (baseDir.findChild("idea.iml") != null || baseDir.findChild("community-main.iml") != null
-           || baseDir.findChild("intellij.idea.community.main.iml") != null || baseDir.findChild("intellij.idea.ultimate.main.iml") != null);
+    if (project == null) {
+      return false;
+    }
+
+    Boolean flag = project.getUserData(IDEA_PROJECT);
+    if (flag == null) {
+      flag = false;
+      ModuleManager moduleManager = ModuleManager.getInstance(project);
+      for (String moduleName : IDEA_PROJECT_MARKER_MODULE_NAMES) {
+        if (moduleManager.findModuleByName(moduleName) != null) {
+          flag = true;
+          break;
+        }
+      }
+      project.putUserData(IDEA_PROJECT, flag);
+    }
+
+    return flag;
+  }
+
+  @TestOnly
+  public static void markAsIdeaProject(@NotNull Project project, Boolean value) {
+    project.putUserData(IDEA_PROJECT, value);
   }
 
   private static Icon createOrFindBetterIcon(VirtualFile file, boolean useIconLoader) throws IOException {

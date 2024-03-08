@@ -72,6 +72,7 @@ public final class XFramesView extends XDebugView {
   private final @NotNull WeakReference<XDebugSessionImpl> mySessionRef;
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
+  private final JScrollPane myScrollPane;
   private final ComboBox<XExecutionStack> myThreadComboBox;
   private final Map<XExecutionStack, XStackFrame> myExecutionStacksWithSelection = new HashMap<>();
   private final AutoScrollToSourceHandler myFrameSelectionHandler;
@@ -158,7 +159,8 @@ public final class XFramesView extends XDebugView {
 
     Component framesList = DebuggerUIUtil.shouldUseAntiFlickeringPanel() ?
                            new AntiFlickeringPanel(myFramesList) : myFramesList;
-    myMainPanel.add(ScrollPaneFactory.createScrollPane(framesList), BorderLayout.CENTER);
+    myScrollPane = ScrollPaneFactory.createScrollPane(framesList);
+    myMainPanel.add(myScrollPane, BorderLayout.CENTER);
 
     myThreadComboBox = new XDebuggerEmbeddedComboBox<>();
     myThreadComboBox.setSwingPopup(false);
@@ -404,7 +406,10 @@ public final class XFramesView extends XDebugView {
     myRefresh = event == SessionEvent.SETTINGS_CHANGED;
 
     if (event == SessionEvent.BEFORE_RESUME) {
-      DebuggerUIUtil.freezePaintingToReduceFlickering(myFramesList.getParent());
+      if (DebuggerUIUtil.freezePaintingToReduceFlickering(myFramesList.getParent())) {
+        myScrollPane.getHorizontalScrollBar().setValue(0);
+        myScrollPane.getVerticalScrollBar().setValue(0);
+      }
       return;
     }
 

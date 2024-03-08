@@ -78,12 +78,8 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
 
   init {
     add(child)
-    border = if (resizable) ResizeHandlebarUpdater.invisibleResizeBorder else null
+    border = if (resizable) CollapsingComponentBorder(editor) else null
     isSeen = true
-  }
-
-  override fun updateUI() {
-    super.updateUI()
     isOpaque = false
   }
 
@@ -165,6 +161,7 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
 
   private class StubComponent(private val editor: EditorImpl) : JLabel("...") {
     init {
+      isOpaque = true
       border = IdeBorderFactory.createEmptyBorder(JBUI.insets(7, 0))
       updateUIFromEditor()
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
@@ -178,7 +175,6 @@ internal class CollapsingComponent(internal val editor: EditorImpl,
 
     override fun updateUI() {
       super.updateUI()
-      isOpaque = true
       if (@Suppress("SENSELESS_COMPARISON") (editor != null)) {
         updateUIFromEditor()
       }

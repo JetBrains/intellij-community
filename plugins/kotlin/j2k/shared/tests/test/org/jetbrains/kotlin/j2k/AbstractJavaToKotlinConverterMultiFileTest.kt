@@ -8,10 +8,10 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
@@ -25,15 +25,18 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
 
     fun doTest(dirPath: String) {
         val directory = File(dirPath)
-        val filesToConvert = directory.listFiles { _, name -> name.endsWith(".java") }!!
-        val firstFileText = filesToConvert.first().readText()
-        withCustomCompilerOptions(firstFileText, project, module) {
-            doTest(directory, filesToConvert)
+        val filesToConvert = directory.listFiles { _, name -> name.endsWith(".java") }!!.sortedBy { it.name }
+        val firstFile = filesToConvert.first()
+
+        IgnoreTests.runTestIfNotDisabledByFileDirective(firstFile.toPath(), getDisableTestDirective()) {
+            withCustomCompilerOptions(firstFile.readText(), project, module) {
+                doTest(directory, filesToConvert)
+            }
         }
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    private fun doTest(directory: File, filesToConvert: Array<File>) {
+    private fun doTest(directory: File, filesToConvert: List<File>) {
         val psiManager = PsiManager.getInstance(project)
 
         val psiFilesToConvert = filesToConvert.map { javaFile ->
@@ -61,7 +64,8 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
 
         val resultFiles = psiFilesToConvert.mapIndexed { i, javaFile ->
             deleteFile(javaFile.virtualFile)
-            val virtualFile = addFile(results[i], expectedResultFile(i).name, "test")
+            val kotlinFileText = results[i].getTextWithoutDirectives()
+            val virtualFile = addFile(kotlinFileText, expectedResultFile(i).name, dirName = "test")
             psiManager.findFile(virtualFile) as KtFile
         }
 
@@ -79,13 +83,13 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
         }
 
         for ((i, kotlinFile) in resultFiles.withIndex()) {
-            KotlinTestUtils.assertEqualsToFile(expectedResultFile(i), kotlinFile.dumpTextWithErrors())
+            KotlinTestUtils.assertEqualsToFile(expectedResultFile(i), kotlinFile.getFileTextWithErrors())
         }
 
         for ((externalFile, externalPsiFile) in externalFiles.zip(externalPsiFiles)) {
             val expectedFile = File(externalFile.path + ".expected")
             val resultText = when (externalPsiFile) {
-                is KtFile -> externalPsiFile.dumpTextWithErrors()
+                is KtFile -> externalPsiFile.getFileTextWithErrors()
                 else -> externalPsiFile.text
             }
             KotlinTestUtils.assertEqualsToFile(expectedFile, resultText)

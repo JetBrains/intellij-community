@@ -91,11 +91,6 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     }
 
     @Throws(EvaluateException::class)
-    fun newInstance(arrayType: ArrayType, dimension: Int): ArrayReference {
-        return debugProcess.newInstance(arrayType, dimension)
-    }
-
-    @Throws(EvaluateException::class)
     fun findClass(name: String, classLoader: ClassLoaderReference? = null): ReferenceType? {
         debugProcess.findClass(evaluationContext, name, classLoader)?.let { return it }
 

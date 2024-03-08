@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveMembersRefactoringProcessor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
@@ -216,8 +216,8 @@ object K2MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 }
                 else -> throw IllegalStateException("Invalid specified target")
             }
-            val descriptor = K2MoveDescriptor.Members(project, source, actualTarget, true, true, true)
-            K2MoveMembersRefactoringProcessor(descriptor).run()
+            val descriptor = K2MoveDescriptor.Declarations(project, source, actualTarget, true, true, true)
+            K2MoveDeclarationsRefactoringProcessor(descriptor).run()
         } else if (specifiedTarget is PsiElement) {
             MoveHandler.doMove(
                 project,

@@ -1,3 +1,5 @@
 package test
 
-class Nested
+class Nested {
+    val bar: String = "regular string bar"
+}

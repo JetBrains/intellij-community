@@ -89,7 +89,7 @@ class TerminalPromptView(
       }
     })
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
-      promptContentUpdated(controller.promptRenderingInfo)
+      updatePrompt(controller.promptRenderingInfo)
     })
   }
 
@@ -196,6 +196,7 @@ class TerminalPromptView(
       }
     }
     component.bindBackgroundToColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, this, editor)
+    component.bindForegroundToColorKey(BlockTerminalColors.DEFAULT_FOREGROUND, this, editor)
     component.myBorder = JBUI.Borders.emptyBottom(2)
     component.ipad = JBInsets.emptyInsets()
     return component

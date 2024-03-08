@@ -43,5 +43,10 @@
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.maven" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.tests" scope="TEST" />
   </component>
 </module>

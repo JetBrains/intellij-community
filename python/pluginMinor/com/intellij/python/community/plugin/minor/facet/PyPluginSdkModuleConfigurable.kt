@@ -7,11 +7,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil
 import com.jetbrains.python.configuration.PyActiveSdkConfigurable
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
-import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil
-import com.intellij.python.community.plugin.minor.facet.MinorPythonFacet
-import com.intellij.python.community.plugin.minor.facet.MinorPythonFacetType
 import com.jetbrains.python.sdk.removeTransferredRoots
 import com.jetbrains.python.sdk.transferRoots
 

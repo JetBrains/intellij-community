@@ -1,12 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl.session
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ml.*
+import com.intellij.platform.ml.Feature.Companion.toCompactString
 import com.intellij.platform.ml.ScopeEnvironment.Companion.restrictedBy
 import com.intellij.platform.ml.TierRequester.Companion.fulfilledBy
 import com.intellij.platform.ml.impl.DescriptionComputer
 import com.intellij.platform.ml.impl.FeatureSelector
 import com.intellij.platform.ml.impl.FeatureSelector.Companion.or
+import com.intellij.platform.ml.impl.MLTask
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform.Companion.getDescriptorsOfTiers
 import com.intellij.platform.ml.impl.environment.ExtendedEnvironment
@@ -17,7 +21,8 @@ data class LevelDescriptor(
   val apiPlatform: MLApiPlatform,
   val descriptionComputer: DescriptionComputer,
   val usedFeaturesSelectors: PerTier<FeatureSelector>,
-  val notUsedFeaturesSelectors: PerTier<FeatureFilter>,
+  val notUsedFeaturesFilters: PerTier<FeatureFilter>,
+  val mlTask: MLTask<*>
 ) {
   suspend fun describe(
     nextLevelCallParameters: Environment,
@@ -25,6 +30,15 @@ data class LevelDescriptor(
     upperLevels: List<DescribedLevel>,
     nextLevelAdditionalTiers: Set<Tier<*>>
   ): DescribedLevel {
+    thisLogger().debug {
+      """
+      [${mlTask.name}] Describing level environment:
+        Call parameters: ${nextLevelCallParameters.tiers}
+        Main environment: ${nextLevelMainEnvironment.tiers}
+        Additional environment: $nextLevelAdditionalTiers
+    """.trimIndent()
+    }
+
     val mainEnvironment = Environment.joined(listOf(
       Environment.of(upperLevels.flatMap { it.mainInstances.keys + it.additionalInstances.keys }),
       nextLevelMainEnvironment
@@ -33,13 +47,27 @@ data class LevelDescriptor(
     val availableEnvironment = ExtendedEnvironment(apiPlatform.environmentExtenders, mainEnvironment)
     val extendedEnvironment = availableEnvironment.restrictedBy(nextLevelMainEnvironment.tiers + nextLevelAdditionalTiers)
 
+    thisLogger().debug {
+      """
+        [${mlTask.name}] Built the environment for description
+          Available environment: ${availableEnvironment.tiers}
+          Tier that will be described: ${extendedEnvironment.tiers}
+      """.trimIndent()
+    }
+
     val runnableDescriptorsPerTier = apiPlatform.getDescriptorsOfTiers(extendedEnvironment.tiers)
       .mapValues { (_, descriptors) -> descriptors.fulfilledBy(availableEnvironment) }
 
-    val extendedEnvironmentDescription = runnableDescriptorsPerTier
+    val extendedEnvironmentDescription: Map<Tier<*>, Declaredness<Usage<Set<Feature>>>> = runnableDescriptorsPerTier
       .mapValues { (tier, tierDescriptors) ->
         describeTier(tier, tierDescriptors, availableEnvironment)
       }
+
+    thisLogger().debug {
+      "[${mlTask.name}] Described level environment:\n" + extendedEnvironmentDescription.map { (tier, description) ->
+        "\t - $tier: $description"
+      }.joinToString("\n")
+    }
 
     val nextLevel = DescribedLevel(
       mainInstances = nextLevelMainEnvironment.tierInstances.associateWith { mainTierInstance ->
@@ -59,7 +87,7 @@ data class LevelDescriptor(
       return FeatureFilter.ACCEPT_ALL
     }
 
-    val tierFeaturesSelector = (usedFeaturesSelectors[tier] ?: FeatureSelector.NOTHING) or notUsedFeaturesSelectors.getValue(tier)
+    val tierFeaturesSelector = (usedFeaturesSelectors[tier] ?: FeatureSelector.NOTHING) or notUsedFeaturesFilters.getValue(tier)
     val tierComputableFeatures = tierDescriptors.flatMap { it.descriptionDeclaration }.toSet()
     val tierToComputeSelection = tierFeaturesSelector.select(tierComputableFeatures)
 
@@ -80,7 +108,7 @@ data class LevelDescriptor(
 
   private fun removeRedundantDescription(descriptor: TierDescriptor, computedDescriptionWithRedundancies: Set<Feature>): Set<Feature> {
     val usedFeaturesSelector = usedFeaturesSelectors[descriptor.tier] ?: FeatureSelector.NOTHING
-    val notUsedFeaturesSelector = notUsedFeaturesSelectors.getValue(descriptor.tier)
+    val notUsedFeaturesSelector = notUsedFeaturesFilters.getValue(descriptor.tier)
 
     return computedDescriptionWithRedundancies.mapNotNull { computedFeature ->
       val featureIsUsed = usedFeaturesSelector.select(computedFeature.declaration)
@@ -88,7 +116,13 @@ data class LevelDescriptor(
       if (!featureIsUsed && !featureIsNotUsed) {
         if (!descriptor.descriptionPolicy.tolerateRedundantDescription)
           throw IllegalArgumentException(
-            "Feature $computedFeature of $descriptor must not have been computed. It is not used by the ML model or marked as not used"
+            """
+              Feature $computedFeature of $descriptor must not have been computed. It is not used by the ML model or marked as not used.
+    
+              You could set DescriptionPolicy.tolerateRedundantDescription to true, if this descriptor computes lightweight features,
+              and redundantly computed features could be tolerated.
+    
+            """.trimIndent()
           )
         else return@mapNotNull null
       }
@@ -134,12 +168,15 @@ data class LevelDescriptor(
 
     require(expectedButNotComputedDescriptionDeclaration.isEmpty()) {
       """
-        Features ${expectedButNotComputedDescriptionDeclaration.map { it.name }}
-        were expected to be computed by $descriptor,
-        because was declared and accepted by the feature filter.
-        If the features are nullable, you should mark the declarations as .nullable(),
-        and then either put the 'null' to the result set explicitly, or mark the corresponding
-        descriptor's descriptionPolicy as 'putNullImplicitly'.
+        Some expected features were not computed
+          
+          Features ${expectedButNotComputedDescriptionDeclaration.map { it.name }}
+          were expected to be computed by $descriptor, because was declared and accepted by the feature filter.
+
+          If the features are nullable, you should mark the declarations as .nullable(),
+          and then either put the 'null' to the result set explicitly, or mark the corresponding
+          descriptor's descriptionPolicy as 'putNullImplicitly'.
+
       """.trimIndent()
     }
   }
@@ -174,12 +211,23 @@ data class LevelDescriptor(
   private suspend fun describeTier(tier: Tier<*>, tierDescriptors: List<TierDescriptor>, environment: Environment): DescriptionPartition {
     val toComputeFilter = createFilterOfFeaturesToCompute(tier, tierDescriptors)
     val usefulTierDescriptors = tierDescriptors.filter { it.couldBeUseful(toComputeFilter) }
+    thisLogger().debug {
+      """
+        [${mlTask.name}] Describing $tier
+         - Usable descriptors: $usefulTierDescriptors
+         - Not usable descriptors: ${tierDescriptors.filterNot { it in usefulTierDescriptors }}
+      """.trimIndent()
+    }
     val description: Map<TierDescriptor, Set<Feature>> = descriptionComputer.computeDescription(
       tier,
       usefulTierDescriptors,
       environment,
       toComputeFilter
     )
+    thisLogger().debug {
+      "[${mlTask.name}] Computed description of $tier\n" +
+      description.entries.joinToString("\n") { (descriptor, features) -> "\t- ${descriptor.javaClass.simpleName}: ${features.map { it.toCompactString() }}" }
+    }
 
     val usedByModelFilter = createFilterOfUsedFeatures(tier)
 
@@ -187,7 +235,7 @@ data class LevelDescriptor(
       description.entries
         .map { (tierDescriptor, computedDescription) ->
           val redundanciesFreeDescription = removeRedundantDescription(tierDescriptor, computedDescription)
-          validateDescription(tierDescriptor, redundanciesFreeDescription, usedByModelFilter)
+          validateDescription(tierDescriptor, redundanciesFreeDescription, toComputeFilter)
           makeDescriptionPartition(tierDescriptor, redundanciesFreeDescription, usedByModelFilter)
         }
         .reduceOrNull { first, second ->

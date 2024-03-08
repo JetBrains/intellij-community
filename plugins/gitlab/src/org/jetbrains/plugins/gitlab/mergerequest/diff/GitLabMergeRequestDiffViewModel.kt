@@ -53,7 +53,7 @@ internal class GitLabMergeRequestDiffViewModelImpl(
   private val helper = CodeReviewDiffViewModelComputer(
     mergeRequest.changes.mapScoped { async { it.loadRevisionsAndParseChanges() } }
   ) { changesBundle, change ->
-    val changeContext: Map<Key<*>, Any> = buildChangeContext(change)
+    val changeContext: Map<Key<*>, Any> = change.buildChangeContext()
     val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)
                              ?: error("Could not create diff producer from $change")
     CodeReviewDiffRequestProducer(project, change, changeDiffProducer, changesBundle.patchesByChange[change]?.getDiffComputer())

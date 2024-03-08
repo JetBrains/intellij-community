@@ -371,9 +371,9 @@ public class XmlDocumentationProvider implements DocumentationProvider {
 
         // The very special case of xml file
         final PsiFile containingFile = xmlTag.getContainingFile();
-        final XmlFile xmlFile = XmlUtil.getContainingFile(xmlTag);
-        if (xmlFile != containingFile) {
-          final XmlTag rootTag = xmlFile.getDocument().getRootTag();
+        @Nullable XmlFile xmlFile = XmlUtil.getContainingFile(xmlTag);
+        if (xmlFile != null && xmlFile != containingFile) {
+          final XmlTag rootTag = xmlFile.getRootTag();
           if (rootTag != null) {
             final XmlNSDescriptor nsDescriptor = rootTag.getNSDescriptor(rootTag.getNamespaceByPrefix(namespacePrefix), true);
             elementDescriptor = (nsDescriptor != null) ? nsDescriptor.getElementDescriptor(tagFromText) : null;

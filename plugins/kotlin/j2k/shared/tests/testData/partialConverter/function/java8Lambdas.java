@@ -1,3 +1,4 @@
+// IGNORE_K2
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;

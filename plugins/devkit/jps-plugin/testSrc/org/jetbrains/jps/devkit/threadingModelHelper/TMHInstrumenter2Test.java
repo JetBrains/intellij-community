@@ -3,8 +3,8 @@ package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import java.util.Arrays;
 
-import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_UNDER_EDT;
-import static com.intellij.util.concurrency.ThreadingAssertions.MUST_NOT_EXECUTE_UNDER_EDT;
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_IN_EDT;
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_NOT_EXECUTE_IN_EDT;
 
 public class TMHInstrumenter2Test extends TMHInstrumenterTestBase {
 
@@ -35,7 +35,7 @@ public class TMHInstrumenter2Test extends TMHInstrumenterTestBase {
   public void testConstructor() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     testClass.aClass.getDeclaredConstructor().newInstance();
-    assertThrows(Throwable.class, MUST_EXECUTE_UNDER_EDT,
+    assertThrows(Throwable.class, MUST_EXECUTE_IN_EDT,
                  () -> executeInBackground(() -> testClass.aClass.getDeclaredConstructor().newInstance()));
   }
 
@@ -48,7 +48,7 @@ public class TMHInstrumenter2Test extends TMHInstrumenterTestBase {
   public void testRequiresBackgroundThreadAssertion() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     executeInBackground(() -> invokeMethod(testClass.aClass));
-    assertThrows(Throwable.class, MUST_NOT_EXECUTE_UNDER_EDT, () -> invokeMethod(testClass.aClass));
+    assertThrows(Throwable.class, MUST_NOT_EXECUTE_IN_EDT, () -> invokeMethod(testClass.aClass));
   }
 
   public void testRequiresReadLockAssertion() throws Exception {

@@ -133,6 +133,10 @@ public final class DefaultLanguageColorsPage implements RainbowColorSettingsPage
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.language.defaults.doc.tips.shortcut"), DefaultLanguageHighlighterColors.DOC_TIPS_SHORTCUT),
     new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.language.defaults.doc.code.block"), DefaultLanguageHighlighterColors.DOC_CODE_BLOCK),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.language.defaults.doc.code.inline"), DefaultLanguageHighlighterColors.DOC_CODE_INLINE),
+    new AttributesDescriptor(
       OptionsBundle.messagePointer("options.language.defaults.label"), DefaultLanguageHighlighterColors.LABEL),
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.language.defaults.constant"), DefaultLanguageHighlighterColors.CONSTANT),

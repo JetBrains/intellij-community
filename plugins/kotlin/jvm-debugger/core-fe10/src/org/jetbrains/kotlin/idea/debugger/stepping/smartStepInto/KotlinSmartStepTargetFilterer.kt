@@ -13,10 +13,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
+import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
+import org.jetbrains.kotlin.idea.debugger.core.getJvmInternalClassName
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
-import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type
@@ -81,7 +82,7 @@ class KotlinSmartStepTargetFilterer(
 
     private fun primaryConstructorMatches(declaration: KtClass, owner: String, name: String, signature: String): Boolean {
         return name == "<init>" && signature == "()V" &&
-                owner.replace('/', '.') == declaration.fqName?.asString()
+                owner.internalNameToFqn() == declaration.fqName?.asString()
     }
 
     private fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean {
@@ -118,7 +119,7 @@ private fun KtDeclaration.getLightClassMethod(): PsiMethod? =
 private fun PsiMethod.matches(className: String, methodName: String, signature: String, debugProcess: DebugProcessImpl): Boolean =
     DebuggerUtilsEx.methodMatches(
         this,
-        className.replace("/", "."),
+        className.internalNameToFqn(),
         methodName,
         signature,
         debugProcess
@@ -128,21 +129,6 @@ private fun MutableMap<String, Int>.increment(key: String): Int {
     val newValue = (get(key) ?: 0) + 1
     put(key, newValue)
     return newValue
-}
-
-context(KtAnalysisSession)
-private fun KtFunctionLikeSymbol.getJvmInternalClassName(): String? {
-    val classOrObject = getContainingClassOrObjectSymbol()
-    return if (classOrObject == null) {
-        val fileSymbol = getContainingFileSymbol() ?: return null
-        val file = fileSymbol.psi as? KtFile ?: return null
-        val shortName = PackagePartClassUtils.getFilePartShortName(file.name)
-        val fqn = file.packageFqName.child(Name.identifier(shortName)).asString()
-        fqn.replace('.', '/')
-    } else {
-        val classId = classOrObject.classIdIfNonLocal ?: return null
-        JvmClassName.internalNameByClassId(classId)
-    }
 }
 
 context(KtAnalysisSession)
@@ -167,8 +153,11 @@ private fun KtType.jvmName(element: PsiElement): String? {
     }
     if (isPrimitive) {
         return if (psiType is PsiPrimitiveType) psiType.kind.binaryName
-        else psiType.canonicalText.replace('.', '/').let { "L$it;" }
+        else psiType.canonicalText.fqnToInternalName().internalNameToReferenceTypeName()
     }
     if (psiType.canonicalText == "kotlin.Unit") return "V"
-    return JvmClassName.internalNameByClassId(classId).let { "L$it;" }
+    return JvmClassName.internalNameByClassId(classId).internalNameToReferenceTypeName()
 }
+
+private fun String.internalNameToReferenceTypeName(): String = "L$this;"
+

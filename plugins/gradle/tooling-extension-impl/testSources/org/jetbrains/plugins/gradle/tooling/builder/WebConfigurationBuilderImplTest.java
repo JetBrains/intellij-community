@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.DomainObjectSet;
@@ -11,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -52,14 +52,14 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
       .generate()
     );
 
-    AllModels allModels = fetchAllModels(WebConfiguration.class);
+    GradleIdeaModelHolder models = runBuildAction(WebConfiguration.class);
 
-    DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
+    DomainObjectSet<? extends IdeaModule> ideaModules = models.getRootModel(IdeaProject.class).getModules();
     assertEquals(2, ideaModules.size());
     IdeaModule ideaModule = ContainerUtil.find(ideaModules, it -> it.getName().equals("testDefaultWarModel"));
     assertNotNull(ideaModule);
 
-    WebConfiguration webConfiguration = allModels.getModel(ideaModule, WebConfiguration.class);
+    WebConfiguration webConfiguration = models.getProjectModel(ideaModule, WebConfiguration.class);
     assertEquals(1, webConfiguration.getWarModels().size());
     WarModel warModel = webConfiguration.getWarModels().get(0);
 

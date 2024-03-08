@@ -6,9 +6,8 @@
 
     <projectService serviceInterface="com.intellij.internal.statistic.local.LanguageUsageStatisticsProvider"
                     serviceImplementation="com.intellij.internal.statistic.local.LanguageUsageStatisticsProviderImpl"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ml.impl.logger.MLEventsLogger"/>
-    <registryKey defaultValue="false" description="Log features that were computed but missing in an ObsoleteTierDescriptor's declaration"
-                 key="ml.description.logMissing"/>
+
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.platform.ml.impl.logs.MLEventLoggerProvider"/>
   </extensions>
 
   <projectListeners>
@@ -23,7 +22,7 @@
                     interface="com.intellij.platform.ml.impl.turboComplete.SmartPipelineRunner"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ml.impl.approach"
-                    interface="com.intellij.platform.ml.impl.MLTaskApproachInitializer"
+                    interface="com.intellij.platform.ml.impl.MLTaskApproachBuilder"
                     dynamic="true"/>
 
     <extensionPoint name="mlCompletionCorrectnessSupporter"

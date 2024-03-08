@@ -139,7 +139,6 @@ private val cdDifferentiateProjects
 internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   return sequenceOf(
     cdShowToolWindowBars,
-    cdShowToolWindowNames,
     cdShowToolWindowNumbers,
     cdEnableMenuMnemonics,
     cdEnableControlsMnemonics,
@@ -519,18 +518,29 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }
         )
         if (ExperimentalUI.isNewUI()) {
-          twoColumnsRow(
-            {
-              checkBox(cdShowToolWindowNames).onApply {
-                ResizeStripeManager.applyShowNames()
-              }
-            },
-            { checkBox(cdLeftToolWindowLayout) }
-          )
-          twoColumnsRow(
-            { checkBox(cdRememberSizeForEachToolWindowNewUI) },
-            { checkBox(cdRightToolWindowLayout) }
-          )
+          if (ResizeStripeManager.enabled()) {
+            twoColumnsRow(
+              {
+                checkBox(cdShowToolWindowNames).onApply {
+                  ResizeStripeManager.applyShowNames()
+                }
+              },
+              { checkBox(cdLeftToolWindowLayout) }
+            )
+            twoColumnsRow(
+              { checkBox(cdRememberSizeForEachToolWindowNewUI) },
+              { checkBox(cdRightToolWindowLayout) }
+            )
+          }
+          else {
+            twoColumnsRow(
+              { checkBox(cdLeftToolWindowLayout) },
+              { checkBox(cdRememberSizeForEachToolWindowNewUI) }
+            )
+            twoColumnsRow(
+              { checkBox(cdRightToolWindowLayout) }
+            )
+          }
         }
         else {
           twoColumnsRow(

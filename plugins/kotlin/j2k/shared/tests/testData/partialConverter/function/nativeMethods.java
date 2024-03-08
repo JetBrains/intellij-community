@@ -1,3 +1,4 @@
+// IGNORE_K2
 public class Foo {
     private native final void nativeMethod();
 

@@ -121,9 +121,11 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
   }
 
   private fun getElementName(element: Any) = when (element) {
-    is PsiItemWithPresentation -> element.presentation.presentableText
-    is PsiNamedElement -> ReadAction.compute<String, Nothing> { element.name }
-    else -> null
+      is PsiItemWithPresentation -> element.item as? PsiNamedElement
+      is PsiNamedElement -> element
+      else -> null
+    }?.let {
+      ReadAction.compute<String, Nothing> { it.name }
   }
 
   /**

@@ -1,3 +1,4 @@
+// IGNORE_K2
 
 class Test extends Base {
   @Override

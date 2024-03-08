@@ -2,6 +2,7 @@
 package com.intellij.util.ui.html
 
 import com.intellij.util.asSafely
+import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import java.util.*
@@ -15,14 +16,6 @@ import javax.swing.text.html.CSS
 import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.StyleSheet
 import javax.swing.text.html.StyleSheet.BoxPainter
-
-val CSS_ATTRIBUTE_CAPTION_SIDE: CSS.Attribute
-  get() = CAPTION_SIDE_FIELD as CSS.Attribute
-
-private val CAPTION_SIDE_FIELD = CSS.Attribute::class.java
-  .getDeclaredField("CAPTION_SIDE")
-  .apply { isAccessible = true }
-  .get(null)
 
 @Suppress("UseDPIAwareInsets")
 val View.cssPadding: Insets
@@ -64,10 +57,8 @@ val View.cssBorderWidths: Insets
   }
 
 val View.cssBorderRadius: Float
-  // "caption-side" is used as "border-radius"
-  get() = attributes.getAttribute(CSS_ATTRIBUTE_CAPTION_SIDE)
+  get() = attributes.getAttribute(BORDER_RADIUS)
             ?.asSafely<String>()
-            ?.takeIf { it.endsWith("px") }
             ?.removeSuffix("px")
             ?.toFloatOrNull()
           ?: 0f
@@ -120,7 +111,13 @@ internal fun paintControlBackgroundAndBorder(
   noBorderOnTheLeft: Boolean = false,
   noBorderOnTheRight: Boolean = false,
 ) {
+  val borderColor = borderColors?.let {
+    sequenceOf(it.top, it.left, it.bottom, it.right)
+      .reduceOrNull { c1, c2 -> if (c1 != c2) null else c1 }
+  }
   val borderWidth = borderWidths?.let { minOf(it.top, it.left, it.bottom, it.right) } ?: 0
+  if (background == null && (borderWidth <= 0 || borderColor == null))
+    return
   val leftInset: Float = if (noBorderOnTheLeft) -borderRadius else margin.left + borderWidth / 2f
   val rightInset: Float = if (noBorderOnTheRight) -borderRadius else margin.right + borderWidth / 2f
   val borderShape = RoundRectangle2D.Float(rect.x + leftInset,
@@ -131,11 +128,9 @@ internal fun paintControlBackgroundAndBorder(
   val g = graphics.create() as Graphics2D
   g.clip(rect)
   g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-  g.color = background
-  g.fill(borderShape)
-  val borderColor = borderColors?.let {
-    sequenceOf(it.top, it.left, it.bottom, it.right)
-      .reduceOrNull { c1, c2 -> if (c1 != c2) null else c1 }
+  if (background != null) {
+    g.color = background
+    g.fill(borderShape)
   }
   if (borderWidth > 0 && borderColor != null) {
     g.color = borderColor
@@ -150,8 +145,39 @@ private fun AttributeSet.getLength(attribute: CSS.Attribute, styleSheet: StyleSh
 private fun AttributeSet.getColor(attribute: CSS.Attribute): Color? =
   cssGetColorMethod.invoke(css, this, attribute) as Color?
 
+private val css: CSS by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  CSS().patchAttributes()
+}
 
-private val css: CSS by lazy(LazyThreadSafetyMode.PUBLICATION) { CSS() }
+internal fun StyleSheet.patchAttributes(): StyleSheet {
+  val css = styleSheetCssField.get(this) as CSS
+  css.patchAttributes()
+  return this
+}
+
+private fun CSS.patchAttributes(): CSS {
+  @Suppress("UNCHECKED_CAST")
+  val valueConvertor = cssValueConvertorField.get(this) as Hashtable<Any, Any>
+  val cssValue = cssCssValueConstructor.newInstance()
+  cssAttributesExList.forEach {
+    valueConvertor[it] = cssValue
+  }
+  return this
+}
+
+internal fun createCssAttribute(name: String, defaultValue: String?, inherited: Boolean): CSS.Attribute {
+  val attribute = cssAttributeConstructor.newInstance(name, defaultValue, inherited) as CSS.Attribute
+
+  @Suppress("UNCHECKED_CAST")
+  val attributeMap = cssAttributeMapField.get(null) as Hashtable<String, CSS.Attribute>
+  attributeMap[name] = attribute
+  return attribute
+}
+
+private val cssAttributesExList by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  CssAttributesEx::class.java.fields
+    .mapNotNull { it.get(null) as? CSS.Attribute }
+}
 
 private val cssLengthMethod by lazy(LazyThreadSafetyMode.PUBLICATION) {
   CSS::class.java.getDeclaredMethod("getLength", AttributeSet::class.java, CSS.Attribute::class.java, StyleSheet::class.java)
@@ -160,6 +186,32 @@ private val cssLengthMethod by lazy(LazyThreadSafetyMode.PUBLICATION) {
 
 private val cssGetColorMethod by lazy(LazyThreadSafetyMode.PUBLICATION) {
   CSS::class.java.getDeclaredMethod("getColor", AttributeSet::class.java, CSS.Attribute::class.java)
+    .also { it.isAccessible = true }
+}
+
+private val cssAttributeMapField by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  CSS::class.java.getDeclaredField("attributeMap")
+    .also { it.isAccessible = true }
+}
+
+private val cssValueConvertorField by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  CSS::class.java.getDeclaredField("valueConvertor")
+    .also { it.isAccessible = true }
+}
+
+private val cssAttributeConstructor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  CSS.Attribute::class.java.getDeclaredConstructor(String::class.java, String::class.java, Boolean::class.javaPrimitiveType)
+    .also { it.isAccessible = true }
+}
+
+private val cssCssValueConstructor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  CSS::class.java.declaredClasses.find { it.simpleName == "CssValue" }!!
+    .getDeclaredConstructor()
+    .also { it.isAccessible = true }
+}
+
+private val styleSheetCssField by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  StyleSheet::class.java.getDeclaredField("css")
     .also { it.isAccessible = true }
 }
 

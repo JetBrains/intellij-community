@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -21,6 +22,7 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlAutoPopupHandler extends TypedHandlerDelegate {
+  private final static Logger LOG = Logger.getInstance(XmlAutoPopupHandler.class);
   @Override
   public @NotNull Result checkAutoPopup(final char charTyped,
                                         final @NotNull Project project,
@@ -82,6 +84,10 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
     String text = lastElement.getText();
     final int len = offset - lastElement.getTextRange().getStartOffset();
     if (len < text.length()) {
+      if (len < 0) {
+        LOG.error("wrong last element calculated: " + lastElement);
+        return false;
+      }
       text = text.substring(0, len);
     }
     if (text.endsWith("<") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||

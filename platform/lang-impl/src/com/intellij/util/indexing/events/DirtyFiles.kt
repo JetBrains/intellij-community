@@ -43,13 +43,7 @@ class DirtyFiles {
   }
 
   fun removeProject(project: Project) {
-    while (true) {
-      // todo: this is a temp fix for the problem in LightPlatformTestCase where
-      //  project is registered in FileBasedIndexImpl two times.
-      //  First time via LightProjectDescriptor.setUpProject
-      //  Second time via ((TestProjectManager)ProjectManagerEx.getInstanceEx()).openProject(project)
-      if (!myDirtyFiles.removeIf { it.first == project }) break;
-    }
+    myDirtyFiles.removeIf { it.first == project }
   }
 
   fun removeFile(fileId: Int) {

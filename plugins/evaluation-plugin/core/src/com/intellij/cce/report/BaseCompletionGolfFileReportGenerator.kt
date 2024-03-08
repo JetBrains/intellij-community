@@ -57,10 +57,6 @@ abstract class BaseCompletionGolfFileReportGenerator(
               delOption("cg-delimiter-underscore", "_")
             }
           }
-          div("trigger") {
-            label("labelText") { +"Trigger model " }
-            span("stats-skipped") { +"skipped" }
-          }
           div("red-code") {
             label("labelText") { +"Filters check " }
             span("stats-absent") { +"skipped" }
@@ -70,16 +66,34 @@ abstract class BaseCompletionGolfFileReportGenerator(
             select {
               id = "wrong-filters"
               option {
-                value="no"
+                value = "no"
                 label = "no"
               }
               option {
-                value="raw"
+                value = "raw-filter"
                 label = "raw"
               }
               option {
-                value="analyzed"
+                value = "analyzed-filter"
                 label = "analyzed"
+              }
+            }
+          }
+          div("model-skipped") {
+            label("labelText") { +"Highlight skipped by model: " }
+            select {
+              id = "model-skipped"
+              option {
+                value = "no"
+                label = "no"
+              }
+              option {
+                value = "trigger-skipped"
+                label = "trigger"
+              }
+              option {
+                value = "filter-skipped"
+                label = "filter"
               }
             }
           }
@@ -263,7 +277,8 @@ abstract class BaseCompletionGolfFileReportGenerator(
   ): Int {
     val text = expectedText[offset].toString()
 
-    span("code-span completion ${getKindClass(lookup, expectedText)} ${getBackgroundClass(lookup, expectedText)} $delimiter") {
+    span("code-span completion ${getKindClass(lookup, expectedText)} ${getFilterCheckClass(lookup, expectedText)} " +
+         "${getSkippedByModelClass(lookup, expectedText)} $delimiter") {
       attributes["data-cl"] = "$columnId"
       attributes["data-id"] = uuid
       attributes["data-offset"] = offsetInFile.toString()
@@ -298,7 +313,9 @@ abstract class BaseCompletionGolfFileReportGenerator(
 
   protected abstract fun getKindClass(lookup: Lookup, expectedText: String): String
 
-  protected abstract fun getBackgroundClass(lookup: Lookup, expectedText: String): String
+  protected abstract fun getFilterCheckClass(lookup: Lookup, expectedText: String): String
+
+  protected abstract fun getSkippedByModelClass(lookup: Lookup, expectedText: String): String
 
   protected abstract fun getThresholds(): List<BaseThreshold>
 

@@ -16,6 +16,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -78,6 +79,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
   private static final Key<LineSeparator> LINE_SEPARATOR_KEY = Key.create("ETF_LINE_SEPARATOR");
   private static final Key<Boolean> MANAGED_BY_FIELD = Key.create("MANAGED_BY_FIELD");
+  private static final Logger LOG = Logger.getInstance(EditorTextField.class);
 
   private Document myDocument;
   private final Project myProject;
@@ -667,6 +669,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     Project project = getProjectIfValid();
     final PsiFileFactory factory = PsiFileFactory.getInstance(project);
     final long stamp = LocalTimeCounter.currentTime();
+    if (myFileType == null) {
+      LOG.error("Provide not-null FileType");
+      myFileType = FileTypes.PLAIN_TEXT;
+    }
     final PsiFile psiFile = factory.createFileFromText("Dummy." + myFileType.getDefaultExtension(), myFileType, "", stamp, true, false);
     return PsiDocumentManager.getInstance(project).getDocument(psiFile);
   }

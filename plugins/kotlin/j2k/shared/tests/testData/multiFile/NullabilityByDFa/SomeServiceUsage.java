@@ -1,4 +1,4 @@
-
+// IGNORE_K2
 public class SomeServiceUsage {
 
     public SomeService getService() {

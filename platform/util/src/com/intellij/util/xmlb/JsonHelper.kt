@@ -8,16 +8,34 @@ import com.intellij.serialization.MutableAccessor
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonPrimitive
 import java.util.*
 
-internal fun toJson(bean: Any, accessor: Accessor, converter: Converter<Any>?): JsonElement? {
-  val value = accessor.read(bean) ?: return null
+internal fun toJson(bean: Any, accessor: Accessor, converter: Converter<Any>?): JsonElement {
+  val value = accessor.read(bean) ?: return JsonNull
   if (converter == null) {
     return primitiveToJsonElement(value)
   }
   else {
-    //return toJsonStringLiteral(converter.toString(value) ?: return null)
-    return JsonPrimitive(converter.toString(value) ?: return null)
+    return JsonPrimitive(converter.toString(value) ?: return JsonNull)
+  }
+}
+
+internal fun valueToJson(value: String?, valueClass: Class<*>): JsonElement? {
+  try {
+    return when {
+      value == null -> JsonNull
+      valueClass === Int::class.javaPrimitiveType || valueClass === Int::class.java -> JsonPrimitive(value.toInt())
+      valueClass === Boolean::class.javaPrimitiveType || valueClass === Boolean::class.java -> JsonPrimitive(value.toBoolean())
+      valueClass === Double::class.javaPrimitiveType || valueClass === Double::class.java -> JsonPrimitive(value.toDouble())
+      valueClass === Float::class.javaPrimitiveType || valueClass === Float::class.java -> JsonPrimitive(value.toFloat())
+      valueClass === Long::class.javaPrimitiveType || valueClass === Long::class.java || Date::class.java.isAssignableFrom(valueClass) -> JsonPrimitive(value.toLong())
+      valueClass === Short::class.javaPrimitiveType || valueClass === Short::class.java -> JsonPrimitive(value.toShort())
+      else -> JsonPrimitive(value)
+    }
+  }
+  catch (ignore: NumberFormatException) {
+    return null
   }
 }
 
@@ -27,19 +45,9 @@ internal fun primitiveToJsonElement(value: Any): JsonElement {
     is Number -> JsonPrimitive(value)
     is Boolean -> JsonPrimitive(value)
     is String -> JsonPrimitive(JDOMUtil.removeControlChars(value))
-    //else -> toJsonStringLiteral(value)
     else -> JsonPrimitive(value.toString())
   }
 }
-
-//private fun toJsonStringLiteral(value: Any): String {
-//  val s = value.toString()
-//  val builder = StringBuilder(s.length + 2)
-//  builder.append('"')
-//  StringUtil.escapeStringCharacters(s.length, s, "\"", builder)
-//  builder.append('"')
-//  return builder.toString()
-//}
 
 internal fun setFromJson(bean: Any, data: JsonElement, accessor: MutableAccessor, valueClass: Class<*>, converter: Converter<Any>?) {
   val s = when {
@@ -59,13 +67,7 @@ internal fun setFromJson(bean: Any, data: JsonElement, accessor: MutableAccessor
   }
 }
 
-internal fun fromJsonPrimitive(data: JsonElement): Any? {
-  return when (data) {
-    is JsonNull -> null
-    is JsonPrimitive -> data.content
-    else -> {
-      LOG.warn("JsonPrimitive is expected but got $data")
-      return Unit
-    }
-  }
+internal fun fromJsonPrimitive(data: JsonElement, valueClass: Class<*>): Any? {
+  // yes, exception, the policy is "all or nothing", do no return semi-correct state
+  return if (data is JsonNull) null else XmlSerializerImpl.convert(data.jsonPrimitive.content, valueClass)
 }

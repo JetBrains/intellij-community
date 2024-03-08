@@ -4,14 +4,7 @@ import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import java.net.URL
-
-
-private const val HF_MD_HEADER_SEPARATOR = "---\n"
-private const val ERR_PY_CODE_FENCE_HEADER = "```py\n"
-private const val PY_CODE_FENCE_HEADER = "```python\n"
-private const val CODE_FENCE_MARKER = "```"
-private const val MD_IMG_PATTERN = """!\[(.*?)]\((.*?)\)"""
-private const val HTML_IMG_PATTERN = """<img([^>]+)?>"""
+import java.util.*
 
 
 class HuggingFaceReadmeCleaner(
@@ -22,11 +15,17 @@ class HuggingFaceReadmeCleaner(
   private val cardUrl: URL = HuggingFaceURLProvider.getEntityCardLink(entityId, entityKind)
 
   fun doCleanUp(): HuggingFaceReadmeCleaner {
+    // todo: some optimisation is needed:
+    // headers are collected twice - in the increaseHeaderLevels and fixContentTables
     removeMetaData()
     increaseHeaderLevels()
     fixCodeFences()
+    cleanupNotSupportedElements()
     cleanupImages()
+    convertRelativeFileLinksToAbsolute()
+    fixContentTables()
     processMarkdownTables()
+    removeMarkdownSeparators()
     // trimLongMd()
     return this
   }
@@ -47,15 +46,51 @@ class HuggingFaceReadmeCleaner(
     }
   }
 
-  private fun fixCodeFences() {
-    markdown = markdown.replace(ERR_PY_CODE_FENCE_HEADER, PY_CODE_FENCE_HEADER)
-      .replace("<details>", "")
-      .replace("</details>", "")
-      .replace(Regex("<summary>.*</summary>"), "")
+  private fun fixContentTables() {
+    val internalLinksRegex = INTERNAL_LINK_PATTERN.toRegex()
+    val headersRegex = MARKDOWN_HEADER_PATTERN.toRegex()
+
+    val internalLinks = internalLinksRegex.findAll(markdown).map { it.groupValues[2] }.toList()
+    val headers = headersRegex.findAll(markdown).map { it.value.trim() }.toList()
+
+    internalLinks.forEach { link ->
+      val anchor = "<a name=\"$link\"></a>"
+      if (markdown.contains(anchor)) {
+        return@forEach
+      }
+
+      val normalizedLink = link.replace("-", "").lowercase(Locale.getDefault())
+
+      headers.forEach { header ->
+        val normalizedHeader = header
+                .replace(Regex("^#{1,6}\\s"), "")
+                .replace(" ", "").lowercase(Locale.getDefault())
+        if (normalizedLink == normalizedHeader) {
+          // Find the position of the header and insert the anchor above it
+          val headerIndex = markdown.indexOf(header)
+          if (headerIndex != -1) {
+            markdown = markdown.substring(0, headerIndex) + "$anchor\n" + markdown.substring(headerIndex)
+          }
+        }
+      }
+    }
   }
 
-  private fun cleanupImages() {  // See PY-70539
-    // Pattern to match ![alt text](url)
+  private fun fixCodeFences() {
+    markdown = markdown.replace(ERR_PY_CODE_FENCE_HEADER, PY_CODE_FENCE_HEADER)
+  }
+
+  private fun cleanupNotSupportedElements() {
+    markdown = markdown
+      .replace("<details>", "")
+      .replace("</details>", "")
+      .replace(Regex(SUMMARY_TAGS_PATTERN)) { matchResult ->
+        matchResult.groupValues[1] // Return only the content captured between <summary> tags
+      }
+  }
+
+  private fun cleanupImages() {
+    // See PY-70539 -> potentially we could keep svgs
     val markdownImgPattern = Regex(MD_IMG_PATTERN)
     markdown = markdownImgPattern.replace(markdown) { matchResult ->
       val altText = matchResult.groupValues[1].ifBlank { matchResult.groupValues[2].split("/").last() }
@@ -73,6 +108,16 @@ class HuggingFaceReadmeCleaner(
       val filename = srcValue?.split("/")?.lastOrNull()
 
       "\n[Image: ${altText?: filename}]($cardUrl)\n"
+    }
+  }
+
+  private fun convertRelativeFileLinksToAbsolute() {
+    // Catch relative links to files excluding internal markdown links (like in tables of content)
+    val regex = RELATIVE_LINK_PATTERN.toRegex()
+    markdown = regex.replace(markdown) { matchResult ->
+      val (linkText, relativePath) = matchResult.destructured
+      val absoluteUrl = HuggingFaceURLProvider.makeAbsoluteFileLink(entityId, relativePath).toString()
+      "[$linkText]($absoluteUrl)"
     }
   }
 
@@ -106,7 +151,7 @@ class HuggingFaceReadmeCleaner(
     val header = table.first()
     val columnCount = header.split("|").filter { it.isNotBlank() }.size
 
-    if (columnCount <= 3) return table
+    if (columnCount <= 4) return table
 
     val truncatedTable = mutableListOf<String>()
     truncatedTable.add(header.split("|").take(4).joinToString("|") + "|...|")
@@ -120,6 +165,13 @@ class HuggingFaceReadmeCleaner(
     }
 
     return truncatedTable
+  }
+
+  private fun removeMarkdownSeparators() {
+    markdown = markdown
+      .replace(Regex("\\n[-]{3,}\\n"), "\n")
+      .replace(Regex("\\n[*]{3,}\\n"), "\n")
+      .replace(Regex("\\n[_]{3,}\\n"), "\n")
   }
 
   fun getMarkdown(): String {
@@ -156,5 +208,18 @@ class HuggingFaceReadmeCleaner(
       val placeholder = HuggingFaceDocumentationPlaceholdersUtil.trimmedMdPlaceholder(entityId, entityKind)
       "${trimmedMd.trimEnd()}\n\n${placeholder}"
     }
+  }
+
+  companion object {
+    private const val HF_MD_HEADER_SEPARATOR = "---\n"
+    private const val ERR_PY_CODE_FENCE_HEADER = "```py\n"
+    private const val PY_CODE_FENCE_HEADER = "```python\n"
+    private const val CODE_FENCE_MARKER = "```"
+    private const val MD_IMG_PATTERN = """!\[(.*?)]\((.*?)\)"""
+    private const val HTML_IMG_PATTERN = """<img([^>]+)?>"""
+    private const val MARKDOWN_HEADER_PATTERN = """(?m)^#{1,6}\s(.*?)$"""
+    private const val INTERNAL_LINK_PATTERN = """\[(.*?)\]\(#(.*?)\)"""
+    private const val RELATIVE_LINK_PATTERN = """\[(.*?)\]\((?!http|#)(.*?)(?<!\.(jpg|jpeg|png|gif))\)"""
+    private const val SUMMARY_TAGS_PATTERN = "<summary>(.*?)</summary>"
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.ui.representation.ideVersion.sec
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.startup.importSettings.models.*
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Panel

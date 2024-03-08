@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Two types of instances have the power to select features:
  *  - [com.intellij.platform.ml.impl.model.MLModel] to tell which features are known.
- *  - [com.intellij.platform.ml.impl.approach.LogDrivenModelInference] to tell which features are not known by the ML model,
+ *  - [com.intellij.platform.ml.impl.LogDrivenModelInference] to tell which features are not known by the ML model,
  *  but they are still must be computed and then logged.
  */
 @ApiStatus.Internal

@@ -1,0 +1,3 @@
+Function call 13 topLevelFun()
+Function call 14 a.topLevelFun()
+Function call 15 topLevelFun("")

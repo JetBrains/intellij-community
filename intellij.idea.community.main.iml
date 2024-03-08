@@ -8,7 +8,6 @@
       <excludeFolder url="file://$MODULE_DIR$/system" />
       <excludeFolder url="file://$MODULE_DIR$/docs/plugin-graph/dist" />
       <excludeFolder url="file://$MODULE_DIR$/docs/dist-visualizer/dist" />
-      <excludeFolder url="file://$MODULE_DIR$/native" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

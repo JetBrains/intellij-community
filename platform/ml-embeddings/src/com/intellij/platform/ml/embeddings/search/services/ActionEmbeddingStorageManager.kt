@@ -17,12 +17,14 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
+import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.platform.ml.embeddings.utils.normalized
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
+import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
@@ -55,6 +57,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     try {
       if (isFirstIndexing) onFirstIndexingStart()
 
+      val actionsIndexingStartTime = System.nanoTime()
       val indexableActions = getIndexableActions()
       project?.let {
         withBackgroundProgress(it, EmbeddingsBundle.getMessage("ml.embeddings.indices.actions.generation.label")) {
@@ -63,6 +66,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
           }
         }
       } ?: iterateActions(indexableActions)
+      EmbeddingSearchLogger.indexingFinished(project, forActions = true, TimeoutUtil.getDurationMillis(actionsIndexingStartTime))
     }
     catch (e: CancellationException) {
       LOG.debug("Actions embedding indexing was cancelled")
@@ -80,12 +84,14 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     ActionEmbeddingsStorage.getInstance().index.onIndexingStart()
   }
 
-  private suspend fun onFirstIndexingFinish() {
+  private suspend fun onFirstIndexingFinish() = cs.launch {
     ActionEmbeddingsStorage.getInstance().index.onIndexingFinish()
     if (shouldSaveToDisk) {
+      val indexSavingStartTime = System.nanoTime()
       withContext(Dispatchers.IO) {
         ActionEmbeddingsStorage.getInstance().index.saveToDisk()
       }
+      EmbeddingSearchLogger.indexingSaved(null, forActions = true, TimeoutUtil.getDurationMillis(indexSavingStartTime))
     }
   }
 
@@ -112,7 +118,9 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
           LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
         }
       }
+      val indexLoadingStartTime = System.nanoTime()
       ActionEmbeddingsStorage.getInstance().index.loadFromDisk()
+      EmbeddingSearchLogger.indexingLoaded(project, forActions = true, TimeoutUtil.getDurationMillis(indexLoadingStartTime))
     }
   }
 

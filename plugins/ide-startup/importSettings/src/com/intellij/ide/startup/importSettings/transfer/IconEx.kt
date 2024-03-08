@@ -14,7 +14,7 @@ internal fun TransferableIdeId.icon(size: IconProductSize): Icon? =
       IconProductSize.MIDDLE -> StartupImportIcons.Vscode.VSCode_24
       IconProductSize.LARGE -> StartupImportIcons.Vscode.VSCode_48
     }
-    TransferableIdeId.VisualStudio -> when (size) {
+    TransferableIdeId.VisualStudio, TransferableIdeId.VisualStudioForMac -> when (size) {
       IconProductSize.SMALL -> StartupImportIcons.VisualStudio.VisualStudio_20
       IconProductSize.MIDDLE -> StartupImportIcons.VisualStudio.VisualStudio_24
       IconProductSize.LARGE -> StartupImportIcons.VisualStudio.VisualStudio_48

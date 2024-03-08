@@ -82,7 +82,14 @@ public final class SourceRootIconProvider {
     @Override
     public Icon getIcon(final @NotNull PsiElement element, final int flags) {
       if (element instanceof PsiDirectory psiDirectory) {
-        return getDirectoryIcon(psiDirectory.getVirtualFile(), psiDirectory.getProject());
+        VirtualFile virtualFile = psiDirectory.getVirtualFile();
+        SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(virtualFile, psiDirectory.getProject());
+        if (sourceFolder != null) {
+          return SourceRootPresentation.getSourceRootIcon(sourceFolder);
+        }
+        else {
+          return getIconIfExcluded(psiDirectory.getProject(), virtualFile);
+        }
       }
       return null;
     }

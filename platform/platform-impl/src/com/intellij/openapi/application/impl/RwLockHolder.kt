@@ -515,8 +515,9 @@ internal object RwLockHolder: ThreadingSupport {
 
     myWriteActionPending = true
     try {
-      fireBeforeWriteActionStart(clazz)
-
+      if (myWriteActionsStack.isEmpty()) {
+        fireBeforeWriteActionStart(clazz)
+      }
 
       // otherwise (when myLock is locked) there's a nesting write action:
       // - allow it,

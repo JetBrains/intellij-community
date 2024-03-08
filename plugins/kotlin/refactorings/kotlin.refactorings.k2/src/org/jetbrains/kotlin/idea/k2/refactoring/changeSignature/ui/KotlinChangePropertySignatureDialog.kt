@@ -1,12 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.ui
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiCodeFragment
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
@@ -15,9 +19,10 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterI
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinBaseChangePropertySignatureDialog
-import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
+import org.jetbrains.kotlin.types.Variance
 import javax.swing.DefaultComboBoxModel
 
 class KotlinChangePropertySignatureDialog(project: Project,
@@ -27,12 +32,20 @@ class KotlinChangePropertySignatureDialog(project: Project,
         model.addAll(listOf(Visibilities.Internal, Visibilities.Private, Visibilities.Protected, Visibilities.Public))
     }
 
-    override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtCodeFragment {
-        return kotlinPsiFactory.createTypeCodeFragment(m.oldReturnType, m.method)
+    override fun createReturnTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
+        val returnPresentableText =
+            analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
+                m.method.getReturnKtType().render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+            }
+        return kotlinPsiFactory.createTypeCodeFragment(returnPresentableText, m.method)
     }
 
-    override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtCodeFragment {
-        return kotlinPsiFactory.createTypeCodeFragment(m.oldReceiverType ?: "", m.method)
+    override fun createReceiverTypeCodeFragment(m: KotlinMethodDescriptor): KtTypeCodeFragment {
+        val receiverPresentableType =
+            analyzeInModalWindow(m.method, KotlinBundle.message("fix.change.signature.prepare")) {
+                (m.method as? KtCallableDeclaration)?.receiverTypeReference?.getKtType()?.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+            }
+        return kotlinPsiFactory.createTypeCodeFragment(receiverPresentableType ?: "", m.method)
     }
 
     override fun isDefaultVisibility(v: Visibility): Boolean {
@@ -66,21 +79,25 @@ class KotlinChangePropertySignatureDialog(project: Project,
             )
         } else null
 
-        receiver?.setType(receiverTypeCodeFragment.text)
+        if (receiver != null) {
+            receiver.setType(receiverTypeCodeFragment.getCanonicalText(false))
+        }
         return KotlinChangeInfo(
             methodDescriptor,
             emptyList(),
             if (methodDescriptor.canChangeVisibility()) visibilityCombo.selectedItem as Visibility else methodDescriptor.visibility,
             receiver,
             name,
-            KotlinTypeInfo(returnTypeCodeFragment.text, methodDescriptor.method)
+            KotlinTypeInfo(returnTypeCodeFragment.getCanonicalText(false), methodDescriptor.method)
         )
     }
 
     override fun doAction() {
-        val changeInfo = evaluateKotlinChangeInfo()
+        val changeInfo = ActionUtil.underModalProgress(project, KotlinBundle.message("fix.change.signature.prepare")) {
+            evaluateKotlinChangeInfo()
+        }
         changeInfo.receiverParameterInfo?.let {
-            val codeFragment = receiverTypeCodeFragment.getContentElement()
+            val codeFragment = receiverDefaultValueCodeFragment.getContentElement()
             if (codeFragment != null) {
                 it.defaultValue = AddQualifiersUtil.addQualifiersRecursively(codeFragment) as? KtExpression
             }

@@ -239,6 +239,12 @@ fun Component.bindBackgroundToColorKey(colorKey: ColorKey, parentDisposable: Dis
   }
 }
 
+fun Component.bindForegroundToColorKey(colorKey: ColorKey, parentDisposable: Disposable, editor: Editor? = null) {
+  bindColorKey(colorKey, parentDisposable, editor) {
+    foreground = it
+  }
+}
+
 fun bindColorKey(colorKey: ColorKey, parentDisposable: Disposable, editor: Editor? = null, applier: (Color?) -> Unit) {
   applier(getColor(editor, colorKey))
   ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {

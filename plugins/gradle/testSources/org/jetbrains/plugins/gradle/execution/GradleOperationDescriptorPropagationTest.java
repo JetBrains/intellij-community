@@ -13,7 +13,6 @@ import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 import org.jetbrains.plugins.gradle.service.project.ModifiableGradleProjectModel;
 import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor;
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
-import org.jetbrains.plugins.gradle.service.project.ToolingModelsProvider;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
@@ -52,9 +51,10 @@ public class GradleOperationDescriptorPropagationTest extends GradleImportingTes
     private ExternalSystemTaskId myExternalSystemTaskId;
 
     @Override
-    public void accept(@NotNull ModifiableGradleProjectModel modifiableGradleProjectModel,
-                       @NotNull ToolingModelsProvider toolingModelsProvider,
-                       @NotNull ProjectResolverContext resolverContext) {
+    public void accept(
+      @NotNull ModifiableGradleProjectModel modifiableGradleProjectModel,
+      @NotNull ProjectResolverContext resolverContext
+    ) {
       myExternalSystemTaskId = resolverContext.getExternalSystemTaskId();
     }
 

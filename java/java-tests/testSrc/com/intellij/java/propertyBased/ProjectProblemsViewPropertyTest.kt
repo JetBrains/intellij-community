@@ -51,7 +51,6 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     PropertyChecker.customized()
-      .rechecking("6NPkvxPGro77DQMBOrenewIECAQCAwoG")
       .withIterationCount(50)
       .checkScenarios { ImperativeCommand(this::doTestAllFilesWithMemberNameReported) }
   }

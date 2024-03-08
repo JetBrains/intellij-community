@@ -13,6 +13,6 @@ internal class KotlinSystemOutPostfixTemplate : StringBasedPostfixTemplate {
         /* provider = */ provider
     )
 
-    override fun getTemplateString(element: PsiElement) = "kotlin.io.println(\$expr$)\$END$"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "kotlin.io.println(\$expr$)\$END$"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }

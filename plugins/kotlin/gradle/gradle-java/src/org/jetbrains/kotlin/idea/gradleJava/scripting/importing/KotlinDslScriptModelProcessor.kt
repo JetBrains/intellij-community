@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.gradle.scripting.importing.*
 import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleScriptInputsStamp
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
-import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 
@@ -25,14 +24,13 @@ fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
     val task = resolverCtx.externalSystemTaskId
     val tasks = KotlinDslSyncListener.instance?.tasks ?: return
     synchronized(tasks) { tasks[task] }?.let { sync ->
-        val gradleHome = resolverCtx.getExtraProject(GradleBuildScriptClasspathModel::class.java)?.gradleHomeDir?.path
+        val gradleHome = resolverCtx.getRootModel(GradleBuildScriptClasspathModel::class.java)?.gradleHomeDir?.path
             ?: resolverCtx.settings?.gradleHome
 
         synchronized(sync) {
             sync.gradleVersion = resolverCtx.projectGradleVersion
 
-            sync.javaHome = (resolverCtx as? DefaultProjectResolverContext)
-                ?.buildEnvironment
+            sync.javaHome = resolverCtx.buildEnvironment
                 ?.java?.javaHome?.path
                 ?.let { toSystemIndependentName(it) }
 

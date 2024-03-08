@@ -60,9 +60,7 @@ internal object TerminalCommandUsageStatistics {
       if (SystemInfo.isWindows) it.removeSuffix(".exe") else it
     }
     val knownSubCommands: Set<String> = knownCommandToSubCommandsMap[executable] ?: return null
-    val subCommand = userCommand.getOrNull(1)?.let {
-      if (knownSubCommands.contains(it)) it else null
-    }
+    val subCommand = userCommand.getOrNull(1)?.takeIf { knownSubCommands.contains(it) }
     return TerminalCommandEventData(executable, subCommand)
   }
 

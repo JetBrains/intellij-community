@@ -19,6 +19,7 @@ public final class AppMainV2 {
   public static final String LAUNCHER_PORT_NUMBER = "idea.launcher.port";
   public static final String LAUNCHER_BIN_PATH = "idea.launcher.bin.path";
   public static final String LAUNCHER_USE_JDK_21_PREVIEW = "idea.launcher.use.21.preview";
+  private static final String LAUNCHER_MAIN_CLASS = "idea.launcher.main.class";
 
   private static native void triggerControlBreak();
 
@@ -84,8 +85,13 @@ public final class AppMainV2 {
       System.err.println("Launcher failed - \"Dump Threads\" and \"Exit\" actions are unavailable (" + t.getMessage() + ')');
     }
 
-    String mainClass = args[0];
-    String[] params = Arrays.copyOfRange(args, 1, args.length);
+    String[] params = args;
+    String mainClass = System.getProperty(LAUNCHER_MAIN_CLASS);
+    if (mainClass == null) {
+      mainClass = args[0];
+      System.setProperty(LAUNCHER_MAIN_CLASS, mainClass);
+      params = Arrays.copyOfRange(args, 1, args.length);
+    }
 
     Class<?> appClass = Class.forName(mainClass);
     Method m = findMethodToRun(appClass);

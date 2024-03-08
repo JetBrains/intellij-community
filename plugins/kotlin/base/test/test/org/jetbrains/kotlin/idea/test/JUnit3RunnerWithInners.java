@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.test;
 
+import com.intellij.testFramework.TestIndexingModeSupporter;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
+import org.jetbrains.kotlin.idea.base.test.TestIndexingMode;
 import org.junit.Ignore;
 import org.junit.internal.MethodSorter;
 import org.junit.internal.runners.JUnit38ClassRunner;
@@ -82,7 +84,9 @@ public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortab
         Map<Class<?>, TestSuite> classSuites = new HashMap<>();
 
         for (Class<?> aClass : classes) {
-            classSuites.put(aClass, hasTestMethods(aClass) ? new TestSuite(aClass) : new TestSuite(aClass.getCanonicalName()));
+            TestSuite testSuite = hasTestMethods(aClass) ? new TestSuite(aClass) : new TestSuite(aClass.getCanonicalName());
+            processIndexingMode(aClass, testSuite);
+            classSuites.put(aClass, testSuite);
         }
 
         for (Class<?> aClass : classes) {
@@ -92,6 +96,27 @@ public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortab
         }
 
         return classSuites.get(root);
+    }
+
+    private static void processIndexingMode(Class<?> aClass, TestSuite testSuite) {
+        if (!TestIndexingModeSupporter.class.isAssignableFrom(aClass)) return;
+        //noinspection unchecked
+        Class<? extends TestIndexingModeSupporter> clazz = (Class<? extends TestIndexingModeSupporter>) aClass;
+
+        TestIndexingModeSupporter.IndexingMode[] modes = getIndexingModes(aClass);
+        if (modes != null && modes.length > 0) {
+            for (TestIndexingModeSupporter.IndexingMode mode : modes) {
+                TestIndexingModeSupporter.IndexingModeTestHandler handler = null;
+                switch (mode) {
+                    case DUMB_EMPTY_INDEX -> handler = new TestIndexingModeSupporter.EmptyIndexSuite();
+                    case DUMB_RUNTIME_ONLY_INDEX -> handler = new TestIndexingModeSupporter.RuntimeOnlyIndexSuite();
+                    case DUMB_FULL_INDEX -> handler = new TestIndexingModeSupporter.FullIndexSuite();
+                }
+                if (handler != null) {
+                    TestIndexingModeSupporter.addTest(clazz, handler, testSuite);
+                }
+            }
+        }
     }
 
     private static Set<Class<?>> unprocessedClasses(Collection<Class<?>> classes) {
@@ -126,6 +151,16 @@ public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortab
         }
 
         return false;
+    }
+
+    private static TestIndexingModeSupporter.IndexingMode[] getIndexingModes(Class<?> klass) {
+        for (Class<?> currentClass = klass; Test.class.isAssignableFrom(currentClass); currentClass = currentClass.getSuperclass()) {
+            TestIndexingMode indexingMode = currentClass.getAnnotation(TestIndexingMode.class);
+            if (indexingMode != null) {
+                return indexingMode.value();
+            }
+        }
+        return null;
     }
 
     static class FakeEmptyClassTest implements Test, Filterable {

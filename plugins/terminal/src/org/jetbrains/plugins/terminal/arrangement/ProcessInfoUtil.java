@@ -6,14 +6,13 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessRunner;
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.pty4j.windows.WinPtyProcess;
 import com.pty4j.windows.conpty.WinConPtyProcess;
+import com.pty4j.windows.winpty.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ public final class ProcessInfoUtil {
   @Nullable
   private static String doGetCwd(@NotNull Process process) throws Exception {
     if (SystemInfo.isUnix) {
-      int pid = OSProcessUtil.getProcessID(process);
+      int pid = (int)process.pid();
       String result = tryGetCwdFastOnUnix(pid);
       if (result != null) {
         return result;

@@ -133,7 +133,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             val isKotlinStrataAvailable = location.declaringType().containsKotlinStrata()
             if (isKotlinStrataAvailable) {
                 try {
-                    val javaSourceFileName = location.sourceName("Java")
+                    val javaSourceFileName = location.sourceName(DebugProcess.JAVA_STRATUM)
                     val javaClassName = JvmClassName.byInternalName(defaultInternalName(location))
                     val project = debugProcess.project
 
@@ -511,7 +511,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         //no stratum or source path => use default one
         val referenceFqName = location.declaringType().name()
         // JDI names are of form "package.Class$InnerClass"
-        return referenceFqName.replace('.', '/')
+        return referenceFqName.fqnToInternalName()
     }
 
     override fun getAllClasses(sourcePosition: SourcePosition): List<ReferenceType> {
@@ -710,25 +710,19 @@ private fun LocalVariableImpl.isVisible(location: Location): Boolean =
 
 fun Location.getClassName(): String? {
     val currentLocationFqName = declaringType().name() ?: return null
-    return JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.replace('/', '.')
+    return JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.internalNameToFqn()
 }
 
 private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: Int): List<ReferenceType> {
-    val vmProxy = virtualMachineProxy
+    val targetClasses = ArrayList<ReferenceType>(1)
 
     try {
         if (!outerClass.isPrepared) {
             return emptyList()
         }
-    } catch (e: ObjectCollectedException) {
-        return emptyList()
-    }
 
-    val targetClasses = ArrayList<ReferenceType>(1)
-
-    try {
         for (location in outerClass.safeAllLineLocations()) {
-            val locationLine = location.lineNumber() - 1
+            val locationLine = location.getZeroBasedLineNumber()
             if (locationLine < 0) {
                 // such locations do not correspond to real lines in code
                 continue
@@ -753,11 +747,13 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
         //             val a = Foo() /* line 3 */
         //          }
         //     }
-        val nestedTypes = vmProxy.nestedTypes(outerClass)
+        val nestedTypes = virtualMachineProxy.nestedTypes(outerClass)
         for (nested in nestedTypes) {
             targetClasses += findTargetClasses(nested, lineAt)
         }
     } catch (_: AbsentInformationException) {
+    } catch (_: ObjectCollectedException) {
+        return emptyList()
     }
 
     return targetClasses

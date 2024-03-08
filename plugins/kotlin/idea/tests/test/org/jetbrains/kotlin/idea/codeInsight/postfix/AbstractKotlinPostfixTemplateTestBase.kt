@@ -2,12 +2,18 @@
 package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.base.util.isInDumbMode
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import java.nio.file.Paths
@@ -31,36 +37,57 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
             KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
             KotlinPluginMode.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
         }
-        IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), disableDirective, "after") {
-            myFixture.configureByDefaultFile()
-            templateName?.let { myFixture.type(".$it") }
+        myFixture.configureByDefaultFile()
+        templateName?.let { myFixture.type(".$it") }
 
-            val fileText = file.text
-            val template = InTextDirectivesUtils.findStringWithPrefixes(fileText, TEMPLATE_DIRECTIVE)
+        val fileText = file.text
+        val template = InTextDirectivesUtils.findStringWithPrefixes(fileText, TEMPLATE_DIRECTIVE)
 
-            if (template != null) {
-                myFixture.type(template.replace("\\t", "\t"))
-            } else {
-                myFixture.type("\t")
-            }
-
-            val allowMultipleExpressions = InTextDirectivesUtils.isDirectiveDefined(fileText, ALLOW_MULTIPLE_EXPRESSIONS)
-            val suggestedExpressions = with(KotlinPostfixTemplateInfo) { file.suggestedExpressions }
-
-            if (suggestedExpressions.size > 1) {
-                assertTrue("Only one expression should be suggested, but $suggestedExpressions were found", allowMultipleExpressions)
-            } else {
-                assertFalse(
-                    "$ALLOW_MULTIPLE_EXPRESSIONS is declared in file, but $suggestedExpressions were found",
-                    allowMultipleExpressions,
-                )
-            }
-
-            myFixture.checkContentByExpectedPath(".after", addSuffixAfterExtension = isOldTestData)
+        val templateKey = templateName ?: run {
+            val text = this.editor.getDocument().getText(TextRange(0, this.editor.getCaretModel().getOffset()))
+            text.substringAfterLast(".")
         }
-        val templateState = TemplateManagerImpl.getTemplateState(editor)
-        if (templateState?.isFinished() == false) {
-            project.executeCommand("") { templateState.gotoEnd(false) }
+        val projectInDumbMode = project.isInDumbMode
+        val postfixTemplate: PostfixTemplate? =
+            LanguagePostfixTemplate.LANG_EP.forLanguage(KotlinLanguage.INSTANCE)
+                .templates.firstOrNull { it.key == ".$templateKey" }
+        val postfixTemplateDumbAware = DumbService.isDumbAware(postfixTemplate)
+        try {
+            IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), disableDirective, "after") {
+                check(postfixTemplate != null) { "Unable to find PostfixTemplate for `$templateKey`" }
+
+                if (template != null) {
+                    myFixture.type(template.replace("\\t", "\t"))
+                } else {
+                    myFixture.type("\t")
+                }
+
+                val allowMultipleExpressions = InTextDirectivesUtils.isDirectiveDefined(fileText, ALLOW_MULTIPLE_EXPRESSIONS)
+                val suggestedExpressions = with(KotlinPostfixTemplateInfo) { file.suggestedExpressions }
+
+                if (suggestedExpressions.size > 1) {
+                    assertTrue("Only one expression should be suggested, but $suggestedExpressions were found", allowMultipleExpressions)
+                } else {
+                    assertFalse(
+                        "$ALLOW_MULTIPLE_EXPRESSIONS is declared in file, but $suggestedExpressions were found",
+                        allowMultipleExpressions,
+                    )
+                }
+
+                myFixture.checkContentByExpectedPath(".after", addSuffixAfterExtension = isOldTestData)
+            }
+        } catch (e: Throwable) {
+            // ignore failed test when postfixTemplate is not dumbAware and project in dumbMode
+            if (!(projectInDumbMode && !postfixTemplateDumbAware)) {
+                throw e
+            } else {
+                LOG.info("$name is ignored as $postfixTemplate is not dumbAware while project is in dumbMode")
+            }
+        } finally {
+            val templateState = TemplateManagerImpl.getTemplateState(editor)
+            if (templateState?.isFinished() == false) {
+                project.executeCommand("") { templateState.gotoEnd(false) }
+            }
         }
     }
 

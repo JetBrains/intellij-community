@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -33,6 +33,7 @@ import java.lang.ref.WeakReference
 open class ActivateToolWindowAction protected constructor(val toolWindowId: String)
   : DumbAwareAction(), MainMenuPresentationAware, ActionRemoteBehaviorSpecification.Frontend {
   companion object {
+    @Suppress("DeprecatedCallableAddReplaceWith")
     @JvmStatic
     @Deprecated("Use ActivateToolWindowAction.Manager explicitly")
     @ApiStatus.ScheduledForRemoval
@@ -40,14 +41,13 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
   }
 
   object Manager {
-    @JvmStatic
-    fun ensureToolWindowActionRegistered(toolWindow: ToolWindow, actionManager: ActionManager) {
+    internal fun ensureToolWindowActionRegistered(toolWindow: ToolWindow, actionManager: ActionManager) {
       val actionId = getActionIdForToolWindow(toolWindow.id)
       var action = actionManager.getAction(actionId)
       if (action == null) {
         action = ActivateToolWindowAction(toolWindow.id)
-        actionManager.registerAction(actionId, action)
         updatePresentation(action.getTemplatePresentation(), toolWindow)
+        actionManager.registerAction(actionId, action)
       }
     }
 
@@ -177,25 +177,28 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
 }
 
 private fun updatePresentation(presentation: Presentation, toolWindow: ToolWindow) {
-  val toolWindowRef = WeakReference(toolWindow)
-  val projectRef: Reference<Project> = WeakReference(toolWindow.project)
-  val toolWindowId = toolWindow.id
-  val fallbackStripeTitleText = toolWindow.stripeTitleProvider.get()
-  updatePresentationImpl(presentation, toolWindowId, projectRef, toolWindowRef, fallbackStripeTitleText)
+  updatePresentationImpl(
+    presentation = presentation,
+    toolWindowId = toolWindow.id,
+    projectRef = WeakReference(toolWindow.project),
+    toolWindowRef = WeakReference(toolWindow),
+    fallbackStripeTitleText = toolWindow.stripeTitleProvider.get(),
+  )
 }
 
 /**
  * Avoid accidentally capturing more than we need by extracting a method
  */
-private fun updatePresentationImpl(presentation: Presentation,
-                                   toolWindowId: String,
-                                   projectRef: Reference<Project>,
-                                   toolWindowRef: Reference<ToolWindow>,
-                                   fallbackStripeTitleText: @NlsContexts.TabTitle String) {
+private fun updatePresentationImpl(
+  presentation: Presentation,
+  toolWindowId: String,
+  projectRef: Reference<Project>,
+  toolWindowRef: Reference<ToolWindow>,
+  fallbackStripeTitleText: @NlsContexts.TabTitle String,
+) {
   presentation.setText { toolWindowRef.get()?.stripeTitleProvider?.get() ?: fallbackStripeTitleText }
   presentation.setDescription {
-    IdeBundle.message("action.activate.tool.window",
-                      toolWindowRef.get()?.stripeTitleProvider?.get() ?: fallbackStripeTitleText)
+    IdeBundle.message("action.activate.tool.window", toolWindowRef.get()?.stripeTitleProvider?.get() ?: fallbackStripeTitleText)
   }
 
   presentation.iconSupplier = SynchronizedClearableLazy label@{

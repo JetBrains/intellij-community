@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -728,7 +729,15 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
           ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
           toolbar.setTargetComponent(textPanel);
           mainPanel.add(ServiceViewUIUtils.wrapServicesAligned(toolbar), BorderLayout.NORTH);
-          toolbar.getComponent().setBorder(JBUI.Borders.emptyTop(1));
+          int left = 0;
+          int right = 0;
+          Border border = toolbar.getComponent().getBorder();
+          if (border != null) {
+            Insets insets = border.getBorderInsets(toolbar.getComponent());
+            left = insets.left;
+            right = insets.right;
+          }
+          toolbar.getComponent().setBorder(JBUI.Borders.empty(1, left, 0, right));
           textPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
       }

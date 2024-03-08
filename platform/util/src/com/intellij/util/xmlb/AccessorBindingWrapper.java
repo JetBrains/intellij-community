@@ -6,6 +6,7 @@ import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.Property;
 import kotlinx.serialization.json.JsonElement;
+import kotlinx.serialization.json.JsonNull;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +36,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   @Override
   public @Nullable JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
     Object value = accessor.read(bean);
-    return value == null ? null : binding.toJson(value, filter);
+    return value == null ? JsonNull.INSTANCE : binding.toJson(value, filter);
   }
 
   @Override
@@ -80,6 +81,11 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     else {
       return deserializeUnsafe(context, (XmlElement)element);
     }
+  }
+
+  @Override
+  public @Nullable JsonElement deserializeToJson(@NotNull Element element) {
+    return ((RootBinding)binding).deserializeToJson(element);
   }
 
   @SuppressWarnings("DuplicatedCode")
@@ -154,46 +160,30 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
     return context;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public @Nullable <T> Object deserializeList(@Nullable Object currentValue, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
-    if (adapter == JdomAdapter.INSTANCE) {
-      assert currentValue != null;
-      //noinspection unchecked
-      deserializeJdomList(currentValue, (List<? extends Element>)elements);
+    assert currentValue != null;
+    Object value = accessor.read(currentValue);
+    if (binding instanceof BeanBinding && !accessor.isWritable()) {
+      ((BeanBinding)binding).deserializeInto(value, elements.get(0), adapter);
     }
     else {
-      deserializeList(currentValue, (List<XmlElement>)elements);
+      Object deserializedValue = MapBindingKt.deserializeList(binding, value, elements, adapter);
+      if (value != deserializedValue) {
+        accessor.set(currentValue, deserializedValue);
+      }
     }
     return null;
   }
 
-  private @NotNull Object deserializeJdomList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
-    Object currentValue = accessor.read(context);
-    if (binding instanceof BeanBinding && !accessor.isWritable()) {
-      ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
-    }
-    else {
-      Object deserializedValue = TagBindingKt.deserializeList(binding, currentValue, elements, JdomAdapter.INSTANCE);
-      if (currentValue != deserializedValue) {
-        accessor.set(context, deserializedValue);
-      }
-    }
-    return context;
+  @Override
+  public boolean isSurroundWithTag() {
+    return false;
   }
 
-  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<XmlElement> elements) {
-    Object currentValue = accessor.read(context);
-    if (binding instanceof BeanBinding && !accessor.isWritable()) {
-      ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
-    }
-    else {
-      Object deserializedValue = TagBindingKt.deserializeList(binding, currentValue, elements, XmlDomAdapter.INSTANCE);
-      if (currentValue != deserializedValue) {
-        accessor.set(context, deserializedValue);
-      }
-    }
-    return context;
+  @Override
+  public @NotNull JsonElement doDeserializeListToJson(@NotNull List<? extends Element> elements) {
+    return ((MultiNodeBinding)binding).deserializeListToJson(elements);
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.SHELF
@@ -17,6 +18,14 @@ class VcsShowLocalChangesAction : VcsShowToolWindowTabAction() {
 
 class VcsShowShelfAction : VcsShowToolWindowTabAction() {
   override val tabName: String get() = SHELF
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    val project = e.project ?: return
+    if (ShelvedChangesViewManager.hideDefaultShelfTab(project)) {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
 }
 
 abstract class VcsShowToolWindowTabAction : DumbAwareAction() {

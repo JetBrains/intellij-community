@@ -88,8 +88,12 @@ button:focus {
   color: #34c759
 }
 
-.completion.cg-skipped {
-  color: #9b1dcd
+.completion.bg-filters-skipped {
+  background-color: #ff3b305b
+}
+
+.completion.bg-model-skipped {
+  background-color: #0d1abb75
 }
 
 .completion.perfect {
@@ -347,10 +351,6 @@ pre {
 
 .cg .stats-absent {
   background-color: rgba(112, 170, 255, 0.25);
-}
-
-.cg .stats-skipped {
-  background-color: rgba(155, 29, 205, 0.3);
 }
 
 .cg tr.stats-hidden {

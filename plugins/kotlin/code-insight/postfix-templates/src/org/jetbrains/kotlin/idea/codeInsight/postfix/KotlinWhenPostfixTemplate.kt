@@ -135,7 +135,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
         return true
     }
 
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
 private sealed class CaseBranch {

@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.P3SupportInstaller
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
@@ -75,7 +76,6 @@ import org.jetbrains.annotations.TestOnly
 import sun.awt.AWTAutoShutdown
 import java.time.Duration
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.jvm.internal.CoroutineDumpState
 
 private var appInitResult: Result<Unit>? = null
 const val LEAKED_PROJECTS: String = "leakedProjects"
@@ -116,9 +116,7 @@ fun loadApp(setupEventQueue: Runnable) {
   System.setProperty("idea.diagnostic.opentelemetry.file",
                      PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString())
 
-  // if BB in classpath
   enableCoroutineDump()
-  CoroutineDumpState.install()
   JBR.getJstack()?.includeInfoFrom {
     """
     $COROUTINE_DUMP_HEADER
@@ -128,6 +126,7 @@ fun loadApp(setupEventQueue: Runnable) {
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
   PluginManagerCore.isUnitTestMode = true
+  P3SupportInstaller.seal()
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
   PluginManagerCore.scheduleDescriptorLoading(GlobalScope)
   setupEventQueue.run()

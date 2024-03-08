@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
-import com.intellij.concurrency.currentThreadContext
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
@@ -293,9 +292,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       invokeLaterOnEdtInScheduledTasksScope(start = CoroutineStart.ATOMIC) {
         try {
           ensureActive()
-          blockingContext {
-            queueTaskOnEdt(task, modality, trace)
-          }
+          queueTaskOnEdt(task, modality, trace)
         }
         catch (t: CancellationException) {
           Disposer.dispose(task)
@@ -307,10 +304,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   private fun invokeLaterOnEdtInScheduledTasksScope(start: CoroutineStart = CoroutineStart.DEFAULT,
                                                     block: suspend CoroutineScope.() -> Unit): Job {
     val modality = ModalityState.defaultModalityState()
-    return scheduledTasksScope.launch(modality.asContextElement() + Dispatchers.EDT + currentThreadContext().minusKey(Job), start, block)
+    return scheduledTasksScope.launch(modality.asContextElement() + Dispatchers.EDT, start, block)
   }
 
-  @RequiresBlockingContext
   private fun queueTaskOnEdt(task: DumbModeTask, modality: ModalityState, trace: Throwable) {
     ThreadingAssertions.assertEventDispatchThread()
     myLatestReceipt = myTaskQueue.addTask(task)

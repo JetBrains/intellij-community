@@ -50,7 +50,7 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
         }
 
         MyInfo info = new MyInfo(element, color, provider);
-        NavigateAction.setNavigateAction(info, IdeBundle.message("dialog.title.choose.color"), null, AllIcons.Actions.Colors);
+        NavigateAction.setNavigateAction(info, IdeBundle.message("dialog.title.choose.color"), null);
         result.add(info);
         return info;
       });

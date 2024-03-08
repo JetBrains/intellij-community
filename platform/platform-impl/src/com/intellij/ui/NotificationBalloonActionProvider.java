@@ -155,7 +155,7 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
         }
       }
       if (ColorUtil.isDark(JBColor.namedColor("MainToolbar.background")) && JBColor.isBright() && icon instanceof CachedImageIcon) {
-        icon = CustomIconUtilKt.loadIconCustomVersionOrScale((CachedImageIcon)icon, icon.getIconWidth(), true);
+        icon = CustomIconUtilKt.loadIconCustomVersionOrScale((CachedImageIcon)icon, 16, true);
       }
     }
     return icon;

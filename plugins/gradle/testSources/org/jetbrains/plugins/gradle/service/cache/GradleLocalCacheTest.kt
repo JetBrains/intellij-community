@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.cache
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
+import com.intellij.testFramework.common.runAll
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
@@ -30,8 +31,10 @@ class GradleLocalCacheTest : GradleImportingTestCase() {
   }
 
   override fun tearDown() {
-    super.tearDown()
-    GradleSystemSettings.getInstance().isDownloadSources = false
+    runAll(
+      { GradleSystemSettings.getInstance().isDownloadSources = false },
+      { super.tearDown() }
+    )
   }
 
   @Test

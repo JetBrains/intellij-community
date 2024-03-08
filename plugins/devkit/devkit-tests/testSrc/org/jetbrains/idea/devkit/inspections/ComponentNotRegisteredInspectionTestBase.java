@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.util.ProjectIconsAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Anchor;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.util.ActionData;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 public abstract class ComponentNotRegisteredInspectionTestBase extends PluginModuleTestCase {
   @Override
@@ -30,14 +30,14 @@ public abstract class ComponentNotRegisteredInspectionTestBase extends PluginMod
   }
 
   public void testRegisteredActionInIDEAProject() {
-    PsiUtil.markAsIdeaProject(getProject(), true);
+    ProjectIconsAccessor.markAsIdeaProject(getProject(), true);
 
     try {
       myFixture.copyFileToProject("registeredAction-plugin.xml", "someOtherPluginXmlName.xml");
       myFixture.testHighlighting("RegisteredAction." + getSourceFileExtension());
     }
     finally {
-      PsiUtil.markAsIdeaProject(getProject(), false);
+      ProjectIconsAccessor.markAsIdeaProject(getProject(), false);
     }
   }
 

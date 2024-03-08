@@ -5,4 +5,4 @@ fun main() {
     list.forEach(::foo)<caret>
 }
 
-// EXISTS: forEach((T) -> Unit), foo(Int)
+// EXISTS: foo(Int), forEach((T) -> Unit)

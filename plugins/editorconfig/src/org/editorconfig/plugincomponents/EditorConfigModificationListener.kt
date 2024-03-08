@@ -17,6 +17,7 @@ internal class EditorConfigModificationListener : BulkFileListener {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
+    var isCodeStylePossiblyAffected = false
     for (event in events) {
       val file = event.file
       if (file == null || file.name != ".editorconfig") {
@@ -29,12 +30,15 @@ internal class EditorConfigModificationListener : BulkFileListener {
             is VFileCopyEvent, is VFileCreateEvent -> {}
             else -> EditorConfigPropertiesService.getInstance(project).clearCache()
           }
-          ApplicationManager.getApplication().invokeLater {
-            for (editor in EditorFactory.getInstance().allEditors) {
-              if (editor.isDisposed) continue
-              (editor as EditorEx).reinitSettings()
-            }
-          }
+          isCodeStylePossiblyAffected = true
+        }
+      }
+    }
+    if (isCodeStylePossiblyAffected) {
+      ApplicationManager.getApplication().invokeLater {
+        for (editor in EditorFactory.getInstance().allEditors) {
+          if (editor.isDisposed) continue
+          (editor as EditorEx).reinitSettings()
         }
       }
     }

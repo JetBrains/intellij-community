@@ -4,6 +4,10 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
+import com.intellij.testFramework.TestIndexingModeSupporter;
+import org.jetbrains.kotlin.idea.base.test.TestIndexingMode;
+import static com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode.DUMB_EMPTY_INDEX;
+import static com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode.SMART;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
@@ -15,9 +19,11 @@ import org.junit.runner.RunWith;
 @SuppressWarnings("all")
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
+@TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../code-insight/postfix-templates/testData/expansion/oldTestData")
 public abstract class K1PostfixTemplateTestGenerated extends AbstractK1PostfixTemplateTest {
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../code-insight/postfix-templates/testData/expansion/oldTestData")
     public static class Uncategorized extends AbstractK1PostfixTemplateTest {
@@ -292,6 +298,7 @@ public abstract class K1PostfixTemplateTestGenerated extends AbstractK1PostfixTe
         }
     }
 
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../code-insight/postfix-templates/testData/expansion/oldTestData/wrapWithCall")
     public static class WrapWithCall extends AbstractK1PostfixTemplateTest {

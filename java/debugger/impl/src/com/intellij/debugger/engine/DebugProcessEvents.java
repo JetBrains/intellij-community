@@ -4,6 +4,7 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.engine.requests.CustomProcessingLocatableEventRequestor;
 import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -15,7 +16,10 @@ import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.statistics.DebuggerStatistics;
 import com.intellij.debugger.statistics.StatisticsStorage;
-import com.intellij.debugger.ui.breakpoints.*;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
+import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
+import com.intellij.debugger.ui.breakpoints.SyntheticBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
 import com.intellij.ide.BrowserUtil;
@@ -61,7 +65,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
@@ -648,9 +651,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
         // Don't try to check breakpoint's condition or evaluate its log expression,
         // because these evaluations may lead to skipping of more important stepping events,
         // see IDEA-336282.
-        boolean filterWasUsed = false;
-        boolean shouldIgnoreThreadFiltering = requestor == null || !requestor.shouldIgnoreThreadFiltering();
-        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine() && shouldIgnoreThreadFiltering) {
+        boolean useThreadFiltering = requestor == null || !requestor.shouldIgnoreThreadFiltering();
+        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine() && useThreadFiltering) {
           LightOrRealThreadInfo filter = getRequestsManager().getFilterThread();
           if (filter != null) {
             if (myPreparingToSuspendAll || !filter.checkSameThread(thread, suspendContext)) {
@@ -658,7 +660,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
               suspendManager.voteResume(suspendContext);
               return;
             }
-            filterWasUsed = true;
           }
         }
 
@@ -748,15 +749,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
           //  // As resume() implicitly cleares the filter, the filter must be always applied _before_ any resume() action happens
           //  myBreakpointManager.applyThreadFilter(DebugProcessEvents.this, event.thread());
           //}
-          Function<SuspendContextImpl, Boolean> performOnSuspendAll = requestor.callbackAfterReplacementForAllThreadSuspendContext();
-          if (filterWasUsed && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && performOnSuspendAll != null) {
-            // Do not vote to resume.
-            // Instead, create an auxiliary request to correctly stop all threads as soon as possible.
-            // [SuspendOtherThreadsRequestor] will resume this suspendContext when the request hits.
-            // Resume will be without voting.
-            SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(DebugProcessEvents.this, suspendContext, performOnSuspendAll);
-          }
-          else {
+          boolean noStandardSuspendNeeded = requestor instanceof CustomProcessingLocatableEventRequestor customRequestor &&
+                                            customRequestor.customVoteSuspend(suspendContext);
+          if (!noStandardSuspendNeeded) {
             suspendManager.voteSuspend(suspendContext);
             showStatusText(DebugProcessEvents.this, event);
           }

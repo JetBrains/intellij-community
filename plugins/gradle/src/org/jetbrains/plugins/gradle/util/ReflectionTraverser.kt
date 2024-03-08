@@ -12,10 +12,13 @@ class ReflectionTraverser : Closeable {
 
   private val visited = IdentityHashMap<Any, Any?>()
   private val classCache = HashMap<Class<*>, ClassInfo>()
-  fun walk(root: Any,
-           classesToSkip: Collection<Class<*>> = emptyList(),
-           classesToSkipChildren: Collection<Class<*>> = emptyList(),
-           consumer: Consumer<Any>) {
+
+  fun walk(
+    root: Any,
+    classesToSkip: Collection<Class<*>> = emptyList(),
+    classesToSkipChildren: Collection<Class<*>> = emptyList(),
+    consumer: Consumer<Any>
+  ) {
     for (classToSkip in classesToSkip) {
       classCache[classToSkip] = skipClass
     }
@@ -106,9 +109,15 @@ class ReflectionTraverser : Closeable {
     private val skipClass = ClassInfo(emptyList())
     private val skipChildrenClass = ClassInfo(emptyList())
 
-    @JvmStatic
-    fun traverse(o: Any, consumer: Consumer<Any>) {
-      ReflectionTraverser().use { it.walk(o, emptyList(), emptyList(), consumer) }
+    fun traverse(
+      root: Any,
+      classesToSkip: Collection<Class<*>> = emptyList(),
+      classesToSkipChildren: Collection<Class<*>> = emptyList(),
+      consumer: Consumer<Any>
+    ) {
+      ReflectionTraverser().use {
+        it.walk(root, classesToSkip, classesToSkipChildren, consumer)
+      }
     }
 
     private fun walkCollection(stack: Deque<Any>, col: Collection<Any?>) {

@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.ui.representation.ideVersion.sec
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.startup.importSettings.models.*
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.MacKeymapUtil

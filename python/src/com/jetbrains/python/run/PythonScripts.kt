@@ -22,11 +22,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.python.HelperPackage
-import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.run.target.PathMapping
+import com.jetbrains.python.run.target.tryResolveAsPythonHelperDir
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -91,11 +92,11 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
 
 data class Upload(val localPath: String, val targetPath: TargetEnvironmentFunction<String>)
 
-private fun resolveUploadPath(localPath: String, uploads: Iterable<Upload>): TargetEnvironmentFunction<String> {
+private fun resolveUploadPath(localPath: String, uploads: List<PathMapping>): TargetEnvironmentFunction<String> {
   val localFileSeparator = Platform.current().fileSeparator
   val matchUploads = uploads.mapNotNull { upload ->
-    if (FileUtil.isAncestor(upload.localPath, localPath, false)) {
-      FileUtil.getRelativePath(upload.localPath, localPath, localFileSeparator)?.let { upload to it }
+    if (FileUtil.isAncestor(upload.localPath.toString(), localPath, false)) {
+      FileUtil.getRelativePath(upload.localPath.toString(), localPath, localFileSeparator)?.let { upload to it }
     }
     else {
       null
@@ -106,7 +107,7 @@ private fun resolveUploadPath(localPath: String, uploads: Iterable<Upload>): Tar
   }
   val (upload, localRelativePath) = matchUploads.firstOrNull()
                                     ?: throw IllegalStateException("Failed to find uploads for the local path '$localPath'")
-  return upload.targetPath.getRelativeTargetPath(localRelativePath)
+  return upload.targetPathFun.getRelativeTargetPath(localRelativePath)
 }
 
 fun prepareHelperScriptExecution(helperPackage: HelperPackage,
@@ -122,26 +123,51 @@ private const val PYTHONPATH_ENV = "PYTHONPATH"
  * Requests the upload of PyCharm helpers root directory to the target.
  */
 fun PythonExecution.applyHelperPackageToPythonPath(helperPackage: HelperPackage,
-                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
+                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): List<PathMapping> {
   return applyHelperPackageToPythonPath(helperPackage.pythonPathEntries, helpersAwareTargetRequest)
 }
 
 fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<String>,
-                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
-  val localHelpersRootPath = PythonHelpersLocator.getHelpersRoot().absolutePath
+                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): List<PathMapping> {
+  return addHelperEntriesToPythonPath(envs, pythonPathEntries, helpersAwareTargetRequest)
+}
+
+/**
+ * @param envs the environment variables to be modified
+ * @param pythonPathEntries the paths located either in PyCharm Community or in PyCharm Professional helpers directories
+ * @param helpersAwareTargetRequest the request
+ * @param failOnError specifies whether the method should fail if one of [pythonPathEntries] is not located within PyCharm helpers dirs
+ *
+ * **Note.** This method assumes that PyCharm Community and PyCharm Professional helpers are uploaded to the same root path on the target.
+ * This assumption comes from [HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers] method that returns the single path value.
+ */
+fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
+                                 pythonPathEntries: List<String>,
+                                 helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+                                 failOnError: Boolean = true): List<PathMapping> {
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
-  val targetUploadPath = helpersAwareTargetRequest.preparePyCharmHelpers()
+  val pythonHelpersMappings = helpersAwareTargetRequest.preparePyCharmHelpers()
+  val pythonHelpersRoots =
+    listOfNotNull(
+      pythonHelpersMappings.communityHelpers,
+      pythonHelpersMappings.proHelpers
+    )
+      .map(PathMapping::localPath)
   val targetPathSeparator = targetPlatform.platform.pathSeparator
-  val uploads = pythonPathEntries.map {
-    // TODO [Targets API] Simplify the paths resolution
-    val relativePath = FileUtil.getRelativePath(localHelpersRootPath, it, Platform.current().fileSeparator)
-                       ?: throw IllegalStateException("Helpers PYTHONPATH entry '$it' cannot be resolved" +
-                                                      " against the root path of PyCharm helpers '$localHelpersRootPath'")
-    Upload(it, targetUploadPath.getRelativeTargetPath(relativePath))
+
+  fun <T> T?.onResolutionFailure(message: String): T? =
+    this ?: if (failOnError) error(message)
+    // log the error and skip this entry
+    else also { LOG.error(message) }
+
+  val uploads = pythonPathEntries.mapNotNull { pythonPathEntry ->
+    pythonPathEntry
+      .tryResolveAsPythonHelperDir(pythonHelpersMappings)
+      .onResolutionFailure(message = "$pythonPathEntry cannot be resolved against Python helpers roots: ${pythonHelpersRoots}")
   }
-  val pythonPathEntriesOnTarget = uploads.map { it.targetPath }
+  val pythonPathEntriesOnTarget = uploads.map { it.targetPathFun }
   val pythonPathValue = pythonPathEntriesOnTarget.joinToStringFunction(separator = targetPathSeparator.toString())
-  appendToPythonPath(pythonPathValue, targetPlatform)
+  appendToPythonPath(envs, pythonPathValue, targetPlatform)
   return uploads
 }
 

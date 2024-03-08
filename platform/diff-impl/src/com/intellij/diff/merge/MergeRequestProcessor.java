@@ -50,8 +50,6 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
-
 // TODO: support merge request chains
 // idea - to keep in memory all viewers that were modified (so binary conflict is not the case and OOM shouldn't be too often)
 // suspend() / resume() methods for viewers? To not interfere with MergeRequest lifecycle: single request -> single viewer -> single applyResult()
@@ -261,10 +259,10 @@ public abstract class MergeRequestProcessor implements Disposable {
     toolbar.setShowSeparatorTitles(true);
 
     DataManager.registerDataProvider(toolbar.getComponent(), myMainPanel);
-    toolbar.setTargetComponent(toolbar.getComponent());
+    toolbar.setTargetComponent(myMainPanel);
 
     myToolbarPanel.setContent(toolbar.getComponent());
-    recursiveRegisterShortcutSet(group, myMainPanel, null);
+    DiffUtil.keepToolbarActionsPromoted(toolbar);
   }
 
   @NotNull

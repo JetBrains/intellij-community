@@ -6,14 +6,12 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.util.io.computeDetached
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import java.io.InputStream
-import java.io.OutputStream
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -28,25 +26,10 @@ interface IjentSessionProvider {
    * [ijentCoroutineScope] must be the scope generated inside [IjentSessionRegistry.register]
    */
   suspend fun connect(
-    ijentCoroutineScope: CoroutineScope,
     ijentId: IjentId,
     platform: IjentExecFileProvider.SupportedPlatform,
-    inputStream: InputStream,
-    outputStream: OutputStream,
+    mediator: IjentSessionMediator
   ): IjentApi
-
-  /**
-   * See also [doBootstrapOverShellSession].
-   */
-  suspend fun connect(
-    ijentCoroutineScope: CoroutineScope,
-    ijentId: IjentId,
-    platform: IjentExecFileProvider.SupportedPlatform,
-    watcher: IjentProcessWatcher,
-  ): IjentApi {
-    watcher.expectedErrorCode = IjentProcessWatcher.ExpectedErrorCode.ZERO
-    return connect(ijentCoroutineScope, ijentId, platform, watcher.process.inputStream, watcher.process.outputStream)
-  }
 
   companion object {
     suspend fun instanceAsync(): IjentSessionProvider = serviceAsync()
@@ -54,13 +37,7 @@ interface IjentSessionProvider {
 }
 
 internal class DefaultIjentSessionProvider : IjentSessionProvider {
-  override suspend fun connect(
-    ijentCoroutineScope: CoroutineScope,
-    ijentId: IjentId,
-    platform: IjentExecFileProvider.SupportedPlatform,
-    inputStream: InputStream,
-    outputStream: OutputStream,
-  ): IjentApi {
+  override suspend fun connect(ijentId: IjentId, platform: IjentExecFileProvider.SupportedPlatform, mediator: IjentSessionMediator): IjentApi {
     throw UnsupportedOperationException()
   }
 }
@@ -80,9 +57,10 @@ fun IjentApi.bindToScope(coroutineScope: CoroutineScope) {
  * [bindToScope] may be useful for terminating the IJent process earlier.
  */
 suspend fun connectToRunningIjent(ijentName: String, platform: IjentExecFileProvider.SupportedPlatform, process: Process): IjentApi =
-  IjentSessionRegistry.instanceAsync().register(ijentName) { ijentCoroutineScope, ijentId ->
-    val watcher = IjentProcessWatcher.launch(ijentCoroutineScope, process, ijentId)
-    IjentSessionProvider.instanceAsync().connect(ijentCoroutineScope, ijentId, platform, watcher)
+  IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
+    val mediator = IjentSessionMediator.create(process, ijentId)
+    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
+    IjentSessionProvider.instanceAsync().connect(ijentId, platform, mediator)
   }
 
 /**
@@ -112,13 +90,13 @@ suspend fun connectToRunningIjent(ijentName: String, platform: IjentExecFileProv
 // TODO Change string paths to IjentPath.Absolute.
 suspend fun bootstrapOverShellSession(ijentName: String, shellProcess: Process): Pair<String, IjentApi> {
   val remoteIjentPath: String
-  val ijentApi = IjentSessionRegistry.instanceAsync().register(ijentName) { ijentCoroutineScope, ijentId ->
-    val processWatcher = IjentProcessWatcher.launch(ijentCoroutineScope, shellProcess, ijentId)
+  val ijentApi = IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
+    val mediator = IjentSessionMediator.create(shellProcess, ijentId)
 
     val (path, targetPlatform) =
       try {
-        processWatcher.attachStderrOnError {
-          processWatcher.expectedErrorCode = IjentProcessWatcher.ExpectedErrorCode.ANY
+        mediator.attachStderrOnError {
+          mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ANY
           doBootstrapOverShellSession(shellProcess)
         }
       }
@@ -126,16 +104,14 @@ suspend fun bootstrapOverShellSession(ijentName: String, shellProcess: Process):
         runCatching { shellProcess.destroyForcibly() }.exceptionOrNull()?.let(err::addSuppressed)
         throw err
       }
-    processWatcher.expectedErrorCode = IjentProcessWatcher.ExpectedErrorCode.ZERO
+    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
     remoteIjentPath = path
 
     try {
       IjentSessionProvider.instanceAsync().connect(
-        ijentCoroutineScope,
-        ijentId,
-        targetPlatform,
-        shellProcess.inputStream,
-        shellProcess.outputStream,
+        ijentId = ijentId,
+        platform = targetPlatform,
+        mediator = mediator
       )
     }
     catch (err: Throwable) {
@@ -209,7 +185,8 @@ private suspend fun doBootstrapOverShellSession(
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true).joinToString(" ")
   val commandLineArgs =
     """cd ${posixQuote(remotePathToBinary.substringBeforeLast('/'))}""" +
-    """; exec "$(getent passwd "${'$'}(whoami)" | cut -d: -f7)" -c ${posixQuote(joinedCmd)}""" +
+    """; export SHELL="${'$'}(getent passwd "${'$'}(whoami)" | cut -d: -f7)" """ +
+    """; exec "${'$'}SHELL" -c ${posixQuote(joinedCmd)}""" +
     "\n"
   LOG.trace { "Executing IJent inside a shell: ${commandLineArgs.trimEnd()}" }
 
@@ -220,22 +197,18 @@ private suspend fun doBootstrapOverShellSession(
 }
 
 /** The same stdin and stdout will be used for transferring binary data. Some buffering wrapper may occasionally consume too much data. */
+@OptIn(DelicateCoroutinesApi::class)
 private suspend fun readLineWithoutBuffering(process: Process): String =
-  withContext(Dispatchers.IO) {
+  computeDetached {
     val buffer = StringBuilder()
     val stream = process.inputStream
-    while (process.isAlive) {
-      val available = stream.available()
-      if (available > 0) {
-        val c = stream.read()
-        if (c < 0 || c == '\n'.code) {
-          break
-        }
-        buffer.append(c.toChar())
+    while (true) {
+      ensureActive()
+      val c = stream.read()
+      if (c < 0 || c == '\n'.code) {
+        break
       }
-      else {
-        delay(50.milliseconds) // Just a random timeout, which was chosen without any research.
-      }
+      buffer.append(c.toChar())
     }
     LOG.trace { "Read line from stdout: $buffer" }
     buffer.toString()

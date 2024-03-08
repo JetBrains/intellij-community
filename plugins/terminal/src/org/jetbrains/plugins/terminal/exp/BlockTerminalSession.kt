@@ -37,9 +37,6 @@ class BlockTerminalSession(settings: JBTerminalSystemSettingsProviderBase,
 
   init {
     val styleState = StyleState()
-    val defaultStyle = TextStyle(TerminalColor { colorPalette.defaultForeground },
-                                 TerminalColor { colorPalette.defaultBackground })
-    styleState.setDefaultStyle(defaultStyle)
     textBuffer = TerminalTextBuffer(80, 24, styleState, AdvancedSettings.getInt("terminal.buffer.max.lines.count"), null)
     model = TerminalModel(textBuffer)
     val alarmManager = TerminalAlarmManager(settings)

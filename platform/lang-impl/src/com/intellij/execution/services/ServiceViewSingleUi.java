@@ -61,6 +61,10 @@ final class ServiceViewSingleUi implements ServiceViewUi {
   }
 
   @Override
+  public void setDetailsComponentVisible(boolean visible) {
+  }
+
+  @Override
   public void setNavBar(@NotNull JComponent component) {
   }
 
@@ -78,6 +82,10 @@ final class ServiceViewSingleUi implements ServiceViewUi {
   public JComponent getDetailsComponent() {
     JComponent content = myMainPanel.getContent();
     return content == myMessagePanel ? null : content;
+  }
+
+  @Override
+  public void setSplitOrientation(boolean verticalSplit) {
   }
 
   private static boolean isHorizontal() {

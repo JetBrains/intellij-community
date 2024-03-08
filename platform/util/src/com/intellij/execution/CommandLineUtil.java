@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ public final class CommandLineUtil {
   private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
-  private static final String SHELL_WHITELIST_CHARACTERS = "$:-._/@=";
+  private static final String SHELL_WHITELIST_CHARACTERS = "-._/@=";
 
   private static final char Q = '\"';
   private static final String QQ = "\"\"";
@@ -500,10 +501,17 @@ public final class CommandLineUtil {
    * replacing single quotes with hardly readable but recursion-safe {@code '"'"'}.
    */
   public static @NotNull String posixQuote(@NotNull String argument) {
-    return shouldWrapWithQuotes(argument) ? "'" + StringUtil.replace(argument, "'", "'\"'\"'") + "'" : argument;
+    return posixQuote(argument, "");
   }
 
-  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument) {
+  @ApiStatus.Internal
+  public static @NotNull String posixQuote(@NotNull String argument, @NotNull String extraWhiteListCharacters) {
+    return shouldWrapWithQuotes(argument, extraWhiteListCharacters) ?
+           "'" + StringUtil.replace(argument, "'", "'\"'\"'") + "'" :
+           argument;
+  }
+
+  private static boolean shouldWrapWithQuotes(@NotNull CharSequence argument, @NotNull String extraWhiteListCharacters) {
     if (argument.length() == 0) {
       return true;
     }
@@ -511,7 +519,8 @@ public final class CommandLineUtil {
       char c = argument.charAt(i);
       if (!Character.isAlphabetic(c) &&
           !Character.isDigit(c) &&
-          !StringUtil.containsChar(SHELL_WHITELIST_CHARACTERS, c)) {
+          !StringUtil.containsChar(SHELL_WHITELIST_CHARACTERS, c) &&
+          !StringUtil.containsChar(extraWhiteListCharacters, c)) {
         return true;
       }
     }

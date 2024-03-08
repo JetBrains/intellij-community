@@ -98,13 +98,7 @@ internal class ApplicationInfoPropertiesImpl(
     this.majorReleaseDate = run {
       val majorReleaseDate = (System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_MAJOR_RELEASE_DATE)
                              ?: applicationInfoOverrides?.majorReleaseDate
-                             ?: buildTag.getAttributeValue("majorReleaseDate"))?.let {
-                               if (it == "") {
-                                return@let null
-                               } else {
-                                 return@let it
-                               }
-                             }
+                             ?: buildTag.getAttributeValue("majorReleaseDate"))?.takeIf { it.isNotEmpty() }
       when {
         isEAP -> {
           val buildDate = Instant.ofEpochSecond(buildOptions.buildDateInSeconds)

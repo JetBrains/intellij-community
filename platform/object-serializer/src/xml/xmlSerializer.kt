@@ -1,5 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PackageDirectoryMismatch", "ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:OptIn(SettingsInternalApi::class)
+
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
@@ -7,7 +9,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
-import com.intellij.serialization.xml.KotlinxSerializationBinding
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.*
 import com.intellij.util.xmlb.XmlSerializerImpl.createClassBinding
@@ -81,7 +82,7 @@ private class JdomSerializerImpl : JdomSerializer {
     }
 
     val beanBinding = serializer.getRootBinding(obj.javaClass) as KotlinAwareBeanBinding
-    beanBinding.serializeProperties(obj, target, filter ?: getDefaultSerializationFilter())
+    beanBinding.serializeProperties(bean = obj, preCreatedElement = target, filter = filter ?: doGetDefaultSerializationFilter())
   }
 
   override fun <T, E : Any> deserialize(element: E, clazz: Class<T>, adapter: DomAdapter<E>): T {
@@ -137,7 +138,12 @@ private class JdomSerializerImpl : JdomSerializer {
 
 fun deserializeBaseStateWithCustomNameFilter(state: BaseState, excludedPropertyNames: Collection<String>): Element? {
   val binding = serializer.getRootBinding(state.javaClass) as KotlinAwareBeanBinding
-  return binding.serializeBaseStateInto(state, null, doGetDefaultSerializationFilter(), excludedPropertyNames)
+  return binding.serializeBaseStateInto(
+    bean = state,
+    _element = null,
+    filter = doGetDefaultSerializationFilter(),
+    excludedPropertyNames = excludedPropertyNames,
+  )
 }
 
 private val serializer = object : Serializer {
@@ -188,7 +194,6 @@ private val serializer = object : Serializer {
     }
   }
 }
-
 
 @Suppress("FunctionName")
 @Internal

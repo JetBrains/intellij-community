@@ -15,6 +15,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
+import kotlin.coroutines.Continuation;
+import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +26,15 @@ import javax.swing.*;
 
 /**
  * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link ProgressIndicator} notice.
  * Use one of the following functions to run tasks:
  * <ul>
  *   <li>{@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress}</li>
  *   <li>{@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}</li>
  *   <li>{@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}</li>
  * </ul>
+ * </p>
  *
  * Intended to run tasks, both modal and non-modal (backgroundable).
  * Example of use:
@@ -203,7 +208,11 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressIndicator} notice.
+   * Use {@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress}.
+   * </p>
    */
   @Obsolete
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
@@ -257,8 +266,14 @@ public abstract class Task implements TaskInfo, Progressive {
  }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#withModalProgress
-   * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressIndicator} notice.
+   * <ul>
+   * <li>Use {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress},</li>
+   * <li>or {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}.</li>
+   * </ul>
+   * </p>
    */
   @Obsolete
   public abstract static class Modal extends Task {
@@ -278,9 +293,15 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
-   * @see com.intellij.openapi.progress.TasksKt#withModalProgress
-   * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressIndicator} notice.
+   * <ul>
+   * <li>Use {@link com.intellij.platform.ide.progress.TasksKt#withBackgroundProgress},</li>
+   * <li>{@link com.intellij.platform.ide.progress.TasksKt#withModalProgress},</li>
+   * <li>or {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}.</li>
+   * </ul>
+   * </p>
    */
   @Obsolete
   public abstract static class ConditionalModal extends Backgroundable {
@@ -345,7 +366,14 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   /**
-   * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * See {@link ProgressIndicator} notice.
+   * <ul>
+   * <li>Use {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking},</li>
+   * <li>or {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}.</li>
+   * </ul>
+   * </p>
    */
   @Obsolete
   public abstract static class WithResult<T, E extends Exception> extends Task.Modal {

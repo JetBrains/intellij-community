@@ -12,11 +12,14 @@ import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.impl.RW;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * A set of data needed to create a kotlin.Metadata annotation instance parsed from bytecode.
@@ -148,6 +151,11 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return container != null? container.getFunctions() : Collections.emptyList();
   }
 
+  public Iterable<KmTypeParameter> getTypeParameters() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? ((KmClass)container).getTypeParameters() : Collections.emptyList();
+  }
+
   @Nullable
   public KmDeclarationContainer getDeclarationContainer() {
     KotlinClassMetadata clsMeta = getClassMetadata();
@@ -166,14 +174,30 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
   public final class Diff implements Difference {
 
     private final KotlinMeta myPast;
+    private final Supplier<Specifier<KmFunction, KmFunctionsDiff>> myFunctionsDiff;
+    private final Supplier<Specifier<KmProperty, KmPropertiesDiff>> myPropertiesDiff;
 
     Diff(KotlinMeta past) {
       myPast = past;
+
+      myFunctionsDiff = Utils.lazyValue(() -> Difference.deepDiff(
+        myPast.getKmFunctions(), getKmFunctions(),
+        (f1, f2) -> Objects.equals(JvmExtensionsKt.getSignature(f1),JvmExtensionsKt.getSignature(f2)),
+        f -> Objects.hashCode(JvmExtensionsKt.getSignature(f)),
+        KmFunctionsDiff::new
+      ));
+
+      myPropertiesDiff = Utils.lazyValue(() -> Difference.deepDiff(
+        myPast.getKmProperties(), getKmProperties(),
+        (p1, p2) -> Objects.equals(p1.getName(), p2.getName()),
+        p -> Objects.hashCode(p.getName()),
+        KmPropertiesDiff::new
+      ));
     }
 
     @Override
     public boolean unchanged() {
-      return !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !functions().unchanged() && !properties().unchanged()/*&& !dataChanged()*/;
+      return !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && functions().unchanged() && properties().unchanged()/*&& !dataChanged()*/;
     }
 
     public boolean kindChanged() {
@@ -196,20 +220,16 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return myPast.myExtraInt != myExtraInt || !Objects.equals(myPast.myExtraString, myExtraString);
     }
 
+    public boolean typeParametersVarianceChanged() {
+      return !Iterators.equals(myPast.getTypeParameters(), getTypeParameters(), (p1, p2) -> p1.getVariance() == p2.getVariance());
+    }
+
     public Specifier<KmFunction, KmFunctionsDiff> functions() {
-      return Difference.deepDiff(myPast.getKmFunctions(), getKmFunctions(),
-        (f1, f2) -> Objects.equals(JvmExtensionsKt.getSignature(f1), JvmExtensionsKt.getSignature(f2)),
-        f -> Objects.hashCode(JvmExtensionsKt.getSignature(f)),
-        KmFunctionsDiff::new
-      );
+      return myFunctionsDiff.get();
     }
 
     public Specifier<KmProperty, KmPropertiesDiff> properties() {
-      return Difference.deepDiff(myPast.getKmProperties(), getKmProperties(),
-        (p1, p2) -> Objects.equals(p1.getName(), p2.getName()),
-        p -> Objects.hashCode(p.getName()),
-        KmPropertiesDiff::new
-      );
+      return myPropertiesDiff.get();
     }
   }
 
@@ -224,7 +244,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !becameNullable() && !argsBecameNotNull();
+      return !becameNullable() && !argsBecameNotNull() && !receiverParameterChanged();
     }
 
     public boolean becameNullable() {
@@ -232,14 +252,35 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean argsBecameNotNull() {
-      var nowIt = now.getValueParameters().iterator();
-      for (KmValueParameter pastParam : past.getValueParameters()) {
-        KmValueParameter nowParam = nowIt.next();
-        if (Attributes.isNullable(pastParam.getType()) && !Attributes.isNullable(nowParam.getType())) {
+      var nowIt = getParameterTypes(now).iterator();
+      for (KmType pastParam : getParameterTypes(past)) {
+        if (!nowIt.hasNext()) {
+          // should not happen normally if getParameterTypes correctly collects all KmFunction properties that make up a jvm signature.
+          // This check make code resistant to possible future changes in kotlinc
+          break;
+        }
+        KmType nowParam = nowIt.next();
+        if (Attributes.isNullable(pastParam) && !Attributes.isNullable(nowParam)) {
           return true;
         }
       }
       return false;
+    }
+
+    public boolean receiverParameterChanged() {
+      // for example 'fun foo(param: Bar): Any'  => 'fun Bar.foo(): Any'
+      // both declarations will have the same JvmSignature in bytecode so functions will be considered the same by this criterion
+      KmType pastType = past.getReceiverParameterType();
+      KmType nowType = now.getReceiverParameterType();
+      if (pastType == null) {
+        return nowType != null;
+      }
+      return nowType == null || !Objects.equals(pastType.getClassifier(), nowType.getClassifier());
+    }
+
+    private static Iterable<KmType> getParameterTypes(KmFunction f) {
+      // return all types that can make up a jvm signature
+      return Iterators.filter(Iterators.flat(List.of(f.getContextReceiverTypes(), Iterators.asIterable(f.getReceiverParameterType()), Iterators.map(f.getValueParameters(), KmValueParameter::getType))), Objects::nonNull);
     }
   }
 
@@ -270,4 +311,5 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
   }
+
 }

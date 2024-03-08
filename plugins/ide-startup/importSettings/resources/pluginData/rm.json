@@ -16,13 +16,13 @@
   },
   {
     "vsCodeId": "aki77.rails-routes",
-    "ideaName": "Rails Routes",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "aliariff.vscode-erb-beautify",
-    "ideaName": "ERB support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "bajdzis.vscode-database",
@@ -31,28 +31,33 @@
   },
   {
     "vsCodeId": "bung87.rails",
-    "ideaName": "Rails support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "bung87.vscode-gemfile",
-    "ideaName": "Gemfile support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
+  },
+  {
+    "vsCodeId": "bungcip.better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
   },
   {
     "vsCodeId": "castwide.solargraph",
-    "ideaName": "Ruby support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "connorshea.vscode-ruby-test-adapter",
-    "ideaName": "Ruby Test Runner",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "CraigMaslowski.erb",
-    "ideaName": "ERB support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "cweijan.vscode-mysql-client2",
@@ -78,6 +83,11 @@
     "vsCodeId": "ecmel.vscode-html-css",
     "ideaName": "HTML CSS Support",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "EditorConfig.EditorConfig",
+    "ideaName": "EditorConfig",
+    "ideaId": "org.editorconfig.editorconfigjetbrains"
   },
   {
     "vsCodeId": "emilast.LogFileHighlighter",
@@ -116,8 +126,8 @@
   },
   {
     "vsCodeId": "GitLab.gitlab-workflow",
-    "ideaName": "GitLab Workflow",
-    "builtIn": true
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql",
@@ -136,23 +146,28 @@
   },
   {
     "vsCodeId": "kaiwood.endwise",
-    "ideaName": "Ruby support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "karunamurti.haml",
-    "ideaName": "HAML support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "KoichiSasada.vscode-rdbg",
-    "ideaName": "Ruby Debugger",
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
+  },
+  {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
     "builtIn": true
   },
   {
     "vsCodeId": "misogi.ruby-rubocop",
-    "ideaName": "Rubocop support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "mongodb.mongodb-vscode",
@@ -175,6 +190,16 @@
     "ideaId": "com.intellij.ja"
   },
   {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
+    "ideaName": "Korean Language Pack / 한국어 언어 팩",
+    "ideaId": "com.intellij.ko"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
+    "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
+    "ideaId": "com.intellij.zh"
+  },
+  {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
     "ideaName": "Kubernetes",
     "ideaId": "com.intellij.kubernetes"
@@ -190,6 +215,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-vscode.node-debug2",
+    "ideaName": "Node.js",
+    "ideaId": "NodeJS"
+  },
+  {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
     "ideaName": "Code With Me",
     "ideaId": "com.jetbrains.codeWithMe"
@@ -201,8 +231,8 @@
   },
   {
     "vsCodeId": "noku.rails-run-spec-vscode",
-    "ideaName": "RSpec support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "pranaygp.vscode-css-peek",
@@ -216,23 +246,23 @@
   },
   {
     "vsCodeId": "Shopify.ruby-lsp",
-    "ideaName": "Ruby support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "Shopify.theme-check-vscode",
-    "ideaName": "Liquid support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "sianglim.slim",
-    "ideaName": "Slim support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "sorbet.sorbet-vscode-extension",
-    "ideaName": "Ruby Sorbet support",
-    "builtIn": true
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "streetsidesoftware.code-spell-checker",
@@ -247,6 +277,16 @@
   {
     "vsCodeId": "techer.open-in-browser",
     "ideaName": "Open in browser",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
     "builtIn": true
   },
   {

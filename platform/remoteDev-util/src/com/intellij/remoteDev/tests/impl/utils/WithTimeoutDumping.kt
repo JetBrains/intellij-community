@@ -1,13 +1,8 @@
 package com.intellij.remoteDev.tests.impl
 
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeoutException
 import kotlin.coroutines.coroutineContext
@@ -15,6 +10,9 @@ import kotlin.time.Duration
 
 @ApiStatus.Internal
 val coroutineDumpPrefix = "CoroutineDump:"
+
+@ApiStatus.Internal
+val threadsDumpPrefix = "ThreadsDump:"
 
 @ApiStatus.Internal
 suspend fun <T> withTimeoutDumping(title: String,
@@ -25,12 +23,13 @@ suspend fun <T> withTimeoutDumping(title: String,
 
   val deferred = outerScope.async { action() }
   coroutineScope {
-    launch {
+    launch(Dispatchers.IO) {
       try {
         withTimeout(timeout) { deferred.await() }
       }
       catch (e: TimeoutCancellationException) {
         val coroutinesDump = dumpCoroutines(outerScope)
+        val threadsDump = ThreadDumper.dumpThreadsToString()
         deferred.cancel(e)
         throw TimeoutException(buildString {
           append("$title: Has not finished in $timeout.\n")
@@ -41,6 +40,8 @@ suspend fun <T> withTimeoutDumping(title: String,
           append("------------\n")
           append("$coroutineDumpPrefix\n")
           append("$coroutinesDump\n")
+          append("$threadsDumpPrefix\n")
+          append("$threadsDump\n")
           append("------------")
         })
       }

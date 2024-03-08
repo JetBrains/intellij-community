@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -41,16 +40,15 @@ import static com.intellij.codeInspection.options.OptPane.*;
 public final class StringConcatenationArgumentToLogCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NonNls
-  private static final Set<String> logNames = new HashSet<>();
-  static {
-    logNames.add("trace");
-    logNames.add("debug");
-    logNames.add("info");
-    logNames.add("warn");
-    logNames.add("error");
-    logNames.add("fatal");
-    logNames.add("log");
-  }
+  private static final Set<String> logNames = Set.of(
+    "trace",
+    "debug",
+    "info",
+    "warn",
+    "error",
+    "fatal",
+    "log"
+  );
   @SuppressWarnings("PublicField") public int warnLevel = 0;
 
   @Override
@@ -64,8 +62,8 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     };
     return pane(
       dropdown("warnLevel", InspectionGadgetsBundle.message("warn.on.label"),
-                       EntryStream.of(options).mapKeyValue((idx, name) -> option(String.valueOf(idx), name))
-                         .toArray(OptDropdown.Option.class))
+               EntryStream.of(options).mapKeyValue((idx, name) -> option(String.valueOf(idx), name))
+                 .toArray(OptDropdown.Option.class))
     );
   }
 
@@ -98,7 +96,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
 
   private static class StringConcatenationArgumentToLogCallFix extends PsiUpdateModCommandQuickFix {
 
-    StringConcatenationArgumentToLogCallFix() {}
+    StringConcatenationArgumentToLogCallFix() { }
 
     @NotNull
     @Override
@@ -290,10 +288,14 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
         return;
       }
       switch (warnLevel) {
-        case 4: if ("debug".equals(referenceName)) return;
-        case 3: if ("info".equals(referenceName)) return;
-        case 2: if ("warn".equals(referenceName)) return;
-        case 1: if ("error".equals(referenceName) || "fatal".equals(referenceName)) return;
+        case 4:
+          if ("debug".equals(referenceName)) return;
+        case 3:
+          if ("info".equals(referenceName)) return;
+        case 2:
+          if ("warn".equals(referenceName)) return;
+        case 1:
+          if ("error".equals(referenceName) || "fatal".equals(referenceName)) return;
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {

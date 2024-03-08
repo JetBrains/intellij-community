@@ -13,6 +13,6 @@ internal class KotlinWhilePostfixTemplate : StringBasedPostfixTemplate {
         /* provider = */ provider
     )
 
-    override fun getTemplateString(element: PsiElement) = "while(\$expr$) {\n\$END$\n}"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "while(\$expr$) {\n\$END$\n}"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }

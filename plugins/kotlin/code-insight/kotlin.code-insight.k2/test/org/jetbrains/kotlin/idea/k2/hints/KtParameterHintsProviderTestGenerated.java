@@ -33,6 +33,11 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/javaParameters.kt");
     }
 
+    @TestMetadata("namedParameters.kt")
+    public void testNamedParameters() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/namedParameters.kt");
+    }
+
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/simple.kt");

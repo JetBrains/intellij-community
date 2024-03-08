@@ -18,9 +18,9 @@ import org.jetbrains.annotations.ApiStatus
   """
     Old format for ML model and analytical features.
     Please make sure the feature you have added is also present in
-    org.jetbrains.completion.full.line.mlApi.description.InlineContextFeatures
+    org.jetbrains.completion.full.line.mlApi.description.ContextFeatures
     """,
-  replaceWith = ReplaceWith("org.jetbrains.completion.full.line.mlApi.description.InlineContextFeatures")
+  replaceWith = ReplaceWith("org.jetbrains.completion.full.line.platform.mlApi.description.ContextFeatures")
 )
 object InlineContextFeatures {
 
@@ -105,12 +105,16 @@ object InlineContextFeatures {
       .forEach { (i, element) -> add(PARENT_FEATURES[i].with(element.javaClass)) }
   }
 
+  /**
+   * Make sure you have updated [com.intellij.codeInsight.inline.completion.ml.TypingFeatures], when added new features here
+   */
+  @Deprecated("Obsolete way to compute typing features, the new ml api should do that")
   private fun MutableList<EventPair<*>>.addTypingFeatures() {
     val typingSpeedTracker = TypingSpeedTracker.getInstance()
     val timeSinceLastTyping = typingSpeedTracker.getTimeSinceLastTyping()
     if (timeSinceLastTyping != null) {
       add(TIME_SINCE_LAST_TYPING.with(timeSinceLastTyping))
-      addAll(typingSpeedTracker.getTypingSpeedEventPairs())
+      addAll(typingSpeedTracker.getTypingSpeedEventPairs().map { it.first })
     }
   }
 

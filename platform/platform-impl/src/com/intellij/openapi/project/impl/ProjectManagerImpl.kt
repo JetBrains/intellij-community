@@ -77,6 +77,7 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils.isDataSpell
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
@@ -582,20 +583,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     val continueOpen = span("checkChildProcess") {
-      if (ApplicationManagerEx.isInIntegrationTest()) {
-        // write current PID to file to kill the process if it hangs
-        if (IS_CHILD_PROCESS) {
-          val pid = ProcessHandle.current().pid()
-
-          @Suppress("SpellCheckingInspection")
-          val file = PathManager.getSystemDir().resolve("pids.txt")
-          withContext(Dispatchers.IO) {
-            Files.writeString(file, pid.toString())
-          }
-        }
-      }
-
-      !checkChildProcess(projectStoreBaseDir)
+      !checkChildProcess(projectStoreBaseDir, options)
     }
     if (!continueOpen) {
       return null
@@ -907,10 +895,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
 
-  private suspend fun checkExistingProjectOnOpen(projectToClose: Project, options: OpenProjectTask, projectDir: Path?): Boolean {
-    val isValidProject = projectDir != null && ProjectUtilCore.isValidProjectPath(projectDir)
-    if (projectDir != null && ProjectAttachProcessor.canAttachToProject() && !isDataSpell() &&
-        (!isValidProject || GeneralSettings.getInstance().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
+  private suspend fun checkExistingProjectOnOpen(projectToClose: Project, options: OpenProjectTask, projectDir: Path): Boolean {
+    val isValidProject = ProjectUtilCore.isValidProjectPath(projectDir)
+    if (ProjectAttachProcessor.canAttachToProject() && !isDataSpell() && (!isValidProject || GeneralSettings.getInstance().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
       when (withContext(Dispatchers.EDT) { ProjectUtil.confirmOpenOrAttachProject() }) {
         -1 -> {
           return true
@@ -929,19 +916,39 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     else {
       val mode = GeneralSettings.getInstance().confirmOpenNewProject
-      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH && projectDir != null &&
-          attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, callback = options.callback)) {
+      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH && attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, callback = options.callback)) {
         return true
       }
 
+      val perProcessSupport = p3Support()
       val projectNameValue = options.projectName ?: projectDir?.fileName?.toString() ?: projectDir?.toString()
       val exitCode = confirmOpenNewProject(options.copy(projectName = projectNameValue))
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
         if (!closeAndDisposeKeepingFrame(projectToClose)) {
           return true
         }
+
+        if (!perProcessSupport.canBeOpenedInThisProcess(projectDir)) {
+          perProcessSupport.openInChildProcess(projectDir)
+
+          blockingContext {
+            application.invokeLater {
+              ApplicationManagerEx.getApplicationEx().exit(true, true)
+            }
+          }
+
+          return true
+        }
       }
-      else if (exitCode != GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
+      else if (exitCode == GeneralSettings.OPEN_PROJECT_NEW_WINDOW) {
+        if (!perProcessSupport.canBeOpenedInThisProcess(projectDir)) {
+          perProcessSupport.openInChildProcess(projectDir)
+          return true
+        }
+
+        return false
+      }
+      else {
         // not in a new window
         return true
       }
@@ -1272,7 +1279,6 @@ internal suspend inline fun projectInitListeners(crossinline executor: suspend (
     executor(adapter.createInstance(ep.componentManager) ?: continue)
   }
 }
-
 
 @Suppress("DuplicatedCode")
 private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {

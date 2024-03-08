@@ -3,11 +3,8 @@ package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.model.BuildIdentifier;
-import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
-import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,24 +51,12 @@ public final class DefaultBuild implements Build, Serializable {
     myParentBuildIdentifier = parentBuildIdentifier;
   }
 
-  public static @NotNull Build convertGradleBuild(@NotNull GradleBuild gradleBuild) {
+  public static @NotNull DefaultBuild convertGradleBuild(@NotNull GradleBuild gradleBuild) {
     String name = gradleBuild.getRootProject().getName();
     File rootDir = gradleBuild.getBuildIdentifier().getRootDir();
     DefaultBuild build = new DefaultBuild(name, rootDir);
     for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
       build.myProjects.add(DefaultProject.convertGradleProject(gradleProject));
-    }
-    return build;
-  }
-
-  public static @NotNull Build convertIdeaProject(@NotNull IdeaProject ideaProject) {
-    String name = ideaProject.getName();
-    DomainObjectSet<? extends IdeaModule> ideaModules = ideaProject.getChildren();
-    assert !ideaModules.isEmpty() : "Cannot evaluate build identifier for IdeaProject";
-    File rootDir = ideaModules.getAt(0).getGradleProject().getProjectIdentifier().getBuildIdentifier().getRootDir();
-    DefaultBuild build = new DefaultBuild(name, rootDir);
-    for (IdeaModule ideaModule : ideaModules) {
-      build.myProjects.add(DefaultProject.convertIdeaProject(ideaModule));
     }
     return build;
   }

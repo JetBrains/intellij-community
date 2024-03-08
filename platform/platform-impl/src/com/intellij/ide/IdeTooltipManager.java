@@ -2,7 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.ide.ui.html.StyleSheetRulesProviderForCodeHighlighting;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -10,10 +9,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
-import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
@@ -29,8 +25,10 @@ import com.intellij.openapi.util.registry.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBHtmlPane;
+import com.intellij.ui.components.JBHtmlPaneConfiguration;
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.*;
@@ -40,18 +38,10 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.lang.reflect.Field;
 import java.util.Collections;
-import java.util.List;
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
 public class IdeTooltipManager implements Disposable {
@@ -717,88 +707,27 @@ public class IdeTooltipManager implements Disposable {
     return initPane(new Html(text), hintHint, layeredPane, true);
   }
 
-  public static JEditorPane initPane(@Tooltip Html html, HintHint hintHint, @Nullable JLayeredPane layeredPane, boolean limitWidthToScreen) {
+  public static JEditorPane initPane(@Tooltip Html html,
+                                     HintHint hintHint,
+                                     @Nullable JLayeredPane layeredPane,
+                                     boolean limitWidthToScreen) {
+
+    JBHtmlPaneStyleConfiguration styleConfiguration = new JBHtmlPaneStyleConfiguration();
+    JBHtmlPaneConfiguration paneConfiguration = new JBHtmlPaneConfiguration(
+      Collections.emptyMap(), url -> null, icon -> null,
+      color -> StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}"),
+      null, Collections.emptyList()
+    );
+
+
+    Ref<Boolean> prefSizeWasComputed = new Ref<>(false);
+    JBHtmlPane pane = !limitWidthToScreen
+                      ? new JBHtmlPane(styleConfiguration, paneConfiguration)
+                      : new LimitedWidthJBHtmlPane(styleConfiguration, paneConfiguration, prefSizeWasComputed, hintHint, layeredPane);
+
     @NonNls String text = HintUtil.prepareHintText(html, hintHint);
-
-    boolean[] prefSizeWasComputed = {false};
-    JEditorPane pane = !limitWidthToScreen ? new JEditorPane() : new JEditorPane() {
-      private Dimension prefSize = null;
-
-      @Override
-      public Dimension getPreferredSize() {
-        if (!prefSizeWasComputed[0] && hintHint.isAwtTooltip()) {
-          JLayeredPane lp = layeredPane;
-          if (lp == null) {
-            JRootPane rootPane = UIUtil.getRootPane(this);
-            if (rootPane != null && rootPane.getSize().width > 0) {
-              lp = rootPane.getLayeredPane();
-            }
-          }
-
-          Dimension size;
-          if (lp != null) {
-            AppUIUtil.targetToDevice(this, lp);
-            size = lp.getSize();
-            prefSizeWasComputed[0] = true;
-          }
-          else {
-            size = ScreenUtil.getScreenRectangle(0, 0).getSize();
-          }
-          int fitWidth = (int)(size.width * 0.8);
-          Dimension prefSizeOriginal = super.getPreferredSize();
-          if (prefSizeOriginal.width > fitWidth) {
-            setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
-            Dimension fixedWidthSize = super.getPreferredSize();
-            Dimension minSize = super.getMinimumSize();
-            prefSize = new Dimension(Math.max(fitWidth, minSize.width), fixedWidthSize.height);
-          }
-          else {
-            prefSize = new Dimension(prefSizeOriginal);
-          }
-        }
-
-        Dimension s = prefSize != null ? new Dimension(prefSize) : super.getPreferredSize();
-        Border b = getBorder();
-        if (b != null) {
-          JBInsets.addTo(s, b.getBorderInsets(this));
-        }
-        return s;
-      }
-
-      @Override
-      public void setPreferredSize(Dimension preferredSize) {
-        super.setPreferredSize(preferredSize);
-        prefSize = preferredSize;
-      }
-    };
-
-    HTMLEditorKit kit = new HTMLEditorKitBuilder()
-      .withViewFactoryExtensions((elem, view) -> {
-        AttributeSet attrs = elem.getAttributes();
-        if (attrs.getAttribute(AbstractDocument.ElementNameAttribute) == null &&
-            attrs.getAttribute(StyleConstants.NameAttribute) == HTML.Tag.HR) {
-          try {
-            Field field = view.getClass().getDeclaredField("size");
-            field.setAccessible(true);
-            field.set(view, JBUIScale.scale(1));
-          }
-          catch (Exception ignored) { }
-        }
-        return view;
-      })
-      .withFontResolver(EditorCssFontResolver.getGlobalInstance())
-      .build();
-    Ref<StyleSheet> currentDefaultStyleSheet = new Ref<>();
-    updateHintPaneDefaultCssRules(pane, kit, currentDefaultStyleSheet);
-    // Remove <style> rule for <code> added by prepareHintText() call above
+    // Remove <style> rule for <code> added by prepareHintText() call
     text = text.replaceFirst("code \\{font-size:[0-9.]*pt;}", "");
-    pane.addPropertyChangeListener(evt -> {
-      var propertyName = evt.getPropertyName();
-      if ("background".equals(propertyName) || "UI".equals(propertyName)) {
-        updateHintPaneDefaultCssRules(pane, kit, currentDefaultStyleSheet);
-      }
-    });
-    pane.setEditorKit(kit);
 
     if (hintHint.isOwnBorderAllowed()) {
       setBorder(pane);
@@ -809,15 +738,13 @@ public class IdeTooltipManager implements Disposable {
     }
 
     if (!hintHint.isAwtTooltip()) {
-      prefSizeWasComputed[0] = true;
+      prefSizeWasComputed.set(true);
     }
 
     pane.setOpaque(hintHint.isOpaqueAllowed());
     pane.setBackground(hintHint.getTextBackground());
 
     pane.setText(text);
-    pane.setCaretPosition(0);
-    pane.setEditable(false);
 
     if (!limitWidthToScreen) {
       AppUIUtil.targetToDevice(pane, layeredPane);
@@ -863,29 +790,69 @@ public class IdeTooltipManager implements Disposable {
     return balloon instanceof IdeTooltip.Ui && ((IdeTooltip.Ui)balloon).isInside(target);
   }
 
-  private static void updateHintPaneDefaultCssRules(
-    @NotNull JEditorPane editorPane,
-    @NotNull HTMLEditorKit editorKit,
-    @NotNull Ref<StyleSheet> currentDefaultStyleSheet
-    ) {
-    StyleSheet editorStyleSheet = editorKit.getStyleSheet();
-    if (currentDefaultStyleSheet.get() != null) {
-      editorStyleSheet.removeStyleSheet(currentDefaultStyleSheet.get());
-    }
-    var newDefaultStyleSheet = new StyleSheet();
-    for (String rule : getHintPaneStyleSheetRules(editorPane.getBackground())) {
-      newDefaultStyleSheet.addRule(rule);
-    }
-    newDefaultStyleSheet.addRule("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}");
-    editorStyleSheet.addStyleSheet(newDefaultStyleSheet);
-    currentDefaultStyleSheet.set(newDefaultStyleSheet);
-  }
+  private static class LimitedWidthJBHtmlPane extends JBHtmlPane {
+    private final Ref<Boolean> myPrefSizeWasComputed;
+    private final HintHint myHintHint;
+    private final @Nullable JLayeredPane myLayeredPane;
+    private Dimension prefSize;
 
-  private static List<String> getHintPaneStyleSheetRules(@NotNull Color background) {
-    EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-    return StyleSheetRulesProviderForCodeHighlighting.getRules(
-      globalScheme, background, Collections.singletonList(""), Collections.emptyList(),
-      true, true, "5px 0 5px 0"
-    );
+    private LimitedWidthJBHtmlPane(JBHtmlPaneStyleConfiguration styleConfiguration,
+                                   JBHtmlPaneConfiguration paneConfiguration,
+                                   Ref<Boolean> prefSizeWasComputed,
+                                   HintHint hintHint,
+                                   @Nullable JLayeredPane layeredPane) {
+      super(styleConfiguration, paneConfiguration);
+      myPrefSizeWasComputed = prefSizeWasComputed;
+      myHintHint = hintHint;
+      myLayeredPane = layeredPane;
+      prefSize = null;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      if (!myPrefSizeWasComputed.get() && myHintHint.isAwtTooltip()) {
+        JLayeredPane lp = myLayeredPane;
+        if (lp == null) {
+          JRootPane rootPane = UIUtil.getRootPane(this);
+          if (rootPane != null && rootPane.getSize().width > 0) {
+            lp = rootPane.getLayeredPane();
+          }
+        }
+
+        Dimension size;
+        if (lp != null) {
+          AppUIUtil.targetToDevice(this, lp);
+          size = lp.getSize();
+          myPrefSizeWasComputed.set(true);
+        }
+        else {
+          size = ScreenUtil.getScreenRectangle(0, 0).getSize();
+        }
+        int fitWidth = (int)(size.width * 0.8);
+        Dimension prefSizeOriginal = super.getPreferredSize();
+        if (prefSizeOriginal.width > fitWidth) {
+          setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
+          Dimension fixedWidthSize = super.getPreferredSize();
+          Dimension minSize = super.getMinimumSize();
+          prefSize = new Dimension(Math.max(fitWidth, minSize.width), fixedWidthSize.height);
+        }
+        else {
+          prefSize = new Dimension(prefSizeOriginal);
+        }
+      }
+
+      Dimension s = prefSize != null ? new Dimension(prefSize) : super.getPreferredSize();
+      Border b = getBorder();
+      if (b != null) {
+        JBInsets.addTo(s, b.getBorderInsets(this));
+      }
+      return s;
+    }
+
+    @Override
+    public void setPreferredSize(Dimension preferredSize) {
+      super.setPreferredSize(preferredSize);
+      prefSize = preferredSize;
+    }
   }
 }

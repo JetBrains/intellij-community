@@ -24,7 +24,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 2
+    // SMART_STEP_INTO_BY_INDEX: 1
     // smart step into map.invoke(), multiline lambda
     array.map(fun (it): Int {
         return it * 2
@@ -34,7 +34,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 4
+    // SMART_STEP_INTO_BY_INDEX: 3
     // smart step into filter.invoke()
     array.map(fun (it): Int { return it * 2 })
          .filter(fun (it): Boolean {
@@ -45,7 +45,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 2
+    // SMART_STEP_INTO_BY_INDEX: 1
     // smart step into map.invoke()
     array.map(fun (it): Int { return it * 2 })
         .filter(fun (it): Boolean {

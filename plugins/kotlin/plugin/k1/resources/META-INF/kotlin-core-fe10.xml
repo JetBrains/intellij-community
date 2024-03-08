@@ -60,6 +60,12 @@
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.stubindex.resolve.KotlinShortClassNameFileIndex"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService"
+            serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.ShortNamesCacheService"/>
+
     <lang.importOptimizer
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer"/>

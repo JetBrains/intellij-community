@@ -26,6 +26,15 @@ import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * See {@link com.intellij.openapi.progress.EmptyProgressIndicatorBase} notice regarding modality.
+ * Use {@link com.intellij.platform.util.progress.ProgressPipe} for progress reporting,
+ * and/or {@link kotlinx.coroutines.Job Job} for cancellation.
+ * </p>
+ */
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
   private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
 

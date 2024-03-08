@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.calls
 import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtDefinitelyNotNullTypeRenderer
@@ -20,9 +21,12 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeProjecti
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.findFacadeClass
@@ -34,6 +38,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -68,7 +73,33 @@ context (KtAnalysisSession)
 internal fun KtType.convertToClass(): KtClass? = expandedClassSymbol?.psi as? KtClass
 
 context (KtAnalysisSession)
-internal fun KtElement.getExpectedJvmType(): JvmType? = getExpectedType()?.convertToJvmType(this)
+internal fun KtElement.getExpectedJvmType(): JvmType? {
+    var expectedType = getExpectedType()
+    if (expectedType == null) {
+        val parent = this.parent
+        expectedType = when {
+            parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> builtinTypes.BOOLEAN
+            parent is KtStringTemplateEntryWithExpression -> builtinTypes.STRING
+            parent is KtPropertyDelegate -> {
+                val variable = parent.parent as KtProperty
+                val delegateClassName = if (variable.isVar) "ReadWriteProperty" else "ReadOnlyProperty"
+                val ktType = variable.getReturnKtType()
+                val symbol = variable.getSymbol() as? KtCallableSymbol
+                val parameterType = symbol?.receiverType ?: (variable.getSymbol()
+                    .getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.buildSelfClassType() ?: builtinTypes.NULLABLE_ANY
+                buildClassType(ClassId.fromString("kotlin/properties/$delegateClassName")) {
+                    argument(parameterType)
+                    argument(ktType)
+                }
+            }
+            parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == this && parent.parent is KtValueArgument -> {
+                (parent.getExpectedType() as? KtFunctionalType)?.returnType
+            }
+            else -> null
+        }
+    }
+    return expectedType?.convertToJvmType(this)
+}
 
 context (KtAnalysisSession)
 private fun KtType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)

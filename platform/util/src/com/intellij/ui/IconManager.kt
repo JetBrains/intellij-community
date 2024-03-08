@@ -125,7 +125,7 @@ private object DummyIconManager : IconManager {
 
   override fun tooltipOnlyIfComposite(icon: Icon): Icon = icon
 
-  override fun <T : Any> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon = base!!
+  override fun <T : Any> createDeferredIcon(base: Icon?, param: T, iconProducer: (T) -> Icon?): Icon = iconProducer(param) ?: base!!
 
   override fun createRowIcon(iconCount: Int, alignment: RowIcon.Alignment): RowIcon = DummyRowIcon(iconCount)
 

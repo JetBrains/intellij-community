@@ -158,8 +158,8 @@ class ActionsCollectorImpl : ActionsCollector() {
           }
           addAll(actionEventData(event))
           if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
-            val isLookupActive = event.dataContext.getData(CommonDataKeys.HOST_EDITOR)
-              ?.let { LookupManager.getActiveLookup(it) } != null
+            val lookupManagerWasCreated = project?.getServiceIfCreated(LookupManager::class.java) != null
+            val isLookupActive = lookupManagerWasCreated && event.dataContext.getData(CommonDataKeys.HOST_EDITOR)?.let { LookupManager.getActiveLookup(it) } != null
             add(ActionsEventLogGroup.LOOKUP_ACTIVE.with(isLookupActive))
           }
         }

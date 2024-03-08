@@ -2,4 +2,11 @@
 package com.intellij.lang.jvm.actions;
 
 public interface CreateConstructorRequest extends CreateExecutableRequest {
+
+  /**
+   * @return should start live template after a new field was created.
+   */
+  default boolean isStartTemplate() {
+    return true;
+  }
 }

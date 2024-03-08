@@ -5,6 +5,7 @@ import com.intellij.dvcs.push.VcsPushOptionValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -19,3 +20,11 @@ interface GitPushNotificationCustomizer {
     val EP_NAME = ProjectExtensionPointName<GitPushNotificationCustomizer>("Git4Idea.gitPushNotificationCustomizer")
   }
 }
+
+@get:Experimental
+val GitPushRepoResult.isSuccessful: Boolean
+  get() =
+    type != GitPushRepoResult.Type.ERROR &&
+    type != GitPushRepoResult.Type.REJECTED_NO_FF &&
+    type != GitPushRepoResult.Type.REJECTED_STALE_INFO &&
+    type != GitPushRepoResult.Type.REJECTED_OTHER

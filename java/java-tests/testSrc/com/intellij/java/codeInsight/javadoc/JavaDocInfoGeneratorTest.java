@@ -128,6 +128,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInlineTagIndex() { useJava9(); doTestClass(); }
   public void testInlineTagSummary() { useJava10(); doTestClass(); }
   public void testLeadingSpacesInPre() { doTestClass(); }
+  public void testBlockquotePre() { doTestAtCaret(); }
   public void testPreInDeprecated() { doTestClass(); }
   public void testEscapeHtmlInCode() { doTestClass(); }
   public void testEscapeAngleBracketsInCode() { doTestClass(); }
@@ -422,7 +423,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   static void assertEqualsFileText(@NotNull String expectedFile, @NotNull String actual) {
-    String actualText = replaceEnvironmentDependentContent(actual);
+    String actualText = replaceEnvironmentDependentContent(actual).replaceAll("[ \t]+\\n", "\n");
     File htmlPath = new File(expectedFile);
     String expectedText = loadFile(htmlPath);
     if (!StringUtil.equals(expectedText, actualText)) {

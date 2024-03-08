@@ -5,6 +5,11 @@
     "ideaId": "org.intellij.plugins.hcl"
   },
   {
+    "vsCodeId": "bungcip.better-toml",
+    "ideaName": "Toml",
+    "ideaId": "org.toml.lang"
+  },
+  {
     "vsCodeId": "codezombiech.gitignore",
     "ideaName": "gitignore",
     "builtIn": true
@@ -66,8 +71,8 @@
   },
   {
     "vsCodeId": "GitLab.gitlab-workflow",
-    "ideaName": "GitLab Workflow",
-    "builtIn": true
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
   },
   {
     "vsCodeId": "GraphQL.vscode-graphql",
@@ -95,6 +100,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "ms-azuretools.vscode-docker",
     "ideaName": "Docker",
     "ideaId": "Docker"
@@ -103,6 +113,11 @@
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
     "ideaName": "Japanese Language Pack / 日本語言語パック",
     "ideaId": "com.intellij.ja"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
+    "ideaName": "Korean Language Pack / 한국어 언어 팩",
+    "ideaId": "com.intellij.ko"
   },
   {
     "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
@@ -121,8 +136,8 @@
   },
   {
     "vsCodeId": "ms-python.python",
-    "ideaName": "Python",
-    "builtIn": true
+    "ideaName": "Python Community Edition",
+    "ideaId": "PythonCore"
   },
   {
     "vsCodeId": "MS-vsliveshare.vsliveshare",
@@ -168,6 +183,16 @@
     "vsCodeId": "vscodevim.vim",
     "ideaName": "IdeaVim",
     "ideaId": "IdeaVIM"
+  },
+  {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
+    "builtIn": true
   },
   {
     "vsCodeId": "yzhang.markdown-all-in-one",

@@ -1,3 +1,4 @@
+// IGNORE_K2
 class Foo {
     Foo(int a, int b) {}
 }

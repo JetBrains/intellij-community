@@ -19,6 +19,7 @@ import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.Utils.isModalContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -162,7 +163,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
 
   internal fun autoShowDocumentationOnItemChange(lookup: LookupEx) {
     val settings = CodeInsightSettings.getInstance()
-    val inModalContext = ModalityState.current().dominates(ModalityState.nonModal())
+    val inModalContext = isModalContext(lookup.editor.component)
     if ((!inModalContext && !settings.AUTO_POPUP_JAVADOC_INFO)
         || (inModalContext && !DocumentationSettings.autoShowQuickDocInModalDialogs())) {
       return

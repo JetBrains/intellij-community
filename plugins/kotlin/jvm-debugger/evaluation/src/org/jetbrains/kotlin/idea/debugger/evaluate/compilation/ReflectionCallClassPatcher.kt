@@ -10,6 +10,7 @@ import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.ClassUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.box
 import org.jetbrains.org.objectweb.asm.*
@@ -71,7 +72,7 @@ private class ReflectionCallMethodVisitor(
         val psiClass = resolvedClass ?: findClass(internalName)
 
         if (psiClass != null && !psiClass.hasModifierProperty(PsiModifier.PUBLIC)) {
-            super.visitLdcInsn(internalName.replace('/', '.'))
+            super.visitLdcInsn(internalName.internalNameToFqn())
             super.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false)
         } else {
             super.visitLdcInsn(type)

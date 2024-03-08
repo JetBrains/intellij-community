@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -11,14 +12,13 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinBreakpointType
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.ApplicabilityResult.Companion.maybe
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
@@ -78,29 +78,34 @@ open class KotlinFunctionBreakpointType protected constructor(@NotNull id: Strin
                     ApplicabilityResult.UNKNOWN
             }
         }
-}
 
-private val COMPOSABLE_CLASS_ID = ClassId.fromString("androidx/compose/runtime/Composable")
-
-/**
- * Don't allow method breakpoints on Composable functions because we can't match their signature.
- *
- * This will be handled by the Compose plugin.
- */
-private fun KtFunction.isComposable(): Boolean {
-    analyze(this) {
-        for (annotationEntry in annotationEntries) {
-            val classSymbol = when (val symbol = annotationEntry.typeReference?.mainReference?.resolveToSymbol()) {
-                is KtTypeAliasSymbol -> symbol.expandedType.expandedClassSymbol
-                is KtClassOrObjectSymbol -> symbol
-                else -> null
-            }
-
-            if (classSymbol != null && classSymbol.classIdIfNonLocal == COMPOSABLE_CLASS_ID) {
-                return true
+    /**
+     * Don't allow method breakpoints on Composable functions because we can't match their signature.
+     *
+     * This will be handled by the Compose plugin.
+     */
+    protected fun KtFunction.isComposable(): Boolean {
+        // Unfortunate facts about trying to check @Composable annotation:
+        // * analysis-based version is absolutely correct but slow
+        // * PSI-check is fast but isn't precise in the case of aliases (really rare case?)
+        // * there are several other implementations in Android plugin maintained by Google:
+        //   * copy-pasted and buggy (always returns false):
+        //       com.android.tools.compose.debug.ComposeFunctionBreakpointType
+        //   * analysis-based but alias-unaware and thus incorrect:
+        //       com.android.tools.compose.AndroidComposablePsiUtils.isComposableFunction
+        //
+        // Someday somebody will fix all these problems.
+        return if (DumbService.isDumb(project)) {
+            KotlinPsiHeuristics.hasAnnotation(this, COMPOSABLE_FQ_NAME)
+        } else {
+            analyze(this) {
+                annotationEntries.any {
+                    it.typeReference?.getKtType()?.expandedClassSymbol?.classIdIfNonLocal == COMPOSABLE_CLASS_ID
+                }
             }
         }
-
-        return false
     }
+
+    private val COMPOSABLE_FQ_NAME = FqName("androidx.compose.runtime.Composable")
+    private val COMPOSABLE_CLASS_ID = ClassId.topLevel(COMPOSABLE_FQ_NAME)
 }

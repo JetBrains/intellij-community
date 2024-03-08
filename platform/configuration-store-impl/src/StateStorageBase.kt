@@ -1,5 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
+@file:Internal
+@file:OptIn(SettingsInternalApi::class)
 
 package com.intellij.configurationStore
 
@@ -14,13 +16,15 @@ import com.intellij.openapi.vfs.LargeFileWriteRequestor
 import com.intellij.openapi.vfs.SafeWriteRequestor
 import com.intellij.platform.settings.*
 import com.intellij.serialization.SerializationException
+import com.intellij.serialization.xml.createSettingKey
+import com.intellij.serialization.xml.deserializeAsJdomElement
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.xmlb.*
-import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.JsonElement
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 
-@Internal
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
 
@@ -31,6 +35,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
     get() = true
 
   abstract val controller: SettingsController?
+  abstract val roamingType: RoamingType?
 
   final override fun <T : Any> getState(
     component: Any?,
@@ -53,10 +58,10 @@ abstract class StateStorageBase<T : Any> : StateStorage {
       controller = controller,
       componentName = componentName,
       pluginId = pluginId,
+      roamingType = roamingType,
     )
   }
 
-  @Internal
   fun getStorageData(): T = getStorageData(reload = false)
 
   abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean): Element?
@@ -108,7 +113,6 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   }
 }
 
-
 abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor, LargeFileWriteRequestor {
   abstract val controller: SettingsController?
   abstract val roamingType: RoamingType?
@@ -146,12 +150,12 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
         val key = SettingDescriptor(
           key = createSettingKey(componentName = componentName, binding = null),
           pluginId = pluginId,
-          tags = createTags(componentName, roamingType),
+          tags = createTags(componentName, roamingType, extraTag = null),
           serializer = JsonElementSettingSerializerDescriptor,
         )
 
         val result = controller.doSetItem(key = key, value = jdomToJson(state))
-        if (result != SetResult.INAPPLICABLE) {
+        if (result != SetResult.inapplicable()) {
           return null
         }
       }
@@ -166,14 +170,11 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
       try {
         val filter = jdomSerializer.getDefaultSerializationFilter()
         val rootBinding = __platformSerializer().getRootBinding(state.javaClass)
-        if (rootBinding is BeanBinding) {
-          if (controller == null) {
-            return rootBinding.serializeProperties(bean = state, preCreatedElement = null, filter = filter)
-          }
-          else {
+        if (controller != null) {
+          if (rootBinding is BeanBinding) {
             return serializeWithController(
               rootBinding = rootBinding,
-              bean = state,
+              state = state,
               filter = filter,
               componentName = componentName,
               pluginId = pluginId,
@@ -181,11 +182,22 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
               roamingType = roamingType,
             )
           }
+          else if (rootBinding is KotlinxSerializationBinding) {
+            val keyTags = createTags(componentName, roamingType, extraTag = null)
+            val key = SettingDescriptor(
+              key = createSettingKey(componentName = componentName, binding = null),
+              pluginId = pluginId,
+              tags = keyTags,
+              serializer = JsonElementSettingSerializerDescriptor,
+            )
+            val result = controller.doSetItem(key = key, value = rootBinding.toJson(state, filter))
+            if (result != SetResult.inapplicable()) {
+              return null
+            }
+          }
         }
-        else {
-          // maybe ArrayBinding
-          return (rootBinding as RootBinding).serialize(bean = state, filter = filter) as Element
-        }
+
+        return (rootBinding as RootBinding).serialize(bean = state, filter = filter)
       }
       catch (e: SerializationException) {
         throw e
@@ -197,39 +209,63 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
   }
 }
 
-private fun createTags(componentName: String, roamingType: RoamingType?): List<SettingTag> {
+private fun createTags(componentName: String, roamingType: RoamingType?, extraTag: SettingTag?): List<SettingTag> {
   val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName)
-  return if (roamingType == RoamingType.DISABLED) java.util.List.of(NonShareableTag, componentPropertyTag) else java.util.List.of(componentPropertyTag)
+  if (roamingType == RoamingType.DISABLED) {
+    if (extraTag == null) {
+      return java.util.List.of(componentPropertyTag, NonShareableTag)
+    }
+    else {
+      return java.util.List.of(componentPropertyTag, NonShareableTag, extraTag)
+    }
+  }
+  else {
+    if (extraTag == null) {
+      return java.util.List.of(componentPropertyTag)
+    }
+    else {
+      return java.util.List.of(componentPropertyTag, extraTag)
+    }
+  }
 }
 
 private fun serializeWithController(
   rootBinding: BeanBinding,
-  bean: Any,
+  state: Any,
   filter: SkipDefaultsSerializationFilter,
   componentName: String,
   pluginId: PluginId,
   controller: SettingsController,
   roamingType: RoamingType?
 ): Element? {
-  val keyTags = createTags(componentName, roamingType)
+  val keyTags = createTags(componentName, roamingType, extraTag = null)
   var element: Element? = null
   for (binding in rootBinding.bindings!!) {
-    val isPropertySkipped = isPropertySkipped(filter = filter, binding = binding, bean = bean, isFilterPropertyItself = true)
+    val isPropertySkipped = isPropertySkipped(filter = filter, binding = binding, bean = state, rootBinding = rootBinding, isFilterPropertyItself = true)
     val key = SettingDescriptor(key = createSettingKey(componentName, binding), pluginId = pluginId, tags = keyTags, serializer = JsonElementSettingSerializerDescriptor)
-    val result = controller.doSetItem(key = key, value = if (isPropertySkipped) null else binding.toJson(bean, filter))
-    if (result != SetResult.INAPPLICABLE) {
+    val result = controller.doSetItem(key = key, value = if (isPropertySkipped) null else binding.toJson(state, filter))
+    if (isPropertySkipped) {
       continue
     }
 
-    if (isPropertySkipped) {
-      continue
+    var effectiveState = state
+    if (result != SetResult.inapplicable()) {
+      val value = result.value
+      if (value is JsonElement) {
+        // substituted value
+        effectiveState = rootBinding.newInstance()
+        binding.setFromJson(effectiveState, value)
+      }
+      else {
+        continue
+      }
     }
 
     if (element == null) {
       element = Element(rootBinding.tagName)
     }
 
-    binding.serialize(bean = bean, parent = element, filter = filter)
+    binding.serialize(bean = effectiveState, parent = element, filter = filter)
   }
   return element
 }
@@ -242,14 +278,25 @@ internal fun <T : Any> deserializeStateWithController(
   controller: SettingsController?,
   componentName: String,
   pluginId: PluginId,
+  roamingType: RoamingType?,
 ): T? {
   if (stateClass === Element::class.java) {
-    return deserializeAsJdomElement(
-      controller = controller,
-      componentName = componentName,
-      pluginId = pluginId,
-      stateElement = stateElement,
-    ) as T? ?: mergeInto
+    if (controller == null) {
+      return stateElement as T? ?: mergeInto
+    }
+    else {
+      return deserializeAsJdomElement(
+        localValue = stateElement,
+        controller = controller,
+        componentName = componentName,
+        pluginId = pluginId,
+        tags = createTags(componentName, roamingType, extraTag = OldLocalValueSupplierTag(supplier = SynchronizedClearableLazy {
+          stateElement?.let {
+            jdomToJson(it)
+          }
+        })),
+      ) as T? ?: mergeInto
+    }
   }
   else if (com.intellij.openapi.util.JDOMExternalizable::class.java.isAssignableFrom(stateClass)) {
     if (stateElement == null) {
@@ -266,25 +313,33 @@ internal fun <T : Any> deserializeStateWithController(
   }
 
   val serializer = __platformSerializer()
-  // KotlinxSerializationBinding here is possible, do not cast to BeanBinding
   val rootBinding = serializer.getRootBinding(stateClass)
   try {
     if (mergeInto == null) {
-      if (rootBinding !is BeanBinding || controller == null) {
-        if (stateElement == null) {
-          return null
+      if (controller != null) {
+        if (rootBinding is BeanBinding) {
+          return getXmlSerializedState<T>(
+            oldData = stateElement,
+            mergeInto = null,
+            rootBinding = rootBinding,
+            componentName = componentName,
+            pluginId = pluginId,
+            controller = controller,
+            roamingType = roamingType,
+          )
         }
-        return rootBinding.deserialize(context = null, element = stateElement, JdomAdapter) as T
+        else if (rootBinding is KotlinxSerializationBinding) {
+          return getKotlinxSerializedState(
+            oldData = stateElement,
+            rootBinding = rootBinding,
+            componentName = componentName,
+            pluginId = pluginId,
+            controller = controller,
+            roamingType = roamingType,
+          )
+        }
       }
-
-      return getXmlSerializedState<T>(
-        oldData = stateElement,
-        mergeInto = null,
-        rootBinding = rootBinding,
-        componentName = componentName,
-        pluginId = pluginId,
-        controller = controller,
-      )
+      return rootBinding.deserialize(context = null, element = stateElement ?: return null, JdomAdapter) as T
     }
     else {
       if (controller == null) {
@@ -301,6 +356,7 @@ internal fun <T : Any> deserializeStateWithController(
           componentName = componentName,
           pluginId = pluginId,
           controller = controller,
+          roamingType = roamingType,
         )
       }
       return mergeInto
@@ -314,37 +370,7 @@ internal fun <T : Any> deserializeStateWithController(
   }
 }
 
-// todo OldLocalValueSupplierTag for bean /
-
-private fun deserializeAsJdomElement(
-  controller: SettingsController?,
-  componentName: String,
-  pluginId: PluginId,
-  stateElement: Element?,
-): Element? {
-  try {
-    val tags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName), OldLocalValueSupplierTag(supplier = lazy {
-      stateElement?.let {
-        jdomToJson(it)
-      }
-    }))
-    val key = SettingDescriptor(
-      key = createSettingKey(componentName = componentName, binding = null),
-      pluginId = pluginId,
-      tags = tags,
-      serializer = JsonElementSettingSerializerDescriptor,
-    )
-    val item = controller?.doGetItem(key) ?: GetResult.inapplicable()
-    if (item.isResolved) {
-      val jsonObject = item.get() ?: return null
-      return jsonDomToXml(jsonObject.jsonObject)
-    }
-  }
-  catch (e: Throwable) {
-    LOG.error("Cannot deserialize value for $componentName", e)
-  }
-  return stateElement
-}
+private val NULL_OLD_LOCAL_VALUE_SUPPLIER = OldLocalValueSupplierTag { null }
 
 private fun <T : Any> getXmlSerializedState(
   oldData: Element?,
@@ -353,12 +379,38 @@ private fun <T : Any> getXmlSerializedState(
   componentName: String,
   pluginId: PluginId,
   controller: SettingsController,
+  roamingType: RoamingType?,
 ): T? {
   var result = mergeInto
   val bindings = rootBinding.bindings!!
 
-  val keyTags = java.util.List.of(PersistenceStateComponentPropertyTag(componentName))
+  var currentBinding: NestedBinding? = null
+
+  val oldDataSupplierLazyValue: SynchronizedClearableLazy<JsonElement?>?
+  val oldValueTagSupplier: OldLocalValueSupplierTag
+  if (oldData == null) {
+    oldDataSupplierLazyValue = null
+    oldValueTagSupplier = NULL_OLD_LOCAL_VALUE_SUPPLIER
+  }
+  else {
+    oldDataSupplierLazyValue = SynchronizedClearableLazy {
+      deserializeNestedBindingToJson(oldData, currentBinding!!)
+    }
+    oldValueTagSupplier = OldLocalValueSupplierTag(oldDataSupplierLazyValue)
+  }
+
+  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName)
+  val keyTags = if (roamingType == RoamingType.DISABLED) {
+    java.util.List.of(oldValueTagSupplier, componentPropertyTag, NonShareableTag)
+  }
+  else {
+    java.util.List.of(oldValueTagSupplier, componentPropertyTag)
+  }
+
   for (binding in bindings) {
+    oldDataSupplierLazyValue?.drop()
+    currentBinding = binding
+
     val key = SettingDescriptor(
       key = createSettingKey(componentName = componentName, binding = binding),
       pluginId = pluginId,
@@ -391,21 +443,62 @@ private fun <T : Any> getXmlSerializedState(
         @Suppress("UNCHECKED_CAST")
         result = rootBinding.newInstance() as T
       }
-      val l = deserializeBeanInto(result = result, element = oldData, binding = binding, checkAttributes = true)
-      if (l != null) {
-        (binding as MultiNodeBinding).deserializeList(currentValue = result, elements = l, adapter = JdomAdapter)
-      }
+      deserializeNestedBindingInto(result = result, element = oldData, binding = binding)
     }
   }
   return result
 }
 
-private fun createSettingKey(componentName: String, binding: NestedBinding?): String {
-  val normalizedComponentName = componentName.replace('.', '-')
-  if (binding == null) {
-    return normalizedComponentName
+
+private fun <T : Any> getKotlinxSerializedState(
+  oldData: Element?,
+  rootBinding: KotlinxSerializationBinding,
+  componentName: String,
+  pluginId: PluginId,
+  controller: SettingsController,
+  roamingType: RoamingType?,
+): T? {
+  val oldValueTagSupplier = if (oldData == null) {
+    NULL_OLD_LOCAL_VALUE_SUPPLIER
   }
   else {
-    return "$normalizedComponentName.${binding.propertyName}"
+    OldLocalValueSupplierTag(SynchronizedClearableLazy {
+      rootBinding.deserializeToJson(oldData)
+    })
   }
+
+  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName)
+  val keyTags = if (roamingType == RoamingType.DISABLED) {
+    java.util.List.of(oldValueTagSupplier, componentPropertyTag, NonShareableTag)
+  }
+  else {
+    java.util.List.of(oldValueTagSupplier, componentPropertyTag)
+  }
+
+  val key = SettingDescriptor(
+    key = createSettingKey(componentName = componentName, binding = null),
+    pluginId = pluginId,
+    tags = keyTags,
+    serializer = JsonElementSettingSerializerDescriptor,
+  )
+  val value = try {
+    controller.doGetItem(key)
+  }
+  catch (e: Throwable) {
+    LOG.error("Cannot deserialize value for $key", e)
+    GetResult.inapplicable()
+  }
+
+  if (value.isResolved) {
+    val jsonElement = value.get()
+    if (jsonElement != null) {
+      @Suppress("UNCHECKED_CAST")
+      return rootBinding.fromJson(currentValue = null, element = jsonElement) as T?
+    }
+  }
+  else if (oldData != null) {
+    @Suppress("UNCHECKED_CAST")
+    return rootBinding.deserialize(context = null, element = oldData, adapter = JdomAdapter) as T?
+  }
+  return null
 }

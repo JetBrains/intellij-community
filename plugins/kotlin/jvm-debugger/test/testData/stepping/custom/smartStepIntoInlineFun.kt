@@ -23,7 +23,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 1
+    // SMART_STEP_INTO_BY_INDEX: 2
     array.map {
         it *2
     }
@@ -32,7 +32,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 1
+    // SMART_STEP_INTO_BY_INDEX: 4
     array.map { it * 2 }
          .filter {
              it > 2
@@ -42,7 +42,7 @@ fun main(args: Array<String>) {
     //Breakpoint!
     test()
     // STEP_OVER: 1
-    // SMART_STEP_INTO_BY_INDEX: 3
+    // SMART_STEP_INTO_BY_INDEX: 2
     array.map { it * 2 }
         .filter {
             it > 2

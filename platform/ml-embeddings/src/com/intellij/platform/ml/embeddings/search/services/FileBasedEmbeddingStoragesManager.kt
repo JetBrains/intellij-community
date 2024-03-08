@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.isFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
+import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
 import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
@@ -25,6 +26,7 @@ import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.psi.PsiManager
+import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -77,9 +79,10 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary(project, retryIfCanceled = false)
         }
       }
-      val settings = EmbeddingIndexSettingsImpl.getInstance(project)
+      val settings = EmbeddingIndexSettingsImpl.getInstance()
       indexLoaded = true
-      launch {
+      val indexLoadingStartTime = System.nanoTime()
+      val filesIndexLoadingJob = launch {
         if (settings.shouldIndexFiles) {
           val index = FileEmbeddingsStorage.getInstance(project).index
           EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
@@ -88,7 +91,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           logger.debug { "Loaded files embedding index from disk, size: ${index.size}, root: ${index.root}" }
         }
       }
-      launch {
+      val classIndexLoadingJob = launch {
         if (settings.shouldIndexClasses) {
           val index = ClassEmbeddingsStorage.getInstance(project).index
           EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
@@ -97,7 +100,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           logger.debug { "Loaded classes embedding index from disk, size: ${index.size}, root: ${index.root}" }
         }
       }
-      launch {
+      val symbolIndexLoadingJob = launch {
         if (settings.shouldIndexSymbols) {
           val index = SymbolEmbeddingStorage.getInstance(project).index
           EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
@@ -106,6 +109,8 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           logger.debug { "Loaded symbols embedding index from disk, size: ${index.size}, root: ${index.root}" }
         }
       }
+      listOf(filesIndexLoadingJob, classIndexLoadingJob, symbolIndexLoadingJob).joinAll()
+      EmbeddingSearchLogger.indexingLoaded(project, forActions = false, TimeoutUtil.getDurationMillis(indexLoadingStartTime))
     }
   }
 
@@ -115,7 +120,9 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
       try {
         if (isFirstIndexing) onFirstIndexingStart()
         logger.debug { "Is first indexing: ${isFirstIndexing}" }
+        val projectIndexingStartTime = System.nanoTime()
         indexFiles(scanFiles().toList().sortedBy { it.name })
+        EmbeddingSearchLogger.indexingFinished(project, forActions = false, TimeoutUtil.getDurationMillis(projectIndexingStartTime))
       }
       catch (e: CancellationException) {
         logger.debug { "Full project embedding indexing was cancelled" }
@@ -132,8 +139,8 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
   }
 
   suspend fun indexFiles(files: List<VirtualFile>) {
-    val settings = EmbeddingIndexSettingsImpl.getInstance(project)
-    if (!settings.shouldIndexAnything) return
+    val settings = EmbeddingIndexSettingsImpl.getInstance()
+    if (!settings.shouldIndexAnythingFileBased) return
     withContext(indexingScope.coroutineContext) {
       val psiManager = PsiManager.getInstance(project)
       var processedFiles = 0
@@ -221,13 +228,13 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
 
   @Suppress("unused")
   fun stopIndexingIfDisabled() {
-    if (!EmbeddingIndexSettingsImpl.getInstance(project).shouldIndexAnything) {
+    if (!EmbeddingIndexSettingsImpl.getInstance().shouldIndexAnythingFileBased) {
       indexingScope.coroutineContext.cancelChildren()
     }
   }
 
   private fun onFirstIndexingStart() {
-    val settings = EmbeddingIndexSettingsImpl.getInstance(project)
+    val settings = EmbeddingIndexSettingsImpl.getInstance()
     if (settings.shouldIndexFiles) {
       FileEmbeddingsStorage.getInstance(project).index.onIndexingStart()
     }
@@ -239,35 +246,33 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     }
   }
 
-  private fun onFirstIndexingFinish() {
-    val settings = EmbeddingIndexSettingsImpl.getInstance(project)
+  private fun onFirstIndexingFinish() = cs.launch {
+    val indexSavingStartTime = System.nanoTime()
+    val savingJobs = mutableListOf<Job>()
+    val settings = EmbeddingIndexSettingsImpl.getInstance()
     if (settings.shouldIndexFiles) {
       val index = FileEmbeddingsStorage.getInstance(project).index
       index.onIndexingFinish()
       if (index.changed) {
-        cs.launch(Dispatchers.IO) {
-          index.saveToDisk()
-        }
+        savingJobs.add(launch(Dispatchers.IO) { index.saveToDisk() })
       }
     }
     if (settings.shouldIndexClasses) {
       val index = ClassEmbeddingsStorage.getInstance(project).index
       index.onIndexingFinish()
       if (index.changed) {
-        cs.launch(Dispatchers.IO) {
-          index.saveToDisk()
-        }
+        savingJobs.add(launch(Dispatchers.IO) { index.saveToDisk() })
       }
     }
     if (settings.shouldIndexSymbols) {
       val index = SymbolEmbeddingStorage.getInstance(project).index
       index.onIndexingFinish()
       if (index.changed) {
-        cs.launch(Dispatchers.IO) {
-          index.saveToDisk()
-        }
+        savingJobs.add(launch(Dispatchers.IO) { index.saveToDisk() })
       }
     }
+    savingJobs.joinAll()
+    EmbeddingSearchLogger.indexingSaved(project, forActions = false, TimeoutUtil.getDurationMillis(indexSavingStartTime))
   }
 
   companion object {

@@ -27,6 +27,8 @@ interface RootBinding : Binding {
 
   // currentValue is used in collection binding and is modified in place if it's mutable
   fun fromJson(currentValue: Any?, element: JsonElement): Any?
+
+  fun deserializeToJson(element: Element): JsonElement?
 }
 
 interface Binding {
@@ -47,13 +49,33 @@ interface NestedBinding : Binding {
 
   fun setFromJson(bean: Any, element: JsonElement)
 
+  fun deserializeToJson(element: Element): JsonElement?
+
   // used only by kotlinx serialization
   val propertyName: String
     get() = accessor.name
 }
 
-interface MultiNodeBinding : Binding {
+internal interface MultiNodeBinding : Binding {
   val isMulti: Boolean
+  val isSurroundWithTag: Boolean
 
   fun <T : Any> deserializeList(currentValue: Any?, elements: List<T>, adapter: DomAdapter<T>): Any?
+
+  fun deserializeListToJson(elements: List<Element>): JsonElement {
+    return doDeserializeListToJson(elements = if (isSurroundWithTag) elements.single().children else elements)
+  }
+
+  fun doDeserializeListToJson(elements: List<Element>): JsonElement
 }
+
+@RequiresOptIn(level = RequiresOptIn.Level.ERROR)
+@Target(
+  AnnotationTarget.CLASS,
+  AnnotationTarget.TYPEALIAS,
+  AnnotationTarget.FUNCTION,
+  AnnotationTarget.PROPERTY,
+  AnnotationTarget.FIELD,
+  AnnotationTarget.CONSTRUCTOR
+)
+annotation class SettingsInternalApi

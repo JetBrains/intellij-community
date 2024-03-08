@@ -8,6 +8,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
@@ -26,6 +27,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener
 import org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector
+import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
@@ -109,8 +111,10 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
 
   fun scheduleUpdateIndicesList(onUpdate: () -> Unit) {
     cs.launch(Dispatchers.IO) {
-      updateIndexList()
-      onUpdate()
+      myProject.trackActivity(MavenActivityKey) {
+        updateIndexList()
+        onUpdate()
+      }
     }
   }
 

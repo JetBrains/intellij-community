@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
@@ -193,7 +194,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   }
 
   override fun targetCompatibility(level: String) = apply {
-    if (gradleVersion.isGradleOlderThan("8.2")) {
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.2")) {
       withPostfix {
         assign("targetCompatibility", level)
       }
@@ -206,7 +207,7 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   }
 
   override fun sourceCompatibility(level: String) = apply {
-    if (gradleVersion.isGradleOlderThan("8.2")) {
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.2")) {
       withPostfix {
         assign("sourceCompatibility", level)
       }

@@ -23,10 +23,7 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -41,7 +38,7 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
-    toolWindow.project.serviceAsync<GHPRToolWindowController>().manageAvailability(toolWindow)
+    toolWindow.project.serviceAsync<GHPRToolWindowController>().manageIconInToolbar(toolWindow)
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) =
@@ -54,7 +51,8 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
 private class GHPRToolWindowController(private val project: Project, parentCs: CoroutineScope) {
   private val cs = parentCs.childScope(Dispatchers.Main)
 
-  suspend fun manageAvailability(toolWindow: ToolWindow) {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  suspend fun manageIconInToolbar(toolWindow: ToolWindow) {
     coroutineScope {
       val vm = project.serviceAsync<GHPRToolWindowViewModel>()
       launch {
@@ -72,30 +70,31 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
           }
         }
       }
-    }
-  }
 
-  @RequiresEdt
-  @OptIn(ExperimentalCoroutinesApi::class)
-  fun manageContent(toolWindow: ToolWindow) {
-    toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
-
-    cs.launch {
-      val vm = project.serviceAsync<GHPRToolWindowViewModel>()
       val focusColor = UIManager.getColor("ToolWindow.Button.selectedForeground")
-
       launch {
         vm.projectVm
           .filterNotNull().flatMapLatest { it.listVm.hasUpdates }
           .distinctUntilChanged()
           .collectLatest {
-            toolWindow.setIcon(
-              if (!it) GithubIcons.PullRequestsToolWindow
-              else IconManager.getInstance().withIconBadge(GithubIcons.PullRequestsToolWindow, JBColor {
-                if (toolWindow.isActive) focusColor else JBUI.CurrentTheme.IconBadge.INFORMATION
-              }))
+            withContext(Dispatchers.EDT) {
+              toolWindow.setIcon(
+                if (!it) GithubIcons.PullRequestsToolWindow
+                else IconManager.getInstance().withIconBadge(GithubIcons.PullRequestsToolWindow, JBColor {
+                  if (toolWindow.isActive) focusColor else JBUI.CurrentTheme.IconBadge.INFORMATION
+                }))
+            }
           }
       }
+    }
+  }
+
+  @RequiresEdt
+  fun manageContent(toolWindow: ToolWindow) {
+    toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
+
+    cs.launch {
+      val vm = project.serviceAsync<GHPRToolWindowViewModel>()
 
       coroutineScope {
         toolWindow.contentManager.addDataProvider {

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.jcef.JBCefBrowser
+import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
 import com.intellij.util.ui.JBUI
 import org.cef.browser.CefBrowser
@@ -362,8 +363,8 @@ fun updateOutputTextConsoleUI(consoleEditor: EditorEx, editor: Editor) {
 class InlayOutputHtml(parent: Disposable, editor: Editor, clearAction: () -> Unit) : InlayOutput(parent, editor, clearAction) {
 
   private val jbBrowser: JBCefBrowser = JBCefBrowser().also { Disposer.register(parent, it) }
-  private val heightJsCallback = JBCefJSQuery.create(jbBrowser)
-  private val saveJsCallback = JBCefJSQuery.create(jbBrowser)
+  private val heightJsCallback = JBCefJSQuery.create(jbBrowser as JBCefBrowserBase)
+  private val saveJsCallback = JBCefJSQuery.create(jbBrowser as JBCefBrowserBase)
   private var height: Int = 0
 
   init {

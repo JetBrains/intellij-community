@@ -5,9 +5,10 @@ package com.intellij.platform.util.progress
 
 import com.intellij.platform.util.progress.impl.ProgressText
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 
-@Experimental
+@Internal
 @NonExtendable
 @Deprecated("Use `ProgressStep` via `reportProgress` or `reportSequentialProgress`.")
 interface ProgressReporter0 {

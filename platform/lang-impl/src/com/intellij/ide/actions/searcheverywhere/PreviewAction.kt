@@ -65,7 +65,7 @@ class CloseSearchEverywherePreviewToolbar : AbstractFloatingToolbarProvider("Sea
   private val toolbarComponents = DisposableWrapperList<Pair<Project, FloatingToolbarComponent>>()
 
   override fun isApplicable(dataContext: DataContext): Boolean {
-    return isPreviewEnabled() && dataContext.getData(PlatformDataKeys.EDITOR)?.getUserData(PREVIEW_EDITOR_FLAG) != null
+    return PreviewExperiment.isExperimentEnabled && dataContext.getData(PlatformDataKeys.EDITOR)?.getUserData(PREVIEW_EDITOR_FLAG) != null
   }
 
   override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {

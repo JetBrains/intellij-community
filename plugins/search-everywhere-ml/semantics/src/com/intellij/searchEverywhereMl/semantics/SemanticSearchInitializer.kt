@@ -14,8 +14,10 @@ private class SemanticSearchInitializer : ProjectActivity {
   override suspend fun execute(project: Project) {
     val searchEverywhereSemanticSettings = serviceAsync<SearchEverywhereSemanticSettings>()
 
-    EmbeddingIndexSettingsImpl.getInstance(project).registerClientSettings(
+    EmbeddingIndexSettingsImpl.getInstance().registerClientSettings(
       object : EmbeddingIndexSettings {
+        override val shouldIndexActions: Boolean
+          get() = searchEverywhereSemanticSettings.enabledInActionsTab
         override val shouldIndexFiles: Boolean
           get() = searchEverywhereSemanticSettings.enabledInFilesTab
         override val shouldIndexClasses: Boolean

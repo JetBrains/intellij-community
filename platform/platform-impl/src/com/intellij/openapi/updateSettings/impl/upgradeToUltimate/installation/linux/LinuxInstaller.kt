@@ -3,10 +3,7 @@ package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.DownloadResult
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.InstallationResult
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstaller
-import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.runCommand
+import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.*
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.Decompressor
@@ -32,12 +29,13 @@ internal class LinuxInstaller(scope: CoroutineScope, project: Project) : Ultimat
 
     val installFolder = installationPath.resolve(entries.first().fileName) // todo add desktop entry
 
-    return InstallationResult(installFolder)
+    return InstallationResult(installFolder, downloadResult.suggestedIde)
   }
 
   override fun startUltimate(installationResult: InstallationResult): Boolean {
     val installed = installationResult.appPath
-    val shellPath = installed.resolve("bin").resolve("idea.sh")
+    val shellName = if (installationResult.suggestedIde.isPycharmProfessional()) "pycharm" else "idea"
+    val shellPath = installed.resolve("bin").resolve("$shellName.sh")
 
     val command = GeneralCommandLine("sh", "-c", "${shellPath.pathString} ${project.basePath} $trialParameter &")
     

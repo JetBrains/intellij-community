@@ -91,10 +91,10 @@ interface CoroutineDebuggerColors {
     }
 }
 
-fun fromState(state: State): Icon =
+fun fromState(state: State, isCurrent: Boolean): Icon =
     when (state) {
         State.SUSPENDED -> AllIcons.Debugger.ThreadFrozen
-        State.RUNNING -> AllIcons.Debugger.ThreadRunning
+        State.RUNNING -> if (isCurrent) AllIcons.Debugger.ThreadCurrent else AllIcons.Debugger.ThreadRunning
         State.CREATED -> AllIcons.Debugger.ThreadStates.Idle
         else -> AllIcons.Debugger.ThreadStates.Daemon_sign
     }
@@ -105,13 +105,13 @@ class SimpleColoredTextIconPresentationRenderer {
     }
 
     private val settings: ThreadsViewSettings = ThreadsViewSettings.getInstance()
-
-    fun render(infoData: CoroutineInfoData, textToHideFromContext: String): SimpleColoredTextIcon {
+    
+    fun render(infoData: CoroutineInfoData, isCurrent: Boolean, textToHideFromContext: String): SimpleColoredTextIcon {
         val thread = infoData.activeThread
         val name = thread?.name()?.substringBefore(" @${infoData.descriptor.name}") ?: ""
         val threadState = if (thread != null) DebuggerUtilsEx.getThreadStatusText(thread.status()) else ""
-
-        val icon = fromState(infoData.descriptor.state)
+        
+        val icon = fromState(infoData.descriptor.state, isCurrent)
 
         val label = SimpleColoredTextIcon(icon, !infoData.isCreated())
         label.append("\"")
@@ -197,6 +197,12 @@ class SimpleColoredTextIconPresentationRenderer {
     fun renderInfoNode(text: String) =
         SimpleColoredTextIcon(AllIcons.General.Information, false, KotlinDebuggerCoroutinesBundle.message(text))
 
-    fun renderGroup(groupName: String) =
-        SimpleColoredTextIcon(AllIcons.Debugger.ThreadGroup, true, groupName)
+    fun renderThreadGroup(groupName: String, isCurrent: Boolean) =
+        SimpleColoredTextIcon(if (isCurrent) AllIcons.Debugger.ThreadGroupCurrent else AllIcons.Debugger.ThreadGroup, true, groupName)
+    
+    fun renderExpandHover(groupName: String) = 
+        SimpleColoredTextIcon(AllIcons.Ide.Notification.ExpandHover, true, groupName)
+    
+    fun renderNoIconNode(groupName: String) =
+        SimpleColoredTextIcon(null, true, groupName)
 }

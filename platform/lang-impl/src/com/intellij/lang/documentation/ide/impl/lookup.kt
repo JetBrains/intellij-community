@@ -9,6 +9,8 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.documentation.impl.documentationRequest
@@ -54,7 +56,7 @@ internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext(
     }
     super.setUpPopup(popup, popupUI)
     cancelPopupWhenLookupIsClosed(lookup, popup)
-    emitDocContentsScrolledEvents(popupUI)
+    emitDocContentsScrolledEvents(popup, popupUI)
   }
 
   override fun requestFlow(): Flow<DocumentationRequest?> = lookup.elementFlow().map(lookupElementToRequestMapper(lookup))
@@ -63,11 +65,12 @@ internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext(
     return LookupPopupBoundsHandler(lookup)
   }
 
-  private fun emitDocContentsScrolledEvents(popupUI: DocumentationPopupUI) {
+  private fun emitDocContentsScrolledEvents(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     var scrollBarPos = 0
     val project = popupUI.ui.project
     val coroutineScope = popupUI.coroutineScope
-    popupUI.ui.scrollPane.verticalScrollBar.model.addChangeListener(object : ChangeListener {
+    val model = popupUI.ui.scrollPane.verticalScrollBar.model
+    val changeListener = object : ChangeListener {
       override fun stateChanged(e: ChangeEvent) {
         if ((e.source as BoundedRangeModel).value != scrollBarPos) {
           scrollBarPos = (e.source as BoundedRangeModel).value
@@ -76,6 +79,12 @@ internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext(
             project.messageBus.syncPublisher(DocumentationPopupListener.TOPIC).contentsScrolled()
           }
         }
+      }
+    }
+    model.addChangeListener(changeListener)
+    popup.addListener(object: JBPopupListener {
+      override fun onClosed(event: LightweightWindowEvent) {
+        model.removeChangeListener(changeListener)
       }
     })
   }

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -290,9 +289,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
             response.result
           }
         }
-      }
-      catch (e: Exception) {
-        throw ProcessCanceledException(e)
       }
       finally {
         progressIndication.cancelAndJoin()

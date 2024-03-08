@@ -13,6 +13,7 @@ import org.jetbrains.jps.javac.Iterators;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static org.jetbrains.jps.javac.Iterators.*;
 
@@ -341,8 +342,8 @@ public final class Utils {
     return k -> cache.computeIfAbsent(k, f);
   }
 
-  public static <V> Iterators.Provider<V> lazyValue(Iterators.Provider<V> provider) {
-    return new Iterators.Provider<>() {
+  public static <V> Supplier<V> lazyValue(Supplier<V> provider) {
+    return new Supplier<>() {
       private Object[] computed;
 
       @Override

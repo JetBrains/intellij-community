@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nls
  * Nevertheless, the platform is ready to handle *idempotent* side effects (such as saving of files, for example).
  * It means that if there is a configuration process ongoing, the method [isInProgress] will be invoked at least two times.
  */
-@Experimental
 interface ActivityTracker {
 
   companion object {

@@ -20,7 +20,6 @@ import com.intellij.util.Processor
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.diagnostics.PsiDiagnosticUtils
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -32,11 +31,13 @@ import org.jetbrains.kotlin.idea.base.util.excludeFileTypes
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.util.*
@@ -45,7 +46,7 @@ import java.util.*
 
 class ExpressionsOfTypeProcessor(
     private val containsTypeOrDerivedInside: (KtDeclaration) -> Boolean,
-    private val classToSearch: PsiClass?,
+    private val classToSearch: PsiElement?,
     private val searchScope: SearchScope,
     private val project: Project,
     private val possibleMatchHandler: (KtExpression) -> Unit,
@@ -87,6 +88,7 @@ class ExpressionsOfTypeProcessor(
                 val fqName = element.kotlinFqName?.asString()
                     ?: (element as? KtNamedDeclaration)?.name
                 when (element) {
+                    is PsiTypeParameter -> element.name
                     is PsiMethod -> fqName + element.parameterList.text
                     is KtFunction -> fqName + element.valueParameterList!!.text
                     is KtParameter -> {
@@ -153,7 +155,7 @@ class ExpressionsOfTypeProcessor(
         }
     }
 
-    private fun isInProjectScope(classToSearch: PsiClass): Boolean {
+    private fun isInProjectScope(classToSearch: PsiElement): Boolean {
         return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = false).matches(classToSearch)
     }
 
@@ -205,8 +207,8 @@ class ExpressionsOfTypeProcessor(
         addClassToProcess(classToSearch)
     }
 
-    private fun addClassToProcess(classToSearch: PsiClass) {
-        data class ProcessClassUsagesTask(val classToSearch: PsiClass) : Task {
+    private fun addClassToProcess(classToSearch: PsiElement) {
+        class ProcessClassUsagesTask : Task {
             override fun perform() {
                 val debugInfo: StringBuilder? = if (isUnitTestMode()) StringBuilder() else null
                 testLog { "Searched references to ${logPresentation(classToSearch)}" }
@@ -248,10 +250,10 @@ class ExpressionsOfTypeProcessor(
                 }
 
                 // we must use plain search inside our class (and inheritors) because implicit 'this' can happen anywhere
-                (classToSearch as? KtLightClass)?.kotlinOrigin?.let { usePlainSearch(it) }
+                ((classToSearch as? KtLightClass)?.kotlinOrigin ?: classToSearch as? KtElement)?.let { usePlainSearch(it) }
             }
         }
-        addTask(ProcessClassUsagesTask(classToSearch))
+        addTask(ProcessClassUsagesTask())
     }
 
     private fun getFallbackDiagnosticsMessage(reference: PsiReference, debugInfo: StringBuilder? = null): String {
@@ -328,11 +330,7 @@ class ExpressionsOfTypeProcessor(
         val declarationName = runReadAction { psiMember.name } ?: return
         if (declarationName.isEmpty()) return
 
-        data class ProcessStaticCallableUsagesTask(
-            val member: PsiMember,
-            val memberScope: SearchScope,
-            val taskProcessor: ReferenceProcessor
-        ) : Task {
+        class ProcessStaticCallableUsagesTask : Task {
             override fun perform() {
                 // This class will look through the whole hierarchy anyway, so shouldn't be a big overhead here
                 val inheritanceClasses = ClassInheritorsSearch.search(
@@ -344,16 +342,16 @@ class ExpressionsOfTypeProcessor(
                 val classes = (inheritanceClasses + declarationClass).filter { it !is KtLightClass }
 
                 val searchRequestCollector = SearchRequestCollector(SearchSession())
-                val resultProcessor = StaticMemberRequestResultProcessor(member, classes)
+                val resultProcessor = StaticMemberRequestResultProcessor(psiMember, classes)
 
-                val memberName = runReadAction { member.name }
+                val memberName = runReadAction { psiMember.name }
                 for (klass in classes) {
                     val request = runReadAction { klass.name } + "." + declarationName
 
                     testLog { "Searched references to static $memberName in non-Java files by request $request" }
                     searchRequestCollector.searchWord(
                         request,
-                        classUseScope(klass).intersectWith(memberScope), UsageSearchContext.IN_CODE, true, member, resultProcessor
+                        classUseScope(klass).intersectWith(scope), UsageSearchContext.IN_CODE, true, psiMember, resultProcessor
                     )
 
                     val qualifiedName = runReadAction { klass.qualifiedName }
@@ -363,7 +361,7 @@ class ExpressionsOfTypeProcessor(
                         testLog { "Searched references to static $memberName in non-Java files by request $importAllUnderRequest" }
                         searchRequestCollector.searchWord(
                             importAllUnderRequest,
-                            classUseScope(klass).intersectWith(memberScope), UsageSearchContext.IN_CODE, true, member, resultProcessor
+                            classUseScope(klass).intersectWith(scope), UsageSearchContext.IN_CODE, true, psiMember, resultProcessor
                         )
                     }
                 }
@@ -372,11 +370,11 @@ class ExpressionsOfTypeProcessor(
                     if (reference.element.parents.any { it is KtImportDirective }) {
                         // Found declaration in import - process all file with an ordinal reference search
                         val containingFile = reference.element.containingFile
-                        addCallableDeclarationToProcess(member, LocalSearchScope(containingFile), taskProcessor)
+                        addCallableDeclarationToProcess(psiMember, LocalSearchScope(containingFile), processor)
 
                         true
                     } else {
-                        val processed = taskProcessor.handler(this@ExpressionsOfTypeProcessor, reference)
+                        val processed = processor.handler(this@ExpressionsOfTypeProcessor, reference)
                         if (!processed) { // we don't know how to handle this reference and down-shift to plain search
                             downShiftToPlainSearch(reference)
                         }
@@ -387,7 +385,7 @@ class ExpressionsOfTypeProcessor(
             }
         }
 
-        addTask(ProcessStaticCallableUsagesTask(psiMember, scope, processor))
+        addTask(ProcessStaticCallableUsagesTask())
         return
     }
 
@@ -399,11 +397,7 @@ class ExpressionsOfTypeProcessor(
             return
         }
 
-        data class ProcessCallableUsagesTask(
-            val declaration: PsiElement,
-            val processor: ReferenceProcessor,
-            val scope: SearchScope
-        ) : Task {
+        class ProcessCallableUsagesTask : Task {
             override fun perform() {
                 if (scope is LocalSearchScope) {
                     testLog { runReadAction { "Searched imported static member $declaration in ${scope.scope.toList()}" } }
@@ -423,7 +417,7 @@ class ExpressionsOfTypeProcessor(
                 }
             }
         }
-        addTask(ProcessCallableUsagesTask(declaration, processor, scope))
+        addTask(ProcessCallableUsagesTask())
     }
 
     private fun addPsiMemberTask(member: PsiMember) {
@@ -568,8 +562,10 @@ class ExpressionsOfTypeProcessor(
     private fun processClassUsageInUserType(userType: KtUserType): Boolean {
         val typeRef = userType.parents.lastOrNull { it is KtTypeReference }
         when (val typeRefParent = typeRef?.parent) {
-            // TODO: type alias
-            //is KtTypeAlias -> {}
+            is KtTypeAlias -> {
+                addClassToProcess(typeRefParent)
+                return true
+            }
             is KtCallableDeclaration -> {
                 when (typeRef) {
                     typeRefParent.typeReference -> { // usage in type of callable declaration
@@ -607,18 +603,14 @@ class ExpressionsOfTypeProcessor(
             is KtConstructorCalleeExpression -> { // super-class name in the list of bases
                 val parent = typeRefParent.parent
                 if (parent is KtSuperTypeCallEntry) {
-                    val classOrObject = (parent.parent as KtSuperTypeList).parent as KtClassOrObject
-                    val psiClass = classOrObject.toLightClass()
-                    psiClass?.let { addClassToProcess(it) }
+                    addClassToProcess((parent.parent as KtSuperTypeList).parent as KtClassOrObject)
                     return true
                 }
             }
 
             is KtSuperTypeListEntry -> { // super-interface name in the list of bases
                 if (typeRef == typeRefParent.typeReference) {
-                    val classOrObject = (typeRefParent.parent as KtSuperTypeList).parent as KtClassOrObject
-                    val psiClass = classOrObject.toLightClass()
-                    psiClass?.let { addClassToProcess(it) }
+                    addClassToProcess((typeRefParent.parent as KtSuperTypeList).parent as KtClassOrObject)
                     return true
                 }
             }
@@ -647,10 +639,14 @@ class ExpressionsOfTypeProcessor(
             }
 
             is KtTypeParameter -> { // <expr> as `<reified T : ClassName>`
-                typeRefParent.extendsBound?.let {
-                    addCallableDeclarationOfOurType(it)
-                    return true
-                }
+                addClassToProcess(typeRefParent)
+                return true
+            }
+
+            is KtTypeConstraint -> {
+                val typeParameter = typeRefParent.subjectTypeParameterName?.mainReference?.resolve() as? KtTypeParameter ?: return true
+                addClassToProcess(typeParameter)
+                return true
             }
         }
 
@@ -836,6 +832,13 @@ class ExpressionsOfTypeProcessor(
                         }
                         break@ParentsLoop
                     }
+                }
+
+                is KtPropertyDelegate -> {
+                    (parent.parent as? KtProperty)?.let {
+                        addCallableDeclarationOfOurType(it)
+                    }
+                    break@ParentsLoop
                 }
             }
 

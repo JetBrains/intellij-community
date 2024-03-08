@@ -9,6 +9,8 @@ import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.xmlb.JsonHelperKt.valueToJson;
+
 final class TextBinding implements NestedBinding {
   private final Class<?> valueClass;
   private final MutableAccessor accessor;
@@ -16,6 +18,11 @@ final class TextBinding implements NestedBinding {
   TextBinding(@NotNull MutableAccessor accessor) {
     this.accessor = accessor;
     valueClass = ClassUtil.typeToClass(accessor.getGenericType());
+  }
+
+  @Override
+  public @Nullable JsonElement deserializeToJson(@NotNull Element element) {
+    return valueToJson(element.getText(), valueClass);
   }
 
   @Override

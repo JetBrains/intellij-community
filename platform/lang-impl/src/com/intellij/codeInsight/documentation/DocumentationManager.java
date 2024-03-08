@@ -79,11 +79,15 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Comment;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1909,20 +1913,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     text = replaceIgnoreQuotesType(text, SECTIONS_START + SECTIONS_END, "");
     text = replaceIgnoreQuotesType(text, SECTIONS_START + "<p>" + SECTIONS_END, ""); //NON-NLS
 
-    int definitionPos = indexOfIgnoreQuotesType(text, "class='" + CLASS_DEFINITION + "'");
-    int contentPos = indexOfIgnoreQuotesType(text, "class='" + CLASS_CONTENT + "'");
-    int sectionsPos = indexOfIgnoreQuotesType(text, "class='" + CLASS_SECTIONS + "'");
-    int bottomPos = indexOfIgnoreQuotesType(
-      text.substring(StreamEx.of(definitionPos, contentPos, sectionsPos).filter(it -> it >= 0).max(Integer::compareTo).orElse(0)),
-      "class='" + CLASS_BOTTOM);
-
-    boolean hasDefinition = definitionPos >= 0;
-    boolean hasContent = contentPos >= 0;
-    boolean hasSections = sectionsPos >= 0;
-    boolean hasDownloadsSection = downloadDocumentationActionLink != null;
-    boolean hasBottom = bottomPos >= 0 || location != null || links != null;
-
-    if (!hasContent && !hasDefinition && !hasSections) {
+    var document = Jsoup.parse(text);
+    if (document.select("." + CLASS_DEFINITION + ", ." + CLASS_CONTENT + ", ." + CLASS_SECTIONS).isEmpty()) {
       int bodyStart = findContentStart(text);
       if (bodyStart > 0) {
         text = text.substring(0, bodyStart) +
@@ -1933,67 +1925,85 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       else {
         text = CONTENT_START + text + CONTENT_END;
       }
-      hasContent = true;
-    }
-    else if (hasContent) {
-      // Ensure content starts with <p> for proper padding
-      int nextChar = text.indexOf(">", contentPos) + 1;
-      if (nextChar > 0) {
-        while (nextChar < text.length() && Character.isWhitespace(text.charAt(nextChar))) {
-          nextChar++;
-        }
-        //noinspection HardCodedStringLiteral
-        if (!text.startsWith("<p", nextChar) && !text.startsWith("<div", nextChar)) {
-          //noinspection HardCodedStringLiteral
-          text = text.substring(0, nextChar) + "<p>" + text.substring(nextChar);
-        }
-      }
-    }
-
-    if (hasDefinition && (hasContent || hasSections || hasDownloadsSection || hasBottom)) {
-      text = replaceIgnoreQuotesType(text, "class='" + CLASS_DEFINITION + "'",
-                                     "class='" + CLASS_DEFINITION_SEPARATED + "'");
+      // reparse the document
+      document = Jsoup.parse(text);
     }
 
     if (downloadDocumentationActionLink != null) {
-      text += HtmlChunk.div()
-        .children(
-          HtmlChunk.icon("AllIcons.Plugins.Downloads", AllIcons.Plugins.Downloads),
-          HtmlChunk.nbsp(),
-          HtmlChunk.link(downloadDocumentationActionLink, CodeInsightBundle.message("documentation.download.button.label"))
-        )
-        .setClass(CLASS_DOWNLOAD_DOCUMENTATION);
+      document.body().append(
+        HtmlChunk.div()
+          .children(
+            HtmlChunk.icon("AllIcons.Plugins.Downloads", AllIcons.Plugins.Downloads),
+            HtmlChunk.nbsp(),
+            HtmlChunk.link(downloadDocumentationActionLink, CodeInsightBundle.message("documentation.download.button.label"))
+          )
+          .setClass(CLASS_DOWNLOAD_DOCUMENTATION)
+          .toString()
+      );
     }
     if (location != null) {
-      text += getBottom().child(location);
+      document.body().append(getBottom().child(location).toString());
     }
     if (links != null) {
-      text += getBottom().child(links);
+      document.body().append(getBottom().child(links).toString());
     }
-    //workaround for Swing html renderer not removing empty paragraphs before non-inline tags
-    text = PARAGRAPH_BEFORE_NON_INLINE_TAG_PATTERN.matcher(text).replaceAll("$1");
-    text = addExternalLinksIcon(text);
-    //convert <blockquote><pre> and <pre><code> into code blocks
-    text = BLOCKQUOTE_PRE_CODE_OPEN_PATTERN.matcher(text).replaceAll(QuickDocHighlightingHelper.CODE_BLOCK_PREFIX);
-    text = BLOCKQUOTE_PRE_CODE_CLOSE_PATTERN.matcher(text).replaceAll(QuickDocHighlightingHelper.CODE_BLOCK_SUFFIX);
-    text = DocumentationHtmlUtil.addWordBreaks(text);
-    return text;
+
+    document.select("." + CLASS_DEFINITION + ", ." + CLASS_CONTENT).forEach(
+      div -> {
+        var nextSibling = div.nextElementSibling();
+        if (nextSibling == null) {
+          return;
+        }
+        if (nextSibling.hasClass(CLASS_DEFINITION)
+            || nextSibling.hasClass(CLASS_CONTENT)
+            || (div.hasClass(CLASS_DEFINITION)
+                && (
+                  nextSibling.hasClass(CLASS_SECTIONS)
+                  || nextSibling.hasClass(CLASS_BOTTOM)
+                  || nextSibling.hasClass(CLASS_DOWNLOAD_DOCUMENTATION)
+                ))) {
+          div.after(new Element("hr"));
+        }
+      }
+    );
+    document.select("." + CLASS_CONTENT).forEach(
+      div -> {
+        var child = div.firstChild();
+        var toWrap = new SmartList<Node>();
+        while (child != null && !isBlockElement(child)) {
+          if (!(child instanceof Comment)) {
+            toWrap.add(child);
+          }
+          child = child.nextSibling();
+        }
+        if (!toWrap.isEmpty()
+            && !ContainerUtil.all(toWrap, n -> n instanceof TextNode textNode && textNode.isBlank())
+        ) {
+          var para = new Element("p");
+          para.insertChildren(0, toWrap);
+          div.insertChildren(0, para);
+        }
+      }
+    );
+
+    document.outputSettings().prettyPrint(false);
+    return addExternalLinksIcon(document.html());
   }
 
-  private static final Pattern PARAGRAPH_BEFORE_NON_INLINE_TAG_PATTERN = Pattern.compile("<p>\\s*(<(?:[uo]l|h\\d|p|tr|td))");
-  private static final Pattern BLOCKQUOTE_PRE_CODE_OPEN_PATTERN =
-    Pattern.compile("<blockquote>[\\s\\n\\r]*<pre>|<pre><code>", Pattern.MULTILINE);
-  private static final Pattern BLOCKQUOTE_PRE_CODE_CLOSE_PATTERN =
-    Pattern.compile("</pre>[\\s\\n\\r]*</blockquote>|</code></pre>", Pattern.MULTILINE);
-
-  private static int indexOfIgnoreQuotesType(@NotNull String text, @NotNull String substring) {
-    return StreamEx.of(
-        text.indexOf(substring),
-        text.indexOf(substring.replace("\"", "'")),
-        text.indexOf(substring.replace("'", "\""))
-      ).filter(it -> it >= 0)
-      .min(Integer::compareTo)
-      .orElse(-1);
+  private static boolean isBlockElement(Node node) {
+    if (node instanceof Element element) {
+      var tagName = element.tagName();
+      return tagName.equals("p")
+             || tagName.equals("div")
+             || tagName.equals("pre")
+             || tagName.equals("table")
+             || tagName.equals("blockquote")
+             || tagName.equals("ol")
+             || tagName.equals("ul")
+             || tagName.equals("dl")
+             || (tagName.startsWith("h") && tagName.length() == 2 && Character.isDigit(tagName.charAt(1)));
+    }
+    return false;
   }
 
   private static @NlsSafe @NotNull String replaceIgnoreQuotesType(@NotNull String text,

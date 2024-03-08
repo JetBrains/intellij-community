@@ -139,30 +139,33 @@ abstract class AbstractKotlinMppGradleImportingTest(private val pluginKind: Kotl
     }
 
     private fun KotlinMppTestsContextImpl.doTest(runImport: Boolean) {
-        try {
-            installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeTestExecution() } }
-            createProjectSubFile(
-                "local.properties",
-                """
+        runAll(
+            {
+                installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeTestExecution() } }
+                createProjectSubFile(
+                    "local.properties",
+                    """
                 |sdk.dir=${KotlinTestUtils.getAndroidSdkSystemIndependentPath()}
                 |org.gradle.java.home=${findJdkPath()}
             """.trimMargin()
-            )
+                )
 
-            configureByFiles()
+                configureByFiles()
 
-            installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeImport() } }
+                installedFeatures.combineMultipleFailures { feature -> with(feature) { context.beforeImport() } }
 
-            if (runImport) importProject()
+                if (runImport) importProject()
 
-            installedFeatures.combineMultipleFailures { feature ->
-                with(feature) {
-                    if (feature !is AbstractTestChecker<*> || isCheckerEnabled(feature)) context.afterImport()
+                installedFeatures.combineMultipleFailures { feature ->
+                    with(feature) {
+                        if (feature !is AbstractTestChecker<*> || isCheckerEnabled(feature)) context.afterImport()
+                    }
                 }
+            },
+            {
+                installedFeatures.combineMultipleFailures { feature -> with(feature) { context.afterTestExecution() } }
             }
-        } finally {
-            installedFeatures.combineMultipleFailures { feature -> with(feature) { context.afterTestExecution() } }
-        }
+        )
     }
 
     @Suppress("RedundantIf")

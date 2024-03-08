@@ -8,16 +8,17 @@ import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinModCommandApplicator
 
 class KotlinApplicatorBasedModCommand<PSI : PsiElement, in INPUT : KotlinApplicatorInput>(
     target: PSI,
     @FileModifier.SafeFieldForPreview
     private val input: INPUT,
     @FileModifier.SafeFieldForPreview
-    val applicator: KotlinModCommandApplicator<PSI, INPUT>,
-) : PsiUpdateModCommandAction<PSI>(target), ReportingClassSubstitutor {
+    private val applicator: KotlinApplicator.ModCommandBased<PSI, INPUT>,
+) : PsiUpdateModCommandAction<PSI>(target),
+    ReportingClassSubstitutor {
 
     override fun getFamilyName(): String =
         applicator.getFamilyName()
@@ -29,6 +30,5 @@ class KotlinApplicatorBasedModCommand<PSI : PsiElement, in INPUT : KotlinApplica
         applicator.applyTo(element, input, context, updater)
     }
 
-    override fun getSubstitutedClass(): Class<*> =
-        (applicator as? ReportingClassSubstitutor)?.substitutedClass ?: applicator.javaClass
+    override fun getSubstitutedClass(): Class<*> = applicator.javaClass
 }

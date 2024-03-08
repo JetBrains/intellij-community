@@ -4,6 +4,8 @@
  */
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
@@ -15,8 +17,8 @@ import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -31,16 +33,26 @@ object SpecifySuperTypeFixFactory {
         @NlsSafe val shortTypeRepresentation: String
     )
 
-    class Input(val superTypes: List<TypeStringWithoutArgs>) : KotlinApplicatorInput
+    data class Input(
+        val superTypes: List<TypeStringWithoutArgs>,
+    ) : KotlinApplicatorInput
 
-    private val applicator = applicator<KtSuperExpression, Input> {
-        familyAndActionName(KotlinBundle.lazyMessage("intention.name.specify.supertype"))
-        applyToWithEditorRequired { psi, input, project, editor ->
+    private val applicator = object : KotlinApplicator.PsiBased<KtSuperExpression, Input> {
+
+        override fun getFamilyName(): String = KotlinBundle.message("intention.name.specify.supertype")
+
+        override fun applyTo(
+            psi: KtSuperExpression,
+            input: Input,
+            project: Project,
+            editor: Editor?,
+        ) {
+            editor ?: return
+
             when (input.superTypes.size) {
-                0 -> return@applyToWithEditorRequired
+                0 -> return
                 1 -> psi.specifySuperType(input.superTypes.single())
-                else -> JBPopupFactory
-                    .getInstance()
+                else -> JBPopupFactory.getInstance()
                     .createListPopup(createListPopupStep(psi, input.superTypes))
                     .showInBestPositionFor(editor)
             }

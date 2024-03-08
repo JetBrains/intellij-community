@@ -232,7 +232,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
     if (!isSub) {
       if (id == PluginManagerCore.CORE_ID) {
-        modules = modules + IdeaPluginPlatform.getHostPlatformModuleIds()
+        modules = modules + IdeaPluginOsRequirement.getHostOsModuleIds()
         if (!AppMode.isRemoteDevHost()) {
           /* dependency on this ID may be used to enable some functionality in local IDE and in JetBrains Client, but disable it in product 
              running in backend mode; this is needed because the backend process currently doesn't use module-based loader and therefore cannot

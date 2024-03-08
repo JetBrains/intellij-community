@@ -1,14 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInsight.options.JavaIdentifierValidator;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -94,7 +98,6 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
   }
 
   @Override
-  @Nullable
   protected LocalQuickFix buildFix(Object... infos) {
     return new LoggerInitializedWithForeignClassFix((String)infos[0]);
   }
@@ -197,10 +200,9 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
         return;
       }
       final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] expressions = argumentList.getExpressions();
       if (expressions.length != 1) {
@@ -220,25 +222,32 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
       if (containingClassName == null) {
         return;
       }
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final String referenceName = methodExpression.getReferenceName();
+      final int index = loggerFactoryMethodNames.indexOf(referenceName);
+      if (index < 0) {
+        return;
+      }
+
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) {
         return;
       }
+
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) {
         return;
       }
       final String className = aClass.getQualifiedName();
-      final int index = loggerFactoryClassNames.indexOf(className);
-      if (index < 0) {
+      if (className == null) {
         return;
       }
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final String referenceName = methodExpression.getReferenceName();
-      final String loggerFactoryMethodName = loggerFactoryMethodNames.get(index);
-      if (!loggerFactoryMethodName.equals(referenceName)) {
+
+      if(StreamEx.zip(loggerFactoryClassNames, loggerFactoryMethodNames, (cl, m)-> new Pair<>(cl, m))
+        .noneMatch(expected->expected.first.equals(className) && expected.second.equals(referenceName))) {
         return;
       }
+
       final PsiTypeElement operand = expression.getOperand();
       final PsiClass initializerClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
       if (initializerClass == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings.local
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -119,10 +119,8 @@ class LocalSettingsControllerTest {
   }
 }
 
-private suspend fun corruptValue(key: String, controller: SettingsController) {
-  val settingsDescriptor = settingDescriptor(key = key,
-                                             pluginId = PluginManagerCore.CORE_ID,
-                                             serializer = RawSettingSerializerDescriptor) {
+private fun corruptValue(@Suppress("SameParameterValue") key: String, controller: SettingsController) {
+  val settingsDescriptor = settingDescriptor(key = key, pluginId = PluginManagerCore.CORE_ID, serializer = RawSettingSerializerDescriptor) {
     tags = listOf(CacheTag)
   }
   controller.setItem(settingsDescriptor, Random(42).nextBytes(4096))

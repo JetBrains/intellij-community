@@ -18,11 +18,13 @@ class ExpandAllAction : DumbAwareAction, ActionRemoteBehaviorSpecification.Front
 
   constructor() : super() {
     getTreeExpander = { it.getData(TREE_EXPANDER) }
+    isEnabledInModalContext = true
   }
 
   constructor(getExpander: (AnActionEvent) -> TreeExpander?) : super() {
     getTreeExpander = getExpander
     copyFrom(this, ACTION_EXPAND_ALL)
+    isEnabledInModalContext = true
   }
 
   override fun actionPerformed(event: AnActionEvent) {

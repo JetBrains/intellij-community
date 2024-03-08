@@ -1,9 +1,7 @@
 package com.intellij.tools.ide.performanceTesting.commands
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.tools.ide.performanceTesting.commands.dto.MavenArchetypeInfo
-import com.intellij.tools.ide.performanceTesting.commands.dto.MavenGoalConfigurationDto
-import com.intellij.tools.ide.performanceTesting.commands.dto.NewMavenProjectDto
+import com.intellij.tools.ide.performanceTesting.commands.dto.*
 import java.io.File
 import java.lang.reflect.Modifier
 import java.nio.file.Path
@@ -578,6 +576,11 @@ fun <T : CommandChain> T.linkGradleProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}linkGradleProject ${projectPath}")
 }
 
+fun <T : CommandChain> T.setGradleDelegatedBuildCommand(delegatedBuild: Boolean = true,
+                                                        gradleTestRunner: GradleTestRunner = GradleTestRunner.GRADLE): T = apply {
+  addCommand("${CMD_PREFIX}setGradleDelegatedBuildCommand $delegatedBuild $gradleTestRunner")
+}
+
 fun <T : CommandChain> T.unlinkGradleProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}unlinkGradleProject ${projectPath}")
 }
@@ -652,6 +655,14 @@ fun <T : CommandChain> T.assertOpenedFileInRoot(path: String): T = apply {
 
 fun <T : CommandChain> T.importGradleProject(): T = apply {
   addCommand("${CMD_PREFIX}importGradleProject")
+}
+
+fun <T : CommandChain> T.setBuildToolsAutoReloadType(type: BuildToolsAutoReloadType): T = apply {
+  addCommand("${CMD_PREFIX}setBuildToolsAutoReloadType $type")
+}
+
+fun <T : CommandChain> T.projectNotificationAwareShouldBeVisible(shouldBeVisible: Boolean): T = apply {
+  addCommand("${CMD_PREFIX}projectNotificationAwareShouldBeVisible $shouldBeVisible")
 }
 
 fun <T : CommandChain> T.setGradleJdk(jdk: SdkObject): T = apply {

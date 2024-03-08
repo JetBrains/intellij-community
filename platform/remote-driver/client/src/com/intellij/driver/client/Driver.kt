@@ -74,6 +74,8 @@ interface Driver : AutoCloseable {
 
   /**
    * Forcefully exits the application.
+   * Don't use directly in tests, instead use [com.intellij.ide.starter.extended.engine.driver.BackgroundRun.closeIdeAndWait], otherwise
+   * test on RemDev won't work since client and not host will be closed.
    */
   fun exitApplication()
 

@@ -6,14 +6,15 @@ import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.StepIntoMethodBreakpoint
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.SuspendOtherThreadsRequestor
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.requests.CustomProcessingLocatableEventRequestor
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
-import java.util.function.Function
 
 object CoroutineBreakpointFacility {
     fun installCoroutineResumedBreakpoint(context: SuspendContextImpl, method: Method): Boolean {
@@ -23,7 +24,8 @@ object CoroutineBreakpointFacility {
 
         val useCoroutineIdFiltering = Registry.`is`("debugger.filter.breakpoints.by.coroutine.id")
 
-        val breakpoint = object : StepIntoMethodBreakpoint(method.declaringType().name(), method.name(), method.signature(), project) {
+        val breakpoint = object : StepIntoMethodBreakpoint(method.declaringType().name(), method.name(), method.signature(), project),
+                                  CustomProcessingLocatableEventRequestor {
             override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
                 val result = super.processLocatableEvent(action, event)
                 if (result) {
@@ -42,11 +44,11 @@ object CoroutineBreakpointFacility {
                 return scheduleStepOverCommandForSuspendSwitch(suspendContextImpl)
             }
 
-            override fun callbackAfterReplacementForAllThreadSuspendContext(): Function<SuspendContextImpl, Boolean>? {
-                if (suspendAll) {
-                    return Function<SuspendContextImpl, Boolean> { scheduleStepOverCommandForSuspendSwitch(it) }
+            override fun customVoteSuspend(suspendContext: SuspendContextImpl): Boolean {
+                if (!suspendAll) return false
+                return SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext) {
+                    scheduleStepOverCommandForSuspendSwitch(it)
                 }
-                return null
             }
 
             private fun scheduleStepOverCommandForSuspendSwitch(it: SuspendContextImpl): Boolean {

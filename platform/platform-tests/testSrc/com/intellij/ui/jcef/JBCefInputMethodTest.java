@@ -96,7 +96,7 @@ public class JBCefInputMethodTest {
     SwingUtilities.invokeAndWait(() -> {
       browser = new JBCefBrowser();
       browser.getJBCefClient().addLoadHandler(startupWaiter, browser.myCefBrowser);
-      JBCefJSQuery jsQuery = JBCefJSQuery.create(browser);
+      JBCefJSQuery jsQuery = JBCefJSQuery.create((JBCefBrowserBase)browser);
       jsQuery.addHandler(result -> {
         stringWaiter.setValue(result);
         System.out.println("Text changed: '" + result + "'");

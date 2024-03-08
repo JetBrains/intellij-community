@@ -92,7 +92,7 @@ private fun findSmartStepTargets(element: KtElement, lines: Range<Int>): List<Sm
     val targets = OrderedSet<SmartStepTarget>()
     val visitor = SmartStepTargetVisitor(lines, targets)
     element.accept(visitor, null)
-    return targets
+    return targets.toList()
 }
 
 private fun calculateSmartStepTargetsToShow(targets: List<SmartStepTarget>, debugProcess: DebugProcessImpl, lines: ClosedRange<Int>): List<SmartStepTarget> {

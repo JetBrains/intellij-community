@@ -41,15 +41,13 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
     if (imports != null) {
       addImportUsages(builder, imports.getFirst(), imports.getSecond());
     }
-    Set<Usage> additional = myAdditionalUsages.remove(nodeName);
-    if (additional != null) {
-      for (Usage usage : additional) {
-        if (!nodeID.equals(usage.getElementOwner())) {
-          builder.addUsage(usage);
-        }
+    Set<Usage> additionalUsages = myAdditionalUsages.remove(nodeName);
+    if (additionalUsages != null) {
+      for (Usage usage : additionalUsages) {
+        builder.addUsage(usage);
       }
     }
-    for (Usage usage : Iterators.flat(Iterators.map(sources, src -> myPerSourceAdditionalUsages.remove(Path.of(src))))) {
+    for (Usage usage : Iterators.flat(Iterators.map(sources, src -> myPerSourceAdditionalUsages.get(Path.of(src))))) {
       builder.addUsage(usage);
     }
     var node = builder.getResult();
@@ -59,7 +57,12 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
   }
 
   public List<Pair<Node<?, ?>, Iterable<NodeSource>>> getNodes() {
-    return myNodes;
+    try {
+      return myNodes;
+    }
+    finally {
+      myPerSourceAdditionalUsages.clear();
+    }
   }
 
   @Override
@@ -96,10 +99,7 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
   private static void addImportUsages(JvmClassNodeBuilder builder, Collection<String> classImports, Collection<String> staticImports) {
     for (final String anImport : classImports) {
-      if (anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
-        builder.addUsage(new ImportPackageOnDemandUsage(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()).replace('.', '/')));
-      }
-      else {
+      if (!anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
         builder.addUsage(new ClassUsage(anImport.replace('.', '/')));
       }
     }

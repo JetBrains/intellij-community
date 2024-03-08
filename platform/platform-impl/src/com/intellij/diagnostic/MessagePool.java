@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -61,11 +61,9 @@ public final class MessagePool {
   public List<AbstractMessage> getFatalErrors(boolean includeReadMessages, boolean includeSubmittedMessages) {
     List<AbstractMessage> result = new ArrayList<>();
     for (AbstractMessage message : myErrors) {
-      if ((!message.isRead() && !message.isSubmitted()) ||
-          (message.isRead() && includeReadMessages) ||
-          (message.isSubmitted() && includeSubmittedMessages)) {
-        result.add(message);
-      }
+      if (!includeReadMessages && message.isRead()) continue;
+      if (!includeSubmittedMessages && (message.isSubmitted() || message.getThrowable() instanceof TooManyErrorsException)) continue;
+      result.add(message);
     }
     return result;
   }

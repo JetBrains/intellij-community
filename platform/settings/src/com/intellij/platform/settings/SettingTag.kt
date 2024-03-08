@@ -4,6 +4,7 @@ package com.intellij.platform.settings
 
 import kotlinx.serialization.json.JsonElement
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.function.Supplier
 
 /**
  * See [SettingDescriptor.tags].
@@ -42,11 +43,15 @@ class PersistenceStateComponentPropertyTag(val componentName: String) : SettingT
   override fun toString(): String = "PersistenceStateComponentPropertyTag(componentName=$componentName)"
 }
 
-// for now, is supported only for PSC with Element state class
+/**
+ * This is an internal tag solely intended for use within the execution scope of [DelegatedSettingsController.getItem].
+ * It is not thread-safe and not immutable, thus caution is required when using it.
+ * As it stands, it is only supported for Bean/Collection/Element bindings.
+ */
 @Internal
-class OldLocalValueSupplierTag(private val supplier: Lazy<JsonElement?>) : SettingTag {
+class OldLocalValueSupplierTag(private val supplier: Supplier<JsonElement?>) : SettingTag {
   val value: JsonElement?
-    get() = supplier.value
+    get() = supplier.get()
 
   override fun toString(): String = "OldLocalValueSupplierTag"
 }

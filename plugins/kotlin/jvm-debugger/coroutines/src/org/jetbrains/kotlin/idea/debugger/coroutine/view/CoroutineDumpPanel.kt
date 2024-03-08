@@ -190,7 +190,7 @@ class CoroutineDumpPanel(
         override fun customizeCellRenderer(list: JList<*>, value: Any, index: Int, selected: Boolean, hasFocus: Boolean) {
             val infoData = value as CompleteCoroutineInfoData
             val state = infoData.descriptor
-            icon = fromState(state.state)
+            icon = fromState(state.state, false)
             val attrs = getAttributes(infoData)
             append(state.name + " (", attrs)
             var detail: String? = state.state.name

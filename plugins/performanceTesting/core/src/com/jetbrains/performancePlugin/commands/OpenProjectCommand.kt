@@ -8,7 +8,6 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -18,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.project.impl.p3Support
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.openapi.wm.IdeFocusManager
@@ -112,10 +112,14 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
       }
     }
     else {
-      newProject = ProjectManagerEx.getInstanceEx().openProjectAsync(Path.of(projectPath), OpenProjectTask(forceOpenInNewFrame = true))
+      val projectStoreBaseDir = Path.of(projectPath)
+      newProject = ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir, OpenProjectTask(forceOpenInNewFrame = true))
       if (newProject == null) {
         // Don't stop if project was opened in a new instance
-        if (ProjectManagerEx.IS_PER_PROJECT_INSTANCE_READY) return
+        if (!p3Support().canBeOpenedInThisProcess(projectStoreBaseDir)) {
+          return
+        }
+
         throw IllegalStateException("Failed to open the project: $projectPath")
       }
 

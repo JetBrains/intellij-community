@@ -602,7 +602,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     MouseEvent.MOUSE_PRESSED == e.id ||
     MouseEvent.MOUSE_RELEASED == e.id ||
     MouseEvent.MOUSE_CLICKED == e.id ||
-    e is WindowEvent || e is FocusEvent
+    e is FocusEvent ||
+    e is WindowEvent && e.id != WindowEvent.WINDOW_CLOSED
 
   private fun processIdleActivityListeners(e: AWTEvent) {
     if (!isUserActivityEvent(e)) return

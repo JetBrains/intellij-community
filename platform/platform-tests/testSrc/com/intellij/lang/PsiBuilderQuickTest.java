@@ -94,6 +94,9 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
              PsiBuilderUtil.advance(builder, 2);
              marker3.done(OTHER);
              PsiBuilderUtil.advance(builder, 1);
+             assertEquals("(a(b)c)", ((LighterASTSyntaxTreeBuilderBackedNode)marker1).getText());
+             assertEquals("(b)", ((LighterASTSyntaxTreeBuilderBackedNode)marker2).getText());
+             assertEquals("(d)", ((LighterASTSyntaxTreeBuilderBackedNode)marker3).getText());
            }
     );
   }
@@ -516,6 +519,8 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
 
     // check light tree composition
     FlyweightCapableTreeStructure<LighterASTNode> lightTree = builder.getLightTree();
+    assertTrue(lightTree.getRoot() instanceof LighterASTSyntaxTreeBuilderBackedNode);
+    assertEquals(text, ((LighterASTSyntaxTreeBuilderBackedNode)lightTree.getRoot()).getText());
     assertEquals(expected, DebugUtil.lightTreeToString(lightTree, true));
     // verify that light tree can be taken multiple times
     FlyweightCapableTreeStructure<LighterASTNode> lightTree2 = builder.getLightTree();

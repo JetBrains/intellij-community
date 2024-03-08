@@ -206,8 +206,8 @@
   },
   {
     "vsCodeId": "GitLab.gitlab-workflow",
-    "ideaName": "GitLab Workflow",
-    "builtIn": true
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
   },
   {
     "vsCodeId": "golang.Go",
@@ -350,6 +350,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "ms-vscode.node-debug2",
+    "ideaName": "Node.js",
+    "ideaId": "NodeJS"
+  },
+  {
     "vsCodeId": "ms-vscode.sublime-keybindings",
     "ideaName": "Sublime Text Keymap",
     "ideaId": "com.intellij.plugins.sublimetextkeymap"
@@ -382,11 +387,6 @@
   {
     "vsCodeId": "mtxr.sqltools-driver-pg",
     "ideaName": "SQLTools PostgreSQL/Cockroach Driver",
-    "builtIn": true
-  },
-  {
-    "vsCodeId": "mtxr.sqltools-driver-sqlite",
-    "ideaName": "SQLTools SQLite",
     "builtIn": true
   },
   {
@@ -503,6 +503,16 @@
     "vsCodeId": "vuhrmeister.vscode-meteor",
     "ideaName": "Meteor",
     "ideaId": "com.jetbrains.plugins.meteor"
+  },
+  {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
+    "builtIn": true
   },
   {
     "vsCodeId": "yzhang.markdown-all-in-one",

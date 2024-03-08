@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.c
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -101,7 +102,7 @@ abstract class AbstractInlinePostProcessor {
 
     private fun restoreComments(pointer: SmartPsiElementPointer<KtElement>) {
         pointer.element?.forEachDescendantOfType<KtExpression> {
-            it.getCopyableUserData(CommentHolder.COMMENTS_TO_RESTORE_KEY)?.restoreComments(it)
+            it.getCopyableUserData(CommentHolder.COMMENTS_TO_RESTORE_KEY)?.restoreComments(it.parent as? KtDotQualifiedExpression ?: it)
         }
     }
 }

@@ -26,6 +26,7 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PsiIconUtil;
+import com.intellij.util.ui.EDT;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +75,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     PsiElement psiElement = (PsiElement)this;
     if (!psiElement.isValid()) return null;
 
-    if (Registry.is("psi.deferIconLoading", true)) {
+    if (Registry.is("psi.deferIconLoading", true) && EDT.isCurrentThreadEdt()) {
       Icon baseIcon = LastComputedIconCache.get(psiElement, flags);
       if (baseIcon == null) {
         baseIcon = AstLoadingFilter.disallowTreeLoading(() -> computeBaseIcon(flags));
@@ -82,9 +83,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (baseIcon == null) {
         return null;
       }
-      return IconManager.getInstance().createDeferredIcon(baseIcon,
-                                                          new ElementIconRequest(psiElement, psiElement.getProject(), flags),
-                                                          ICON_COMPUTE);
+      return IconManager.getInstance().createDeferredIcon(
+        baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
     }
 
     return computeIconNow(psiElement, flags);
@@ -222,7 +222,8 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
           baseIcon = ((CoreAwareIconManager)iconManager).getIcon(vFile, flags & ~ICON_FLAG_READ_STATUS, psiFile.getProject());
         }
         else {
-          return null;
+          baseIcon = isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
+          if (baseIcon == null) return null;
         }
       }
       return IconManager.getInstance().createLayeredIcon(this, baseIcon, elementFlags);

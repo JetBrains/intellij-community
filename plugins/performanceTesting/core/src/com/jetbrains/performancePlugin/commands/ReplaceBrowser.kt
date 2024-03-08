@@ -15,10 +15,15 @@ class ReplaceBrowser(text: String, line: Int) : PerformanceCommandCoroutineAdapt
   companion object {
     const val PREFIX: String = PlaybackCommandCoroutineAdapter.CMD_PREFIX + "replaceBrowser"
     val browser = FakeBrowser()
+
+    @JvmStatic
+    fun replaceBrowser() {
+      @Suppress("TestOnlyProblems")
+      (ApplicationManager.getApplication() as ApplicationImpl).replaceServiceInstance(BrowserLauncher::class.java, browser, Disposer.newDisposable())
+    }
   }
   override suspend fun doExecute(context: PlaybackContext) {
-    @Suppress("TestOnlyProblems")
-    (ApplicationManager.getApplication() as ApplicationImpl).replaceServiceInstance(BrowserLauncher::class.java, browser, Disposer.newDisposable())
+    replaceBrowser()
   }
   override fun getName(): String {
    return "replaceBrowser"

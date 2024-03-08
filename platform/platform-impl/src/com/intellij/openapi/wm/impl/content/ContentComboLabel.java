@@ -73,7 +73,12 @@ final class ContentComboLabel extends ContentLabel {
   }
 
   void update() {
-    setBorder(isToDrawCombo() ? JBUI.Borders.empty(0, 8) : JBUI.Borders.empty());
+    if (isToDrawCombo()) {
+      myBorder.setBorderInsets(0, JBUI.scale(8), 0, JBUI.scale(8));
+    }
+    else {
+      myBorder.setBorderInsets(0, 0, 0, 0);
+    }
     updateTextAndIcon(getContent(), true, ExperimentalUI.isNewUI());
     updateAdditionalActions();
   }
@@ -107,9 +112,12 @@ final class ContentComboLabel extends ContentLabel {
     }
 
     if (ExperimentalUI.isNewUI()) {
-      setBorder(myLayout.shouldShowId()
-                ? JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, iconsGap)
-                : JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, iconsGap));
+      if (myLayout.shouldShowId()) {
+        myBorder.setBorderInsets(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, iconsGap);
+      }
+      else {
+        myBorder.setBorderInsets(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, iconsGap);
+      }
     }
 
     return size;

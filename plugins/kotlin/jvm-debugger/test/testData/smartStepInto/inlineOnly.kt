@@ -3,5 +3,5 @@ fun foo() {
     val b = a
 }
 
-// EXISTS: mutableListOf(T)
 // EXISTS: also: block.invoke()
+// EXISTS: mutableListOf(T)

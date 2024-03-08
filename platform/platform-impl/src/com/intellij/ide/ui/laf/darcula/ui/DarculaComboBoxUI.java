@@ -54,12 +54,16 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected static final int DEFAULT_BORDER_COMPENSATION = 1;
   private final float myArc;
   private final Insets myBorderCompensation;
-  private final boolean myPaintArrowButton;
+  private boolean myPaintArrowButton;
 
   public DarculaComboBoxUI() {
     this(COMPONENT_ARC.getFloat(), JBUI.insets(DEFAULT_BORDER_COMPENSATION), true);
   }
 
+  /**
+   * @deprecated arc and borderCompensation are going to be removed. For paintArrowButton use correspondent getter and setter
+   */
+  @Deprecated
   public DarculaComboBoxUI(float arc,
                            Insets borderCompensation,
                            boolean paintArrowButton) {
@@ -145,6 +149,14 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       comboBox.removePropertyChangeListener(propertyListener);
       propertyListener = null;
     }
+  }
+
+  public boolean isPaintArrowButton() {
+    return myPaintArrowButton;
+  }
+
+  public void setPaintArrowButton(boolean paintArrowButton) {
+    myPaintArrowButton = paintArrowButton;
   }
 
   public static boolean hasSwingPopup(JComponent component) {

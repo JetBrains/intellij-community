@@ -68,6 +68,7 @@
                             id="terminalPowerShell"
                             implementationClass="org.jetbrains.plugins.terminal.exp.completion.powershell.PowerShellCompletionContributor"
                             order="first, before shShebang, before liveTemplates, after ml_context"/>
+    <completion.ml.model implementation="org.jetbrains.plugins.terminal.exp.completion.ml.ShMLRankingProvider"/>
     <weigher key="completion"
              id="terminalCommandSpec"
              order="before stats"

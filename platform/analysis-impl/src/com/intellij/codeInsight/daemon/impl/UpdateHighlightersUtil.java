@@ -220,7 +220,7 @@ public final class UpdateHighlightersUtil {
       boolean shouldRemove = shouldRemoveHighlighter(highlighter, session);
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("incinerateObsoleteHighlighters "+highlighter+"; info:"+info+"; shouldRemove:"+shouldRemove);
+        LOG.debug("incinerateObsoleteHighlighters "+highlighter+"; shouldRemove:"+shouldRemove);
       }
       if (shouldRemove) {
         highlighter.dispose();

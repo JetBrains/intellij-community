@@ -16,8 +16,8 @@ internal class KotlinWithPostfixTemplate : StringBasedPostfixTemplate {
         /* provider = */ provider
     )
 
-    override fun getTemplateString(element: PsiElement) = "kotlin.with(\$expr$) {\n\$END$\n}"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "kotlin.with(\$expr$) {\n\$END$\n}"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
 private object WhenTargetFilter : (KtExpression) -> Boolean {

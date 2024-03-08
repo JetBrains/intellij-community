@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.IntRef;
@@ -11,9 +11,12 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+import sun.misc.Unsafe;
 
 import java.io.IOException;
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.Field;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -42,6 +45,25 @@ public class PersistentFSStoragesBenchmarks {
 
   public static final StorageLockContext CONTEXT = new StorageLockContext(true, true, true);
 
+  private static final Unsafe UNSAFE;
+  private static final long BYTE_BUFFER_ADDRESS_FIELD_OFFSET;
+
+  static {
+    try {
+      Field theUnsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+      theUnsafeField.setAccessible(true);
+      UNSAFE = (Unsafe)theUnsafeField.get(null);
+
+      Field addressField = Buffer.class.getDeclaredField("address");
+
+      BYTE_BUFFER_ADDRESS_FIELD_OFFSET = UNSAFE.objectFieldOffset(addressField);
+    }
+    catch (Throwable e) {
+      throw new ExceptionInInitializerError(e);
+    }
+  }
+
+
   @State(Scope.Thread)
   public static class IterationState {
     public int cursor = 0;
@@ -59,7 +81,7 @@ public class PersistentFSStoragesBenchmarks {
       return cursor;
     }
 
-    public int nextRandom() {
+    public int nextRandomRecordIndex() {
       return ThreadLocalRandom.current().nextInt(1, RECORDS_COUNT);
     }
   }
@@ -98,12 +120,14 @@ public class PersistentFSStoragesBenchmarks {
   public static class ByteBufferState extends RecordsState {
     public int recordSizeInInts;
     public ByteBuffer buffer;
+    public long bufferAddress;//for Unsafe-based access
 
     @Setup
     public void setup() {
       recordSizeInInts = recordSize / Integer.BYTES;
       buffer = ByteBuffer.allocate(recordSize * RECORDS_COUNT)
         .order(nativeOrder());
+      bufferAddress = UNSAFE.getLong(buffer, BYTE_BUFFER_ADDRESS_FIELD_OFFSET);
     }
   }
 
@@ -111,12 +135,14 @@ public class PersistentFSStoragesBenchmarks {
   public static class DirectByteBufferState extends RecordsState {
     public int recordSizeInInts;
     public ByteBuffer buffer;
+    public long bufferAddress;//for Unsafe-based access
 
     @Setup
     public void setup() {
       recordSizeInInts = recordSize / Integer.BYTES;
       buffer = ByteBuffer.allocateDirect(recordSize * RECORDS_COUNT)
         .order(nativeOrder());
+      bufferAddress = UNSAFE.getLong(buffer, BYTE_BUFFER_ADDRESS_FIELD_OFFSET);
     }
   }
 
@@ -254,7 +280,7 @@ public class PersistentFSStoragesBenchmarks {
       final int recordSizeInInts = state.recordSizeInInts;
       final int[] array = state.array;
       int consumer = 1;
-      final int offset = recordSizeInInts * it.nextRandom();
+      final int offset = recordSizeInInts * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         consumer += array[offset + recordField];
       }
@@ -267,7 +293,7 @@ public class PersistentFSStoragesBenchmarks {
       final int recordSizeInInts = state.recordSizeInInts;
       final AtomicIntegerArray array = state.array;
       int consumer = 1;
-      final int offset = recordSizeInInts * it.nextRandom();
+      final int offset = recordSizeInInts * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         consumer += array.get(offset + recordField);
       }
@@ -293,7 +319,7 @@ public class PersistentFSStoragesBenchmarks {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer buffer = state.buffer;
       int consumer = 1;
-      final int offset = recordSizeInInts * it.nextRandom();
+      final int offset = recordSizeInInts * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         consumer += buffer.getInt(offset + recordField);
       }
@@ -306,7 +332,7 @@ public class PersistentFSStoragesBenchmarks {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer buffer = state.buffer;
       int consumer = 1;
-      final int offset = recordSizeInInts * it.nextRandom();
+      final int offset = recordSizeInInts * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         consumer += buffer.getInt(offset + recordField);
       }
@@ -324,12 +350,93 @@ public class PersistentFSStoragesBenchmarks {
       final ByteBuffer buffer = state.buffer;
 
       int consumer = 1;
-      final int offset = recordSizeBytes * it.nextRandom();
+      final int offset = recordSizeBytes * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         consumer += (int)BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.getVolatile(buffer, offset + recordField * Integer.BYTES);
       }
       return consumer;
     }
+
+    @Benchmark
+    public int byteBuffer_RandomVolatileRead_ViaUnsafe(final IterationState it,
+                                                       final ByteBufferState state) {
+      int recordSizeInInts = state.recordSizeInInts;
+      int recordSizeBytes = state.recordSize;
+      //ByteBuffer buffer = state.buffer;
+      //long bufferAddress = UNSAFE.getLong(buffer, BYTE_BUFFER_ADDRESS_FIELD_OFFSET);
+      long bufferAddress = state.bufferAddress;
+
+      int consumer = 1;
+      int offset = recordSizeBytes * it.nextRandomRecordIndex();
+      for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
+        consumer += UNSAFE.getIntVolatile(null, bufferAddress + offset + recordField * Integer.BYTES);
+      }
+      return consumer;
+    }
+
+    @Benchmark
+    public int byteBuffer_SingleInt32RandomVolatileRead_ViaVarHandle(IterationState it,
+                                                                     ByteBufferState state) {
+      int recordSizeBytes = state.recordSize;
+      ByteBuffer buffer = state.buffer;
+
+      int offset = recordSizeBytes * it.nextRandomRecordIndex();
+      return (int)BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.getVolatile(buffer, offset);
+    }
+
+    @Benchmark
+    public int byteBuffer_SingleInt32RandomVolatileRead_ViaUnsafe(IterationState it,
+                                                                  ByteBufferState state) {
+      //int recordSizeInInts = state.recordSizeInInts;
+      int recordSizeBytes = state.recordSize;
+      ByteBuffer buffer = state.buffer;
+      //long bufferAddress = UNSAFE.getLong(buffer, BYTE_BUFFER_ADDRESS_FIELD_OFFSET);
+      long bufferAddress = state.bufferAddress;
+
+      int offset = recordSizeBytes * it.nextRandomRecordIndex();
+      int recordField = 0;
+      return UNSAFE.getIntVolatile(buffer.array(), bufferAddress + offset + recordField * Integer.BYTES);
+    }
+
+    @Benchmark
+    public int byteBufferDirect_SingleInt32RandomVolatileRead_ViaUnsafe(final IterationState it,
+                                                                        final DirectByteBufferState state) {
+      //int recordSizeInInts = state.recordSizeInInts;
+      int recordSizeBytes = state.recordSize;
+      //ByteBuffer buffer = state.buffer;
+      long bufferAddress = state.bufferAddress;//UNSAFE.getLong(buffer, BYTE_BUFFER_ADDRESS_FIELD_OFFSET);
+
+      int offset = recordSizeBytes * it.nextRandomRecordIndex();
+      return UNSAFE.getIntVolatile(null, bufferAddress + offset);
+    }
+
+    @Benchmark
+    public int byteBufferDirect_SingleInt32RandomVolatileRead_ViaVarHandle(final IterationState it,
+                                                                           final DirectByteBufferState state) throws IOException {
+      final int recordSizeInBytes = state.recordSize;
+      //final int recordSizeInInts = state.recordSizeInInts;
+      final ByteBuffer buffer = state.buffer;
+
+      final int offset = recordSizeInBytes * it.nextRandomRecordIndex();
+      return (int)BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.getVolatile(buffer, offset);
+    }
+
+    @Benchmark
+    public int byteBufferDirect_RandomVolatileRead_ViaUnsafe(final IterationState it,
+                                                             final DirectByteBufferState state) {
+      int recordSizeInInts = state.recordSizeInInts;
+      int recordSizeBytes = state.recordSize;
+      //ByteBuffer buffer = state.buffer;
+      long bufferAddress = state.bufferAddress;//UNSAFE.getLong(buffer, BYTE_BUFFER_ADDRESS_FIELD_OFFSET);
+
+      int consumer = 1;
+      int offset = recordSizeBytes * it.nextRandomRecordIndex();
+      for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
+        consumer += UNSAFE.getIntVolatile(null, bufferAddress + offset + recordField * Integer.BYTES);
+      }
+      return consumer;
+    }
+
 
     @Benchmark
     public int byteBufferMemoryMapped_RandomVolatileRead_ViaVarHandle(final IterationState it,
@@ -339,7 +446,7 @@ public class PersistentFSStoragesBenchmarks {
       final ByteBuffer mmappedBuffer = state.buffer;
 
       int consumer = 1;
-      final int offset = recordSizeInBytes * it.nextRandom();
+      final int offset = recordSizeInBytes * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         consumer += (int)BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.getVolatile(mmappedBuffer, offset + recordField * Integer.BYTES);
       }
@@ -390,7 +497,7 @@ public class PersistentFSStoragesBenchmarks {
 
     private static int fsRecords_randomReadByField(final IterationState it,
                                                    final PersistentFSRecordsStorage storage) throws IOException {
-      final int recordId = it.nextRandom();
+      final int recordId = it.nextRandomRecordIndex();
       int consumer = 0;
       consumer += storage.getNameId(recordId);
       consumer += storage.getParent(recordId);
@@ -406,7 +513,7 @@ public class PersistentFSStoragesBenchmarks {
     private static int fsRecords_RandomReadByRecord(final IterationState it,
                                                     final IPersistentFSRecordsStorage storage) throws IOException {
       final IntRef consumer = new IntRef(0);
-      final int recordId = it.nextRandom();
+      final int recordId = it.nextRandomRecordIndex();
       storage.readRecord(recordId, record -> {
         final long result = record.getNameId()
                             + record.getParent()
@@ -448,7 +555,7 @@ public class PersistentFSStoragesBenchmarks {
                                        final ArrayState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final int[] array = state.array;
-      final int offset = recordSizeInInts * it.nextRandom();
+      final int offset = recordSizeInInts * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         array[offset + recordField] = recordField;
       }
@@ -459,7 +566,7 @@ public class PersistentFSStoragesBenchmarks {
                                           final AtomicArrayState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final AtomicIntegerArray array = state.array;
-      final int offset = recordSizeInInts * it.nextRandom();
+      final int offset = recordSizeInInts * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         array.set(offset + recordField, recordField);
       }
@@ -481,7 +588,7 @@ public class PersistentFSStoragesBenchmarks {
                                             final ByteBufferState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer buffer = state.buffer;
-      final int offset = recordSizeInInts * it.nextRandom();
+      final int offset = recordSizeInInts * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         buffer.putInt(offset + recordField, recordField);
       }
@@ -492,7 +599,7 @@ public class PersistentFSStoragesBenchmarks {
                                                   final DirectByteBufferState state) {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer buffer = state.buffer;
-      final int offset = recordSizeInInts * it.nextRandom();
+      final int offset = recordSizeInInts * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         buffer.putInt(offset + recordField, recordField);
       }
@@ -507,7 +614,7 @@ public class PersistentFSStoragesBenchmarks {
       final int recordSizeInInts = state.recordSizeInInts;
       final int recordSizeInBytes = state.recordSize;
       final ByteBuffer buffer = state.buffer;
-      final int offset = recordSizeInBytes * it.nextRandom();
+      final int offset = recordSizeInBytes * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         int value = recordField;
         BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.setVolatile(buffer, offset + recordField * Integer.BYTES, value);
@@ -521,7 +628,7 @@ public class PersistentFSStoragesBenchmarks {
       final ByteBuffer mmappedBuffer = state.buffer;
 
       //RC: Somehow on m1 CAS is 2x faster than volatile!
-      final int offset = state.recordSize * it.nextRandom();
+      final int offset = state.recordSize * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         int oldValue = (int)BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.getVolatile(mmappedBuffer, offset + recordField * Integer.BYTES);
         int newValue = recordField;
@@ -535,7 +642,7 @@ public class PersistentFSStoragesBenchmarks {
       final int recordSizeInInts = state.recordSizeInInts;
       final ByteBuffer mmappedBuffer = state.buffer;
 
-      final int offset = state.recordSize * it.nextRandom();
+      final int offset = state.recordSize * it.nextRandomRecordIndex();
       for (int recordField = 0; recordField < recordSizeInInts; recordField++) {
         BYTE_BUFFER_AS_INT_ARRAY_VAR_HANDLE.setVolatile(mmappedBuffer, offset + recordField * Integer.BYTES, recordField);
       }
@@ -585,7 +692,7 @@ public class PersistentFSStoragesBenchmarks {
 
     private static void fsRecords_randomWriteByField(final IterationState it,
                                                      final PersistentFSRecordsStorage storage) throws IOException {
-      final int recordId = it.nextRandom();
+      final int recordId = it.nextRandomRecordIndex();
       storage.updateNameId(recordId, 1);
       storage.setParent(recordId, 2);
       storage.setContentRecordId(recordId, 3);
@@ -597,7 +704,7 @@ public class PersistentFSStoragesBenchmarks {
 
     private static void fsRecords_randomWriteByRecord(final IterationState it,
                                                       final IPersistentFSRecordsStorage storage) throws IOException {
-      final int recordId = it.nextRandom();
+      final int recordId = it.nextRandomRecordIndex();
       storage.updateRecord(recordId, record -> {
         record.setNameId(1);
         record.setParent(2);
@@ -617,13 +724,13 @@ public class PersistentFSStoragesBenchmarks {
                "-Dvfs.lock-free-impl.enable=true",
                "-Dvfs.lock-free-impl.fraction-direct-memory-to-utilize=0.5"
       )
-      .mode(Mode.SampleTime)
       //.include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*AccessTest.*Volatile.*")
-      .include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*AccessTest.*byteBuffer.*")
+      .include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*ReadAccessTest.*Buffer.*SingleInt32.*")
       .threads(4)
       .forks(1)
       .warmupIterations(2).warmupTime(seconds(1))
       .measurementIterations(3).measurementTime(seconds(2))
+      //.mode(Mode.SampleTime)
       .mode(Mode.AverageTime)
       .build();
 

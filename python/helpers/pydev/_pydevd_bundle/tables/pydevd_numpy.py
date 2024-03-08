@@ -10,7 +10,10 @@ NP_ROWS_TYPE = "int64"
 is_pd = False
 try:
     import pandas as pd
-
+    version = pd.__version__
+    majorVersion = int(version[0])
+    pd.set_option('display.max_colwidth', None)
+    is_pd = majorVersion>=1
     is_pd = True
 except:
     pass

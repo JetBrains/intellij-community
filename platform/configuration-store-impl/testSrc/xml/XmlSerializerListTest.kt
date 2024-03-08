@@ -3,10 +3,32 @@ package com.intellij.configurationStore.xml
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.*
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.*
 
 class XmlSerializerListTest {
+  @Test
+  fun nullCollection() {
+    @Suppress("unused")
+    class BeanWithCollection {
+      @Property(surroundWithTag = false)
+      @XCollection
+      var collection: List<BeanWithProperty>? = null
+    }
+    testSerializer(
+      expectedXml = "<BeanWithCollection />",
+      expectedJson = """
+        {
+          "collection": null
+        }
+      """,
+      expectedJsonByXml = """
+        {}
+      """,
+      bean = BeanWithCollection(),
+    )
+  }
+
   @Test
   fun notFinalField() {
     @Tag("bean")
@@ -62,14 +84,25 @@ class XmlSerializerListTest {
 
     val data = Bean()
     data.values = listOf("foo")
-    testSerializer("""
-    <bean>
-      <option name="values">
-        <list>
-          <option value="foo" />
-        </list>
-      </option>
-    </bean>""", data)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="values">
+            <list>
+              <option value="foo" />
+            </list>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": [
+            "foo"
+          ]
+        }
+      """,
+      bean = data,
+    )
   }
 
   @Test
@@ -165,6 +198,7 @@ class XmlSerializerListTest {
     )
   }
 
+  @Suppress("SpellCheckingInspection")
   @Test
   fun elementTypes() {
     @Tag("selector")
@@ -182,6 +216,7 @@ class XmlSerializerListTest {
       private val selectors = ArrayList<Selector>()
 
       // test mutable list (in-place mutation must not be performed)
+      @Suppress("unused")
       @XCollection(propertyElementName = "selectors")
       fun getSelectors() = selectors.toMutableList()
 
@@ -232,6 +267,51 @@ class XmlSerializerListTest {
           </option>
         </Bean>
       """,
+      expectedJson = """
+        {
+          "handlers": [
+            {
+              "_class": "A",
+              "selectors": [
+                {
+                  "name": "-12rsomb",
+                  "path": "6vt2nn"
+                },
+                {
+                  "name": "-18hgh0v",
+                  "path": "64bg18"
+                }
+              ]
+            },
+            {
+              "_class": "B",
+              "selectors": [
+                {
+                  "name": "17ggf74",
+                  "path": "-7d8h5l"
+                },
+                {
+                  "name": "13et7c3",
+                  "path": "-15d6ukj"
+                }
+              ]
+            },
+            {
+              "_class": "C",
+              "selectors": [
+                {
+                  "name": "-1apt5a2",
+                  "path": "bm234q"
+                },
+                {
+                  "name": "-cbp623",
+                  "path": "1pob5us"
+                }
+              ]
+            }
+          ]
+        }
+      """,
       bean = bean,
     )
   }
@@ -245,50 +325,102 @@ class XmlSerializerListTest {
     }
 
     val bean = Bean()
-    testSerializer("""
-    <bean>
-      <option name="values">
-        <option value="a" />
-        <option value="b" />
-        <option value="w" />
-      </option>
-    </bean>""", bean)
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="values">
+            <option value="a" />
+            <option value="b" />
+            <option value="w" />
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": [
+            "a",
+            "b",
+            "w"
+          ]
+        }
+      """,
+      bean = bean,
+    )
 
     bean.values.clear()
     bean.values.addAll(listOf("1", "2", "3"))
 
-    testSerializer("""
-    <bean>
-      <option name="values">
-        <option value="1" />
-        <option value="2" />
-        <option value="3" />
-      </option>
-    </bean>""", bean)
-  }
-
-  private fun <T : Any> check(bean: T, setter: (values: ArrayList<String>) -> Unit) {
-    testSerializer("""
-      <bean>
-        <option name="values">
-          <list>
-            <option value="a" />
-            <option value="b" />
-            <option value="w" />
-          </list>
-        </option>
-      </bean>""", bean)
-    setter(arrayListOf("1", "2", "3"))
-
-    testSerializer("""
-      <bean>
-        <option name="values">
-          <list>
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="values">
             <option value="1" />
             <option value="2" />
             <option value="3" />
-          </list>
-        </option>
-      </bean>""", bean)
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": [
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      """,
+      bean = bean,
+    )
+  }
+
+  private fun <T : Any> check(bean: T, setter: (values: ArrayList<String>) -> Unit) {
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="values">
+            <list>
+              <option value="a" />
+              <option value="b" />
+              <option value="w" />
+            </list>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": [
+            "a",
+            "b",
+            "w"
+          ]
+        }
+      """,
+      bean = bean,
+    )
+    setter(arrayListOf("1", "2", "3"))
+
+    testSerializer(
+      expectedXml = """
+        <bean>
+          <option name="values">
+            <list>
+              <option value="1" />
+              <option value="2" />
+              <option value="3" />
+            </list>
+          </option>
+        </bean>
+      """,
+      expectedJson = """
+        {
+          "values": [
+            "1",
+            "2",
+            "3"
+          ]
+        }
+      """,
+      bean = bean,
+    )
   }
 }

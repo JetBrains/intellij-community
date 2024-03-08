@@ -1216,12 +1216,16 @@
 
     <group id="Internal" internal="true" popup="true" compact="true">
       <group id="Internal.Errors" popup="true">
-        <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"/>
-        <action id="DropAnErrorWithAttachments" internal="true" class="com.intellij.diagnostic.DropAnErrorWithAttachmentsAction"/>
-        <action id="DropPluginError" internal="true" class="com.intellij.diagnostic.DropPluginErrorAction"/>
-        <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"/>
+        <action id="DropAnError" internal="true" class="com.intellij.diagnostic.DropAnErrorAction"
+                text="Drop an Error" description="Hold down SHIFT for a sequence of exceptions"/>
+        <action id="DropAnErrorWithAttachments" internal="true" class="com.intellij.diagnostic.DropAnErrorWithAttachmentsAction"
+                text="Drop an Error with Attachments" description="Hold down SHIFT for multiple attachments"/>
+        <action id="DropPluginError" internal="true" class="com.intellij.diagnostic.DropPluginErrorAction"
+                text="Drop an Error in a Random Plugin" description="Hold down SHIFT for 3rd-party plugins only"/>
+        <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"
+                text="Drop an OutOfMemoryError" description="Hold down SHIFT for OOME in Metaspace"/>
       </group>
-      <action id="SimulateFreeze" class="com.intellij.diagnostic.SimulateFreeze" />
+      <action id="SimulateFreeze" internal="true" class="com.intellij.diagnostic.SimulateFreeze" text="Simulate a Freeze"/>
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <group id="Internal.Trust" popup="true">

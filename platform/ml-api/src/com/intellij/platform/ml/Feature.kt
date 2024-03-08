@@ -87,4 +87,10 @@ sealed class Feature {
     : TypedFeature<com.intellij.openapi.util.Version>(name, value) {
     override val valueType = FeatureValueType.Version
   }
+
+  companion object {
+    fun Feature.toCompactString(): String {
+      return "${this.declaration.name}=${this.value}"
+    }
+  }
 }

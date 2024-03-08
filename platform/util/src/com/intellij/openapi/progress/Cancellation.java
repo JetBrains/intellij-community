@@ -37,7 +37,7 @@ public final class Cancellation {
   }
 
   /**
-   * {@code true} if running in non-cancelable section started with {@link #computeInNonCancelableSection)} in this thread,
+   * {@code true} if running in a non-cancelable section started with {@link #computeInNonCancelableSection} in this thread,
    * otherwise {@code false}
    */
   // do not supply initial value to conserve memory

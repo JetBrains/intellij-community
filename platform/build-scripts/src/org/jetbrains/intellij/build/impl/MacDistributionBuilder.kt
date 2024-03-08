@@ -421,6 +421,7 @@ private fun createProductInfoLaunchData(context: BuildContext, arch: JvmArchitec
       bootClassPathJarNames = it.bootClassPathJarNames,
       additionalJvmArguments = it.getAdditionalJvmArguments(OsFamily.MACOS, arch) + ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
       mainClass = it.ideMainClassName,
+      dataDirectoryName = it.systemSelector,
     )
   }
 

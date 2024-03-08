@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
 import com.intellij.ide.projectView.PresentationData;
@@ -43,7 +43,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.psi.*;
+import com.intellij.psi.LanguageSubstitutor;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
@@ -55,7 +58,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProvider;
 import com.intellij.util.FileContentUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -303,7 +305,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     }
   }
 
-  static final class FilePresentation implements FileIconProvider, EditorTabTitleProvider, ProjectViewNodeDecorator, DumbAware {
+  static final class FilePresentation implements FileIconProvider, FileIconPatcher, EditorTabTitleProvider, ProjectViewNodeDecorator, DumbAware {
     @Override
     public void decorate(ProjectViewNode<?> node, PresentationData data) {
       Object value = node.getValue();
@@ -321,31 +323,34 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
       ScratchFileService scratchFileService = ScratchFileService.getInstance();
       VirtualFile rootFile = LocalFileSystem.getInstance().findFileByPath(scratchFileService.getRootPath(rootType));
       String text;
-      Icon icon = null;
       if (virtualFile == null || virtualFile.isDirectory() && virtualFile.equals(rootFile)) {
         text = rootType.getDisplayName();
       }
       else {
         Project project = Objects.requireNonNull(node.getProject());
         text = rootType.substituteName(project, virtualFile);
-        icon = rootType.substituteIcon(project, virtualFile);
       }
       if (text != null) {
         data.clearText();
         data.addText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         data.setPresentableText(text);
       }
-      if (icon != null) {
-        data.setIcon(icon);
-      }
     }
 
     @Override
     public @Nullable Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
-      if (project == null || file.isDirectory()) return null;
+      if (project == null) return null;
       RootType rootType = ScratchFileService.getInstance().getRootType(file);
       if (rootType == null) return null;
-      return ObjectUtils.notNull(rootType.substituteIcon(project, file), AllIcons.FileTypes.Text);
+      return rootType.substituteIcon(project, file);
+    }
+
+    @Override
+    public Icon patchIcon(Icon baseIcon, VirtualFile file, int flags, @Nullable Project project) {
+      if (project == null) return baseIcon;
+      RootType rootType = ScratchFileService.getInstance().getRootType(file);
+      if (rootType == null) return baseIcon;
+      return rootType.patchIcon(baseIcon, file, flags, project);
     }
 
     @Override
@@ -364,15 +369,6 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
   }
 
   static final class NavBarExtension extends AbstractNavBarModelExtension {
-    @Override
-    public @Nullable Icon getIcon(Object object) {
-      VirtualFile file = object instanceof PsiFileSystemItem ? ((PsiFileSystemItem)object).getVirtualFile() : null;
-      if (file == null) return null;
-      RootType rootType = ScratchFileService.getInstance().getRootType(file);
-      if (rootType == null) return null;
-      Icon icon = rootType.substituteIcon(((PsiFileSystemItem)object).getProject(), file);
-      return icon == null && file.isDirectory() ? AllIcons.Nodes.Folder : icon;
-    }
 
     @Override
     public @Nullable String getPresentableText(Object object) {

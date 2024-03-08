@@ -11,9 +11,11 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.jetbrains.uast.UMethod
@@ -46,6 +48,7 @@ class InvokeOperatorReferenceSearcher(
                         val numberOfArguments = uastParameters.size
                         when {
                             targetFunction.isExtensionDeclaration() -> numberOfArguments - 1
+                            targetFunction is KtFunction && targetFunction.hasModifier(KtTokens.SUSPEND_KEYWORD) -> numberOfArguments - 1
                             else -> numberOfArguments
                         }
                     } else {

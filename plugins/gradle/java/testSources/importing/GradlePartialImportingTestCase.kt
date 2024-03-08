@@ -1,16 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil.pathsEqual
 import com.intellij.testFramework.registerServiceInstance
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
-import org.gradle.tooling.model.BuildModel
-import org.gradle.tooling.model.ProjectModel
-import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder
 import org.jetbrains.plugins.gradle.model.Project
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleBuildActionListener
 import org.jetbrains.plugins.gradle.service.project.*
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectPropertiesTestModelBuilder.ProjectProperties
 import java.util.function.Predicate
@@ -67,26 +64,27 @@ abstract class GradlePartialImportingTestCase : BuildViewMessagesImportingTestCa
       return setOf(ProjectProperties::class.java)
     }
 
-    override fun projectsLoaded(models: ModelsHolder<BuildModel, ProjectModel>?) {
-      val buildFinishedModel = models?.getModel(BuildFinishedModel::class.java)
-      if (buildFinishedModel != null) {
-        throw ProcessCanceledException(RuntimeException("buildFinishedModel should not be available for projectsLoaded callback"))
-      }
-
-      val rootProjectLoadedModel = models?.getModel(ProjectLoadedModel::class.java)
-      if (rootProjectLoadedModel == null) {
-        throw ProcessCanceledException(RuntimeException("projectLoadedModel should be available for projectsLoaded callback"))
-      }
-
-      if (rootProjectLoadedModel.map.containsValue("error")) {
-        val project = resolverCtx.externalSystemTaskId.findProject()!!
-        val modelConsumer = project.getService(ModelConsumer::class.java)
-        val build = (models as AllModels).mainBuild
-        for (gradleProject in build.projects) {
-          val projectLoadedModel = models.getModel(gradleProject, ProjectLoadedModel::class.java)!!
-          modelConsumer.projectLoadedModels.add(gradleProject to projectLoadedModel)
+    override fun createBuildListener() = object : GradleBuildActionListener {
+      override fun onProjectLoaded() {
+        val buildFinishedModel = resolverCtx.getRootModel(BuildFinishedModel::class.java)
+        if (buildFinishedModel != null) {
+          throw ProcessCanceledException(RuntimeException("buildFinishedModel should not be available for projectsLoaded callback"))
         }
-        throw ProcessCanceledException(RuntimeException(rootProjectLoadedModel.map.toString()))
+
+        val rootProjectLoadedModel = resolverCtx.getRootModel(ProjectLoadedModel::class.java)
+        if (rootProjectLoadedModel == null) {
+          throw ProcessCanceledException(RuntimeException("projectLoadedModel should be available for projectsLoaded callback"))
+        }
+
+        if (rootProjectLoadedModel.map.containsValue("error")) {
+          val project = resolverCtx.externalSystemTaskId.findProject()!!
+          val modelConsumer = project.getService(ModelConsumer::class.java)
+          for (gradleProject in resolverCtx.rootBuild.projects) {
+            val projectLoadedModel = resolverCtx.getProjectModel(gradleProject, ProjectLoadedModel::class.java)!!
+            modelConsumer.projectLoadedModels.add(gradleProject to projectLoadedModel)
+          }
+          throw ProcessCanceledException(RuntimeException(rootProjectLoadedModel.map.toString()))
+        }
       }
     }
 
@@ -99,14 +97,17 @@ abstract class GradlePartialImportingTestCase : BuildViewMessagesImportingTestCa
   private class TestProjectModelContributor : ProjectModelContributor {
     override fun accept(
       modifiableGradleProjectModel: ModifiableGradleProjectModel,
-      toolingModelsProvider: ToolingModelsProvider,
       resolverContext: ProjectResolverContext
     ) {
       val project = resolverContext.externalSystemTaskId.findProject()!!
       val modelConsumer = project.getService(ModelConsumer::class.java)
-      toolingModelsProvider.projects().forEach {
-        modelConsumer.projectLoadedModels.add(it to toolingModelsProvider.getProjectModel(it, ProjectLoadedModel::class.java)!!)
-        modelConsumer.buildFinishedModels.add(it to toolingModelsProvider.getProjectModel(it, BuildFinishedModel::class.java)!!)
+      for (buildModel in resolverContext.allBuilds) {
+        for (projectModel in buildModel.projects) {
+          val projectLoadedModel = resolverContext.getProjectModel(projectModel, ProjectLoadedModel::class.java)!!
+          val buildFinishedModel = resolverContext.getProjectModel(projectModel, BuildFinishedModel::class.java)!!
+          modelConsumer.projectLoadedModels.add(projectModel to projectLoadedModel)
+          modelConsumer.buildFinishedModels.add(projectModel to buildFinishedModel)
+        }
       }
     }
   }

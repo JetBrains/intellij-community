@@ -8,6 +8,7 @@ import com.intellij.serialization.ClassUtil
 import com.intellij.serialization.MutableAccessor
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
 import org.jdom.Content
 import org.jdom.Element
 import org.jdom.Namespace
@@ -67,11 +68,40 @@ class TagBinding(
     }
     else {
       if (binding is RootBinding) {
-        val currentValue = accessor.read(bean)
-        val value = binding.fromJson(currentValue = currentValue, element = element)
-        check(value !== Unit)
-        if (currentValue !== value) {
+        if (binding is BeanBinding) {
+          // yes, we must set `null` as well
+          val value = binding.fromJson(currentValue = null, element = element)
           accessor.set(bean, value)
+        }
+        else if (binding is CollectionBinding || binding is MapBinding) {
+          // in-place mutation only for non-writable accessors (final) - getter can return a mutable list,
+          // and if we mutate it in-place, the deserialization result may be lost (XmlSerializerListTest.elementTypes test)
+          if (accessor.isWritable) {
+            // we must pass the current value in any case - collection binding use it to infer a new collection type
+            val oldValue = accessor.read(bean)
+            if (oldValue == null && element == JsonNull) {
+              // do nothing if the field is already null
+            }
+            else {
+              val newValue = binding.fromJson(currentValue = oldValue, element = element)
+              accessor.set(bean, newValue)
+            }
+          }
+          else {
+            val oldValue = accessor.read(bean)
+            if (oldValue == null && element == JsonNull) {
+              // do nothing if the field is already null
+            }
+            else {
+              val newValue = binding.fromJson(currentValue = oldValue, element = element)
+              if (oldValue !== newValue) {
+                accessor.set(bean, newValue)
+              }
+            }
+          }
+        }
+        else {
+          throw UnsupportedOperationException("Binding $binding is not expected")
         }
       }
       else {
@@ -132,6 +162,31 @@ class TagBinding(
     }
 
     parent.addContent(targetElement)
+  }
+
+  override fun deserializeToJson(element: Element): JsonElement? {
+    if (valueAttribute == null) {
+      if (converter == null && binding != null) {
+        when (binding) {
+          is BeanBinding -> {
+            val beanElement = if (serializeBeanBindingWithoutWrapperTag) element else (element.content.firstOrNull() as Element?) ?: return JsonNull
+            return binding.deserializeToJson(element = beanElement, includeClassDiscriminator = false)
+          }
+          is CollectionBinding, is MapBinding -> {
+            return (binding as MultiNodeBinding).deserializeListToJson(element.children)
+          }
+          else -> {
+            throw UnsupportedOperationException("Binding $binding is not expected")
+          }
+        }
+      }
+      else {
+        return element.content?.firstOrNull { it is Text }?.value?.let { JsonPrimitive(it) } ?: JsonNull
+      }
+    }
+    else {
+      return valueToJson(element.getAttributeValue(valueAttribute), accessor.valueClass)
+    }
   }
 
   override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {
@@ -213,14 +268,5 @@ internal fun addContent(targetElement: Element, node: Any) {
       targetElement.addContent(node as Collection<Content>)
     }
     else -> throw IllegalArgumentException("Wrong node: $node")
-  }
-}
-
-internal fun <T : Any> deserializeList(binding: Binding, currentValue: Any?, nodes: List<T>, adapter: DomAdapter<T>): Any? {
-  return when {
-    binding is MultiNodeBinding -> binding.deserializeList(currentValue = currentValue, elements = nodes, adapter = adapter)
-    nodes.size == 1 -> binding.deserialize(context = currentValue, element = nodes.get(0), adapter = adapter)
-    nodes.isEmpty() -> null
-    else -> throw AssertionError("Duplicate data for $binding will be ignored")
   }
 }

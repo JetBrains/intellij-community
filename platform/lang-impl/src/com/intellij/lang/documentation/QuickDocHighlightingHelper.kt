@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation
 
-import com.intellij.ide.ui.html.StyleSheetRulesProviderForCodeHighlighting
 import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
@@ -13,12 +12,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
-import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.Color
 
 /**
  * This class facilitates generation of highlighted text and code for Quick Documentation.
@@ -26,11 +24,11 @@ import java.awt.Color
  */
 object QuickDocHighlightingHelper {
 
-  const val CODE_BLOCK_PREFIX = StyleSheetRulesProviderForCodeHighlighting.CODE_BLOCK_PREFIX
-  const val CODE_BLOCK_SUFFIX = StyleSheetRulesProviderForCodeHighlighting.CODE_BLOCK_SUFFIX
+  const val CODE_BLOCK_PREFIX = "<pre><code>"
+  const val CODE_BLOCK_SUFFIX = "</code></pre>"
 
-  const val INLINE_CODE_PREFIX = StyleSheetRulesProviderForCodeHighlighting.INLINE_CODE_PREFIX
-  const val INLINE_CODE_SUFFIX = StyleSheetRulesProviderForCodeHighlighting.INLINE_CODE_SUFFIX
+  const val INLINE_CODE_PREFIX = "<code>"
+  const val INLINE_CODE_SUFFIX = "</code>"
 
   /**
    * The returned code block HTML (prefixed with [CODE_BLOCK_PREFIX] and suffixed with [CODE_BLOCK_SUFFIX])
@@ -59,10 +57,6 @@ object QuickDocHighlightingHelper {
     append(CODE_BLOCK_PREFIX)
       .appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfCodeBlocksEnabled(), code, true)
       .append(CODE_BLOCK_SUFFIX)
-
-  @JvmStatic
-  fun removeSurroundingStyledCodeBlock(string: String): String =
-    string.trim().removeSurrounding(CODE_BLOCK_PREFIX, CODE_BLOCK_SUFFIX)
 
   /**
    * The returned inline code HTML (prefixed with [INLINE_CODE_PREFIX] and suffixed with [INLINE_CODE_SUFFIX])
@@ -271,50 +265,30 @@ object QuickDocHighlightingHelper {
         )
         .firstOrNull()
 
-  @Internal
-  @JvmStatic
-  fun getDefaultFormattingStyles(spacing: Int): List<String> {
-    val fontSize = StartupUiUtil.labelFont.size
-    return listOf(
-      "h6 { font-size: ${fontSize + 1}}",
-      "h5 { font-size: ${fontSize + 2}}",
-      "h4 { font-size: ${fontSize + 3}}",
-      "h3 { font-size: ${fontSize + 4}}",
-      "h2 { font-size: ${fontSize + 6}}",
-      "h1 { font-size: ${fontSize + 8}}",
-      "h1, h2, h3, h4, h5, h6 {margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; }",
-      "p { margin: 0 0 0 0; padding: 0 0 ${spacing}px 0; line-height: 125%;}",
-      "ul { margin: 0 0 0 ${scale(10)}px; padding: 0 0 ${spacing}px 0;}",
-      "ol { margin: 0 0 0 ${scale(20)}px; padding: 0 0 ${spacing}px 0;}",
-      "li { padding: ${scale(1)}px 0 ${scale(2)}px 0; }",
-      "li p { padding-top: 0; padding-bottom: 0; }",
-      "th { text-align: left; }",
-      "tr, table { margin: 0 0 0 0; padding: 0 0 0 0; }",
-      "td { margin: 0 0 0 0; padding: 0 ${spacing}px ${spacing}px 0; }",
-      "td p { padding-top: 0; padding-bottom: 0; }",
-      "td pre { padding: ${scale(1)}px 0 0 0; margin: 0 0 0 0 }",
-      ".$CLASS_CENTERED { text-align: center}",
-    )
-  }
 
   @Internal
   @JvmStatic
-  fun getDefaultDocCodeStyles(
-    colorScheme: EditorColorsScheme,
-    editorPaneBackgroundColor: Color,
-    spacing: Int,
-  ): List<String> = StyleSheetRulesProviderForCodeHighlighting.getRules(
-    colorScheme, editorPaneBackgroundColor,
-    listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)", ".$CLASS_CONTENT div:not(.$CLASS_TOP)",
-           ".$CLASS_SECTIONS"),
-    listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_SEPARATED code", ".$CLASS_DEFINITION_SEPARATED pre",
-           ".$CLASS_BOTTOM code", ".$CLASS_TOP code"),
-    DocumentationSettings.isCodeBackgroundEnabled()
-    && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
-    DocumentationSettings.isCodeBackgroundEnabled()
-    && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
-    "0 0 ${spacing}px 0"
-  )
+  fun getDefaultDocStyleOptions(colorScheme: EditorColorsScheme, editorInlineContext: Boolean): JBHtmlPaneStyleConfiguration =
+    JBHtmlPaneStyleConfiguration(
+      colorScheme = colorScheme,
+      editorInlineContext = editorInlineContext,
+      inlineCodeParentSelectors = listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)",
+                                         ".$CLASS_CONTENT div:not(.$CLASS_TOP)", ".$CLASS_SECTIONS"),
+      largeCodeFontSizeSelectors = listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_BOTTOM code", ".$CLASS_TOP code"),
+      enableInlineCodeBackground = DocumentationSettings.isCodeBackgroundEnabled()
+                                   && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
+      enableCodeBlocksBackground = DocumentationSettings.isCodeBackgroundEnabled()
+                                   && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
+      useFontLigaturesInCode = false,
+      controlStyleOverrides = if (editorInlineContext)
+        ControlStyleOverrides(
+          controlKindSuffix = "EditorPane",
+          overrides = mapOf(
+            ControlKind.CodeBlock to listOf(ControlProperty.BackgroundColor, ControlProperty.BackgroundOpacity, ControlProperty.BorderColor)
+          )
+        )
+      else null
+    )
 
   private fun StringBuilder.appendHighlightedCode(project: Project, language: Language?, doHighlighting: Boolean,
                                                   code: CharSequence, isForRenderedDoc: Boolean): StringBuilder {

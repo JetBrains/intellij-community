@@ -599,7 +599,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
     // TODO [Targets API] This workaround is required until Cython extensions are uploaded using Targets API
     boolean isLocalTarget = targetEnvironmentRequest instanceof LocalTargetEnvironmentRequest;
-    configureDebugEnvironment(project, new TargetEnvironmentController(debuggerScript.getEnvs(), targetEnvironmentRequest), runProfile,
+    configureDebugEnvironment(project, new TargetEnvironmentController(debuggerScript.getEnvs(), request), runProfile,
                               isLocalTarget);
 
     configureClientModeDebugConnectionParameters(debuggerScript, serverPortOnTarget);

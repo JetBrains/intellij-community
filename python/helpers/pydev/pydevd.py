@@ -69,6 +69,7 @@ from pydevd_file_utils import get_fullname, rPath, get_package_dir
 import pydev_ipython  # @UnusedImport
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
+from _pydevd_bundle.pydevd_asyncio_provider import get_apply
 
 get_file_type = DONT_TRACE.get
 
@@ -1520,9 +1521,9 @@ class PyDB(object):
         if set_trace:
             self.enable_tracing()
 
-        from _pydevd_bundle.pydevd_asyncio_provider import apply
-        if apply is not None:
-            apply()
+        apply_func = get_apply()
+        if apply_func is not None:
+            apply_func()
 
         return self._exec(is_module, entry_point_fn, module_name, file, globals, locals)
 

@@ -3,7 +3,7 @@ package com.intellij.ide.startup.importSettings
 
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsController
 import com.intellij.ide.startup.importSettings.controllers.TransferSettingsControllerImpl
-import com.intellij.ide.startup.importSettings.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
 import com.intellij.ide.startup.importSettings.transfer.backend.TransferSettingsDataProvider
 import com.intellij.ide.startup.importSettings.ui.representation.ideVersion.sections.KeymapSection
 import com.intellij.ide.startup.importSettings.ui.representation.ideVersion.sections.PluginsSection

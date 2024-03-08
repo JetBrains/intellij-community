@@ -55,9 +55,4 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings" />
     <applicationService serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings" />
   </extensions>
-  <actions>
-    <action id="install-vscode-plugin" class="org.jetbrains.plugins.textmate.actions.InstallVSCodePluginAction"
-            text="Install VSCode Plugin..." description="Installs plugin for VSCode"
-            internal="true"/>
-  </actions>
 </idea-plugin>

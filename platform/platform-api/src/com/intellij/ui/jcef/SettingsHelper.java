@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.net.NetUtils;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefSettings;
@@ -61,6 +62,16 @@ final class SettingsHelper {
     int port = Registry.intValue("ide.browser.jcef.debug.port");
     if (ApplicationManager.getApplication().isInternal() && port > 0) {
       settings.remote_debugging_port = port;
+    }
+    // Workaround until https://github.com/chromiumembedded/cef/issues/3619 (0 = random port) is implemented
+    // The registry key defined only in Aqua WI plugin.xml as not intended to be used anywhere else
+    else if (Registry.is("ide.browser.jcef.debug.port.random.enabled", false)) {
+      try {
+        settings.remote_debugging_port = NetUtils.findAvailableSocketPort();
+      }
+      catch (IOException e) {
+        throw new RuntimeException("Cannot find free debug port for JCEF browser", e);
+      }
     }
 
     settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
@@ -195,6 +206,10 @@ final class SettingsHelper {
     }
 
     args = ArrayUtil.mergeArrays(args, "--autoplay-policy=no-user-gesture-required");
+
+    if (isOffScreenRenderingModeEnabled()) {
+      args = ArrayUtil.mergeArrays(args, "--disable-gpu-compositing");
+    }
 
     return args;
   }

@@ -1,3 +1,4 @@
+// IGNORE_K2
 class EnumTest {
     void testToReplaceEnumValues() {
         MyEnum x1 = MyEnum.values()[1];

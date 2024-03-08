@@ -1,3 +1,4 @@
+// IGNORE_K2
 class Test {
     <A, B> B foo(A value, FunctionalI<A, B> fun) {
         return fun.apply(value);

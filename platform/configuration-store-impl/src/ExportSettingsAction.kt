@@ -31,7 +31,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.outputStream
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -43,6 +43,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
 
+@Internal
 open class ExportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   protected open fun getExportableComponents(): Map<FileSpec, List<ExportableItem>> = filterExisting(getExportableComponentsMap(true))
 
@@ -154,21 +155,25 @@ fun exportSettings(exportableItems: Set<ExportableItem>,
     }
 }
 
-@ApiStatus.Internal
-data class FileSpec(@NlsSafe val relativePath: String,
-                    /* File spec as written in the class annotation */ val rawFileSpec: String,
-                    val isDirectory: Boolean = false)
+@Internal
+data class FileSpec(
+  @JvmField @NlsSafe val relativePath: String,
+  /* File spec as written in the class annotation */ @JvmField val rawFileSpec: String,
+  @JvmField val isDirectory: Boolean = false,
+)
 
-@ApiStatus.Internal
-data class ExportableItem(val fileSpec: FileSpec,
-                          val presentableName: String,
-                          @NonNls val componentName: String? = null,
-                          val roamingType: RoamingType = RoamingType.DEFAULT)
+@Internal
+data class ExportableItem(
+  @JvmField val fileSpec: FileSpec,
+  @JvmField val presentableName: String,
+  @JvmField @NonNls val componentName: String? = null,
+  @JvmField val roamingType: RoamingType = RoamingType.DEFAULT,
+)
 
-@ApiStatus.Internal
-data class LocalExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
+@Internal
+data class LocalExportableItem(@JvmField val file: Path, @JvmField val presentableName: String, @JvmField val roamingType: RoamingType = RoamingType.DEFAULT)
 
-@ApiStatus.Internal
+@Internal
 fun exportInstalledPlugins(zip: Compressor) {
   val pluginIds = PluginManagerCore.loadedPlugins
     .asSequence()
@@ -179,7 +184,7 @@ fun exportInstalledPlugins(zip: Compressor) {
   }
 }
 
-@ApiStatus.Internal
+@Internal
 fun getExportableComponentsMap(isComputePresentableNames: Boolean,
                                storageManager: StateStorageManager = getAppStorageManager(),
                                withDeprecated: Boolean = false,
@@ -359,6 +364,7 @@ private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, @Nls 
   }
 }
 
+@Internal
 fun getExportableItemsFromLocalStorage(exportableItems: Map<FileSpec, List<ExportableItem>>, storageManager: StateStorageManager):
   Map<Path, List<LocalExportableItem>> {
 

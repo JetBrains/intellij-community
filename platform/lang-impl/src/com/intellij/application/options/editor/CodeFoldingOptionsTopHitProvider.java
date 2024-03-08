@@ -26,6 +26,11 @@ final class CodeFoldingOptionsTopHitProvider implements OptionsSearchTopHitProvi
     return CodeFoldingConfigurable.ID;
   }
 
+  @Override
+  public boolean preloadNeeded() {
+    return false; // seems rarely needed, can load on-demand
+  }
+
   @NotNull
   @Override
   public Collection<OptionDescription> getOptions() {

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.testGenerator.generator
 
 import org.jetbrains.kotlin.testGenerator.model.TAnnotation
+import org.jetbrains.kotlin.testGenerator.model.TAnnotationValue
 import javax.lang.model.element.Modifier
 
 interface RenderElement {
@@ -143,9 +144,15 @@ fun Code.appendDocComment(text: String?): Code {
 
 fun Code.appendAnnotation(annotation: TAnnotation) {
     append("@${annotation.simpleName}")
-    if (annotation.args.isNotEmpty()) {
-        val args = annotation.args.joinToString(prefix = "(", postfix = ")") { it.render() }
-        append(args)
+    with(annotation.args) {
+        if (isNotEmpty()) {
+            val args = if (size == 1) {
+                this.first().render()
+            } else {
+                joinToString(prefix = "{", postfix = "}", transform = TAnnotationValue::render)
+            }
+            append("($args)")
+        }
     }
     newLine()
 }

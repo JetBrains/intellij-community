@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.win;
 
 import com.intellij.ide.IdeBundle;
@@ -6,20 +6,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.PathChooserDialog;
+import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PathChooserDialogHelper;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.OwnerOptional;
 import com.jetbrains.JBRFileDialog;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,16 +25,16 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-
+@ApiStatus.Internal
+@SuppressWarnings("DuplicatedCode")
 public final class WinPathChooserDialog implements PathChooserDialog, FileChooserDialog {
-
   private FileDialog myFileDialog;
   private final FileChooserDescriptor myFileChooserDescriptor;
   private final WeakReference<Component> myParent;
   private final Project myProject;
   private final @NlsContexts.DialogTitle String myTitle;
-  private VirtualFile [] virtualFiles;
   private final PathChooserDialogHelper myHelper;
+  private VirtualFile[] myChosenFiles = VirtualFile.EMPTY_ARRAY;
 
   public WinPathChooserDialog(FileChooserDescriptor descriptor, Component parent, Project project) {
     myHelper = new PathChooserDialogHelper(descriptor);
@@ -45,15 +42,11 @@ public final class WinPathChooserDialog implements PathChooserDialog, FileChoose
     myParent = new WeakReference<>(parent);
     myProject = project;
     myTitle = getChooserTitle(descriptor);
-
-    Consumer<Dialog> dialogConsumer = owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD);
-    Consumer<Frame> frameConsumer = owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD);
-
     OwnerOptional
       .fromComponent(parent)
-      .ifDialog(dialogConsumer)
-      .ifFrame(frameConsumer)
-      .ifNull(frameConsumer);
+      .ifDialog(owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD))
+      .ifFrame(owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD))
+      .ifNull(owner -> myFileDialog = new FileDialog(owner, myTitle, FileDialog.LOAD));
     initExtendedProperties();
   }
 
@@ -125,52 +118,36 @@ public final class WinPathChooserDialog implements PathChooserDialog, FileChoose
       }
     }
 
-    File[] files = myFileDialog.getFiles();
-    List<VirtualFile> virtualFileList = myHelper.getChosenFiles(files);
-    virtualFiles = virtualFileList.toArray(VirtualFile.EMPTY_ARRAY);
+    List<VirtualFile> virtualFileList = myHelper.getChosenFiles(myFileDialog.getFiles());
+    myChosenFiles = virtualFileList.toArray(VirtualFile.EMPTY_ARRAY);
+    FileChooserUsageCollector.log(this, myFileChooserDescriptor, myChosenFiles);
 
     if (!virtualFileList.isEmpty()) {
       try {
-        if (virtualFileList.size() == 1) {
-          myFileChooserDescriptor.isFileSelectable(virtualFileList.get(0));
-        }
-        myFileChooserDescriptor.validateSelectedFiles(virtualFiles);
+        myFileChooserDescriptor.validateSelectedFiles(myChosenFiles);
       }
       catch (Exception e) {
-        if (parent == null) {
-          Messages.showErrorDialog(myProject, e.getMessage(), myTitle);
+        if (parent != null) {
+          Messages.showErrorDialog(parent, e.getMessage(), myTitle);
         }
         else {
-          Messages.showErrorDialog(parent, e.getMessage(), myTitle);
+          Messages.showErrorDialog(myProject, e.getMessage(), myTitle);
         }
 
         return;
       }
 
-      if (!ArrayUtil.isEmpty(files)) {
-        callback.consume(virtualFileList);
-      }
-      else if (callback instanceof FileChooser.FileChooserConsumer) {
-        ((FileChooser.FileChooserConsumer)callback).cancelled();
-      }
+      callback.consume(virtualFileList);
     }
-  }
-
-  private static @NotNull FileDialog createFileDialogWithoutOwner(String title, int load) {
-    // This is bad. But sometimes we do not have any windows at all.
-    // On the other hand, it is a bit strange to show a file dialog without an owner
-    // Therefore we should minimize usage of this case.
-    return new FileDialog((Frame)null, title, load);
-  }
-
-  @Override
-  public VirtualFile @NotNull [] choose(@Nullable VirtualFile toSelect, @Nullable Project project) {
-    choose(toSelect, files -> {});
-    return virtualFiles;
+    else if (callback instanceof FileChooser.FileChooserConsumer) {
+      ((FileChooser.FileChooserConsumer)callback).cancelled();
+    }
   }
 
   @Override
   public VirtualFile @NotNull [] choose(@Nullable Project project, VirtualFile @NotNull ... toSelect) {
-    return choose((toSelect.length > 0 ? toSelect[0] : null), project);
+    choose(toSelect.length > 0 ? toSelect[0] : null, files -> {});
+    FileChooserUsageCollector.log(this, myFileChooserDescriptor, myChosenFiles);
+    return myChosenFiles;
   }
 }

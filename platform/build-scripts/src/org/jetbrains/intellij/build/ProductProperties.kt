@@ -411,6 +411,11 @@ abstract class ProductProperties {
   )
 
   /**
+   * Returns IDs of flavors which the current product has. They will be added to the product-info.json file.  
+   */
+  open fun getProductFlavors(buildContext: BuildContext): List<String> = emptyList()
+
+  /**
    * Additional validation can be performed here for [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
    * Please do not ignore validation failures here, they will fail CI builds anyway.
    * @return list of plugin validation errors.

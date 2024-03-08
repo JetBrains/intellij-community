@@ -275,7 +275,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
         resultHandler.onComplete(result)
       }
 
-      override fun onFailure(gradleConnectionException: GradleConnectionException?) {
+      override fun onFailure(gradleConnectionException: GradleConnectionException) {
         resultReceived = true
         resultHandler.onFailure(gradleConnectionException)
       }

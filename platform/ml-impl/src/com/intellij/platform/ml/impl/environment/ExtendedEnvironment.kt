@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl.environment
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ml.*
 import com.intellij.platform.ml.EnvironmentExtender.Companion.extendTierInstance
 import com.intellij.platform.ml.ScopeEnvironment.Companion.accessibleSafelyByOrNull
@@ -45,7 +47,7 @@ class ExtendedEnvironment : Environment {
               tiersToExtend: Set<Tier<*>>) {
     val alreadyExistingButRequestedTiers = tiersToExtend.filter { it in mainEnvironment }
     require(alreadyExistingButRequestedTiers.isEmpty()) {
-    """
+      """
       Requested to extend $alreadyExistingButRequestedTiers, but they already exist in the main environment
       (which contains ${mainEnvironment.tiers})
     """.trimIndent()
@@ -53,7 +55,8 @@ class ExtendedEnvironment : Environment {
     val nonOverridingExtenders = environmentExtenders.filter { it.extendingTier !in mainEnvironment }
     storage = buildExtendedEnvironment(
       tiersToExtend + mainEnvironment.tiers,
-      nonOverridingExtenders + mainEnvironment.separateIntoExtenders()
+      nonOverridingExtenders + mainEnvironment.separateIntoExtenders(),
+      mainEnvironment.tiers
     )
   }
 
@@ -69,7 +72,8 @@ class ExtendedEnvironment : Environment {
     val nonOverridingExtenders = environmentExtenders.filter { it.extendingTier !in mainEnvironment }
     storage = buildExtendedEnvironment(
       nonOverridingExtenders.map { it.extendingTier }.toSet() + mainEnvironment.tiers,
-      nonOverridingExtenders + mainEnvironment.separateIntoExtenders()
+      nonOverridingExtenders + mainEnvironment.separateIntoExtenders(),
+      mainEnvironment.tiers
     )
   }
 
@@ -87,18 +91,46 @@ class ExtendedEnvironment : Environment {
      * Creates an [Environment] that contents tiers from [tiers], that were successfully extended by [extenders]
      */
     private fun buildExtendedEnvironment(tiers: Set<Tier<*>>,
-                                         extenders: List<EnvironmentExtender<*>>): Environment {
+                                         extenders: List<EnvironmentExtender<*>>,
+                                         mainTiers: Set<Tier<*>>): Environment {
       val validatedExtendersPerTier = validateExtenders(tiers, extenders)
       val extensionOrder = ENVIRONMENT_RESOLVER.resolve(validatedExtendersPerTier)
       val storage = TierInstanceStorage()
 
-      extensionOrder.map {
-        val safelyAccessibleEnvironment = storage.accessibleSafelyByOrNull(it) ?: return@map
-        it.extendTierInstance(safelyAccessibleEnvironment)?.let { extendedTierInstance ->
+      val extensionOutcome: List<ExtensionOutcome> = extensionOrder.map { environmentExtender ->
+        val safelyAccessibleEnvironment = storage.accessibleSafelyByOrNull(environmentExtender)
+                                          ?: return@map ExtensionOutcome.InsufficientEnvironment(environmentExtender)
+        environmentExtender.extendTierInstance(safelyAccessibleEnvironment)?.let { extendedTierInstance ->
           storage.putTierInstance(extendedTierInstance)
-        }
+          ExtensionOutcome.Success(environmentExtender, extendedTierInstance)
+        } ?: ExtensionOutcome.NullReturned(environmentExtender)
       }
+
+      logger<ExtendedEnvironment>().debug {
+        "Extending environment having ${mainTiers}\n" +
+        extensionOutcome
+          .filterNot { it.environmentExtender is ContainingExtender<*> }
+          .withIndex()
+          .joinToString("\n") { (index, outcome) -> "  extender #$index: $outcome" }
+      }
+
       return storage
+    }
+
+    private sealed class ExtensionOutcome {
+      abstract val environmentExtender: EnvironmentExtender<*>
+
+      data class Success(override val environmentExtender: EnvironmentExtender<*>, val instance: Any) : ExtensionOutcome() {
+        override fun toString() = "[success] ${environmentExtender.javaClass.simpleName} -> ${environmentExtender.extendingTier}"
+      }
+
+      data class InsufficientEnvironment(override val environmentExtender: EnvironmentExtender<*>) : ExtensionOutcome() {
+        override fun toString() = "[insufficient environment] ${environmentExtender.javaClass.simpleName} "
+      }
+
+      data class NullReturned(override val environmentExtender: EnvironmentExtender<*>) : ExtensionOutcome() {
+        override fun toString() = "[null returned] ${environmentExtender.javaClass.simpleName} "
+      }
     }
 
     private fun validateExtenders(tiers: Set<Tier<*>>, extenders: List<EnvironmentExtender<*>>): Map<Tier<*>, EnvironmentExtender<*>> {
@@ -130,16 +162,16 @@ class ExtendedEnvironment : Environment {
   }
 }
 
-private fun Environment.separateIntoExtenders(): List<EnvironmentExtender<*>> {
-  class ContainingExtender<T : Any>(private val tier: Tier<T>) : EnvironmentExtender<T> {
-    override val extendingTier: Tier<T> = tier
+internal class ContainingExtender<T : Any>(private val containingEnvironment: Environment, private val tier: Tier<T>) : EnvironmentExtender<T> {
+  override val extendingTier: Tier<T> = tier
 
-    override fun extend(environment: Environment): T {
-      return this@separateIntoExtenders[tier]
-    }
-
-    override val requiredTiers: Set<Tier<*>> = emptySet()
+  override fun extend(environment: Environment): T {
+    return containingEnvironment[tier]
   }
 
-  return this.tiers.map { tier -> ContainingExtender(tier) }
+  override val requiredTiers: Set<Tier<*>> = emptySet()
+}
+
+private fun Environment.separateIntoExtenders(): List<EnvironmentExtender<*>> {
+  return this.tiers.map { tier -> ContainingExtender(this, tier) }
 }

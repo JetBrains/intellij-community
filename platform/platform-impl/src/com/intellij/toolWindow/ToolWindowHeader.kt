@@ -320,16 +320,16 @@ abstract class ToolWindowHeader internal constructor(
       return
     }
 
-    val type = toolWindow.type
     val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
     val isNewUi = toolWindow.toolWindowManager.isNewUi
-    val drawTopLine = type != ToolWindowType.FLOATING && locationOnScreen.y == toolWindow.decorator?.locationOnScreen?.y
+    val drawTopLine = InternalDecoratorImpl.headerNeedsTopBorder(this)
     var drawBottomLine = true
 
     if (isNewUi) {
       val scrolled = ClientProperty.isTrue(nearestDecorator, SimpleToolWindowPanel.SCROLLED_STATE)
+      val contentCount = (nearestDecorator?.contentManager ?: toolWindow.contentManager).contentCount
       drawBottomLine = (toolWindow.anchor == ToolWindowAnchor.BOTTOM
-                        || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
+                        || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && contentCount > 1)
                         || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow)
                         || scrolled)
     }
@@ -355,12 +355,12 @@ abstract class ToolWindowHeader internal constructor(
   protected abstract fun hideToolWindow()
 
   override fun getPreferredSize(): Dimension {
-    val size = super.getPreferredSize()
+    val unscaledHeight =
+        if (toolWindow.toolWindowManager.isNewUi) JBUI.CurrentTheme.ToolWindow.headerHeight() else SingleHeightTabs.UNSCALED_PREF_HEIGHT
     val insets = insets
-    var height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT) - insets.top - insets.bottom
-    if (toolWindow.toolWindowManager.isNewUi) {
-      height = JBUI.scale(JBUI.CurrentTheme.ToolWindow.headerHeight()) - insets.top - insets.bottom
-    }
+    val top = if (InternalDecoratorImpl.headerNeedsTopBorder(this)) 1 else 0
+    val height = JBUI.scale(unscaledHeight) + top - insets.top - insets.bottom - 1 // -1 to match the editors area header.
+    val size = super.getPreferredSize()
     return Dimension(size.width, height)
   }
 

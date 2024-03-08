@@ -11,15 +11,16 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Dimension
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants
 import javax.swing.table.DefaultTableModel
 
-@Suppress("HardCodedStringLiteral", "unused")
-class ShowBundleMessagesDialogAction : AnAction(), DumbAware {
-  override fun actionPerformed(e: AnActionEvent) = BundleMessagesDialog(e.project).show()
+@Internal
+internal class ShowBundleMessagesDialogAction : AnAction(), DumbAware {
+  override fun actionPerformed(e: AnActionEvent): Unit = BundleMessagesDialog(e.project).show()
 
   private class BundleMessagesDialog(project: Project?) : DialogWrapper(project) {
     private lateinit var  table: JBTable

@@ -8,7 +8,6 @@ import com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExtern
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -92,24 +91,24 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
-    final ExternalProject externalProject = resolverCtx.getExtraProject(ExternalProject.class);
+    final ExternalProject externalProject = resolverCtx.getRootModel(ExternalProject.class);
     if (externalProject != null) {
       ideProject.createChild(ExternalProjectDataCache.KEY, externalProject);
       ideProject.getData().setDescription(externalProject.getDescription());
     }
 
-    final IntelliJSettings intellijSettings = resolverCtx.getExtraProject(IntelliJProjectSettings.class);
+    final IntelliJSettings intellijSettings = resolverCtx.getRootModel(IntelliJProjectSettings.class);
     if (intellijSettings != null) {
       ideProject.createChild(ProjectKeys.CONFIGURATION,
                              new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
     }
 
-    final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getExtraProject(DependencyAccessorsModel.class);
+    final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getRootModel(DependencyAccessorsModel.class);
     if (dependencyAccessorsModel != null && Registry.is(GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) {
       ideProject.createChild(BuildScriptClasspathData.ACCESSORS, dependencyAccessorsModel);
     }
 
-    final VersionCatalogsModel versionCatalogsModel = resolverCtx.getExtraProject(VersionCatalogsModel.class);
+    final VersionCatalogsModel versionCatalogsModel = resolverCtx.getRootModel(VersionCatalogsModel.class);
     if (versionCatalogsModel != null) {
       ideProject.createChild(BuildScriptClasspathData.VERSION_CATALOGS, versionCatalogsModel);
     }
@@ -265,8 +264,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
                             new ConfigurationDataImpl(GradleConstants.SYSTEM_ID, intellijSettings.getSettings()));
     }
 
-    AllModels models = resolverCtx.getModels();
-    ExternalTestsModel externalTestsModel = models.getModel(gradleModule, ExternalTestsModel.class);
+    ExternalTestsModel externalTestsModel = resolverCtx.getProjectModel(gradleModule, ExternalTestsModel.class);
     if (externalTestsModel != null) {
       for (ExternalTestSourceMapping testSourceMapping : externalTestsModel.getTestSourceMappings()) {
         String testName = testSourceMapping.getTestName();

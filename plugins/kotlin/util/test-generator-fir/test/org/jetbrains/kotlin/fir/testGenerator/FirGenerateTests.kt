@@ -14,11 +14,7 @@ import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractLocalSe
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.idea.fir.codeInsight.AbstractK2MultiModuleLineMarkerTest
 import org.jetbrains.kotlin.idea.fir.completion.*
-import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeywordCompletionHandlerTest
-import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
-import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJavaCompletionHandlerTest
-import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionCharFilterTest
-import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionIncrementalResolveTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.*
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralKotlinToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.fir.copyPaste.AbstractFirLiteralTextToKotlinCopyPasteTest
@@ -46,6 +42,8 @@ import org.jetbrains.kotlin.idea.k2.copyright.AbstractFirUpdateKotlinCopyrightTe
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirMultiModuleRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterMultiFileTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterPartialTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
@@ -59,7 +57,6 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOT_AND_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_FIR_PREFIX
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
-import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
     generateK2Tests()
@@ -84,7 +81,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("base/fir/analysis-api-providers") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
-            model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or Patterns.JAVA)
+            model("outOfBlockProjectWide", pattern = KT_WITHOUT_DOTS or JAVA)
         }
 
         testClass<AbstractLocalSessionInvalidationTest> {
@@ -459,11 +456,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractHighLevelJavaCompletionHandlerTest> {
-            model("handlers/injava", pattern = Patterns.JAVA)
+            model("handlers/injava", pattern = JAVA)
         }
 
         testClass<AbstractFirKeywordCompletionHandlerTest> {
             model("handlers/keywords", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+        }
+
+        testClass<AbstractFirDumbCompletionTest> {
+            model("dumb")
         }
 
         testClass<AbstractHighLevelWeigherTest> {
@@ -578,7 +579,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractK2MultiModuleHighlightingTest> {
-            model("resolve/anchors", isRecursive = false, pattern = forRegex("^([^\\._]+)$"))
+            model("resolve/anchors", isRecursive = false, pattern = Patterns.forRegex("^([^\\._]+)$"))
         }
 
         testClass<AbstractK2ReferenceResolveWithResolveExtensionTest> {
@@ -639,6 +640,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("j2k/k2/tests", testDataPath = "../../shared/tests/testData") {
         testClass<AbstractK2JavaToKotlinConverterSingleFileTest> {
             model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
+        testClass<AbstractK2JavaToKotlinConverterPartialTest> {
+            model("partialConverter", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
+        testClass<AbstractK2JavaToKotlinConverterMultiFileTest>(commonSuite = false) {
+            model("multiFile", pattern = DIRECTORY, isRecursive = false)
         }
     }
 }

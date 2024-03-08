@@ -15,6 +15,8 @@ interface ServiceViewUi {
 
   void setMasterComponent(@NotNull JComponent component, @NotNull ServiceViewActionProvider actionManager);
 
+  void setDetailsComponentVisible(boolean visible);
+
   void setDetailsComponent(@Nullable JComponent component);
 
   void setNavBar(@NotNull JComponent component);
@@ -24,4 +26,6 @@ interface ServiceViewUi {
   void setMasterComponentVisible(boolean visible);
 
   @Nullable JComponent getDetailsComponent();
+
+  void setSplitOrientation(boolean verticalSplit);
 }

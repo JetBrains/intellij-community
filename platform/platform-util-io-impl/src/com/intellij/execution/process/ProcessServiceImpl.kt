@@ -7,8 +7,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
-import com.pty4j.windows.WinPtyProcess
 import com.pty4j.windows.conpty.WinConPtyProcess
+import com.pty4j.windows.winpty.WinPtyProcess
 import org.jvnet.winp.WinProcess
 import java.io.File
 import java.io.OutputStream

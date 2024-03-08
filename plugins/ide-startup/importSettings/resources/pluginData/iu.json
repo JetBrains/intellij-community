@@ -151,8 +151,8 @@
   },
   {
     "vsCodeId": "GitLab.gitlab-workflow",
-    "ideaName": "GitLab Workflow",
-    "builtIn": true
+    "ideaName": "GitLab",
+    "ideaId": "org.jetbrains.plugins.gitlab"
   },
   {
     "vsCodeId": "golang.Go",
@@ -210,6 +210,11 @@
     "builtIn": true
   },
   {
+    "vsCodeId": "mhutchie.git-graph",
+    "ideaName": "Git Graph",
+    "builtIn": true
+  },
+  {
     "vsCodeId": "mongodb.mongodb-vscode",
     "ideaName": "Database Tools and SQL",
     "ideaId": "com.intellij.database"
@@ -228,6 +233,16 @@
     "vsCodeId": "MS-CEINTL.vscode-language-pack-ja",
     "ideaName": "Japanese Language Pack / 日本語言語パック",
     "ideaId": "com.intellij.ja"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-ko",
+    "ideaName": "Korean Language Pack / 한국어 언어 팩",
+    "ideaId": "com.intellij.ko"
+  },
+  {
+    "vsCodeId": "MS-CEINTL.vscode-language-pack-zh-hans",
+    "ideaName": "Chinese (Simplified) Language Pack / 中文语言包",
+    "ideaId": "com.intellij.zh"
   },
   {
     "vsCodeId": "ms-kubernetes-tools.vscode-kubernetes-tools",
@@ -278,6 +293,11 @@
     "vsCodeId": "ms-vscode-remote.remote-wsl",
     "ideaName": "WSL",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "ms-vscode.node-debug2",
+    "ideaName": "Node.js",
+    "ideaId": "NodeJS"
   },
   {
     "vsCodeId": "ms-vscode.vscode-typescript-tslint-plugin",
@@ -343,6 +363,11 @@
     "vsCodeId": "Shan.code-settings-sync",
     "ideaName": "Settings Sync",
     "builtIn": true
+  },
+  {
+    "vsCodeId": "Shopify.ruby-lsp",
+    "ideaName": "Ruby",
+    "ideaId": "org.jetbrains.plugins.ruby"
   },
   {
     "vsCodeId": "streetsidesoftware.code-spell-checker",
@@ -443,6 +468,16 @@
     "vsCodeId": "Vue.volar",
     "ideaName": "Vue.js",
     "ideaId": "org.jetbrains.plugins.vue"
+  },
+  {
+    "vsCodeId": "waderyan.gitblame",
+    "ideaName": "Git Blame",
+    "builtIn": true
+  },
+  {
+    "vsCodeId": "wayou.vscode-todo-highlight",
+    "ideaName": "TODO Highlight",
+    "builtIn": true
   },
   {
     "vsCodeId": "wholroyd.jinja",

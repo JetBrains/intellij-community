@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JreHiDpiUtil;
@@ -188,6 +189,9 @@ public final class JBCefApp {
           !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled")) {
         return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
       }
+      if (SystemInfo.isWindows && !SystemInfo.isWin8OrNewer)
+        return unsupported.apply("JCEF isn't supported in Windows 7");
+
       if (!SKIP_VERSION_CHECK) {
         JCefVersionDetails version;
         try {

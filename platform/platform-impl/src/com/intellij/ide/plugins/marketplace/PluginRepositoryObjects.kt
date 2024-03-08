@@ -191,6 +191,11 @@ data class ReviewCommentPlugin(
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+data class SalesMetadata(
+  val trialPeriod: Int? = null
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijPluginMetadata(
   val screenshots: List<String>? = null,
   val vendor: PluginVendorMetadata? = null,
@@ -199,7 +204,8 @@ data class IntellijPluginMetadata(
   val bugtrackerUrl: String? = null,
   val documentationUrl: String? = null,
   val sourceCodeUrl: String? = null,
-  val reportPluginUrl: String? = null
+  val reportPluginUrl: String? = null,
+  val salesInfo: SalesMetadata? = null
 ) {
 
   fun toPluginNode(pluginNode: PluginNode) {
@@ -214,6 +220,7 @@ data class IntellijPluginMetadata(
     pluginNode.documentationUrl = documentationUrl
     pluginNode.sourceCodeUrl = sourceCodeUrl
     pluginNode.reportPluginUrl = reportPluginUrl
+    pluginNode.trialPeriod = salesInfo?.trialPeriod
   }
 }
 

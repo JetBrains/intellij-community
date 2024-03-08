@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.indices.names
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.*
 import com.intellij.util.io.DataExternalizer
@@ -26,7 +27,10 @@ import java.io.DataOutput
 @ApiStatus.Internal
 fun getNamesInPackage(indexId: ID<FqName, List<Name>>, packageFqName: FqName, scope: GlobalSearchScope): Set<Name> {
     return buildSet {
-        FileBasedIndex.getInstance().getValues(indexId, packageFqName, scope).forEach(::addAll)
+        FileBasedIndex.getInstance().getValues(indexId, packageFqName, scope).forEach {
+            ProgressManager.checkCanceled()
+            addAll(it)
+        }
     }
 }
 

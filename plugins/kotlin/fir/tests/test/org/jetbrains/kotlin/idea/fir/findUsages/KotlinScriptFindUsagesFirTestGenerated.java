@@ -43,6 +43,11 @@ public class KotlinScriptFindUsagesFirTestGenerated extends AbstractKotlinScript
         runTest("../../idea/tests/testData/findUsages/kotlinScript/dummy.0.kts");
     }
 
+    @TestMetadata("lambdas.0.kts")
+    public void testLambdas() throws Exception {
+        runTest("../../idea/tests/testData/findUsages/kotlinScript/lambdas.0.kts");
+    }
+
     @TestMetadata("localClass.0.kts")
     public void testLocalClass() throws Exception {
         runTest("../../idea/tests/testData/findUsages/kotlinScript/localClass.0.kts");

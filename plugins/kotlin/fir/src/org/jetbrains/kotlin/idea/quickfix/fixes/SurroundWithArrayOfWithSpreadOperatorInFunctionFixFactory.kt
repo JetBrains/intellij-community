@@ -4,6 +4,8 @@
  */
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -11,11 +13,11 @@ import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames.arrayClassFqNameToPrimitiveType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.modCommandApplicator
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
@@ -23,14 +25,26 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
 
-    class Input(val fullyQualifiedArrayOfCall: String, val shortArrayOfCall: String) : KotlinApplicatorInput
+    data class Input(
+        val fullyQualifiedArrayOfCall: String,
+        val shortArrayOfCall: String,
+    ) : KotlinApplicatorInput
 
-    private val applicator = modCommandApplicator<KtExpression, Input> {
-        familyName(KotlinBundle.lazyMessage("surround.with.array.of"))
-        actionName { _, input ->
-            KotlinBundle.getMessage("surround.with.0", input.shortArrayOfCall)
-        }
-        applyTo { psi, input ->
+    private val applicator = object : KotlinApplicator.ModCommandBased<KtExpression, Input> {
+
+        override fun getFamilyName(): String = KotlinBundle.message("surround.with.array.of")
+
+        override fun getActionName(
+            psi: KtExpression,
+            input: Input,
+        ): String = KotlinBundle.getMessage("surround.with.0", input.shortArrayOfCall)
+
+        override fun applyTo(
+            psi: KtExpression,
+            input: Input,
+            context: ActionContext,
+            updater: ModPsiUpdater,
+        ) {
             val argument = psi.getParentOfType<KtValueArgument>(false) ?: return@applyTo
             val argumentName = argument.getArgumentName()?.asName ?: return@applyTo
             val argumentExpression = argument.getArgumentExpression() ?: return@applyTo

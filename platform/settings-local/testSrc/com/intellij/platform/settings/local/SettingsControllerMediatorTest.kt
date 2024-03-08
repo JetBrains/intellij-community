@@ -66,7 +66,7 @@ private fun createGet(resultSupplier: () -> GetResult<String?>): DelegatedSettin
       return resultSupplier() as GetResult<T?>
     }
 
-    override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.INAPPLICABLE
+    override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.inapplicable()
   }
 }
 

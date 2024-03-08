@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -249,7 +249,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
 
-    if (mode == InlineMode.ASK && refExpr != null && refsToInlineList.size() > 1 &&
+    if (mode == InlineMode.ASK && refExpr != null && refsToInlineList.size() > 1 && refsToInlineList.contains(refExpr) &&
         EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
       return createChooser(local, refExpr, refsToInlineList);
     }

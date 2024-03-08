@@ -56,7 +56,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
       else {
         context.affectUsage(usageFactory.apply(id));
       }
-      debug("Affect ", usageKind, " usage referenced of class ", id.getNodeName());
+      debug("Affect ", usageKind, " usage owned by node '", id.getNodeName(), "'");
     }
   }
 
@@ -76,6 +76,20 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
 
   protected void debug(String message) {
     LOG.debug(message);
+  }
+
+  protected void affectSubclasses(DifferentiateContext context, Utils utils, ReferenceID fromClass, boolean affectUsages) {
+    debug("Affecting subclasses of class: ", fromClass, "; with usages affection: ", affectUsages);
+    for (ReferenceID cl : utils.withAllSubclasses(fromClass)) {
+      affectNodeSources(context, cl, "Affecting source file: ");
+      if (affectUsages) {
+        String nodeName = utils.getNodeName(cl);
+        if (nodeName != null) {
+          context.affectUsage(new ClassUsage(nodeName));
+          debug("Affect usage of class ", nodeName);
+        }
+      }
+    }
   }
 
   protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason) {

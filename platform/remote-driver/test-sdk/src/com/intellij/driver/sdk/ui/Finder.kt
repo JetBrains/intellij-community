@@ -15,14 +15,14 @@ interface Finder {
   val robotService: RobotService
   val searchContext: SearchContext
 
-  fun x(@Language("xpath") xpath: String, cached: Boolean = true): UiComponent {
-    return UiComponent(ComponentData(xpath, cached, driver, robotService, searchContext, null))
+  fun x(@Language("xpath") xpath: String): UiComponent {
+    return UiComponent(ComponentData(xpath, driver, robotService, searchContext, null))
   }
 
-  fun <T : UiComponent> x(@Language("xpath") xpath: String, type: Class<T>, cached: Boolean = true): T {
+  fun <T : UiComponent> x(@Language("xpath") xpath: String, type: Class<T>): T {
     return type.getConstructor(
       ComponentData::class.java
-    ).newInstance(ComponentData(xpath, cached, driver, robotService, searchContext, null))
+    ).newInstance(ComponentData(xpath, driver, robotService, searchContext, null))
   }
 
   fun xx(@Language("xpath") xpath: String): UIComponentsList<UiComponent> {

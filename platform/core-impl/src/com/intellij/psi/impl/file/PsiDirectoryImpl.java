@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.file;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -112,7 +113,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
     VirtualFile child = parentFile.findChild(name);
     if (child != null && !child.equals(myFile)) {
-      throw new IncorrectOperationException(CoreBundle.message("file.already.exists.error", child.getPresentableUrl()));
+      throw new IncorrectOperationException(CoreBundle.message("dir.already.exists.error", child.getPresentableUrl()));
     }
   }
 
@@ -533,7 +534,14 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   protected Icon getElementIcon(int flags) {
-    return IconManager.getInstance().tooltipOnlyIfComposite(IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder));
+    for (FileIconProvider provider : FileIconProvider.EP_NAME.getExtensionList()) {
+      Icon icon = provider.getIcon(myFile, flags, getProject());
+      if (icon != null) {
+        return icon;
+      }
+    }
+    return IconManager.getInstance().tooltipOnlyIfComposite(
+      IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder));
   }
 
   @Override

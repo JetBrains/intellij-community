@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Experimental
 @file:Suppress("DeprecatedCallableAddReplaceWith", "UNUSED_PARAMETER")
 
 package com.intellij.platform.util.progress
@@ -89,6 +88,7 @@ suspend fun <T> reportProgress(size: Int = 100, action: suspend (reporter: Progr
  * }
  * ```
  */
+@Experimental
 suspend fun <T> reportProgressScope(size: Int = 100, action: suspend CoroutineScope.(reporter: ProgressReporter) -> T): T {
   return reportProgress(size) {
     ignoreProgressReportingIn {
@@ -135,6 +135,9 @@ suspend fun <T> withProgressText(text: ProgressText?, action: ScopedLambda<T>): 
   return currentProgressStep().withText(text, action)
 }
 
+/**
+ * Suppresses progress reporting inside [action] to avoid the [action] taking the ownership of the [current step][currentProgressStep].
+ */
 suspend fun <T> ignoreProgressReportingIn(action: suspend CoroutineScope.() -> T): T {
   // It's not possible to throw away a context element
   // => we replace the element with a null-object instead
@@ -170,6 +173,7 @@ suspend fun <T, R> Collection<T>.mapWithProgress(mapper: suspend (value: T) -> R
 }
 
 // <editor-fold desc="Deprecated stuff">
+@Experimental
 @Deprecated("Use `SequentialProgressReporter.indeterminateStep`")
 suspend fun <T> indeterminateStep(
   text: ProgressText? = null,
@@ -178,6 +182,7 @@ suspend fun <T> indeterminateStep(
   return coroutineScope(action)
 }
 
+@Experimental
 @Deprecated("Use `SequentialProgressReporter.sizedStep`")
 suspend fun <T> progressStep(
   endFraction: Double,
@@ -187,56 +192,13 @@ suspend fun <T> progressStep(
   return coroutineScope(action)
 }
 
-@Deprecated("Pass `Collection.size` as argument to `reportProgress` or `reportSequentialProgress`")
-fun Collection<*>.itemDuration(): Double = this.size.itemDuration()
-
-@Deprecated("Pass `Collection.size` as argument to `reportProgress` or `reportSequentialProgress`")
-fun Int.itemDuration(): Double = 1.0 / this
-
+@Experimental
 @Deprecated("Use `ProgressReporter.sizedStep`")
 suspend fun <T> durationStep(duration: Double, text: ProgressText? = null, action: suspend CoroutineScope.() -> T): T {
   return coroutineScope(action)
 }
 
-@Deprecated(
-  "Use `mapConcurrent` with `reportProgress`," +
-  " or `map` with `reportProgress` or `reportSequentialProgress`",
-)
-suspend fun <T, R> Collection<T>.mapWithProgress(concurrent: Boolean = false, mapper: suspend (value: T) -> R): List<R> {
-  return map {
-    mapper(it)
-  }
-}
-
-/**
- * ```
- * val filtered = items.filterWithProgress(predicate)
- * filtered.forEachWithProgress(action)
- * // becomes
- * items.forEachWithProgress {
- *   if (predicate(it)) {
- *     action(it)
- *   }
- * }
- * ```
- */
-@Deprecated("Inline filter step into nearby `mapWithProgress`/`forEachWithProgress`", level = DeprecationLevel.ERROR)
-suspend fun <T> Collection<T>.filterWithProgress(concurrent: Boolean = false, predicate: suspend (value: T) -> Boolean): List<T> {
-  return filter {
-    predicate(it)
-  }
-}
-
-@Deprecated(
-  "Use `forEachConcurrent` with `reportProgress`," +
-  " or `forEach` with `reportProgress` or `reportSequentialProgress`",
-)
-suspend fun <T> Collection<T>.forEachWithProgress(concurrent: Boolean = false, action: suspend (value: T) -> Unit) {
-  forEach {
-    action(it)
-  }
-}
-
+@Experimental
 @Deprecated("Use `reportRawProgress`")
 suspend fun <X> withRawProgressReporter(action: suspend CoroutineScope.() -> X): X {
   return reportRawProgress { reporter ->

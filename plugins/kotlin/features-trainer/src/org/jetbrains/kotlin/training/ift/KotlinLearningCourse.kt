@@ -127,7 +127,8 @@ class KotlinLearningCourse : LearningCourseBase(KotlinLanguage.INSTANCE.id) {
                 LocalHistoryLesson(),
                 CodeFormatLesson(ls("CodeFormat.kt.sample"), true),
                 ParameterInfoLesson(ls("ParameterInfo.kt.sample")),
-                QuickPopupsLesson(ls("QuickPopups.kt.sample")),
+                QuickPopupsLesson(ls("QuickPopups.kt.sample"),
+                                  "viewing-reference-information.html#inline-quick-documentation"),
                 // TODO: KotlinEditorCodingAssistanceLesson(ls("EditorCodingAssistance.java.sample")),
             )
         },

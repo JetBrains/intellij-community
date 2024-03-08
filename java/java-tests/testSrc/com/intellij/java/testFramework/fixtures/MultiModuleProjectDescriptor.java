@@ -18,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TemporaryDirectory;
@@ -54,6 +55,7 @@ public class MultiModuleProjectDescriptor extends DefaultLightProjectDescriptor 
   @Nullable private final String myMainModuleName;
   @Nullable private final Consumer<ProjectModel> myProcess;
   private final Path myProjectPath;
+  @Nullable private LanguageLevel myLanguageLevel;
 
   public MultiModuleProjectDescriptor(@NotNull Path path, @Nullable String mainModuleName, @Nullable Consumer<ProjectModel> process) {
     myPath = path;
@@ -81,7 +83,9 @@ public class MultiModuleProjectDescriptor extends DefaultLightProjectDescriptor 
 
   @Override
   public Sdk getSdk() {
-    return IdeaTestUtil.getMockJdk11();
+    return myLanguageLevel != null
+    ? IdeaTestUtil.getMockJdk(myLanguageLevel.toJavaVersion())
+    : IdeaTestUtil.getMockJdk11();
   }
 
   @Override
@@ -92,6 +96,8 @@ public class MultiModuleProjectDescriptor extends DefaultLightProjectDescriptor 
       VfsUtil.markDirtyAndRefresh(false, true, true, myProjectPath.toFile());
       ProjectModel projectModel = new ProjectModel(project, myProjectPath);
       if (myProcess != null) myProcess.accept(projectModel);
+      myLanguageLevel = projectModel.getLanguageLevel();
+      AcceptedLanguageLevelsSettings.allowLevel(project, myLanguageLevel);
 
       for (ModuleDescriptor descriptor : projectModel.getModules()) {
         Path iml = descriptor.basePath().resolve(descriptor.name() + ModuleFileType.DOT_DEFAULT_EXTENSION);
@@ -104,7 +110,7 @@ public class MultiModuleProjectDescriptor extends DefaultLightProjectDescriptor 
 
         ModuleRootModificationUtil.updateModel(module, model -> {
           model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(descriptor.languageLevel());
-          //model.setSdk(IdeaTestUtil.getMockJdk(descriptor.languageLevel().toJavaVersion()));
+          model.setSdk(IdeaTestUtil.getMockJdk(descriptor.languageLevel().toJavaVersion()));
           for (SourceDirectory source : descriptor.sources()) {
             final ContentEntry entry = model.addContentEntry(source.dir());
             switch (source.type()) {

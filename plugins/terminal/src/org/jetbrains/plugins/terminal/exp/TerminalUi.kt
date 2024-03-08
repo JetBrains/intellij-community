@@ -1,9 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
-import com.intellij.ui.JBColor
-import java.awt.Color
-
 @Suppress("ConstPropertyName")
 object TerminalUi {
   const val blockTopInset = 8
@@ -25,17 +22,4 @@ object TerminalUi {
   const val alternateBufferLeftInset = 4
 
   const val searchComponentWidth = 500
-
-  // todo: create color keys
-  val commandForeground: Color
-    get() = JBColor(0x000000, 0xFFFFFF)
-
-  val searchEntryBackground: Color
-    get() = JBColor(0xFFEA00, 0xFFEA00)
-  val searchEntryForeground: Color
-    get() = JBColor(0x000000, 0x000000)
-  val currentSearchEntryBackground: Color
-    get() = JBColor(0xFF941A, 0xFF941A)
-  val currentSearchEntryForeground: Color
-    get() = JBColor(0x000000, 0x000000)
 }

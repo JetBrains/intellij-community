@@ -194,6 +194,12 @@ object KotlinPluginBuilder {
     "kotlin.refactorings.rename.k2",
     "kotlin.performanceExtendedPlugin",
     "kotlin.bundled-compiler-plugins-support",
+    "kotlin.jsr223"
+  )
+
+  private val KOTLIN_SCRIPTING_LIBRARIES = persistentListOf(
+    "kotlinc.kotlin-script-runtime",
+    "kotlinc.kotlin-scripting-jvm"
   )
 
   private val MODULES_SHARED_WITH_CLIENT = persistentListOf(
@@ -209,16 +215,14 @@ object KotlinPluginBuilder {
     "kotlinc.high-level-api",
     "kotlinc.high-level-api-fe10",
     "kotlinc.high-level-api-impl-base",
-    "kotlinc.kotlin-script-runtime",
     "kotlinc.kotlin-scripting-compiler-impl",
     "kotlinc.kotlin-scripting-common",
-    "kotlinc.kotlin-scripting-jvm",
     "kotlinc.kotlin-gradle-statistics",
     "kotlinc.high-level-api-fir",
     "kotlinc.kotlin-compiler-fir",
     "kotlinc.low-level-api-fir",
     "kotlinc.symbol-light-classes",
-  )
+  ) + KOTLIN_SCRIPTING_LIBRARIES
 
   private val GRADLE_TOOLING_MODULES = persistentListOf(
     "kotlin.base.project-model",
@@ -304,20 +308,7 @@ object KotlinPluginBuilder {
         spec.withModules(ultimateModules)
       }
 
-      val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-      spec.withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
-
-      spec.withPatch { patcher, context ->
-        val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
-        val jars = library.getPaths(JpsOrderRootType.COMPILED)
-        if (jars.size != 1) {
-          throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
-        }
-
-        consumeDataByPrefix(jars[0], "META-INF/extensions/") { name, data ->
-          patcher.patchModuleOutput(moduleName = MAIN_KOTLIN_PLUGIN_MODULE, path = name, content = data)
-        }
-      }
+      spec.withKotlincKotlinCompilerCommonLibrary(MAIN_KOTLIN_PLUGIN_MODULE)
 
       spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       spec.withProjectLibrary("kotlinc.kotlin-compiler-ir")
@@ -328,15 +319,7 @@ object KotlinPluginBuilder {
       spec.withProjectLibrary("javaslang")
       spec.withProjectLibrary("javax-inject")
 
-      spec.withGeneratedResources { targetDir, context ->
-        val distLibName = "kotlinc.kotlin-dist"
-        val library = context.project.libraryCollection.findLibrary(distLibName)!!
-        val jars = library.getPaths(JpsOrderRootType.COMPILED)
-        if (jars.size != 1) {
-          throw IllegalStateException("$distLibName is expected to have only one jar")
-        }
-        Decompressor.Zip(jars[0]).extract(targetDir.resolve("kotlinc"))
-      }
+      spec.withKotlincInPluginDirectory()
 
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
         override fun evaluate(pluginXml: Path, ideBuildVersion: String, context: BuildContext): String {
@@ -452,6 +435,55 @@ object KotlinPluginBuilder {
     return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
       spec.withModules(MODULES_SHARED_WITH_CLIENT)
       spec.withProjectLibrary("kotlinc.kotlin-compiler-common", LibraryPackMode.STANDALONE_MERGED)
+    }
+  }
+
+  @JvmStatic
+  fun kotlinScriptingPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
+    val mainModuleName = "kotlin.scripting-plugin"
+    return PluginLayout.plugin(mainModuleName) { spec ->
+      spec.directoryName = "KotlinScripting"
+      spec.mainJarName = "kotlin-scripting-plugin.jar"
+
+      spec.withModule("kotlin.jsr223")
+
+      for (libraryName in KOTLIN_SCRIPTING_LIBRARIES) {
+        spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
+      }
+      spec.withKotlincKotlinCompilerCommonLibrary(mainModuleName)
+      spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
+      spec.withKotlincInPluginDirectory()
+
+      addition?.invoke(spec)
+    }
+  }
+
+  private fun PluginLayout.PluginLayoutSpec.withKotlincKotlinCompilerCommonLibrary(mainPluginModule: String) {
+    val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
+    withProjectLibrary(kotlincKotlinCompilerCommon, LibraryPackMode.STANDALONE_MERGED)
+
+    withPatch { patcher, context ->
+      val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
+      val jars = library.getPaths(JpsOrderRootType.COMPILED)
+      if (jars.size != 1) {
+        throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
+      }
+
+      consumeDataByPrefix(jars[0], "META-INF/extensions/") { name, data ->
+        patcher.patchModuleOutput(moduleName = mainPluginModule, path = name, content = data)
+      }
+    }
+  }
+
+  private fun PluginLayout.PluginLayoutSpec.withKotlincInPluginDirectory() {
+    withGeneratedResources { targetDir, context ->
+      val distLibName = "kotlinc.kotlin-dist"
+      val library = context.project.libraryCollection.findLibrary(distLibName)!!
+      val jars = library.getPaths(JpsOrderRootType.COMPILED)
+      if (jars.size != 1) {
+        throw IllegalStateException("$distLibName is expected to have only one jar")
+      }
+      Decompressor.Zip(jars[0]).extract(targetDir.resolve("kotlinc"))
     }
   }
 }

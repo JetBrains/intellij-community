@@ -53,7 +53,7 @@ internal class KotlinTryPostfixTemplate : StringBasedPostfixTemplate {
         return listOf(ClassId.fromString("kotlin/Exception"))
     }
 
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
 @OptIn(KtAllowAnalysisOnEdt::class)
