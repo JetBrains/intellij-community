@@ -2,6 +2,8 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntLists;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -30,6 +32,7 @@ public final class TextMateLexer {
 
   @NotNull
   private TextMateScope myCurrentScope = TextMateScope.EMPTY;
+  private IntArrayList myNestedScope = IntArrayList.of();
   private FList<TextMateLexerState> myStates = FList.emptyList();
 
   private final CharSequence myLanguageScopeName;
@@ -56,6 +59,7 @@ public final class TextMateLexer {
 
     myStates = FList.singleton(myLanguageInitialState);
     myCurrentScope = new TextMateScope(myLanguageScopeName, null);
+    myNestedScope = IntArrayList.of(1);
   }
 
   public int getCurrentOffset() {
@@ -307,7 +311,17 @@ public final class TextMateLexer {
 
   private void openScopeSelector(@NotNull Queue<Token> output, @Nullable CharSequence name, int position) {
     addToken(output, position);
-    myCurrentScope = myCurrentScope.add(name);
+    int indexOfSpace = name != null ? Strings.indexOf(name, ' ', 0) : -1;
+    int prevIndexOfSpace = 0;
+    int count = 0;
+    while (indexOfSpace >= 0) {
+      myCurrentScope = myCurrentScope.add(name.subSequence(prevIndexOfSpace, indexOfSpace));
+      prevIndexOfSpace = indexOfSpace + 1;
+      indexOfSpace = Strings.indexOf(name, ' ', prevIndexOfSpace);
+      count++;
+    }
+    myCurrentScope = myCurrentScope.add(name != null ? name.subSequence(prevIndexOfSpace, name.length()) : null);
+    myNestedScope.add(count + 1);
   }
 
   private void closeScopeSelector(@NotNull Queue<Token> output, int position) {
@@ -315,7 +329,11 @@ public final class TextMateLexer {
     if (lastOpenedName != null && !lastOpenedName.isEmpty()) {
       addToken(output, position);
     }
-    myCurrentScope = myCurrentScope.getParentOrSelf();
+    int nested = myNestedScope.getInt(myNestedScope.size() - 1);
+    myNestedScope.removeInt(myNestedScope.size() - 1);
+    for (int i = 0; i < nested; i++) {
+      myCurrentScope = myCurrentScope.getParentOrSelf();
+    }
   }
 
 
