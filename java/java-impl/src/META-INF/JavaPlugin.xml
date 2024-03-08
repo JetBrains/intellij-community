@@ -2513,8 +2513,8 @@
               implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
 
     <psi.symbolReferenceProvider
-      hostElementClass="com.intellij.psi.PsiLiteralExpression"
-      hostLanguage="JAVA"
+      hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
+      hostLanguage="UAST"
       implementationClass="com.intellij.lang.logging.resolve.JvmLoggerFormatSymbolReferenceProvider"
       targetClass="com.intellij.lang.logging.resolve.JvmLoggerArgumentSymbol"/>
   </extensions>

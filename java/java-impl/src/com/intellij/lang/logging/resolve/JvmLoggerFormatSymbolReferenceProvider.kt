@@ -8,15 +8,16 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiCallExpression
-import com.intellij.psi.PsiLiteralExpression
-import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElementOfType
 
 class JvmLoggerFormatSymbolReferenceProvider : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
     if (!hintsCheck(hints)) return listOf()
-    val literalExpression = element as? PsiLiteralExpression ?: return listOf()
+
+    val literalExpression = element.toUElementOfType<ULiteralExpression>() ?: return listOf()
     return getLogArgumentReferences(literalExpression)
   }
 
@@ -34,14 +35,8 @@ class JvmLoggerFormatSymbolReferenceProvider : PsiSymbolReferenceProvider {
 
 }
 
-fun getLogArgumentReferences(element: PsiLiteralExpression): List<PsiSymbolReference> {
-  val literalExpression = element as? PsiLiteralExpression ?: return listOf()
-  val callExpression = PsiTreeUtil.getParentOfType(literalExpression, PsiCallExpression::class.java) ?: return listOf()
+fun getLogArgumentReferences(literalExpression: ULiteralExpression): List<PsiSymbolReference> {
+  val callExpression = literalExpression.getParentOfType<UCallExpression>()
 
-  val arguments = callExpression.argumentList?.expressions ?: return mutableListOf()
-  val firstIdx = literalExpression.text.indexOfFirst { it == '{' }
-  if (firstIdx == -1) {
-    return emptyList()
-  }
-  return listOf(JvmLoggerArgumentSymbolReference(literalExpression, TextRange(firstIdx, firstIdx + 2), arguments[1]))
+  return listOf()
 }

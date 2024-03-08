@@ -29,12 +29,6 @@ public final class StringFormatUsageSearcher implements UsageSearcher {
       PsiExpression arg = symbol.getExpression();
       return getFormatUsages(symbol, expression, arg, StringFormatSymbolReferenceProvider::getReferences);
     }
-    else if (target instanceof JvmLoggerArgumentSymbol symbol) {
-      PsiExpression expression = symbol.getFormatString();
-      if (expression == null) return List.of();
-      PsiExpression arg = symbol.getExpression();
-      return getFormatUsages(symbol, expression, arg, JvmLoggerFormatSymbolReferenceProviderKt::getLogArgumentReferences);
-    }
     return List.of();
   }
 
