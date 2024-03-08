@@ -106,6 +106,10 @@ public final class TextMateServiceImpl extends TextMateService {
       List<@NotNull TextMateBundleToLoad> bundlesToLoad = getPluginBundles(this);
       if (!userBundles.isEmpty()) {
         bundlesToLoad.addAll(ContainerUtil.mapNotNull(userBundles.entrySet(), entry -> {
+          if (entry == null || entry.getValue() == null) {
+            return null;
+          }
+
           return entry.getValue().getEnabled() ? new TextMateBundleToLoad(entry.getValue().getName(), entry.getKey()) : null;
         }));
       }
