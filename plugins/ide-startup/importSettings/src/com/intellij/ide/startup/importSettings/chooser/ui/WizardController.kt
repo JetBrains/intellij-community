@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contr(ibutors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.StartupWizardService
@@ -29,6 +29,12 @@ interface WizardController : BaseController {
 class WizardControllerImpl(dialog: OnboardingDialog,
                            override val service: StartupWizardService,
                            override val goBackAction: (() -> Unit)?) : WizardController, BaseControllerImpl(dialog) {
+
+  init {
+    service.shouldClose.advise(lifetime) {
+      dialog.dialogClose()
+    }
+  }
 
   override fun goToThemePage() {
     if (ScreenReader.isActive()) {

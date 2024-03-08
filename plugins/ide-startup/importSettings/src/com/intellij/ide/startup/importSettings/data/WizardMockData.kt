@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
@@ -8,7 +8,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.StartupUiUtil
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reactive.Property
+import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -19,6 +20,7 @@ import javax.swing.Icon
 
 class WizardServiceTest : StartupWizardService {
   override val isActive = true
+  override val shouldClose = Signal<Unit>()
 
   override fun getKeymapService(): KeymapService {
     return TestKeymapService()

@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.openapi.components.service
 import com.jetbrains.rd.util.reactive.IPropertyView
+import com.jetbrains.rd.util.reactive.IVoidSource
+import com.jetbrains.rd.util.reactive.Signal
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.Icon
@@ -20,6 +22,8 @@ interface StartupWizardService {
 
   val isActive: Boolean
 
+  val shouldClose: IVoidSource
+
   fun getKeymapService(): KeymapService
 
   fun getThemeService(): ThemeService
@@ -29,6 +33,7 @@ interface StartupWizardService {
 
 class DisabledStartupWizardPages : StartupWizardService {
   override val isActive = false
+  override val shouldClose = Signal<Unit>()
   override fun getKeymapService() = error("Startup wizard is disabled.")
   override fun getThemeService() = error("Startup wizard is disabled.")
   override fun getPluginService() = error("Startup wizard is disabled.")
