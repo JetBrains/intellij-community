@@ -66,6 +66,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     fun getRootFrontendModuleForIde(platformPrefix: String): RuntimeModuleId = when (platformPrefix) {
       PlatformUtils.IDEA_PREFIX, PlatformUtils.IDEA_CE_PREFIX -> RuntimeModuleId.module("intellij.idea.frontend")
       PlatformUtils.RIDER_PREFIX -> RuntimeModuleId.module("intellij.rider.frontend")
+      PlatformUtils.GOIDE_PREFIX -> RuntimeModuleId.module("intellij.goland.frontend")
       else -> RuntimeModuleId.module("intellij.cwm.guest")
     }
   }
