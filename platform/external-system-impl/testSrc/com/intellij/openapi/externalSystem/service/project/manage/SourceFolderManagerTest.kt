@@ -16,7 +16,6 @@ import com.intellij.platform.backend.workspace.impl.internal
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import junit.framework.TestCase
 import org.assertj.core.api.BDDAssertions.then
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
@@ -98,8 +97,10 @@ class SourceFolderManagerTest: HeavyPlatformTestCase() {
     })
     LocalFileSystem.getInstance().refresh(false)
     manager.consumeBulkOperationsState { PlatformTestUtil.waitForFuture(it, 1000)}
-    TestCase.assertTrue(notificationsCount == 1)
-    TestCase.assertTrue(version + 1 == WorkspaceModel.getInstance(project).internal.entityStorage.version)
+    then(notificationsCount).isEqualTo(1)
+    then(WorkspaceModel.getInstance(project).internal.entityStorage.version)
+      .describedAs("Check that storage version increased by 1")
+      .isEqualTo(version + 1)
   }
 
   private fun createModuleWithContentRoot(dir: File, moduleName: String = "topModule"): Module {
