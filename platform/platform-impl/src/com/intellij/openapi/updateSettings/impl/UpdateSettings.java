@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -109,7 +109,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
     }
 
-    hosts.addAll(UpdateSettingsProviderHelper.getPluginRepositories());
+    hosts.addAll(UpdateSettingsProvider.getRepositoriesFromProviders());
     ContainerUtil.removeDuplicates(hosts);
     return hosts;
   }
