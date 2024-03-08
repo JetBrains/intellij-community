@@ -165,10 +165,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
         myMarkupUpdater.scheduleUpdate();
       }
     });
-
-    for (EditorEx editor : getEditors()) {
-      editor.putUserData(DiffUserDataKeys.DIFF_VIEWER, this);
-    }
   }
 
   @Override
@@ -1089,6 +1085,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
         return new LineRange(change.getLine1(), change.getLine2());
       }
     }
+    else if (DiffDataKeys.EDITOR_CHANGED_RANGE_PROVIDER.is(dataId)) {
+      return new MyChangedRangeProvider();
+    }
     return super.getData(dataId);
   }
 
@@ -1567,6 +1566,17 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
       public List<? extends Action> getContextActions() {
         return myDelegate.getContextActions();
       }
+    }
+  }
+
+  private class MyChangedRangeProvider implements DiffChangedRangeProvider {
+    @Override
+    public @Nullable List<TextRange> getChangedRanges(@NotNull Editor editor) {
+      if (editor != myEditor) return null;
+
+      return ContainerUtil.map(getNonSkippedDiffChanges(), change -> {
+        return DiffUtil.getLinesRange(editor.getDocument(), change.getLine1(), change.getLine2());
+      });
     }
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.diff.util;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.FrameDiffTool;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -141,9 +140,4 @@ public interface DiffUserDataKeys {
    * @see com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings#isEnableAligningChangesMode
    */
   Key<Boolean> ALIGNED_TWO_SIDED_DIFF = Key.create("Diff.AlignTwoSidedDiff");
-
-  /**
-   * {@link FrameDiffTool.DiffViewer} reference accessible from particular {@link com.intellij.openapi.editor.Editor}
-   */
-  Key<FrameDiffTool.DiffViewer> DIFF_VIEWER = Key.create("Diff.FrameViewer");
 }
