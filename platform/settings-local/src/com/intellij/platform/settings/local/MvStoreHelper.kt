@@ -2,18 +2,16 @@
 package com.intellij.platform.settings.local
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.ArrayUtilRt
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
 
-fun markAsInvalid(file: Path) {
-  if (Files.exists(file)) {
-    Files.write(getInvalidateMarkerFile(file), ArrayUtilRt.EMPTY_BYTE_ARRAY, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-  }
-}
+//fun markAsInvalid(file: Path) {
+//  if (Files.exists(file)) {
+//    Files.write(getInvalidateMarkerFile(file), ArrayUtilRt.EMPTY_BYTE_ARRAY, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+//  }
+//}
 
 internal fun <K, V> openOrResetMap(
   store: MVStore,
