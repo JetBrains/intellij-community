@@ -1,96 +1,115 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.update;
+package com.intellij.openapi.vcs.update
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vcs.VcsBundle;
-import org.jdom.Element;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.openapi.vcs.VcsBundle
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Container for files which have been affected by an update/integrate/status operation.
  * The files are grouped by file status.
  *
- * @see UpdateEnvironment#fillGroups
- * @see UpdateEnvironment#updateDirectories
+ * @see UpdateEnvironment.fillGroups
+ *
+ * @see UpdateEnvironment.updateDirectories
  */
-public final class UpdatedFiles {
-  private final List<FileGroup> groups = new ArrayList<>();
+class UpdatedFiles private constructor() {
+  private val groups = ArrayList<FileGroup>()
 
-  private UpdatedFiles() {
-  }
-
-  public FileGroup registerGroup(FileGroup fileGroup) {
-    FileGroup existing = getGroupById(fileGroup.getId());
-    if (existing != null) return existing;
-    groups.add(fileGroup);
-    return fileGroup;
-  }
-
-  public void writeExternal(Element element) throws WriteExternalException {
-    FileGroup.writeGroupsToElement(groups, element);
-  }
-
-  public void readExternal(Element element) throws InvalidDataException {
-    FileGroup.readGroupsFromElement(groups, element);
-  }
-
-  public boolean isEmpty() {
-    for (FileGroup fileGroup : groups) {
-      if (!fileGroup.isEmpty()) return false;
+  fun registerGroup(fileGroup: FileGroup): FileGroup {
+    val existing = getGroupById(fileGroup.id)
+    if (existing != null) {
+      return existing
     }
-    return true;
+
+    groups.add(fileGroup)
+    return fileGroup
   }
 
+  val isEmpty: Boolean
+    get() = groups.all { it.isEmpty }
 
-  public FileGroup getGroupById(String id) {
-    if (id == null) return null;
-    return findByIdIn(groups, id);
-  }
+  fun getGroupById(id: String?): FileGroup? = if (id == null) null else findByIdIn(groups, id)
 
-  private static FileGroup findByIdIn(List<? extends FileGroup> groups, String id) {
-    for (FileGroup fileGroup : groups) {
-      if (id.equals(fileGroup.getId())) return fileGroup;
-      FileGroup foundInChildren = findByIdIn(fileGroup.getChildren(), id);
-      if (foundInChildren != null) return foundInChildren;
+  val topLevelGroups: List<FileGroup>
+    get() = groups
+
+  override fun toString(): String = groups.toString()
+
+  companion object {
+    @Internal
+    fun readExternal(element: Element): UpdatedFiles {
+      val result = create()
+      FileGroup.readGroupsFromElement(result.groups, element)
+      return result
     }
-    return null;
+
+    @JvmStatic
+    fun create(): UpdatedFiles {
+      val result = UpdatedFiles()
+      val updatedFromServer = result.registerGroup(
+        FileGroup(VcsBundle.message("update.group.name.updated.from.server"), VcsBundle.message("status.group.name.changed.on.server"),
+                  false, FileGroup.CHANGED_ON_SERVER_ID, false))
+
+      updatedFromServer.addChild(
+        FileGroup(VcsBundle.message("update.group.name.updated"), VcsBundle.message("status.group.name.changed"), false,
+                  FileGroup.UPDATED_ID, false))
+      updatedFromServer.addChild(
+        FileGroup(VcsBundle.message("update.group.name.created"), VcsBundle.message("status.group.name.created"), false,
+                  FileGroup.CREATED_ID, false))
+      updatedFromServer.addChild(
+        FileGroup(VcsBundle.message("update.group.name.deleted"), VcsBundle.message("status.group.name.deleted"), false,
+                  FileGroup.REMOVED_FROM_REPOSITORY_ID, true))
+      updatedFromServer.addChild(
+        FileGroup(VcsBundle.message("update.group.name.restored"), VcsBundle.message("status.group.name.will.be.restored"), false,
+                  FileGroup.RESTORED_ID, false))
+
+      result.registerGroup(
+        FileGroup(VcsBundle.message("update.group.name.modified"), VcsBundle.message("status.group.name.modified"), false,
+                  FileGroup.MODIFIED_ID, false))
+      result.registerGroup(
+        FileGroup(VcsBundle.message("update.group.name.skipped"), VcsBundle.message("status.group.name.skipped"), false,
+                  FileGroup.SKIPPED_ID, false))
+
+      result.registerGroup(FileGroup(VcsBundle.message("update.group.name.merged.with.conflicts"),
+                                     VcsBundle.message("status.group.name.will.be.merged.with.conflicts"), false,
+                                     FileGroup.MERGED_WITH_CONFLICT_ID, false))
+      result.registerGroup(FileGroup(VcsBundle.message("update.group.name.merged.with.tree.conflicts"),
+                                     VcsBundle.message("update.group.name.merged.with.tree.conflicts"), false,
+                                     FileGroup.MERGED_WITH_TREE_CONFLICT, false))
+      result.registerGroup(FileGroup(VcsBundle.message("update.group.name.merged.with.property.conflicts"),
+                                     VcsBundle.message("status.group.name.will.be.merged.with.property.conflicts"),
+                                     false, FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID, false))
+      result.registerGroup(
+        FileGroup(VcsBundle.message("update.group.name.merged"), VcsBundle.message("status.group.name.will.be.merged"), false,
+                  FileGroup.MERGED_ID, false))
+      result.registerGroup(
+        FileGroup(VcsBundle.message("update.group.name.not.in.repository"), VcsBundle.message("status.group.name.not.in.repository"), true,
+                  FileGroup.UNKNOWN_ID, false))
+      result.registerGroup(
+        FileGroup(VcsBundle.message("update.group.name.locally.added"), VcsBundle.message("status.group.name.locally.added"), false,
+                  FileGroup.LOCALLY_ADDED_ID, false))
+      result.registerGroup(
+        FileGroup(VcsBundle.message("update.group.name.locally.removed"), VcsBundle.message("status.group.name.locally.removed"), false,
+                  FileGroup.LOCALLY_REMOVED_ID, false))
+      result.registerGroup(
+        FileGroup(VcsBundle.message("update.group.name.switched"), VcsBundle.message("status.group.name.switched"), false,
+                  FileGroup.SWITCHED_ID, false))
+      return result
+    }
   }
+}
 
-  public List<FileGroup> getTopLevelGroups() {
-    return groups;
+private fun findByIdIn(groups: List<FileGroup>, id: String): FileGroup? {
+  for (fileGroup in groups) {
+    if (id == fileGroup.id) {
+      return fileGroup
+    }
+
+    val foundInChildren = findByIdIn(fileGroup.children, id)
+    if (foundInChildren != null) {
+      return foundInChildren
+    }
   }
-
-  public static UpdatedFiles create() {
-    UpdatedFiles result = new UpdatedFiles();
-    FileGroup updatedFromServer = result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.updated.from.server"), VcsBundle.message("status.group.name.changed.on.server"), false, FileGroup.CHANGED_ON_SERVER_ID, false));
-
-    updatedFromServer.addChild(new FileGroup(VcsBundle.message("update.group.name.updated"), VcsBundle.message("status.group.name.changed"), false, FileGroup.UPDATED_ID, false));
-    updatedFromServer.addChild(new FileGroup(VcsBundle.message("update.group.name.created"), VcsBundle.message("status.group.name.created"), false, FileGroup.CREATED_ID, false));
-    updatedFromServer.addChild(new FileGroup(VcsBundle.message("update.group.name.deleted"), VcsBundle.message("status.group.name.deleted"), false, FileGroup.REMOVED_FROM_REPOSITORY_ID, true));
-    updatedFromServer.addChild(new FileGroup(VcsBundle.message("update.group.name.restored"), VcsBundle.message("status.group.name.will.be.restored"), false, FileGroup.RESTORED_ID, false));
-
-    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.modified"), VcsBundle.message("status.group.name.modified"), false, FileGroup.MODIFIED_ID, false));
-    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.skipped"), VcsBundle.message("status.group.name.skipped"), false, FileGroup.SKIPPED_ID, false));
-
-    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.conflicts"), VcsBundle.message("status.group.name.will.be.merged.with.conflicts"), false, FileGroup.MERGED_WITH_CONFLICT_ID, false));
-    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.tree.conflicts"),
-                                       VcsBundle.message("update.group.name.merged.with.tree.conflicts"), false, FileGroup.MERGED_WITH_TREE_CONFLICT, false));
-    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged.with.property.conflicts"),
-                                       VcsBundle.message("status.group.name.will.be.merged.with.property.conflicts"),
-                                       false, FileGroup.MERGED_WITH_PROPERTY_CONFLICT_ID, false));
-    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.merged"), VcsBundle.message("status.group.name.will.be.merged"), false, FileGroup.MERGED_ID, false));
-    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.not.in.repository"), VcsBundle.message("status.group.name.not.in.repository"), true, FileGroup.UNKNOWN_ID, false));
-    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.locally.added"), VcsBundle.message("status.group.name.locally.added"), false, FileGroup.LOCALLY_ADDED_ID, false));
-    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.locally.removed"), VcsBundle.message("status.group.name.locally.removed"), false, FileGroup.LOCALLY_REMOVED_ID, false));
-    result.registerGroup(new FileGroup(VcsBundle.message("update.group.name.switched"), VcsBundle.message("status.group.name.switched"), false, FileGroup.SWITCHED_ID, false));
-    return result;
-  }
-
-  @Override
-  public String toString() {
-    return groups.toString();
-  }
+  return null
 }

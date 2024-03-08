@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import org.jetbrains.annotations.ApiStatus.Internal
 
 @State(name = "RestoreUpdateTree", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 @Service(Service.Level.PROJECT)
@@ -42,14 +43,14 @@ class RestoreUpdateTree : PersistentStateComponent<UpdateInfoState> {
     }
   }
 
+  @Internal
   override fun getState(): UpdateInfoState {
     return updateInfo?.writeExternal() ?: UpdateInfoState()
   }
 
+  @Internal
   override fun loadState(state: UpdateInfoState) {
-    val updateInfo = UpdateInfo()
-    updateInfo.readExternal(state)
-    this.updateInfo = if (updateInfo.isEmpty) null else updateInfo
+    updateInfo = readUpdateInfoState(state).takeIf { !it.isEmpty }
   }
 
   fun registerUpdateInformation(updatedFiles: UpdatedFiles?, actionInfo: ActionInfo?) {
