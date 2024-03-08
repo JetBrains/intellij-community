@@ -576,6 +576,10 @@ fun <T : CommandChain> T.linkGradleProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}linkGradleProject ${projectPath}")
 }
 
+fun <T : CommandChain> T.refreshProject(): T = apply {
+  addCommand("${CMD_PREFIX}refreshProject")
+}
+
 fun <T : CommandChain> T.setGradleDelegatedBuildCommand(delegatedBuild: Boolean = true,
                                                         gradleTestRunner: GradleTestRunner = GradleTestRunner.GRADLE): T = apply {
   addCommand("${CMD_PREFIX}setGradleDelegatedBuildCommand $delegatedBuild $gradleTestRunner")
