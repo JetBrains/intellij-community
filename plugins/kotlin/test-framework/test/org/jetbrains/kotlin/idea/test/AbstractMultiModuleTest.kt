@@ -284,8 +284,8 @@ fun Module.createMultiplatformFacetM1(
 fun Module.createMultiplatformFacetM3(
     platformKind: TargetPlatform? = null,
     useProjectSettings: Boolean = true,
-    dependsOnModuleNames: List<String>,
-    pureKotlinSourceFolders: List<String>,
+    dependsOnModuleNames: List<String> = emptyList(),
+    pureKotlinSourceFolders: List<String> = emptyList(),
     additionalVisibleModuleNames: Set<String> = emptySet(),
 ) {
     createFacetWithAdditionalSetup(platformKind, useProjectSettings) {

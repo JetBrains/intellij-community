@@ -66,6 +66,8 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibJdk8: File by lazy { getJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJdk8Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJs: File by lazy { getKlib("kotlin-stdlib-js") }
+    // The latest published kotlin-stdlib-js with both .knm and .kjsm roots
+    @JvmStatic val kotlinStdlibJsLegacyJar: File by lazy { downloadOrReportUnavailability("kotlin-stdlib-js", "1.9.22") }
     @JvmStatic val kotlinDomApiCompat: File by lazy { getKlib("kotlin-dom-api-compat") }
     @JvmStatic val kotlinStdlibWasmJs: File by lazy { getKlib("kotlin-stdlib-wasm-js") }
     @JvmStatic val kotlinStdlibSources: File by lazy { getSourcesJar("kotlin-stdlib") }
