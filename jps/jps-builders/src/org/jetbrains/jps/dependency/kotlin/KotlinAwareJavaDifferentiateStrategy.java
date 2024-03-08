@@ -33,7 +33,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     if (!addedClass.isPrivate()) {
       // calls to newly added class' constructors may shadow calls to functions named similarly
       debug("Affecting lookup usages for added class ", addedClass.getName());
-      affectClassLookupUsages(context, addedClass, future);
+      affectClassLookupUsages(context, addedClass);
     }
 
     return true;
@@ -50,7 +50,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       KmDeclarationContainer container = getDeclarationContainer(removedClass);
       if (container == null /*is non-kotlin node*/ || container instanceof KmClass) {
         debug("Affecting lookup usages for removed class ", removedClass.getName());
-        affectClassLookupUsages(context, removedClass, present);
+        affectClassLookupUsages(context, removedClass);
       }
     }
 
@@ -276,7 +276,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       return;
     }
     if (clsMethod.isConstructor()) {
-      affectClassLookupUsages(context, cls, utils);
+      affectClassLookupUsages(context, cls);
     }
     else {
       Set<JvmNodeReferenceID> targets = collect(
@@ -358,9 +358,27 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     return !iterator.hasNext();
   }
 
-  private void affectClassLookupUsages(DifferentiateContext context, JvmClass cls, Utils utils) {
+  private void affectClassLookupUsages(DifferentiateContext context, JvmClass cls) {
+    String scope;
+    String name;
     String ktName = getKotlinName(cls);
-    affectLookupUsages(context, asIterable(new JvmNodeReferenceID(cls.getPackageName())), ktName != null? JvmClass.getShortName(ktName) : cls.getShortName(), utils, null);
+    if (ktName != null) {
+      scope = JvmClass.getPackageName(ktName);
+      name = JvmClass.getShortName(ktName);
+    }
+    else { // not a kotlin-compiled class or a synthetic kotlin class
+      if (cls.isInnerClass()) {
+        String fqName = cls.getName();
+        String outerFqName = cls.getOuterFqName();
+        scope = outerFqName.replace('$', '/');
+        name = fqName.length() > outerFqName.length() && fqName.startsWith(outerFqName)? cls.getName().substring(outerFqName.length() + 1 /* separator char, usually '$' */) : cls.getShortName();
+      }
+      else {
+        scope = cls.getPackageName();
+        name = cls.getShortName();
+      }
+    }
+    affectUsages(context, "lookup '" + name + "'" , asIterable(new JvmNodeReferenceID(scope)), id -> new LookupNameUsage(id, name), null);
   }
 
   private void affectMemberLookupUsages(DifferentiateContext context, JvmClass cls, String name, Utils utils) {
@@ -418,7 +436,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       return cls.getPackageName();
     }
     if (container instanceof KmClass) {
-      return ((KmClass)container).getName();
+      return ((KmClass)container).getName().replace('.', '/');
     }
     return null;
   }
