@@ -1616,16 +1616,18 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   private fun updateSideComponent(tabInfo: TabInfo) {
-    updateToolbar(tabInfo, tabInfo.foreSideComponent, infoToForeToolbar)
-    updateToolbar(tabInfo, tabInfo.sideComponent, infoToToolbar)
+    updateToolbar(tabInfo, tabInfo.foreSideComponent, infoToForeToolbar, false)
+    updateToolbar(tabInfo, tabInfo.sideComponent, infoToToolbar, true)
   }
 
-  private fun updateToolbar(tabInfo: TabInfo, side: JComponent?, toolbars: MutableMap<TabInfo, Toolbar>) {
+  private fun updateToolbar(tabInfo: TabInfo, side: JComponent?, toolbars: MutableMap<TabInfo, Toolbar>, addGroup: Boolean) {
     val old = toolbars.get(tabInfo)
     old?.let { remove(it) }
-    val toolbar = Toolbar(this, tabInfo, side)
-    toolbars.put(tabInfo, toolbar)
-    add(toolbar)
+    if (addGroup || side != null) {
+      val toolbar = Toolbar(this, tabInfo, side)
+      toolbars.put(tabInfo, toolbar)
+      add(toolbar)
+    }
   }
 
   private fun updateTabActions(info: TabInfo) {
