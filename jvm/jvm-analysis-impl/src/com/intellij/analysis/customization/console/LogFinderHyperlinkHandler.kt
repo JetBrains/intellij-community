@@ -4,13 +4,9 @@ package com.intellij.analysis.customization.console
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
-import com.intellij.codeInspection.logging.*
 import com.intellij.execution.filters.HyperlinkInfoFactory
 import com.intellij.ide.util.EditSourceUtil
-import com.intellij.lang.logging.resolve.LOGGER_TYPE_SEARCHERS
-import com.intellij.lang.logging.resolve.LoggingUtil
-import com.intellij.lang.logging.resolve.findMessageSetterStringArg
-import com.intellij.lang.logging.resolve.getLogStringIndex
+import com.intellij.lang.logging.resolve.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -166,8 +162,9 @@ internal class LogVisitor(private val probableClassName: ProbableClassName) : Ps
     startPoint += probableClassName.fullClassName.length
     if (calculateValue.none { it.isConstant && it.text != null }) return false
     for (value in calculateValue) {
-      if (value.isConstant && value.text != null) {
-        for (part in value.text.split("{}")) {
+      val text = value.text
+      if (value.isConstant && text != null) {
+        for (part in text.split("{}")) {
           startPoint = fullLine.indexOf(part, startPoint)
           if (startPoint == -1) return false
           startPoint += part.length

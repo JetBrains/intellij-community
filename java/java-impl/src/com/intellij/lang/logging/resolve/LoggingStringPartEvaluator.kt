@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection.logging
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.lang.logging.resolve
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiTypes
@@ -10,15 +10,15 @@ import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
-internal class LoggingStringPartEvaluator {
+class LoggingStringPartEvaluator {
 
   /**
    * @param text       - null if it is a literal, which is not String or Character
    * @param isConstant - it is a constant
    */
-  internal data class PartHolder(val text: String?, val isConstant: Boolean, val callPart: CallPart? = null)
+  data class PartHolder(val text: String?, val isConstant: Boolean, val callPart: CallPart? = null)
 
-  internal data class CallPart(val stringArguments: List<String>)
+  data class CallPart(val stringArguments: List<String>)
 
   private data class Context(val depth: Int, val maxParts: Int)
   companion object {

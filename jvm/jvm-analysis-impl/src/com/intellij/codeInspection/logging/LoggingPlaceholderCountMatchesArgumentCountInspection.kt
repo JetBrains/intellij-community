@@ -8,15 +8,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.logging.resolve.*
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
-import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.intellij.util.containers.addIfNotNull
-import com.siyeh.ig.format.FormatDecode
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 
 class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLocalInspectionTool() {
@@ -125,50 +121,6 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       return true
     }
 
-    private fun getPlaceHolderCountContext(
-      node: UCallExpression,
-      searcher: LoggerTypeSearcher,
-      loggerType: PlaceholderLoggerType
-    ): PlaceholderCountContext? {
-      val method = node.resolveToUElement() as? UMethod ?: return null
-      val arguments = node.valueArguments
-      val parameters = method.uastParameters
-
-      var argumentCount: Int?
-      val logStringArgument: UExpression?
-      var lastArgumentIsException = false
-      var lastArgumentIsSupplier = false
-      if (parameters.isEmpty() || arguments.isEmpty()) {
-        //try to find String somewhere else
-        logStringArgument = findMessageSetterStringArg(node, searcher) ?: return null
-        argumentCount = findAdditionalArgumentCount(node, searcher, true) ?: return null
-      }
-      else {
-        val index = getLogStringIndex(parameters) ?: return null
-
-        argumentCount = arguments.size - index
-        lastArgumentIsException = hasThrowableType(arguments[arguments.size - 1])
-        lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1], arguments[arguments.size - 1])
-
-        if (argumentCount == 1 && parameters.size > 1) {
-          val argument = arguments[index]
-          val argumentType = argument.getExpressionType()
-          if (argumentType is PsiArrayType) {
-            return null
-          }
-        }
-        val additionalArgumentCount: Int = findAdditionalArgumentCount(node, searcher, false) ?: return null
-        argumentCount += additionalArgumentCount
-        logStringArgument = arguments[index - 1]
-      }
-      return PlaceholderCountContext(argumentCount, logStringArgument, lastArgumentIsException, lastArgumentIsSupplier)
-    }
-
-
-    private fun collectParts(logStringArgument: UExpression): List<LoggingStringPartEvaluator.PartHolder>? {
-      return LoggingStringPartEvaluator.calculateValue(logStringArgument)
-    }
-
     private fun registerProblem(holder: ProblemsHolder, logStringArgument: UExpression, result: Result) {
       val errorString = buildErrorString(result)
       val anchor = logStringArgument.sourcePsi ?: return
@@ -190,178 +142,9 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       else JvmAnalysisBundle.message("jvm.inspection.logging.placeholder.count.matches.argument.count.fewer.problem.descriptor",
                                      result.argumentCount, result.placeholderCount)
     }
-
-    private fun solvePlaceholderCount(loggerType: PlaceholderLoggerType,
-                                      argumentCount: Int,
-                                      holders: List<LoggingStringPartEvaluator.PartHolder>): PlaceholderCountResult {
-      return if (loggerType == PlaceholderLoggerType.LOG4J_FORMATTED_STYLE) {
-        val prefix = StringBuilder()
-        var full = true
-        for (holder in holders) {
-          if (holder.isConstant && holder.text != null) {
-            prefix.append(holder.text)
-          }
-          else {
-            full = false
-            break
-          }
-        }
-        if (prefix.isEmpty()) {
-          return PlaceholderCountResult(emptyList(), PlaceholdersStatus.EMPTY)
-        }
-        val validators = try {
-          if (full) {
-            FormatDecode.decode(prefix.toString(), argumentCount)
-          }
-          else {
-            FormatDecode.decodePrefix(prefix.toString(), argumentCount)
-          }
-        }
-        catch (e: FormatDecode.IllegalFormatException) {
-          return PlaceholderCountResult(emptyList(), PlaceholdersStatus.ERROR_TO_PARSE_STRING)
-        }
-        PlaceholderCountResult(listOf(
-          PlaceholderRangesInPartHolder(validators.map {
-            it.range
-          })
-        ), if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
-      }
-      else {
-        countPlaceholders(holders, loggerType)
-      }
-    }
-
-    private fun countPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>, loggerType: PlaceholderLoggerType): PlaceholderCountResult {
-      var count = 0
-      var full = true
-      val partHolderPlaceholderList = mutableListOf<PlaceholderRangesInPartHolder>()
-      for (holderIndex in holders.indices) {
-        val partHolder = holders[holderIndex]
-        if (!partHolder.isConstant) {
-          full = false
-          continue
-        }
-        val string = partHolder.text ?: continue
-        val length = string.length
-        var escaped = false
-        var lastPlaceholderIndex = -1
-        val placeholderRanges = mutableListOf<TextRange>()
-        for (i in 0 until length) {
-          val c = string[i]
-          if (c == '\\' &&
-              (loggerType == PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS || loggerType == PlaceholderLoggerType.SLF4J)) {
-            escaped = !escaped
-          }
-          else if (c == '{') {
-            if (holderIndex != 0 && i == 0 && !holders[holderIndex - 1].isConstant) {
-              continue
-            }
-            if (!escaped) {
-              lastPlaceholderIndex = i
-            }
-          }
-          else if (c == '}') {
-            if (lastPlaceholderIndex != -1) {
-              count++
-              placeholderRanges.add(TextRange(lastPlaceholderIndex, lastPlaceholderIndex + 2))
-              lastPlaceholderIndex = -1
-            }
-          }
-          else {
-            escaped = false
-            lastPlaceholderIndex = -1
-          }
-        }
-        partHolderPlaceholderList.add(PlaceholderRangesInPartHolder(placeholderRanges))
-      }
-      return PlaceholderCountResult(partHolderPlaceholderList, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
-    }
-
-    private fun couldBeThrowableSupplier(loggerType: PlaceholderLoggerType, lastParameter: UParameter?, lastArgument: UExpression?): Boolean {
-      if (loggerType != PlaceholderLoggerType.LOG4J_OLD_STYLE && loggerType != PlaceholderLoggerType.LOG4J_FORMATTED_STYLE) {
-        return false
-      }
-      if (lastParameter == null || lastArgument == null) {
-        return false
-      }
-      val lastParameterType = lastParameter.type.let { if (it is PsiEllipsisType) it.componentType else it }
-      if (lastParameterType is UastErrorType) {
-        return false
-      }
-      if (!(InheritanceUtil.isInheritor(lastParameterType, CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER) || InheritanceUtil.isInheritor(
-          lastParameterType, "org.apache.logging.log4j.util.Supplier"))) {
-        return false
-      }
-      val sourcePsi = lastArgument.sourcePsi ?: return true
-      val throwable = PsiType.getJavaLangThrowable(sourcePsi.manager, sourcePsi.resolveScope)
-
-      if (lastArgument is ULambdaExpression) {
-        return !lastArgument.getReturnExpressions().any {
-          val expressionType = it.getExpressionType()
-          expressionType != null && !throwable.isConvertibleFrom(expressionType)
-        }
-      }
-
-      if (lastArgument is UCallableReferenceExpression) {
-        val psiType = lastArgument.getMethodReferenceReturnType() ?: return true
-        return throwable.isConvertibleFrom(psiType)
-      }
-
-      val type = lastArgument.getExpressionType() ?: return true
-      val functionalReturnType = LambdaUtil.getFunctionalInterfaceReturnType(type) ?: return true
-      return throwable.isConvertibleFrom(functionalReturnType)
-    }
-
-  }
-
-  private enum class ResultType {
-    PARTIAL_PLACE_HOLDER_MISMATCH, PLACE_HOLDER_MISMATCH, INCORRECT_STRING, SUCCESS
   }
 
   enum class Slf4jToLog4J2Type {
     AUTO, YES, NO
   }
-
-  private data class PlaceholderCountResult(val placeholderRangesInPartHolderList: List<PlaceholderRangesInPartHolder>, val status: PlaceholdersStatus) {
-    val count = placeholderRangesInPartHolderList.sumOf { it.rangeList.size }
-  }
-
-  private data class PlaceholderRangesInPartHolder(val rangeList: List<TextRange?>)
-
-  private data class Result(val argumentCount: Int, val placeholderCount: Int, val result: ResultType)
-
-  private data class PlaceholderCountContext(val argumentCount: Int, val logStringArgument: UExpression, val lastArgumentIsException: Boolean, val lastArgumentIsSupplier: Boolean)
-}
-
-internal fun hasThrowableType(lastArgument: UExpression): Boolean {
-  val type = lastArgument.getExpressionType()
-  if (type is UastErrorType) {
-    return false
-  }
-  if (type is PsiDisjunctionType) {
-    return type.disjunctions.all { InheritanceUtil.isInheritor(it, CommonClassNames.JAVA_LANG_THROWABLE) }
-  }
-  return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)
-}
-
-private fun UCallableReferenceExpression.getMethodReferenceReturnType(): PsiType? {
-  val method = this.resolveToUElement() as? UMethod ?: return null
-  if (method.isConstructor) {
-    val psiMethod = method.javaPsi
-    val containingClass = psiMethod.containingClass ?: return null
-    return JavaPsiFacade.getElementFactory(containingClass.project).createType(containingClass)
-  }
-  return method.returnType
-}
-
-private fun ULambdaExpression.getReturnExpressions(): List<UExpression> {
-  val returnExpressions = mutableListOf<UExpression>()
-  val visitor: AbstractUastVisitor = object : AbstractUastVisitor() {
-    override fun visitReturnExpression(node: UReturnExpression): Boolean {
-      returnExpressions.addIfNotNull(node.returnExpression)
-      return true
-    }
-  }
-  body.accept(visitor)
-  return returnExpressions
 }
