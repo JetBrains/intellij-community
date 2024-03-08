@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.logging.resolve.*
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -206,7 +207,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
           }
         }
         if (prefix.isEmpty()) {
-          return PlaceholderCountResult(0, PlaceholdersStatus.EMPTY)
+          return PlaceholderCountResult(emptyList(), PlaceholdersStatus.EMPTY)
         }
         val validators = try {
           if (full) {
@@ -217,9 +218,13 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
           }
         }
         catch (e: FormatDecode.IllegalFormatException) {
-          return PlaceholderCountResult(0, PlaceholdersStatus.ERROR_TO_PARSE_STRING)
+          return PlaceholderCountResult(emptyList(), PlaceholdersStatus.ERROR_TO_PARSE_STRING)
         }
-        PlaceholderCountResult(validators.size, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
+        PlaceholderCountResult(listOf(
+          PlaceholderRangesInPartHolder(validators.map {
+            it.range
+          })
+        ), if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
       }
       else {
         countPlaceholders(holders, loggerType)
@@ -229,6 +234,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
     private fun countPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>, loggerType: PlaceholderLoggerType): PlaceholderCountResult {
       var count = 0
       var full = true
+      val partHolderPlaceholderList = mutableListOf<PlaceholderRangesInPartHolder>()
       for (holderIndex in holders.indices) {
         val partHolder = holders[holderIndex]
         if (!partHolder.isConstant) {
@@ -238,7 +244,8 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
         val string = partHolder.text ?: continue
         val length = string.length
         var escaped = false
-        var placeholder = false
+        var lastPlaceholderIndex = -1
+        val placeholderRanges = mutableListOf<TextRange>()
         for (i in 0 until length) {
           val c = string[i]
           if (c == '\\' &&
@@ -249,21 +256,25 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
             if (holderIndex != 0 && i == 0 && !holders[holderIndex - 1].isConstant) {
               continue
             }
-            if (!escaped) placeholder = true
+            if (!escaped) {
+              lastPlaceholderIndex = i
+            }
           }
           else if (c == '}') {
-            if (placeholder) {
+            if (lastPlaceholderIndex != -1) {
               count++
-              placeholder = false
+              placeholderRanges.add(TextRange(lastPlaceholderIndex, lastPlaceholderIndex + 2))
+              lastPlaceholderIndex = -1
             }
           }
           else {
             escaped = false
-            placeholder = false
+            lastPlaceholderIndex = -1
           }
         }
+        partHolderPlaceholderList.add(PlaceholderRangesInPartHolder(placeholderRanges))
       }
-      return PlaceholderCountResult(count, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
+      return PlaceholderCountResult(partHolderPlaceholderList, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
     }
 
     private fun couldBeThrowableSupplier(loggerType: PlaceholderLoggerType, lastParameter: UParameter?, lastArgument: UExpression?): Boolean {
@@ -311,8 +322,11 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
     AUTO, YES, NO
   }
 
-  private data class PlaceholderCountResult(val count: Int, val status: PlaceholdersStatus)
+  private data class PlaceholderCountResult(val placeholderRangesInPartHolderList: List<PlaceholderRangesInPartHolder>, val status: PlaceholdersStatus) {
+    val count = placeholderRangesInPartHolderList.sumOf { it.rangeList.size }
+  }
 
+  private data class PlaceholderRangesInPartHolder(val rangeList: List<TextRange?>)
 
   private data class Result(val argumentCount: Int, val placeholderCount: Int, val result: ResultType)
 
