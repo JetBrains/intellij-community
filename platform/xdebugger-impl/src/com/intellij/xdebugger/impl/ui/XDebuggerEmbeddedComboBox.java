@@ -1,19 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ComboBoxUI;
 import java.awt.*;
-import java.awt.geom.RectangularShape;
 
 public class XDebuggerEmbeddedComboBox<T> extends ComboBox<T> {
 
@@ -28,7 +26,7 @@ public class XDebuggerEmbeddedComboBox<T> extends ComboBox<T> {
 
   @Override
   public void setUI(ComboBoxUI ui) {
-    BorderlessCombBoxUI newUI = new BorderlessCombBoxUI();
+    EmbeddedComboBoxUI newUI = new EmbeddedComboBoxUI();
     if (myEmbeddedComponent != null) {
       newUI.setEmbeddedComponent(myEmbeddedComponent);
     }
@@ -45,33 +43,6 @@ public class XDebuggerEmbeddedComboBox<T> extends ComboBox<T> {
   }
 }
 
-class BorderlessCombBoxUI extends EmbeddedComboBoxUI {
-
-  BorderlessCombBoxUI() {
-    super(0f, JBUI.insets(0), false);
-  }
-
-  @Override
-  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    Graphics2D g2 = (Graphics2D)g.create();
-    try {
-      DarculaUIUtil.paintCellEditorBorder(g2, c, new Rectangle(x, y, width, height), hasFocus(c));
-    } finally {
-      g2.dispose();
-    }
-  }
-
-  @Override
-  public Insets getBorderInsets(Component c) {
-    return JBUI.insets(2);
-  }
-
-  @Override
-  protected RectangularShape getOuterShape(Rectangle r, float bw, float arc) {
-    return r;
-  }
-}
-
 /**
  * ComboBoxUI with extra space for a component.
  */
@@ -79,10 +50,8 @@ class EmbeddedComboBoxUI extends DarculaComboBoxUI {
 
   protected final @NotNull NonOpaquePanel myPanel = new NonOpaquePanel();
 
-  EmbeddedComboBoxUI(float arc,
-                     Insets borderCompensation,
-                     boolean paintArrowButton) {
-    super(arc, borderCompensation, paintArrowButton);
+  EmbeddedComboBoxUI() {
+    setPaintArrowButton(false);
   }
 
   public void setEmbeddedComponent(@NotNull JComponent panel) {
@@ -97,6 +66,13 @@ class EmbeddedComboBoxUI extends DarculaComboBoxUI {
     if (padding == null) {
       padding = JBInsets.emptyInsets();
     }
+    comboBox.setBorder(new DarculaComboBoxBorder());
+    comboBox.putClientProperty(ComboBox.IS_EMBEDDED_PROPERTY, true);
+  }
+
+  @Override
+  protected boolean isNewBorderSupported(@NotNull JComboBox<?> comboBox) {
+    return true;
   }
 
   @Override
@@ -104,6 +80,12 @@ class EmbeddedComboBoxUI extends DarculaComboBoxUI {
     super.installComponents();
 
     comboBox.add(myPanel);
+  }
+
+  @Override
+  protected void uninstallDefaults() {
+    comboBox.setBorder(null);
+    super.uninstallDefaults();
   }
 
   @Override

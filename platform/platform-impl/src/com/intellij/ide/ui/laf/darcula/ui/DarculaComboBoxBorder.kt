@@ -4,8 +4,10 @@ package com.intellij.ide.ui.laf.darcula.ui
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.fillInsideComponentBorder
 import com.intellij.ide.ui.laf.darcula.paintComponentBorder
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ErrorBorderCapable
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import java.awt.*
 import javax.swing.JComboBox
 import javax.swing.border.Border
@@ -18,6 +20,10 @@ import javax.swing.plaf.UIResource
 open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+    if (c !is JComboBox<*>) {
+      return
+    }
+
     val ui = getLegacyComboBoxUI(c)
 
     if (ui == null) {
@@ -29,13 +35,18 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
   }
 
   override fun getBorderInsets(c: Component): Insets {
+    if (c !is JComboBox<*>) {
+      return JBInsets.emptyInsets()
+    }
+
     val ui = getLegacyComboBoxUI(c)
 
     if (ui == null) {
-      return when {
-        DarculaUIUtil.isTableCellEditor(c) || DarculaUIUtil.isCompact(c) -> JBInsets.create(2, 3)
-        DarculaUIUtil.isBorderless(c) -> JBInsets.emptyInsets()
-        else -> DarculaComboBoxUI.getDefaultComboBoxInsets()
+      return when (getType(c)) {
+        Type.TABLE_CELL_EDITOR, Type.COMPACT -> JBInsets.create(2, 3)
+        Type.EMBEDDED -> JBUI.insets(2)
+        Type.BORDERLESS -> JBInsets.emptyInsets()
+        Type.DEFAULT -> DarculaComboBoxUI.getDefaultComboBoxInsets()
       }
     }
     else {
@@ -52,26 +63,38 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
    */
   protected fun paintComboBoxBackground(g: Graphics2D, comboBox: JComboBox<*>, color: Color) {
     val r = Rectangle(comboBox.size)
-    JBInsets.removeFrom(r, getBorderInsets(comboBox))
-    fillInsideComponentBorder(g, r, color)
+    when (getType(comboBox)) {
+      Type.EMBEDDED -> {
+        val g2 = g.create() as Graphics2D
+        try {
+          g2.color = color
+          g2.fillRect(r.x, r.y, r.width, r.height)
+        }
+        finally {
+          g2.dispose()
+        }
+      }
+      else -> {
+        JBInsets.removeFrom(r, getBorderInsets(comboBox))
+        fillInsideComponentBorder(g, r, color)
+      }
+    }
   }
 
-  private fun paintBorderImpl(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-    if (c !is JComboBox<*>) {
-      return
-    }
-
-    val focused = DarculaComboBoxUI.hasComboBoxFocus(c)
+  private fun paintBorderImpl(comboBox: JComboBox<*>, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+    val focused = DarculaComboBoxUI.hasComboBoxFocus(comboBox)
     val r = Rectangle(x, y, width, height)
     val g2 = g.create() as Graphics2D
 
     try {
-      if (DarculaUIUtil.isTableCellEditor(c)) {
-        DarculaUIUtil.paintCellEditorBorder(g2, c, r, focused)
-        return
+      when (getType(comboBox)) {
+        Type.TABLE_CELL_EDITOR, Type.EMBEDDED -> {
+          DarculaUIUtil.paintCellEditorBorder(g2, comboBox, r, focused)
+        }
+        else -> {
+          paintNormalBorder(g2, comboBox, r, focused)
+        }
       }
-
-      paintNormalBorder(g2, c, r, focused)
     }
     finally {
       g2.dispose()
@@ -87,9 +110,26 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
    * Returns DarculaComboBoxUI if it should be used as border instead of [DarculaComboBoxBorder] itself.
    * See [DarculaComboBoxUI.isNewBorderSupported] for details
    */
-  private fun getLegacyComboBoxUI(c: Component): DarculaComboBoxUI? {
-    val comboBox = c as? JComboBox<*> ?: return null
+  private fun getLegacyComboBoxUI(comboBox: JComboBox<*>): DarculaComboBoxUI? {
     val ui = comboBox.ui as? DarculaComboBoxUI ?: return null
     return if (comboBox.border !== comboBox || ui.isNewBorderSupported(comboBox)) null else ui
+  }
+
+  private fun getType(comboBox: JComboBox<*>): Type {
+    return when {
+      DarculaUIUtil.isTableCellEditor(comboBox) -> Type.TABLE_CELL_EDITOR
+      DarculaUIUtil.isCompact(comboBox) -> Type.COMPACT
+      comboBox.getClientProperty(ComboBox.IS_EMBEDDED_PROPERTY) == true -> Type.EMBEDDED
+      DarculaUIUtil.isBorderless(comboBox) -> Type.BORDERLESS
+      else -> Type.DEFAULT
+    }
+  }
+
+  private enum class Type {
+    DEFAULT,
+    TABLE_CELL_EDITOR,
+    COMPACT,
+    EMBEDDED,
+    BORDERLESS
   }
 }

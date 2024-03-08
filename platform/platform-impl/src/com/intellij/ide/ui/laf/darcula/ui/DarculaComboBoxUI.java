@@ -91,7 +91,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
    * @return true if this DarculaComboBoxUI has no specific customization for Border, so {@link DarculaComboBoxBorder} can use own rendering
    */
   @ApiStatus.Internal
-  final boolean isNewBorderSupported(@NotNull JComboBox<?> comboBox) {
+  protected boolean isNewBorderSupported(@NotNull JComboBox<?> comboBox) {
     ComboBoxUI ui = comboBox.getUI();
 
     if (!(comboBox.getBorder() instanceof DarculaComboBoxBorder)) {
@@ -105,8 +105,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     // Some UI customizations are not supported by DarculaComboBoxBorderNew for now. Can be implemented later when needed
     if (myArc != COMPONENT_ARC.getFloat()
-        || !(myBorderCompensation instanceof JBInsets && myBorderCompensation.equals(JBUI.insets(DEFAULT_BORDER_COMPENSATION)))
-        || !myPaintArrowButton) {
+        || !(myBorderCompensation instanceof JBInsets && myBorderCompensation.equals(JBUI.insets(DEFAULT_BORDER_COMPENSATION)))) {
       return false;
     }
 

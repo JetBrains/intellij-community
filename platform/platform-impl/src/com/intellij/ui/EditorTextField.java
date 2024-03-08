@@ -34,6 +34,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -772,7 +773,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   protected void updateBorder(final @NotNull EditorEx editor) {
     if (editor.isOneLineMode()
-        && !Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
+        && !Boolean.TRUE.equals(getClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY))
         && (SwingUtilities.getAncestorOfClass(JTable.class, this) == null || Boolean.TRUE.equals(getClientProperty("JBListTable.isTableCellEditor")))) {
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
