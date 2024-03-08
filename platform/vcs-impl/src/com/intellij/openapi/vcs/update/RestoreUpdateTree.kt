@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update
 
 import com.intellij.openapi.components.*
@@ -22,7 +22,7 @@ class RestoreUpdateTree : PersistentStateComponent<Element> {
     fun getInstance(project: Project): RestoreUpdateTree = project.service<RestoreUpdateTree>()
   }
 
-  internal class MyStartUpActivity : ProjectActivity {
+  internal class RestoreUpdateTreeStartUpActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
       val updateTree = project.serviceAsync<RestoreUpdateTree>()
       val updateInfo = updateTree.updateInfo

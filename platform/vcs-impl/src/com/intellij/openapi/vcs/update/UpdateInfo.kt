@@ -1,78 +1,69 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.update;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.vcs.update
 
-import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.util.text.DateFormatUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.Clock
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.util.text.DateFormatUtil
+import org.jdom.Element
+import org.jetbrains.annotations.NonNls
 
-final class UpdateInfo {
-  private UpdatedFiles myUpdatedFiles;
-  private String myDate;
-  private ActionInfo myActionInfo;
-  @NonNls private static final String DATE_ATTR = "date";
-  @NonNls private static final String FILE_INFO_ELEMENTS = "UpdatedFiles";
-  @NonNls private static final String ACTION_INFO_ATTRIBUTE_NAME = "ActionInfo";
+internal class UpdateInfo {
+  var fileInformation: UpdatedFiles? = null
+    private set
 
-  UpdateInfo(UpdatedFiles updatedFiles, ActionInfo actionInfo) {
-    myActionInfo = actionInfo;
-    myUpdatedFiles = updatedFiles;
-    myDate = DateFormatUtil.formatPrettyDateTime(Clock.getTime());
+  private var date: String? = null
+
+  var actionInfo: ActionInfo? = null
+    private set
+
+  constructor(updatedFiles: UpdatedFiles?, actionInfo: ActionInfo?) {
+    this.actionInfo = actionInfo
+    fileInformation = updatedFiles
+    date = DateFormatUtil.formatPrettyDateTime(Clock.getTime())
   }
 
-  UpdateInfo() {
-  }
+  constructor()
 
-  public void writeExternal(@NotNull Element element) {
-    if (myUpdatedFiles == null) {
-      return;
+  fun writeExternal(element: Element) {
+    if (fileInformation == null) {
+      return
     }
 
-    element.setAttribute(DATE_ATTR, myDate);
-    element.setAttribute(ACTION_INFO_ATTRIBUTE_NAME, myActionInfo.getActionName());
-    Element filesElement = new Element(FILE_INFO_ELEMENTS);
-    myUpdatedFiles.writeExternal(filesElement);
-    element.addContent(filesElement);
+    element.setAttribute(DATE_ATTR, date)
+    element.setAttribute(ACTION_INFO_ATTRIBUTE_NAME, actionInfo!!.actionName)
+    val filesElement = Element(FILE_INFO_ELEMENTS)
+    fileInformation!!.writeExternal(filesElement)
+    element.addContent(filesElement)
   }
 
-  public void readExternal(@NotNull Element element) {
-    myDate = element.getAttributeValue(DATE_ATTR);
-    Element fileInfoElement = element.getChild(FILE_INFO_ELEMENTS);
-    if (fileInfoElement == null) {
-      return;
-    }
+  fun readExternal(element: Element) {
+    date = element.getAttributeValue(DATE_ATTR)
+    val fileInfoElement = element.getChild(FILE_INFO_ELEMENTS) ?: return
 
-    String actionInfoName = element.getAttributeValue(ACTION_INFO_ATTRIBUTE_NAME);
+    val actionInfoName = element.getAttributeValue(ACTION_INFO_ATTRIBUTE_NAME)
 
-    myActionInfo = getActionInfoByName(actionInfoName);
-    if (myActionInfo == null) return;
+    actionInfo = getActionInfoByName(actionInfoName) ?: return
 
-    UpdatedFiles updatedFiles = UpdatedFiles.create();
-    updatedFiles.readExternal(fileInfoElement);
-    myUpdatedFiles = updatedFiles;
+    val updatedFiles = UpdatedFiles.create()
+    updatedFiles.readExternal(fileInfoElement)
+    fileInformation = updatedFiles
   }
 
-  private static ActionInfo getActionInfoByName(String actionInfoName) {
-    if (ActionInfo.UPDATE.getActionName().equals(actionInfoName)) return ActionInfo.UPDATE;
-    if (ActionInfo.STATUS.getActionName().equals(actionInfoName)) return ActionInfo.STATUS;
-    return null;
-  }
+  val caption: String
+    get() = VcsBundle.message("toolwindow.title.update.project", date)
 
-  public UpdatedFiles getFileInformation() {
-    return myUpdatedFiles;
-  }
+  val isEmpty: Boolean
+    get() = fileInformation == null || fileInformation!!.isEmpty
+}
 
-  public String getCaption() {
-    return VcsBundle.message("toolwindow.title.update.project", myDate);
-  }
+private const val DATE_ATTR: @NonNls String = "date"
+private const val FILE_INFO_ELEMENTS: @NonNls String = "UpdatedFiles"
+private const val ACTION_INFO_ATTRIBUTE_NAME: @NonNls String = "ActionInfo"
 
-  public boolean isEmpty() {
-    return myUpdatedFiles == null || myUpdatedFiles.isEmpty();
-  }
-
-  public ActionInfo getActionInfo() {
-    return myActionInfo;
+private fun getActionInfoByName(actionInfoName: String): ActionInfo? {
+  return when {
+    ActionInfo.UPDATE.actionName == actionInfoName -> ActionInfo.UPDATE
+    ActionInfo.STATUS.actionName == actionInfoName -> ActionInfo.STATUS
+    else -> null
   }
 }
