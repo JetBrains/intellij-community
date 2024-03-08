@@ -130,8 +130,8 @@ class NonIncrementalCellLines private constructor(private val document: Document
       func()
     }
     catch (t: Throwable) {
-      thisLogger().error("NotebookCellLines.IntervalListener shouldn't throw exceptions", t)
-      // consume exception, otherwise this will prevent document updating. See DS-4305
+      thisLogger().error(NonIncrementalCellLinesException("NotebookCellLines.IntervalListener shouldn't throw exceptions", t))
+      // Wrap and consume exception even if it is control flow exception, otherwise this will prevent document updating. See DS-4305
     }
   }
 
@@ -147,6 +147,8 @@ class NonIncrementalCellLines private constructor(private val document: Document
       map[document]
   }
 }
+
+class NonIncrementalCellLinesException(msg: String, t: Throwable): RuntimeException(msg, t)
 
 private fun <T> trimmed(list: List<T>, trimAtBegin: Int, trimAtEnd: Int) =
   list.subList(trimAtBegin, list.size - trimAtEnd)
