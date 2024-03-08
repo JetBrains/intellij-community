@@ -104,7 +104,7 @@ public class JUnit3RunnerWithInners extends Runner implements Filterable, Sortab
         Class<? extends TestIndexingModeSupporter> clazz = (Class<? extends TestIndexingModeSupporter>) aClass;
 
         TestIndexingModeSupporter.IndexingMode[] modes = getIndexingModes(aClass);
-        if (modes != null && modes.length > 0) {
+        if (modes != null) {
             for (TestIndexingModeSupporter.IndexingMode mode : modes) {
                 TestIndexingModeSupporter.IndexingModeTestHandler handler = null;
                 switch (mode) {

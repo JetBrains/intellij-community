@@ -395,6 +395,7 @@ public class PersistentFSStoragesBenchmarks {
 
       int offset = recordSizeBytes * it.nextRandomRecordIndex();
       int recordField = 0;
+      //noinspection ConstantValue
       return UNSAFE.getIntVolatile(buffer.array(), bufferAddress + offset + recordField * Integer.BYTES);
     }
 
