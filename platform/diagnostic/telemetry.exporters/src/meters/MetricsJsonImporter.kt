@@ -22,7 +22,7 @@ import io.opentelemetry.sdk.resources.Resource
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-class MetricDataDeserializer : JsonDeserializer<MetricData>() {
+internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
   companion object {
     private val emptyResource = Resource.empty()
     private val emptyInstrumentationScope = InstrumentationScopeInfo.empty()
