@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.Divider;
+import com.intellij.codeInsight.daemon.impl.InspectionVisitorOptimizer;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -52,7 +53,7 @@ public final class InspectionEngine {
     // if inspection returned an empty visitor, then it should be skipped
     if (visitor == PsiElementVisitor.EMPTY_VISITOR) return false;
 
-    List<Class<?>> acceptingPsiTypes = InspectionVisitorsOptimizer.getAcceptingPsiTypes(visitor);
+    List<Class<?>> acceptingPsiTypes = InspectionVisitorOptimizer.getAcceptingPsiTypes(visitor);
 
     tool.inspectionStarted(session, isOnTheFly);
     acceptElements(elements, visitor, targetPsiClasses, acceptingPsiTypes);
@@ -82,7 +83,7 @@ public final class InspectionEngine {
                                      @NotNull PsiElementVisitor elementVisitor,
                                      @NotNull Map<Class<?>, Collection<Class<?>>> targetPsiClasses,
                                      @NotNull List<? extends Class<?>> acceptingPsiTypes) {
-    if (acceptingPsiTypes == InspectionVisitorsOptimizer.ALL_ELEMENTS_VISIT_LIST) {
+    if (acceptingPsiTypes == InspectionVisitorOptimizer.ALL_ELEMENTS_VISIT_LIST) {
       for (int i = 0; i < elements.size(); i++) {
         PsiElement element = elements.get(i);
         element.accept(elementVisitor);
@@ -90,7 +91,7 @@ public final class InspectionEngine {
       }
     }
     else {
-      Set<Class<?>> accepts = InspectionVisitorsOptimizer.getVisitorAcceptClasses(targetPsiClasses, acceptingPsiTypes);
+      Set<Class<?>> accepts = InspectionVisitorOptimizer.getVisitorAcceptClasses(targetPsiClasses, acceptingPsiTypes);
       if (accepts == null || accepts.isEmpty()) {
         return; // nothing to visit in this run
       }
@@ -288,7 +289,7 @@ public final class InspectionEngine {
     withSession(psiFile, restrictRange, restrictRange, HighlightSeverity.INFORMATION, isOnTheFly, session -> {
       List<LocalInspectionToolWrapper> applicableTools = filterToolsApplicableByLanguage(toolWrappers, elementDialectIds, elementDialectIds);
 
-      Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
+      Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorOptimizer.getTargetPsiClasses(elements);
 
       final @Nullable var inspectionListener =
         isOnTheFly ? null : psiFile.getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);

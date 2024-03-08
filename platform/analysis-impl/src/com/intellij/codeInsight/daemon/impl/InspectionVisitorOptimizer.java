@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInspection;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -41,11 +41,11 @@ import static java.util.Collections.*;
  * Declare `inspection.basicVisitor` in plugin.xml for your language to get speed up of inspection runs.
  */
 @ApiStatus.Internal
-public final class InspectionVisitorsOptimizer {
-  private InspectionVisitorsOptimizer() {
+public final class InspectionVisitorOptimizer {
+  private InspectionVisitorOptimizer() {
   }
 
-  private static final Logger LOG = Logger.getInstance(InspectionVisitorsOptimizer.class);
+  private static final Logger LOG = Logger.getInstance(InspectionVisitorOptimizer.class);
 
   public static final List<Class<?>> ALL_ELEMENTS_VISIT_LIST = singletonList(PsiElement.class);
 
