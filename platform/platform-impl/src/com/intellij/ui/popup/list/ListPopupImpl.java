@@ -523,7 +523,9 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private void disposePopup(@Nullable InputEvent e) {
-    setFinalRunnable(myStep.getFinalRunnable());
+    if (myStep.getFinalRunnable() != null) {
+      setFinalRunnable(myStep.getFinalRunnable());
+    }
     setOk(true);
     disposeAllParents(e);
     setIndexForShowingChild(-1);
