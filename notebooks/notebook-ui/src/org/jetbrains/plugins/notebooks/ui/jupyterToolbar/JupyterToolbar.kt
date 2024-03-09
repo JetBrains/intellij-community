@@ -8,6 +8,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import java.awt.AlphaComposite
 import java.awt.Cursor
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -20,11 +21,13 @@ import javax.swing.BorderFactory
 class JupyterToolbar(actionGroup: ActionGroup,
                      firstLine: Int = 0
 ) : ActionToolbarImpl(ActionPlaces.EDITOR_INLAY, actionGroup, true) {
+  var alpha = 1.0f
+
   init {
-    border = BorderFactory.createCompoundBorder(RoundedLineBorder(JBColor.LIGHT_GRAY, TOOLBAR_ARC_SIZE, TOOLBAR_BORDER_THICKNESS),
-                                                BorderFactory.createEmptyBorder(2, 3, 2, 3))
-    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     isOpaque = false
+    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    border = BorderFactory.createCompoundBorder(RoundedLineBorder(JBColor.LIGHT_GRAY, TOOLBAR_ARC_SIZE, TOOLBAR_BORDER_THICKNESS),
+                                                BorderFactory.createEmptyBorder(OUTER_PADDING, OUTER_PADDING, OUTER_PADDING, OUTER_PADDING))
     // todo: it would be preferable to set NotebookCellLines.Interval right here
     putClientProperty(JUPYTER_TOOLBAR_LINE_POSITION_KEY, firstLine)
     setSkipWindowAdjustments(false)
@@ -33,6 +36,7 @@ class JupyterToolbar(actionGroup: ActionGroup,
   override fun paintComponent(g: Graphics) {
     val g2 = g.create() as Graphics2D
     try {
+      g2.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
       g2.color = this.background
       g2.fillRoundRect(0, 0, width, height, TOOLBAR_ARC_SIZE, TOOLBAR_ARC_SIZE)
     }
@@ -51,6 +55,7 @@ class JupyterToolbar(actionGroup: ActionGroup,
   companion object {
     private val TOOLBAR_ARC_SIZE = JBUI.scale(14)
     private val TOOLBAR_BORDER_THICKNESS = JBUI.scale(1)
+    private val OUTER_PADDING = JBUI.scale(3)
     val JUPYTER_TOOLBAR_LINE_POSITION_KEY = Key.create<Int>("JUPYTER_TOOLBAR_LINE_POSITION_KEY")
   }
 }
