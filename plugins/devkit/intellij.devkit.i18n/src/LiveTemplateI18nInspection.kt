@@ -17,7 +17,7 @@ class LiveTemplateI18nInspection: BasicDomElementsInspection<TemplateSet>(Templa
     }
   }
 
-  private class Fix: PluginXmlI18nInspection.InspectionI18NQuickFix("description") {
+  private class Fix: PluginXmlI18nInspection.InspectionI18NQuickFix("description", "live.template") {
     override fun getName(xml: XmlTag): String? {
       return xml.getAttributeValue("name")
     }

@@ -98,7 +98,7 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       if (implementationClass == null || implementationClass.getStringValue() == null) {
         return;
       }
-      checkNonLocalizableAttribute(holder, extension, "displayName", new InspectionI18NQuickFix("displayName"));
+      checkNonLocalizableAttribute(holder, extension, "displayName", new InspectionI18NQuickFix("displayName", "inspection"));
       checkNonLocalizableAttribute(holder, extension, "groupName", null);
       //checkNonLocalizableAttribute(holder, element, "groupPath", null);
     }
@@ -334,9 +334,11 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   static class InspectionI18NQuickFix implements LocalQuickFix, BatchQuickFix {
 
     private final String attributeName;
+    private final String prefix;
 
-    InspectionI18NQuickFix(String attributeName) {
+    InspectionI18NQuickFix(String attributeName, String prefix) {
       this.attributeName = attributeName;
+      this.prefix = prefix;
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -400,7 +402,7 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       String shortName = getName(xml);
       if (shortName == null) return;
       String[] items = ArrayUtil.mergeArrays(NameUtilCore.splitNameIntoWords(shortName), NameUtilCore.splitNameIntoWords(attributeName));
-      @NonNls String key = "inspection." + StringUtil.join(items, s -> StringUtil.decapitalize(s), ".");
+      @NonNls String key = prefix + "." + StringUtil.join(items, s -> StringUtil.decapitalize(s), ".");
       xml.setAttribute("key", key);
 
       String bundleQName = getBundleQName(project, propertiesFile);
