@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.startup
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -50,7 +50,7 @@ interface StartupActivity {
  * Flow and any other long-running activities are allowed and natural.
  *
  * Note: in test mode ([com.intellij.openapi.application.Application.isUnitTestMode]) [execute] can be called from an outer coroutine scope.
- * In this case flow collectors and long-running activities can block project opening and cause timeout.
+ * In this case, flow collectors and long-running activities can block project opening and cause timeout.
  *
  * @see StartupManager
  * @see com.intellij.ide.util.RunOnceUtil
