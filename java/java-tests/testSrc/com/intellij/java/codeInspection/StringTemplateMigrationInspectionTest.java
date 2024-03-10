@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInspection.StringTemplateMigrationInspection;
@@ -85,6 +85,28 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              class StringTemplateMigration {
                void test(int i) {
                  String test = STR."\\{(1 + 2) - (3 * i)} = number = \\{1 + 2}";
+               }
+             }""");
+  }
+
+  public void testCharacterLiteral() {
+    doTest("""
+             class Test {
+               private String name;
+               private Date birthDate;
+             
+               @Override
+               public String toString() {
+                 return "Test{<caret>" + "name='" + this.name + '\\'' + ", birthDate=" + this.birthDate + '}';
+               }
+             }""", """
+             class Test {
+               private String name;
+               private Date birthDate;
+            
+               @Override
+               public String toString() {
+                 return STR."Test{name='\\{this.name}', birthDate=\\{this.birthDate}}";
                }
              }""");
   }
