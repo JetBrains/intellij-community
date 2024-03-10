@@ -1,166 +1,104 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.graph.impl.permanent
 
-package com.intellij.vcs.log.graph.impl.permanent;
+import com.intellij.vcs.log.graph.GraphCommit
+import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
+import com.intellij.vcs.log.graph.utils.IntList
+import com.intellij.vcs.log.graph.utils.TimestampGetter
+import com.intellij.vcs.log.graph.utils.impl.CompressedIntList
+import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import java.util.*
 
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.graph.GraphCommit;
-import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
-import com.intellij.vcs.log.graph.utils.IntList;
-import com.intellij.vcs.log.graph.utils.TimestampGetter;
-import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
-import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
-
-public final class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<CommitId> {
-  @NotNull
-  public static <CommitId> PermanentCommitsInfoImpl<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits,
-                                                                          @NotNull Int2ObjectMap<CommitId> notLoadedCommits) {
-    TimestampGetter timestampGetter = createTimestampGetter(graphCommits);
-
-    boolean isIntegerCase = !graphCommits.isEmpty() && graphCommits.get(0).getId().getClass() == Integer.class;
-
-    List<CommitId> commitIdIndex;
-    if (isIntegerCase) {
-      commitIdIndex = (List<CommitId>)createCompressedIntList((List<? extends GraphCommit<Integer>>)graphCommits);
-    }
-    else {
-      commitIdIndex = ContainerUtil.map(graphCommits, GraphCommit::getId);
-    }
-    return new PermanentCommitsInfoImpl<>(timestampGetter, commitIdIndex, notLoadedCommits);
+class PermanentCommitsInfoImpl<CommitId : Any> private constructor(val timestampGetter: TimestampGetter,
+                                                                   private val commitIdIndexes: List<CommitId>,
+                                                                   private val notLoadedCommits: Int2ObjectMap<CommitId>) : PermanentCommitsInfo<CommitId> {
+  override fun getCommitId(nodeId: Int): CommitId {
+    if (nodeId < 0) return notLoadedCommits[nodeId]
+    return commitIdIndexes[nodeId]
   }
 
-  @NotNull
-  public static <CommitId> IntTimestampGetter createTimestampGetter(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits) {
-    return IntTimestampGetter.newInstance(new TimestampGetter() {
-      @Override
-      public int size() {
-        return graphCommits.size();
-      }
-
-      @Override
-      public long getTimestamp(int index) {
-        return graphCommits.get(index).getTimestamp();
-      }
-    });
-  }
-
-  @NotNull
-  private static List<Integer> createCompressedIntList(@NotNull final List<? extends GraphCommit<Integer>> graphCommits) {
-    final IntList compressedIntList = CompressedIntList.newInstance(new IntList() {
-      @Override
-      public int size() {
-        return graphCommits.size();
-      }
-
-      @Override
-      public int get(int index) {
-        return graphCommits.get(index).getId();
-      }
-    }, 30);
-    return new AbstractList<>() {
-      @NotNull
-      @Override
-      public Integer get(int index) {
-        return compressedIntList.get(index);
-      }
-
-      @Override
-      public int size() {
-        return compressedIntList.size();
-      }
-    };
-  }
-
-  @NotNull private final TimestampGetter myTimestampGetter;
-
-  @NotNull private final List<? extends CommitId> myCommitIdIndexes;
-
-  private final @NotNull Int2ObjectMap<CommitId> myNotLoadCommits;
-
-  private PermanentCommitsInfoImpl(@NotNull TimestampGetter timestampGetter,
-                                   @NotNull List<? extends CommitId> commitIdIndex,
-                                   @NotNull Int2ObjectMap<CommitId> notLoadCommits) {
-    myTimestampGetter = timestampGetter;
-    myCommitIdIndexes = commitIdIndex;
-    myNotLoadCommits = notLoadCommits;
-  }
-
-  @Override
-  @NotNull
-  public CommitId getCommitId(int nodeId) {
-    if (nodeId < 0) return myNotLoadCommits.get(nodeId);
-    return myCommitIdIndexes.get(nodeId);
-  }
-
-  @Override
-  public long getTimestamp(int nodeId) {
-    if (nodeId < 0) return 0;
-    return myTimestampGetter.getTimestamp(nodeId);
-  }
-
-  @NotNull
-  public TimestampGetter getTimestampGetter() {
-    return myTimestampGetter;
+  override fun getTimestamp(nodeId: Int): Long {
+    if (nodeId < 0) return 0
+    return timestampGetter.getTimestamp(nodeId)
   }
 
   // todo optimize with special map
-  @Override
-  public int getNodeId(@NotNull CommitId commitId) {
-    int indexOf = myCommitIdIndexes.indexOf(commitId);
-    if (indexOf != -1) return indexOf;
+  override fun getNodeId(commitId: CommitId): Int {
+    val indexOf = commitIdIndexes.indexOf(commitId)
+    if (indexOf != -1) return indexOf
 
-    return getNotLoadNodeId(commitId);
+    return getNotLoadNodeId(commitId)
   }
 
-  private int getNotLoadNodeId(@NotNull CommitId commitId) {
-    for (Int2ObjectMap.Entry<CommitId> entry : myNotLoadCommits.int2ObjectEntrySet()) {
-      if (entry.getValue().equals(commitId)) {
-        return entry.getIntKey();
+  private fun getNotLoadNodeId(commitId: CommitId): Int {
+    for (entry in notLoadedCommits.int2ObjectEntrySet()) {
+      if (entry.value == commitId) {
+        return entry.intKey
       }
     }
-    return -1;
+    return -1
   }
 
-  @NotNull
-  public List<CommitId> convertToCommitIdList(@NotNull Collection<Integer> commitIndexes) {
-    return ContainerUtil.map(commitIndexes, this::getCommitId);
+  fun convertToCommitIdList(commitIndexes: Collection<Int>): List<CommitId> {
+    return commitIndexes.map(this::getCommitId)
   }
 
-  @NotNull
-  public Set<CommitId> convertToCommitIdSet(@NotNull Collection<Integer> commitIndexes) {
-    return ContainerUtil.map2Set(commitIndexes, this::getCommitId);
+  fun convertToCommitIdSet(commitIndexes: Collection<Int>): Set<CommitId> {
+    return commitIndexes.mapTo(HashSet(), this::getCommitId)
   }
 
-  @Override
-  @NotNull
-  public Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> commitIds) {
-    Set<Integer> result = new HashSet<>();
-    for (int i = 0; i < myCommitIdIndexes.size(); i++) {
-      CommitId commitId = myCommitIdIndexes.get(i);
+  override fun convertToNodeIds(commitIds: Collection<CommitId>): Set<Int> {
+    val result = IntOpenHashSet()
+    for (i in commitIdIndexes.indices) {
+      val commitId = commitIdIndexes[i]
       if (commitIds.contains(commitId)) {
-        result.add(i);
+        result.add(i)
       }
     }
-    for (Int2ObjectMap.Entry<CommitId> entry : myNotLoadCommits.int2ObjectEntrySet()) {
-      CommitId value = entry.getValue();
-      if (commitIds.contains(value)) {
-        result.add(entry.getIntKey());
+    for (entry in notLoadedCommits.int2ObjectEntrySet()) {
+      if (commitIds.contains(entry.value)) {
+        result.add(entry.intKey)
       }
     }
-    return result;
+    return result
   }
 
-  public boolean containsAll(@NotNull Collection<? extends CommitId> commitIds) {
-    Set<? extends CommitId> commitsToFind = new HashSet<>(commitIds);
-    for (CommitId commitId : myCommitIdIndexes) {
-      commitsToFind.remove(commitId);
-      if (commitsToFind.isEmpty()) {
-        return true;
+  fun containsAll(commitIds: Collection<CommitId>): Boolean {
+    return commitIdIndexes.containsAll(commitIds)
+  }
+
+  companion object {
+    @JvmStatic
+    fun <CommitId : Any> newInstance(graphCommits: List<GraphCommit<CommitId>>,
+                                     notLoadedCommits: Int2ObjectMap<CommitId>): PermanentCommitsInfoImpl<CommitId> {
+      val isIntegerCase = !graphCommits.isEmpty() && graphCommits[0].id.javaClass == Int::class.java
+
+      val commitIdIndex = if (isIntegerCase) createCompressedIntList(graphCommits as List<GraphCommit<Int>>) as List<CommitId>
+      else graphCommits.map { it.id }
+
+      val timestampGetter = createTimestampGetter(graphCommits)
+      return PermanentCommitsInfoImpl(timestampGetter, commitIdIndex, notLoadedCommits)
+    }
+
+    @JvmStatic
+    fun <CommitId> createTimestampGetter(graphCommits: List<GraphCommit<CommitId>>): IntTimestampGetter {
+      return IntTimestampGetter.newInstance(object : TimestampGetter {
+        override fun size() = graphCommits.size
+        override fun getTimestamp(index: Int) = graphCommits[index].timestamp
+      })
+    }
+
+    private fun createCompressedIntList(graphCommits: List<GraphCommit<Int>>): List<Int> {
+      val compressedIntList = CompressedIntList.newInstance(object : IntList {
+        override fun size() = graphCommits.size
+        override fun get(index: Int): Int = graphCommits[index].id
+      }, 30)
+      return object : AbstractList<Int>() {
+        override val size get() = compressedIntList.size()
+        override fun get(index: Int) = compressedIntList[index]
       }
     }
-    return false;
   }
 }

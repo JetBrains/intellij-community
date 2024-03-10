@@ -13,73 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.graph;
+package com.intellij.vcs.log.graph
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Predicate;
+import java.util.function.Predicate
 
 /**
- * PermanentGraph is created once per repository, and forever until the log is refreshed. <br/>
+ * PermanentGraph is created once per repository, and forever until the log is refreshed.
+ *
  * This graph contains all commits in the log and may occupy a lot of memory.
  *
  * @see VisibleGraph
  */
-public interface PermanentGraph<Id> {
-
+interface PermanentGraph<Id> {
   /**
-   * Create a new instance of VisibleGraph with specific sort type, visible branches and commits.
+   * Create a new instance of VisibleGraph with a specific sort type, visible branches, and commits.
    *
-   * @param sortType               mechanism of sorting for commits in the graph (see {@link SortType}):
-   *                               <ul><li/> sort topologically and by date,
-   *                               <li/> show incoming commits first for merges (IntelliSort),
-   *                               <li/> show incoming commits on top of main branch commits as if they were rebased (linear IntelliSort).</ul>
+   * @param sortType               mechanism of sorting for commits in the graph (see [SortType]):
+   *                               * sort topologically and by date,
+   *                               * show incoming commits first for merges (IntelliSort),
+   *                               * show incoming commits on top of main branch commits as if they were rebased (linear IntelliSort).
    * @param headsOfVisibleBranches heads of visible branches, null value means all branches are visible.
    * @param matchedCommits         visible commits, null value means all commits are visible.
    * @return new instance of VisibleGraph.
    */
-  @NotNull
-  VisibleGraph<Id> createVisibleGraph(@NotNull SortType sortType,
-                                      @Nullable Set<? extends Id> headsOfVisibleBranches,
-                                      @Nullable Set<? extends Id> matchedCommits);
+  fun createVisibleGraph(sortType: SortType,
+                         headsOfVisibleBranches: Set<Id>?,
+                         matchedCommits: Set<Id>?): VisibleGraph<Id>
 
-  @NotNull
-  List<GraphCommit<Id>> getAllCommits();
+  val allCommits: List<GraphCommit<Id>>
 
-  @NotNull
-  List<Id> getChildren(@NotNull Id commit);
+  fun getChildren(commit: Id): List<Id>
 
-  @NotNull
-  Set<Id> getContainingBranches(@NotNull Id commit);
+  fun getContainingBranches(commit: Id): Set<Id>
 
-  @NotNull
-  Predicate<Id> getContainedInBranchCondition(@NotNull Collection<? extends Id> currentBranchHead);
+  fun getContainedInBranchCondition(currentBranchHead: Collection<Id>): Predicate<Id>
 
-  enum SortType {
-    Normal("Off", "Sort commits topologically and by date"), // NON-NLS
-    Bek("Standard", "In case of merge show incoming commits first (directly below merge commit)"), // NON-NLS
-    LinearBek("Linear", "In case of merge show incoming commits on top of main branch commits as if they were rebased"); // NON-NLS
-
-    @NotNull private final String myPresentation;
-    @NotNull private final String myDescription;
-
-    SortType(@NotNull String presentation, @NotNull String description) {
-      myPresentation = presentation;
-      myDescription = description;
-    }
-
-    @NotNull
-    public String getName() {
-      return myPresentation;
-    }
-
-    @NotNull
-    public String getDescription() {
-      return myDescription;
-    }
+  enum class SortType(val presentation: String, val description: String) {
+    Normal("Off", "Sort commits topologically and by date"),  // NON-NLS
+    Bek("Standard", "In case of merge show incoming commits first (directly below merge commit)"),  // NON-NLS
+    LinearBek("Linear", "In case of merge show incoming commits on top of main branch commits as if they were rebased") // NON-NLS
   }
 }

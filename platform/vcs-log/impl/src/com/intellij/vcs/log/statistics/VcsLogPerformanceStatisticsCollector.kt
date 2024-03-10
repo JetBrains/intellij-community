@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("CompanionObjectInExtension")
 
 package com.intellij.vcs.log.statistics
@@ -32,7 +32,7 @@ object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
     override val validationRule: List<String> get() = VcsLogRepoSizeCollector.getVcsValidationRule()
   }
   val FILTERS_FIELD = EventFields.StringList("filters", VcsLogFilterCollection.STANDARD_KEYS.map { it.name })
-  val SORT_TYPE_FIELD = EventFields.String("intelli_sort_type", PermanentGraph.SortType.entries.map { it.getName() })
+  val SORT_TYPE_FIELD = EventFields.String("intelli_sort_type", PermanentGraph.SortType.entries.map { it.presentation })
   val FILTERED_COMMIT_COUNT_FIELD = object : StringEventField("filtered_commit_count") {
     override val validationRule: List<String> get() = listOf("{regexp#integer}", "{enum:${CommitCountStage.ALL}}")
   }
