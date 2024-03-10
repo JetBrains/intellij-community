@@ -237,8 +237,7 @@ public final class ImportUtils {
           }
         }
       }
-      else if (element instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass)element;
+      else if (element instanceof PsiClass aClass) {
         final PsiClass innerClass = aClass.findInnerClassByName(shortName, true);
         if (importStatement instanceof PsiImportStatement) {
           if (innerClass != null && PsiUtil.isAccessible(innerClass, containingFile, null)) {
@@ -431,8 +430,8 @@ public final class ImportUtils {
       return false;
     }
     final PsiImportStatementBase existingImportStatement = importList.findSingleImportStatement(memberName);
-    if (existingImportStatement instanceof PsiImportStaticStatement) {
-      final PsiClass importClass = ((PsiImportStaticStatement)existingImportStatement).resolveTargetClass();
+    if (existingImportStatement instanceof PsiImportStaticStatement importStaticStatement) {
+      final PsiClass importClass = importStaticStatement.resolveTargetClass();
       if (InheritanceUtil.isInheritorOrSelf(importClass, memberClass, true)) {
         return true;
       }
@@ -490,8 +489,7 @@ public final class ImportUtils {
     final PsiMember member = ObjectUtils.tryCast(reference.resolve(), PsiMember.class);
     if (member == null) return false;
     if (!(qualifier.resolve() instanceof PsiClass)) return false;
-    return isStaticallyImported(member, reference) &&
-           isReferenceCorrectWithoutQualifier(reference, member);
+    return isStaticallyImported(member, reference) && isReferenceCorrectWithoutQualifier(reference, member);
   }
 
   private static class MemberReferenceVisitor extends JavaRecursiveElementWalkingVisitor {
