@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vcs.VcsScopeKt;
@@ -53,23 +53,16 @@ public class DataPack extends DataPackBase {
                                                                         @NotNull RefsModel refsModel,
                                                                         @NotNull Map<VirtualFile, VcsLogProvider> providers,
                                                                         @NotNull VcsLogStorage storage) {
-    PermanentGraph<Integer> permanentGraph;
-    if (commits.isEmpty()) {
-      permanentGraph = EmptyPermanentGraph.getInstance();
-    }
-    else {
-      Comparator<Integer> headCommitdComparator = new HeadCommitsComparator(refsModel, getRefManagerMap(providers), commitIndex -> {
-        return ObjectUtils.doIfNotNull(storage.getCommitId(commitIndex), CommitId::getHash);
-      });
-      Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
+    if (commits.isEmpty()) return EmptyPermanentGraph.getInstance();
 
-      permanentGraph =
-        computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope), LogData.BuildingGraph.getName(), (span) -> {
-          return PermanentGraphImpl.newInstance(commits, new GraphColorManagerImpl(refsModel), headCommitdComparator, branches);
-        });
-    }
+    Comparator<Integer> headCommitsComparator = new HeadCommitsComparator(refsModel, getRefManagerMap(providers), commitIndex -> {
+      return ObjectUtils.doIfNotNull(storage.getCommitId(commitIndex), CommitId::getHash);
+    });
+    Set<Integer> branches = getBranchCommitHashIndexes(refsModel.getBranches(), storage);
 
-    return permanentGraph;
+    return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope), LogData.BuildingGraph.getName(), (span) -> {
+      return PermanentGraphImpl.newInstance(commits, new GraphColorManagerImpl(refsModel), headCommitsComparator, branches);
+    });
   }
 
   private static @NotNull Set<Integer> getHeads(@NotNull List<? extends GraphCommit<Integer>> commits) {
