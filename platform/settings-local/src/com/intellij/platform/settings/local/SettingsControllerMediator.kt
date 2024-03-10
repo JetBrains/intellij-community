@@ -44,7 +44,10 @@ class SettingsControllerMediator(
   }
 
   override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?) {
-    doSetItem(key, value)
+    val result = doSetItem(key, value)
+    if (result == SetResult.forbid()) {
+      throw ReadOnlySettingException(key)
+    }
   }
 
   override fun <T : Any> doSetItem(key: SettingDescriptor<T>, value: T?): SetResult {
