@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.vcs.log.graph.impl.permanent;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
@@ -16,8 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public final class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<CommitId> {
-  private static final Logger LOG = Logger.getInstance(PermanentCommitsInfoImpl.class);
-
   @NotNull
   public static <CommitId> PermanentCommitsInfoImpl<CommitId> newInstance(@NotNull final List<? extends GraphCommit<CommitId>> graphCommits,
                                                                           @NotNull Int2ObjectMap<CommitId> notLoadedCommits) {
@@ -140,27 +137,13 @@ public final class PermanentCommitsInfoImpl<CommitId> implements PermanentCommit
   @Override
   @NotNull
   public Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> commitIds) {
-    return convertToNodeIds(commitIds, false);
-  }
-
-  @NotNull
-  public Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> commitIds, boolean reportNotFound) {
     Set<Integer> result = new HashSet<>();
-    Set<CommitId> matchedIds = new HashSet<>();
     for (int i = 0; i < myCommitIdIndexes.size(); i++) {
       CommitId commitId = myCommitIdIndexes.get(i);
       if (commitIds.contains(commitId)) {
         result.add(i);
-        matchedIds.add(commitId);
       }
     }
-    if (reportNotFound) {
-      Collection<CommitId> unmatchedIds = ContainerUtil.subtract(commitIds, matchedIds);
-      if (!unmatchedIds.isEmpty()) {
-        LOG.warn("Unmatched commit ids " + unmatchedIds);
-      }
-    }
-
     for (Int2ObjectMap.Entry<CommitId> entry : myNotLoadCommits.int2ObjectEntrySet()) {
       CommitId value = entry.getValue();
       if (commitIds.contains(value)) {

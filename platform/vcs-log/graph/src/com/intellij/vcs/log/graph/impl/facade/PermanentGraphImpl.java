@@ -72,7 +72,7 @@ public final class PermanentGraphImpl<CommitId> implements PermanentGraph<Commit
                                                          @NotNull SortType sortType,
                                                          @Nullable Set<? extends CommitId> visibleHeads,
                                                          @Nullable Set<? extends CommitId> matchingCommits) {
-    Set<Integer> visibleHeadsIds = visibleHeads != null ? myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true) : null;
+    Set<Integer> visibleHeadsIds = visibleHeads != null ? myPermanentCommitsInfo.convertToNodeIds(visibleHeads) : null;
     if (matchingCommits != null) {
       return new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits), visibleHeadsIds);
     }
