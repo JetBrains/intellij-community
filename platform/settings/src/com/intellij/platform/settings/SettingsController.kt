@@ -29,21 +29,25 @@ interface SettingsController {
   fun createChild(container: ComponentManager): SettingsController?
 
   @Internal
+  @SettingsInternalApi
   fun release()
 
   @Internal
+  @SettingsInternalApi
   fun <T : Any> doGetItem(key: SettingDescriptor<T>): GetResult<T?>
 
   @Internal
+  @SettingsInternalApi
   fun <T : Any> doSetItem(key: SettingDescriptor<T>, value: T?): SetResult
 
   @Internal
+  @SettingsInternalApi
   fun isPersistenceStateComponentProxy(): Boolean
 }
 
 @Internal
 @JvmInline
-value class GetResult<out T : Any?> @PublishedApi internal constructor(@PublishedApi internal val value: Any?) {
+value class GetResult<out T : Any?> @PublishedApi internal constructor(internal val value: Any?) {
   companion object {
     fun <T : Any> resolved(value: T?): GetResult<T?> = GetResult(value)
 
@@ -105,6 +109,9 @@ interface DelegatedSettingsController {
 
   fun createChild(container: ComponentManager): DelegatedSettingsController? = null
 
+  /**
+   * Called when the configuration store is closed, which occurs prior to a full disposal of the service container.
+   */
   fun close() {
   }
 }

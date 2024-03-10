@@ -14,8 +14,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 
 @VisibleForTesting
-internal val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<DelegatedSettingsController> =
-  ExtensionPointName("com.intellij.settingsController")
+internal val SETTINGS_CONTROLLER_EP_NAME: ExtensionPointName<DelegatedSettingsController> = ExtensionPointName("com.intellij.settingsController")
 
 @VisibleForTesting
 @SettingsInternalApi
