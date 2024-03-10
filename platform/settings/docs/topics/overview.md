@@ -14,11 +14,10 @@ scm: Settings Controller Mediator {
 }
 firstSC: First Settings Controller {
   explanation: |md
-  `ChainedSettingsController`
+  `DelegatedSettingsController`
   |
 }
-secondSC: Second Settings Controller
-nSC: Nth Settings Controller
+secondSC: Nth Settings Controller
 
 xml: XML files {shape: document}
 Database: {shape: stored_data}
@@ -30,19 +29,14 @@ client -> scm: getItem\nsetItem
 scm -> firstSC
 
 firstSC -> custom
-firstSC -> secondSC: Delegate the request\nto the next controller
+scm -> secondSC: Delegate the request\nto the next controller if needed
 
 secondSC -> xml
 secondSC -> Database
-
-secondSC -> nSC
 ```
 {scale="0.8"}
 
-The extension order defines the sequence in which controllers are processed.
-
-The mediator selects the first controller,
-and the processing order of the following controllers is determined by the implementation of this first controller.
+The order of the extensions defines the sequence in which the controllers are processed. The mediator continues to process these controllers until a result is resolved.
 
 ## Use Cases
 
