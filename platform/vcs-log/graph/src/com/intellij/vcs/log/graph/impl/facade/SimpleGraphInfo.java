@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.util.SmartList;
@@ -148,10 +148,10 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
       }
 
       @Override
-      public @NotNull Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> heads) {
+      public @NotNull Set<Integer> convertToNodeIds(@NotNull Collection<? extends CommitId> commitIds) {
         Set<Integer> result = new HashSet<>();
         for (int id = 0; id < myLinearGraph.nodesCount(); id++) {
-          if (heads.contains(myFunction.apply(id))) {
+          if (commitIds.contains(myFunction.apply(id))) {
             result.add(id);
           }
         }
