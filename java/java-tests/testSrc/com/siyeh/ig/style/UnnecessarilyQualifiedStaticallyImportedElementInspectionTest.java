@@ -11,6 +11,7 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspectionTest exten
   public void testChainedMethodCall() { doTest(); }
   public void testOverriding() { doTest(); }
   public void testYield() { doTest(); }
+  public void testInterfacing() { doTest(); }
 
   private void doTest() {
     doTest("com/siyeh/igtest/style/unnecessarily_qualified_statically_imported_element/" + getTestName(true),

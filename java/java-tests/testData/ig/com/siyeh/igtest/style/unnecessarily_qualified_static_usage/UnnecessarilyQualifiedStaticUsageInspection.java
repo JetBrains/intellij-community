@@ -108,3 +108,16 @@ class Assert {
 
   }
 }
+class Unsure implements Dubious {
+
+  public static void main(String[] args) {
+    System.out.println(<warning descr="Unnecessarily qualified access to static field 'Dubious.STR'">Dubious</warning>.STR);
+    Dubious.x();
+  }
+}
+interface Dubious {
+  String STR = "bye";
+
+  public static void x() {
+  }
+}
