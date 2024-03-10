@@ -7,7 +7,10 @@ Please note these are technical notes, not end user documentation.
 `StateStorageBackedByController` is a special implementation of `StateStorage`. 
 It's another PSC bridge implementation and currently, it's only used for cache (`StoragePathMacros.CACHE_FILE`).
 
-You might wonder why it's not used for [internal](setting-types.md) settings. Well, this is because it lacks numerous features like support for `StreamProvider` (settings sync, settings import). While we could potentially overcome this, the return on investment isn't evident for now.
+You might wonder why it's not used for [internal](setting-types.md) settings. 
+
+* It lacks numerous features like support for `StreamProvider` (settings sync, settings import). While we could potentially overcome this, the return on investment isn't evident for now.
+* Regarding backward compatibility — would it be appropriate to transfer internal settings from the old storage to a new one upon opening the new IDE version?
 
 So, how does it work? It utilizes the same [unified format](bridge-to-old-api.md#unified-format) and also employs `JsonElementSettingSerializerDescriptor` as the setting key serializator. 
 Although the implementation shares some similarities with the PSC bridge, it's not completely identical. As `StateStorageBackedByController` is an exclusive storage, we don't need to handle local data (e.g., merging).
