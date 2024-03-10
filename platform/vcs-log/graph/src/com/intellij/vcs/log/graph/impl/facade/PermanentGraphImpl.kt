@@ -12,7 +12,6 @@ import com.intellij.vcs.log.graph.collapsing.CollapsedController
 import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap
 import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter
 import com.intellij.vcs.log.graph.impl.permanent.*
-import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByHeadFactory
 import com.intellij.vcs.log.graph.linearBek.LinearBekController
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
@@ -172,14 +171,6 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
       }
 
       return PermanentGraphImpl(linearGraph, permanentGraphLayout, permanentCommitsInfo, colorGetterFactory, branchesCommitId)
-    }
-
-    @JvmStatic
-    fun <CommitId : Any> newInstance(graphCommits: List<GraphCommit<CommitId>>,
-                                     colorManager: GraphColorManager<CommitId>,
-                                     headCommitsComparator: Comparator<CommitId>,
-                                     branchesCommitId: Set<CommitId>): PermanentGraphImpl<CommitId> {
-      return newInstance(graphCommits, GraphColorGetterByHeadFactory(colorManager), headCommitsComparator, branchesCommitId)
     }
   }
 }

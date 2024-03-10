@@ -12,6 +12,7 @@ import com.intellij.vcs.log.graph.GraphCommit
 import com.intellij.vcs.log.graph.HeadCommitsComparator
 import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
+import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByHeadFactory
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.NonNls
@@ -70,7 +71,8 @@ private fun buildPermanentGraph(commits: List<GraphCommit<Int>>, refsModel: Refs
   val branches = refsModel.branches.mapTo(HashSet()) { storage.getCommitIndex(it.commitHash, it.root) }
 
   return computeWithSpan(getInstance().getTracer(VcsScope), VcsTelemetrySpan.LogData.BuildingGraph.getName()) {
-    PermanentGraphImpl.newInstance(commits, GraphColorManagerImpl(refsModel), headCommitsComparator, branches)
+    PermanentGraphImpl.newInstance(commits, GraphColorGetterByHeadFactory(GraphColorManagerImpl(refsModel)), headCommitsComparator,
+                                   branches)
   }
 }
 
