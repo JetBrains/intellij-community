@@ -44,7 +44,7 @@ public class GradleDependencyReportTask extends DefaultTask {
 
   @TaskAction
   public void generate() throws IOException {
-    Collection<Configuration> configurations = getSelectedConfigurations();
+    Collection<Configuration> configurations = new ArrayList<>(getSelectedConfigurations());
     GradleDependencyReportGenerator generator = new GradleDependencyReportGenerator();
     List<DependencyScopeNode> graph = new ArrayList<>();
     for (Configuration configuration : configurations) {
