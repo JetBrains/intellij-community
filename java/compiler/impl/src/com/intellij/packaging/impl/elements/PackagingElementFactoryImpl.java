@@ -317,7 +317,7 @@ public final class PackagingElementFactoryImpl extends PackagingElementFactory {
   @Override
   public @NotNull List<? extends PackagingElement<?>> createParentDirectories(@NotNull String relativeOutputPath, @NotNull List<? extends PackagingElement<?>> elements) {
     relativeOutputPath = StringUtil.trimStart(relativeOutputPath, "/");
-    if (relativeOutputPath.length() == 0) {
+    if (relativeOutputPath.isEmpty()) {
       return elements;
     }
     int slash = relativeOutputPath.indexOf('/');
