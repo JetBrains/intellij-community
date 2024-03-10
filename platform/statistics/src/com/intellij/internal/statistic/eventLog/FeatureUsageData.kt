@@ -66,7 +66,7 @@ class FeatureUsageData(val recorderId: String) {
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
                                                 "file_path", "anonymous_id", "client_id", "system_qdcld_project_id")
 
-    private const val QODANA_PROJECT_ID_PATTERN = "([0-9A-Fa-f]{36,64})"
+    private const val QODANA_PROJECT_ID_PATTERN = "([-0-9A-Fa-f]{32,64})"
     private val QODANA_PROJECT_ID: String? = calcQodanaProjectId()
 
     private fun calcQodanaProjectId(): String? {
