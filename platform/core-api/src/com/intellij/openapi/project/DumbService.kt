@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.Disposable
@@ -15,13 +15,12 @@ import com.intellij.openapi.util.*
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.Topic
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Unmodifiable
+import java.util.*
 import javax.swing.JComponent
 
 /**
@@ -195,7 +194,7 @@ abstract class DumbService {
       }
       return result
     }
-    return if (collection is List<*>) collection as List<T> else collection.toImmutableList()
+    return if (collection is List<*>) collection as List<T> else collection.toList()
   }
 
   /**
@@ -435,7 +434,7 @@ abstract class DumbService {
       val point = extensionPoint.point
       val size = point.size()
       if (size == 0) {
-        return persistentListOf()
+        return Collections.emptyList()
       }
 
       if (!getInstance(project).isDumb) {

@@ -35,12 +35,11 @@ import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.containers.UList
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.runSuppressing
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -1408,7 +1407,7 @@ abstract class ComponentManagerImpl(
 
 private class PluginServicesStore {
   private val regularServices = ConcurrentHashMap<IdeaPluginDescriptor, UnregisterHandle>()
-  private val dynamicServices = ConcurrentHashMap<IdeaPluginDescriptor, PersistentList<InstanceHolder>>()
+  private val dynamicServices = ConcurrentHashMap<IdeaPluginDescriptor, UList<InstanceHolder>>()
 
   fun putServicesUnregisterHandle(descriptor: IdeaPluginDescriptor, handle: UnregisterHandle) {
     val prev = regularServices.put(descriptor, handle)
@@ -1421,12 +1420,12 @@ private class PluginServicesStore {
 
   fun addDynamicService(descriptor: IdeaPluginDescriptor, holder: InstanceHolder) {
     dynamicServices.compute(descriptor) { _, instances ->
-      (instances ?: persistentListOf()).add(holder)
+      (instances ?: UList()).add(holder)
     }
   }
 
   fun removeDynamicServices(descriptor: IdeaPluginDescriptor): List<InstanceHolder> {
-    return dynamicServices.remove(descriptor) ?: java.util.List.of()
+    return dynamicServices.remove(descriptor)?.toList() ?: java.util.List.of()
   }
 }
 

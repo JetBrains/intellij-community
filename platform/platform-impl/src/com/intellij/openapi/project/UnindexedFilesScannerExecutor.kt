@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.Disposable
@@ -48,11 +48,11 @@ class UnindexedFilesScannerExecutor(project: Project)
     thisLogger().debug(Throwable("submit task, thread=${Thread.currentThread()}"))
 
     // Two tasks with limited checks should be just run one after another.
-    // A case of a full check followed by a limited change cancelling first one and making a full check anew results
+    // A case of a full check followed by a limited change cancelling the first one and making a full check anew results
     // in endless restart of full checks on Windows with empty Maven cache.
     // So only in case the second one is a full check should the first one be cancelled.
     if (task.isFullIndexUpdate()) {
-      // we don't want to execute any of the existing tasks - the only task we want to execute will be submitted few lines below
+      // we don't want to execute any of the existing tasks - the only task we want to execute will be submitted the few lines below
       cancelAllTasks()
       cancelRunningScannerTaskInDumbQueue()
     }
@@ -90,7 +90,7 @@ class UnindexedFilesScannerExecutor(project: Project)
   }
 
   fun cancelAllTasksAndWait() {
-    cancelAllTasks() // this also cancels running task even if they paused by ProgressSuspender
+    cancelAllTasks() // this also cancels a running task even if they paused by ProgressSuspender
     while (isRunning.value && !project.isDisposed) {
       PingProgress.interactWithEdtProgress()
       LockSupport.parkNanos(50_000_000)

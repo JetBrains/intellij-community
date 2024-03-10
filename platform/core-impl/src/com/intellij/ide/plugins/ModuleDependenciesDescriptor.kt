@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
-import kotlinx.collections.immutable.persistentListOf
+import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -26,7 +26,7 @@ class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleReference>,
 @ApiStatus.Internal
 class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
   companion object {
-    @JvmField val EMPTY: PluginContentDescriptor = PluginContentDescriptor(persistentListOf())
+    @JvmField val EMPTY: PluginContentDescriptor = PluginContentDescriptor(Java11Shim.INSTANCE.listOf())
   }
 
   @ApiStatus.Internal

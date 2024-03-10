@@ -11,8 +11,6 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.util.Java11Shim
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -77,7 +75,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     // https://youtrack.jetbrains.com/issue/IDEA-206274
     val list = raw.depends
     if (list.isNullOrEmpty()) {
-      pluginDependencies = persistentListOf()
+      pluginDependencies = Java11Shim.INSTANCE.listOf()
     }
     else {
       val iterator = list.iterator()
@@ -93,7 +91,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
           }
         }
       }
-      pluginDependencies = list.toPersistentList()
+      pluginDependencies = list
     }
   }
 

@@ -12,13 +12,12 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.Java11Shim
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
-import kotlinx.collections.immutable.persistentHashSetOf
-import kotlinx.collections.immutable.persistentListOf
 import org.codehaus.stax2.XMLStreamReader2
 import org.codehaus.stax2.typed.TypedXMLStreamException
 import org.jetbrains.annotations.ApiStatus
@@ -171,17 +170,17 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
 /**
  * Keep in sync with KotlinPluginUtil.KNOWN_KOTLIN_PLUGIN_IDS
  */
-private val KNOWN_KOTLIN_PLUGIN_IDS = persistentHashSetOf(
+private val KNOWN_KOTLIN_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(listOf(
   "org.jetbrains.kotlin",
   "com.intellij.appcode.kmm",
   "org.jetbrains.kotlin.native.appcode"
-)
+))
 
 fun isKotlinPlugin(pluginId: PluginId): Boolean {
   return pluginId.idString in KNOWN_KOTLIN_PLUGIN_IDS
 }
 
-private val K2_ALLOWED_PLUGIN_IDS = KNOWN_KOTLIN_PLUGIN_IDS.addAll(persistentHashSetOf(
+private val K2_ALLOWED_PLUGIN_IDS = Java11Shim.INSTANCE.copyOf(KNOWN_KOTLIN_PLUGIN_IDS + listOf(
   "fleet.backend.mercury",
   "fleet.backend.mercury.macos",
   "fleet.backend.mercury.kotlin.macos",
@@ -779,8 +778,8 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
 }
 
 private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDescriptor, readContext: ReadModuleContext) {
-  var modules = persistentListOf<ModuleDependenciesDescriptor.ModuleReference>()
-  var plugins = persistentListOf<ModuleDependenciesDescriptor.PluginReference>()
+  val modules = ArrayList<ModuleDependenciesDescriptor.ModuleReference>()
+  val plugins = ArrayList<ModuleDependenciesDescriptor.PluginReference>()
   reader.consumeChildElements { elementName ->
     when (elementName) {
       "module" -> {
@@ -791,7 +790,7 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
           }
         }
 
-        modules = modules.add(ModuleDependenciesDescriptor.ModuleReference(name!!))
+        modules.add(ModuleDependenciesDescriptor.ModuleReference(name!!))
       }
       "plugin" -> {
         var id: String? = null
@@ -801,12 +800,13 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
           }
         }
 
-        plugins = plugins.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(id!!)))
+        plugins.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(id!!)))
       }
       else -> throw RuntimeException("Unknown content item type: $elementName")
     }
     reader.skipElement()
   }
+
   descriptor.dependencies = ModuleDependenciesDescriptor(modules, plugins)
   assert(reader.isEndElement)
 }

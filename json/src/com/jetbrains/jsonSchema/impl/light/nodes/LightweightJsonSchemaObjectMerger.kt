@@ -52,7 +52,6 @@ internal fun <T> mergeSets(first: Set<T>?, second: Set<T>?): Set<T>? {
   return merged.toImmutableSet()
 }
 
-
 internal fun MergedJsonSchemaObjectView.booleanOr(memberReference: JsonSchemaObject.() -> Boolean): Boolean {
   val first = base.memberReference()
   if (first) return true

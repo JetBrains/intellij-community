@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -12,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
 public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<EditorHighlighterProvider> {
   public static final ExtensionPointName<KeyedLazyInstance<EditorHighlighterProvider>> EP_NAME = ExtensionPointName.create("com.intellij.editorHighlighterProvider");
@@ -40,7 +38,7 @@ public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<
             SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, virtualFile), colors);
         }
       };
-      return persistentListOf(defaultProvider);
+      return List.of(defaultProvider);
     }
     return fromEP;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.diagnostic
@@ -451,7 +451,7 @@ private fun postProcessReportFolder(durationMs: Long, task: SamplingTask, dir: P
 
 private fun getFreezePlaceSuffix(task: SamplingTask): String {
   var stacktraceCommonPart: List<StackTraceElement>? = null
-  for (info in task.threadInfos) {
+  for (info in task.threadInfos.asIterable()) {
     val edt = info.firstOrNull(ThreadDumper::isEDT) ?: continue
     val edtStack = edt.stackTrace ?: continue
     stacktraceCommonPart = if (stacktraceCommonPart == null) {
@@ -466,7 +466,7 @@ private fun getFreezePlaceSuffix(task: SamplingTask): String {
     return ""
   }
 
-  val element = stacktraceCommonPart[0]
+  val element = stacktraceCommonPart.first()
   return "-${sanitizeFileName(StringUtilRt.getShortName(element.className))}.${sanitizeFileName(element.methodName)}"
 }
 
