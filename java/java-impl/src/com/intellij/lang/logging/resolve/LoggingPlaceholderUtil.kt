@@ -340,11 +340,11 @@ private fun couldBeThrowableSupplier(loggerType: PlaceholderLoggerType, lastPara
   return throwable.isConvertibleFrom(functionalReturnType)
 }
 
-fun getPlaceholderCountContext(
+fun getPlaceholderContext(
   node: UCallExpression,
   searcher: LoggerTypeSearcher,
   loggerType: PlaceholderLoggerType
-): PlaceholderCountContext? {
+): PlaceholderContext? {
   val method = node.resolveToUElement() as? UMethod ?: return null
   val arguments = node.valueArguments
   val parameters = method.uastParameters
@@ -377,7 +377,7 @@ fun getPlaceholderCountContext(
   }
 
 
-  return PlaceholderCountContext(placeholderParameters, logStringArgument, lastArgumentIsException, lastArgumentIsSupplier)
+  return PlaceholderContext(placeholderParameters, logStringArgument, lastArgumentIsException, lastArgumentIsSupplier)
 }
 
 fun collectParts(logStringArgument: UExpression): List<LoggingStringPartEvaluator.PartHolder>? {
@@ -438,4 +438,4 @@ data class PlaceholderRangesInPartHolder(val rangeList: List<TextRange?>)
 
 data class Result(val argumentCount: Int, val placeholderCount: Int, val result: ResultType)
 
-data class PlaceholderCountContext(val placeholderParameters: List<UExpression>, val logStringArgument: UExpression, val lastArgumentIsException: Boolean, val lastArgumentIsSupplier: Boolean)
+data class PlaceholderContext(val placeholderParameters: List<UExpression>, val logStringArgument: UExpression, val lastArgumentIsException: Boolean, val lastArgumentIsSupplier: Boolean)

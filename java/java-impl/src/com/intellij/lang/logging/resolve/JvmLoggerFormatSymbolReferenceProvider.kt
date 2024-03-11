@@ -44,37 +44,35 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
   val log4jAsImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(node)
   val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return emptyList()
 
-  val placeholderCountContext = getPlaceholderCountContext(node, searcher, loggerType) ?: return emptyList()
-  val parts = collectParts(placeholderCountContext.logStringArgument) ?: return emptyList()
+  val placeholderContext = getPlaceholderContext(node, searcher, loggerType) ?: return emptyList()
+  val parts = collectParts(placeholderContext.logStringArgument) ?: return emptyList()
 
   if (parts.size > 1) {
     return emptyList()
   }
 
-  val placeholderCountResult = solvePlaceholderCount(loggerType, placeholderCountContext.placeholderParameters.size, parts)
+  val placeholderCountResult = solvePlaceholderCount(loggerType, placeholderContext.placeholderParameters.size, parts)
   if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY || placeholderCountResult.placeholderRangesInPartHolderList.size != 1) {
     return emptyList()
   }
 
   val placeholderRanges = placeholderCountResult.placeholderRangesInPartHolderList.single()
-  val parameterExpressions = placeholderCountContext.placeholderParameters
+  val parameterExpressions = placeholderContext.placeholderParameters
   val zipped = placeholderRanges.rangeList.zip(parameterExpressions)
 
-  val literalExpressionPsi = literalExpression.sourcePsi ?: return emptyList()
+  val psiLiteralExpression = literalExpression.sourcePsi ?: return emptyList()
   val value = literalExpression.evaluateString() ?: return emptyList()
 
   val result = when (loggerType) {
     SLF4J -> {
       zipped.mapNotNull { (range, parameter) ->
         if (range == null) return@mapNotNull null
-        val alignedRange = mapTextRange(literalExpressionPsi, value, range.startOffset, range.endOffset) ?: return@mapNotNull null
+        val alignedRange = mapTextRange(psiLiteralExpression, value, range.startOffset, range.endOffset) ?: return@mapNotNull null
         val parameterPsi = parameter.sourcePsi ?: return@mapNotNull null
-        JvmLoggerArgumentSymbolReference(literalExpressionPsi, alignedRange, parameterPsi)
+        JvmLoggerArgumentSymbolReference(psiLiteralExpression, alignedRange, parameterPsi)
       }
     }
-    else -> {
-      emptyList()
-    }
+    else -> emptyList()
   }
 
   return result
@@ -85,5 +83,8 @@ private fun mapTextRange(expression: PsiElement, value: String, from: Int, to: I
   if (text == null) return null
 
   val offset = text.indexOf(value)
+
+  if (offset == -1) return null
+
   return TextRange(from + offset, to + offset)
 }
