@@ -37,24 +37,17 @@ internal fun KtType?.toDfType(): DfType {
         var notNullableType = this.withNullability(KtTypeNullability.NON_NULLABLE).toDfTypeNotNullable()
         if (notNullableType is DfPrimitiveType) {
             val cls = (this as? KtNonErrorClassType)?.expandedClassSymbol
-            val boxedType: DfType
-            if (cls != null) {
-                boxedType = TypeConstraints.exactClass(cls.classDef()).asDfType()
+            val boxedType = if (cls != null) {
+                TypeConstraints.exactClass(cls.classDef()).asDfType()
             } else {
-                boxedType = DfTypes.OBJECT_OR_NULL
+                DfTypes.OBJECT_OR_NULL
             }
             notNullableType = SpecialField.UNBOX.asDfType(notNullableType).meet(boxedType)
         }
         return when (notNullableType) {
-            is DfReferenceType -> {
-                notNullableType.dropNullability().meet(DfaNullability.NULLABLE.asDfType())
-            }
-            DfType.BOTTOM -> {
-                DfTypes.NULL
-            }
-            else -> {
-                notNullableType
-            }
+            is DfReferenceType -> notNullableType.dropNullability().meet(DfaNullability.NULLABLE.asDfType())
+            DfType.BOTTOM -> DfTypes.NULL
+            else -> notNullableType
         }
     }
     return toDfTypeNotNullable()
@@ -69,12 +62,7 @@ private fun KtType.toDfTypeNotNullable(): DfType {
                 DefaultTypeClassIds.BOOLEAN -> DfTypes.BOOLEAN
                 DefaultTypeClassIds.BYTE -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
                 DefaultTypeClassIds.CHAR -> DfTypes.intRange(
-                    LongRangeSet.range(
-                        Character.MIN_VALUE.code.toLong(),
-                        Character.MAX_VALUE.code.toLong()
-                    )
-                )
-
+                    LongRangeSet.range(Character.MIN_VALUE.code.toLong(), Character.MAX_VALUE.code.toLong()))
                 DefaultTypeClassIds.SHORT -> DfTypes.intRange(LongRangeSet.range(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()))
                 DefaultTypeClassIds.INT -> DfTypes.INT
                 DefaultTypeClassIds.LONG -> DfTypes.LONG

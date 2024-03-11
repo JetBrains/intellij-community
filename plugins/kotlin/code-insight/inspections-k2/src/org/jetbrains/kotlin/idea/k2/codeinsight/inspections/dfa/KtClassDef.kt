@@ -5,7 +5,6 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint
 import com.intellij.codeInspection.dataFlow.TypeConstraints
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -75,7 +74,11 @@ class KtClassDef(val module: KtModule, val hash: Int, val cls: KtSymbolPointer<K
 
     override fun getEnumConstant(ordinal: Int): PsiEnumConstant? = analyze(module) {
         val classLikeSymbol = cls.restoreSymbol() ?: return@analyze null
-        val psiClass = classLikeSymbol.psi.asPsiClass() ?: return@analyze null
+        val psiClass = when (val psi = classLikeSymbol.psi) {
+            is PsiClass -> psi
+            is KtClassOrObject -> psi.toLightClass() ?: return@analyze null
+            else -> return@analyze null
+        }
         var cur = 0
         for (field in psiClass.fields) {
             if (field is PsiEnumConstant) {
@@ -185,8 +188,3 @@ class KtClassDef(val module: KtModule, val hash: Int, val cls: KtSymbolPointer<K
     }
 }
 
-private fun PsiElement?.asPsiClass(): PsiClass? = when (this) {
-    is PsiClass -> this
-    is KtClassOrObject -> toLightClass()
-    else -> null
-}
