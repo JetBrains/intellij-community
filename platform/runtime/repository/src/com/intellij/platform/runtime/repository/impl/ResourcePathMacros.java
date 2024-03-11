@@ -40,7 +40,9 @@ final class ResourcePathMacros {
 
   private static boolean isProjectHome(@NotNull Path path) {
     return Files.isDirectory(path.resolve(".idea")) && 
-           (Files.exists(path.resolve("intellij.idea.ultimate.main.iml")) || Files.exists(path.resolve("intellij.idea.community.main.iml")));
+           (Files.exists(path.resolve("intellij.idea.ultimate.main.iml")) 
+            || Files.exists(path.resolve("intellij.idea.community.main.iml"))
+            || Files.exists(path.resolve(".ultimate.root.marker")));
   }
 
   private static Path getMavenRepositoryPath() {
