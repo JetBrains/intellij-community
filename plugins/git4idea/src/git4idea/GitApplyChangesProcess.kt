@@ -397,7 +397,7 @@ internal class GitApplyChangesProcess(
   private fun notifyResult(successfulCommits: List<VcsCommitMetadata>, skipped: List<VcsCommitMetadata>) {
     when {
       skipped.isEmpty() -> {
-        vcsNotifier.notifySuccess(null,
+        vcsNotifier.notifySuccess(GitNotificationIdsHolder.APPLY_CHANGES_SUCCESS,
                                   GitBundle.message("apply.changes.operation.successful", operationName.capitalize()),
                                   getCommitsDetails(successfulCommits))
       }
@@ -405,10 +405,10 @@ internal class GitApplyChangesProcess(
         val title = GitBundle.message("apply.changes.applied.for.commits", appliedWord.capitalize(), successfulCommits.size,
                                       successfulCommits.size + skipped.size)
         val description = getCommitsDetails(successfulCommits) + UIUtil.HR + formSkippedDescription(skipped, true)
-        vcsNotifier.notifySuccess(null, title, description)
+        vcsNotifier.notifySuccess(GitNotificationIdsHolder.APPLY_CHANGES_SUCCESS, title, description)
       }
       else -> {
-        vcsNotifier.notifyImportantWarning(null, GitBundle.message("apply.changes.nothing.to.do", operationName),
+        vcsNotifier.notifyImportantWarning(GitNotificationIdsHolder.APPLY_CHANGES_SUCCESS, GitBundle.message("apply.changes.nothing.to.do", operationName),
                                            formSkippedDescription(skipped, false))
       }
     }
@@ -427,6 +427,7 @@ internal class GitApplyChangesProcess(
 
     val notification = VcsNotifier.importantNotification()
       .createNotification(title, description, NotificationType.WARNING)
+      .setDisplayId(GitNotificationIdsHolder.APPLY_CHANGES_CONFLICTS)
       .addAction(NotificationAction.createSimple(GitBundle.message("apply.changes.unresolved.conflicts.notification.resolve.action.text")) {
         val hash = commit.id.toShortString()
         val commitAuthor = VcsUserUtil.getShortPresentation(commit.author)
@@ -459,7 +460,7 @@ internal class GitApplyChangesProcess(
   ) {
     var description = commitDetails(failedCommit) + UIUtil.BR + content
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyError(null, GitBundle.message("apply.changes.operation.failed", operationName.capitalize()), description)
+    vcsNotifier.notifyError(GitNotificationIdsHolder.APPLY_CHANGES_ERROR, GitBundle.message("apply.changes.operation.failed", operationName.capitalize()), description)
   }
 
   @Nls
