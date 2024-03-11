@@ -18,7 +18,7 @@ class JvmLoggerFormatSymbolReferenceProvider : PsiSymbolReferenceProvider {
     if (!hintsCheck(hints)) return listOf()
 
     val literalExpression = element.toUElementOfType<UExpression>() ?: return listOf()
-    return getLogArgumentReferences(literalExpression)
+    return getLogArgumentReferences(literalExpression) ?: emptyList()
   }
 
   private fun hintsCheck(hints: PsiSymbolReferenceHints): Boolean {
@@ -34,34 +34,30 @@ class JvmLoggerFormatSymbolReferenceProvider : PsiSymbolReferenceProvider {
   }
 }
 
-fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolReference> {
-  val node = literalExpression.getParentOfType<UCallExpression>() ?: return emptyList()
-  val searcher = LOGGER_RESOLVE_TYPE_SEARCHERS.mapFirst(node) ?: return emptyList()
+fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolReference>? {
+  val node = literalExpression.getParentOfType<UCallExpression>() ?: return null
+  val searcher = LOGGER_RESOLVE_TYPE_SEARCHERS.mapFirst(node) ?: return null
 
   val arguments = node.valueArguments
-  if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return emptyList()
+  if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return null
 
   val log4jAsImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(node)
-  val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return emptyList()
+  val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return null
 
-  val placeholderContext = getPlaceholderContext(node, searcher, loggerType) ?: return emptyList()
-  val parts = collectParts(placeholderContext.logStringArgument) ?: return emptyList()
+  val placeholderContext = getPlaceholderContext(node, searcher, loggerType) ?: return null
+  val parts = collectParts(placeholderContext.logStringArgument) ?: return null
 
-  if (parts.size > 1) {
-    return emptyList()
-  }
+  if (parts.size > 1) return null
 
   val placeholderCountResult = solvePlaceholderCount(loggerType, placeholderContext.placeholderParameters.size, parts)
-  if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY || placeholderCountResult.placeholderRangesInPartHolderList.size != 1) {
-    return emptyList()
-  }
+  if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY || placeholderCountResult.placeholderRangesInPartHolderList.size != 1) return null
 
   val placeholderRanges = placeholderCountResult.placeholderRangesInPartHolderList.single()
   val parameterExpressions = placeholderContext.placeholderParameters
   val zipped = placeholderRanges.rangeList.zip(parameterExpressions)
 
-  val psiLiteralExpression = literalExpression.sourcePsi ?: return emptyList()
-  val value = literalExpression.evaluateString() ?: return emptyList()
+  val psiLiteralExpression = literalExpression.sourcePsi ?: return null
+  val value = literalExpression.evaluateString() ?: return null
 
   val result = when (loggerType) {
     SLF4J -> {
@@ -72,7 +68,7 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
         JvmLoggerArgumentSymbolReference(psiLiteralExpression, alignedRange, parameterPsi)
       }
     }
-    else -> emptyList()
+    else -> null
   }
 
   return result
