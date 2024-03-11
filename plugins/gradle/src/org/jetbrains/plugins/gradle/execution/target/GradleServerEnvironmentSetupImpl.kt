@@ -37,6 +37,7 @@ import org.jetbrains.plugins.gradle.service.execution.toGroovyStringLiteral
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.tooling.proxy.Main
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
+import org.jetbrains.plugins.gradle.tooling.proxy.TargetIntermediateResultHandler
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.INIT_SCRIPT_CMD_OPTION
 import org.slf4j.LoggerFactory
@@ -55,6 +56,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
   override val javaParameters = SimpleJavaParameters()
   override lateinit var environmentConfiguration: TargetEnvironmentConfiguration
   lateinit var targetEnvironment: TargetEnvironment
+  lateinit var targetIntermediateResultHandler: TargetIntermediateResultHandler
   lateinit var targetBuildParameters: TargetBuildParameters
   lateinit var projectUploadRoot: TargetEnvironment.UploadRoot
 
@@ -122,6 +124,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     (targetBuildParametersBuilder as? TargetBuildParameters.TaskAwareBuilder<*>)
       ?.withTasks(consumerOperationParameters.tasks ?: emptyList())
 
+    targetIntermediateResultHandler = targetBuildParametersBuilder.buildIntermediateResultHandler()
     targetBuildParameters = targetBuildParametersBuilder.build()
 
     return targetedCommandLineBuilder.build()

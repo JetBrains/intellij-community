@@ -54,7 +54,7 @@ internal abstract class TargetBuildExecutor<R>(
     ): TargetBuildExecutor<Void> {
       return object : TargetBuildExecutor<Void>(connection, "TargetPhasedBuildActionExecutor API") {
 
-        override val targetBuildParametersBuilder = PhasedBuildActionParametersBuilder(projectsLoadedAction?.action, buildFinishedAction?.action)
+        override val targetBuildParametersBuilder = PhasedBuildActionParametersBuilder(projectsLoadedAction, buildFinishedAction)
 
         override val buildActions = listOfNotNull(projectsLoadedAction?.action, buildFinishedAction?.action)
       }

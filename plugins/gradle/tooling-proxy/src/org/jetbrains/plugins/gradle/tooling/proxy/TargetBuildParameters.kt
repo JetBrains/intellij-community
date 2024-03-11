@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling.proxy
 
 import org.gradle.tooling.BuildAction
 import org.gradle.tooling.events.OperationType
+import org.gradle.tooling.internal.consumer.PhasedBuildAction.BuildActionWrapper
 import java.io.Serializable
 
 sealed class TargetBuildParameters : Serializable {
@@ -74,6 +75,10 @@ sealed class TargetBuildParameters : Serializable {
     }
 
     abstract fun build(): TargetBuildParameters
+
+    open fun buildIntermediateResultHandler(): TargetIntermediateResultHandler {
+      return TargetIntermediateResultHandler.NOOP
+    }
   }
 
   abstract class TaskAwareBuilder<This : TaskAwareBuilder<This>> : Builder<This>() {
@@ -129,21 +134,45 @@ sealed class TargetBuildParameters : Serializable {
     override fun getThis(): BuildActionParametersBuilder<T> = this
 
     override fun build(): BuildActionParameters<T> {
-      return BuildActionParameters(action, tasks, gradleHome, gradleUserHome,
-                                   arguments, jvmArguments, environmentVariables, progressListenerOperationTypes, initScripts)
+      return BuildActionParameters(
+        action, tasks, gradleHome, gradleUserHome,
+        arguments, jvmArguments, environmentVariables, progressListenerOperationTypes, initScripts
+      )
     }
   }
 
-  class PhasedBuildActionParametersBuilder<T>(
-    private var projectsLoadedAction: BuildAction<T>?,
-    private var buildFinishedAction: BuildAction<T>?
-  ) : TaskAwareBuilder<PhasedBuildActionParametersBuilder<T>>() {
+  class PhasedBuildActionParametersBuilder(
+    private val projectsLoadedAction: BuildActionWrapper<Any>?,
+    private val buildFinishedAction: BuildActionWrapper<Any>?
+  ) : TaskAwareBuilder<PhasedBuildActionParametersBuilder>() {
 
-    override fun getThis(): PhasedBuildActionParametersBuilder<T> = this
+    override fun getThis(): PhasedBuildActionParametersBuilder = this
 
-    override fun build(): PhasedBuildActionParameters<T> {
-      return PhasedBuildActionParameters(projectsLoadedAction, buildFinishedAction, tasks, gradleHome, gradleUserHome,
-                                         arguments, jvmArguments, environmentVariables, progressListenerOperationTypes, initScripts)
+    override fun buildIntermediateResultHandler(): TargetIntermediateResultHandler {
+      return super.buildIntermediateResultHandler()
+        .then(PhasedIntermediateResultHandler(projectsLoadedAction, buildFinishedAction))
+    }
+
+    override fun build(): PhasedBuildActionParameters {
+      return PhasedBuildActionParameters(
+        projectsLoadedAction?.action, buildFinishedAction?.action, tasks, gradleHome, gradleUserHome,
+        arguments, jvmArguments, environmentVariables, progressListenerOperationTypes, initScripts
+      )
+    }
+
+    private class PhasedIntermediateResultHandler(
+      private val projectsLoadedAction: BuildActionWrapper<Any>?,
+      private val buildFinishedAction: BuildActionWrapper<Any>?
+    ) : TargetIntermediateResultHandler {
+
+      override fun onResult(type: IntermediateResultType, result: Any?) {
+        if (type == IntermediateResultType.PROJECT_LOADED) {
+          projectsLoadedAction!!.handler.onComplete(result!!)
+        }
+        if (type == IntermediateResultType.BUILD_FINISHED) {
+          buildFinishedAction!!.handler.onComplete(result!!)
+        }
+      }
     }
   }
 }
@@ -185,13 +214,13 @@ data class BuildActionParameters<T>(val buildAction: BuildAction<T>,
                                     override val progressListenerOperationTypes: Set<OperationType>,
                                     override val initScripts: Map<String, String>) : TargetBuildParameters()
 
-data class PhasedBuildActionParameters<T>(val projectsLoadedAction: BuildAction<T>?,
-                                          val buildFinishedAction: BuildAction<T>?,
-                                          val tasks: List<String>,
-                                          override val gradleHome: String?,
-                                          override val gradleUserHome: String?,
-                                          override val arguments: List<String>,
-                                          override val jvmArguments: List<String>,
-                                          override val environmentVariables: Map<String, String>,
-                                          override val progressListenerOperationTypes: Set<OperationType>,
-                                          override val initScripts: Map<String, String>) : TargetBuildParameters()
+data class PhasedBuildActionParameters(val projectsLoadedAction: BuildAction<Any>?,
+                                       val buildFinishedAction: BuildAction<Any>?,
+                                       val tasks: List<String>,
+                                       override val gradleHome: String?,
+                                       override val gradleUserHome: String?,
+                                       override val arguments: List<String>,
+                                       override val jvmArguments: List<String>,
+                                       override val environmentVariables: Map<String, String>,
+                                       override val progressListenerOperationTypes: Set<OperationType>,
+                                       override val initScripts: Map<String, String>) : TargetBuildParameters()

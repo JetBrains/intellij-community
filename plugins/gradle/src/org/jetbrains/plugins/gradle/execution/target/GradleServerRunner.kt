@@ -71,7 +71,6 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
         return BaseOutputReader.Options.forMostlySilentProcess()
       }
     }
-    val targetBuildParameters = serverEnvironmentSetup.targetBuildParameters
     val projectUploadRoot = serverEnvironmentSetup.projectUploadRoot
     val targetProjectBasePath = projectUploadRoot.getTargetUploadPath().apply(remoteEnvironment)
     val localProjectBasePath = projectUploadRoot.localRootPath.toString()
@@ -85,7 +84,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
       val hostPort = if (targetPort == it.port && localPort != null) HostPort(it.host, localPort) else it
       serverConfigurationProvider?.getClientCommunicationAddress(serverEnvironmentSetup.environmentConfiguration, hostPort) ?: hostPort
     }
-    val gradleServerEventsListener = GradleServerEventsListener(targetBuildParameters, connectionAddressResolver, classpathInferer) {
+    val gradleServerEventsListener = GradleServerEventsListener(serverEnvironmentSetup, connectionAddressResolver, classpathInferer) {
       when (it) {
         is String -> {
           consumerOperationParameters.progressListener.run {
@@ -167,10 +166,12 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     return buf.toString()
   }
 
-  private class GradleServerEventsListener(private val targetBuildParameters: TargetBuildParameters,
-                                           private val connectionAddressResolver: (HostPort) -> HostPort,
-                                           private val classpathInferer: GradleServerClasspathInferer,
-                                           private val buildEventConsumer: BuildEventConsumer) {
+  private class GradleServerEventsListener(
+    private val serverEnvironmentSetup: GradleServerEnvironmentSetupImpl,
+    private val connectionAddressResolver: (HostPort) -> HostPort,
+    private val classpathInferer: GradleServerClasspathInferer,
+    private val buildEventConsumer: BuildEventConsumer
+  ) {
 
     private lateinit var listenerTask: Future<*>
 
@@ -198,7 +199,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 
       val connection = createConnection(hostName, port)
 
-      connection.dispatch(BuildEvent(targetBuildParameters))
+      connection.dispatch(BuildEvent(serverEnvironmentSetup.targetBuildParameters))
       connection.flush()
 
       try {
@@ -214,14 +215,18 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
               resultHandler.onFailure(message.value as? GradleConnectionException ?: GradleConnectionException(message.value.message))
               break@loop
             }
+            is BuildEvent -> {
+              buildEventConsumer.dispatch(message.payload)
+            }
             is org.jetbrains.plugins.gradle.tooling.proxy.Output -> {
               buildEventConsumer.dispatch(message)
             }
-            !is BuildEvent -> {
-              break@loop
+            is org.jetbrains.plugins.gradle.tooling.proxy.IntermediateResult -> {
+              val value = deserializeIfNeeded(message.value)
+              serverEnvironmentSetup.targetIntermediateResultHandler.onResult(message.type, value)
             }
             else -> {
-              buildEventConsumer.dispatch(message.payload)
+              break@loop
             }
           }
         }

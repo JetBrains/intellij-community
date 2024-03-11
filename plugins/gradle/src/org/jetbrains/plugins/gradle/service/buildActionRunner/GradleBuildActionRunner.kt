@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.buildActionRunner
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.hasTargetEnvironmentConfiguration
 import com.intellij.openapi.util.registry.Registry
 import org.gradle.tooling.BuildActionExecuter
 import org.gradle.tooling.GradleConnectionException
@@ -55,9 +54,6 @@ class GradleBuildActionRunner(
 
       // Gradle older than 4.8 doesn't support phased execution
       GradleVersionUtil.isGradleOlderThan(gradleVersion, "4.8") -> runDefaultBuildAction()
-
-      // Targeted Gradle executors don't support phased execution
-      settings.hasTargetEnvironmentConfiguration() -> runDefaultBuildAction()
 
       else -> runPhasedBuildAction()
     }
