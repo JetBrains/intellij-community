@@ -150,7 +150,7 @@ private const val ADD_ARGUMENT = "addArgument"
 private const val SET_MESSAGE = "setMessage"
 
 fun findMessageSetterStringArg(node: UCallExpression,
-                                        loggerType: LoggerTypeSearcher?): UExpression? {
+                               loggerType: LoggerTypeSearcher?): UExpression? {
   if (loggerType == null) {
     return null
   }
@@ -220,8 +220,8 @@ fun findAdditionalArgumentCount(node: UCallExpression,
 }
 
 fun solvePlaceholderCount(loggerType: PlaceholderLoggerType,
-                                  argumentCount: Int,
-                                  holders: List<LoggingStringPartEvaluator.PartHolder>): PlaceholderCountResult {
+                          argumentCount: Int,
+                          holders: List<LoggingStringPartEvaluator.PartHolder>): PlaceholderCountResult {
   return if (loggerType == PlaceholderLoggerType.LOG4J_FORMATTED_STYLE) {
     val prefix = StringBuilder()
     var full = true
@@ -340,13 +340,20 @@ private fun couldBeThrowableSupplier(loggerType: PlaceholderLoggerType, lastPara
   return throwable.isConvertibleFrom(functionalReturnType)
 }
 
+
 fun getPlaceholderContext(
-  node: UCallExpression,
-  searcher: LoggerTypeSearcher,
-  loggerType: PlaceholderLoggerType
+  uCallExpression: UCallExpression,
+  mapper: CallMapper<LoggerTypeSearcher>,
+  log4jAsImplementationForSlf4j: Boolean
 ): PlaceholderContext? {
-  val method = node.resolveToUElement() as? UMethod ?: return null
-  val arguments = node.valueArguments
+  val method = uCallExpression.resolveToUElement() as? UMethod ?: return null
+
+  val searcher = mapper.mapFirst(uCallExpression) ?: return null
+  val arguments = uCallExpression.valueArguments
+
+  val loggerType = searcher.findType(uCallExpression, LoggerContext(log4jAsImplementationForSlf4j)) ?: return null
+
+  if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return null
   val parameters = method.uastParameters
   var placeholderParameters: List<UExpression>?
   val logStringArgument: UExpression?
@@ -354,8 +361,8 @@ fun getPlaceholderContext(
   var lastArgumentIsSupplier = false
   if (parameters.isEmpty() || arguments.isEmpty()) {
     //try to find String somewhere else
-    logStringArgument = findMessageSetterStringArg(node, searcher) ?: return null
-    placeholderParameters = findAdditionalArgumentCount(node, searcher, true) ?: return null
+    logStringArgument = findMessageSetterStringArg(uCallExpression, searcher) ?: return null
+    placeholderParameters = findAdditionalArgumentCount(uCallExpression, searcher, true) ?: return null
   }
   else {
     val index = getLogStringIndex(parameters) ?: return null
@@ -371,13 +378,14 @@ fun getPlaceholderContext(
         return null
       }
     }
-    val additionalArgumentCount = findAdditionalArgumentCount(node, searcher, false) ?: return null
+    val additionalArgumentCount = findAdditionalArgumentCount(uCallExpression, searcher, false) ?: return null
     placeholderParameters += additionalArgumentCount
     logStringArgument = arguments[index - 1]
   }
 
+  val parts = collectParts(logStringArgument) ?: return null
 
-  return PlaceholderContext(placeholderParameters, logStringArgument, lastArgumentIsException, lastArgumentIsSupplier)
+  return PlaceholderContext(placeholderParameters, logStringArgument, parts, loggerType, lastArgumentIsException, lastArgumentIsSupplier)
 }
 
 fun collectParts(logStringArgument: UExpression): List<LoggingStringPartEvaluator.PartHolder>? {
@@ -438,4 +446,4 @@ data class PlaceholderRangesInPartHolder(val rangeList: List<TextRange?>)
 
 data class Result(val argumentCount: Int, val placeholderCount: Int, val result: ResultType)
 
-data class PlaceholderContext(val placeholderParameters: List<UExpression>, val logStringArgument: UExpression, val lastArgumentIsException: Boolean, val lastArgumentIsSupplier: Boolean)
+data class PlaceholderContext(val placeholderParameters: List<UExpression>, val logStringArgument: UExpression, val partHolderList: List<LoggingStringPartEvaluator.PartHolder>, val loggerType: PlaceholderLoggerType, val lastArgumentIsException: Boolean, val lastArgumentIsSupplier: Boolean)

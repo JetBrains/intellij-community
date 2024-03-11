@@ -2,10 +2,8 @@
 package com.siyeh.ig.format;
 
 import com.intellij.find.usages.api.*;
-import com.intellij.model.Pointer;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;

@@ -36,30 +36,23 @@ class JvmLoggerSymbolReferenceProvider : PsiSymbolReferenceProvider {
 
 fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolReference>? {
   val uCallExpression = literalExpression.getParentOfType<UCallExpression>() ?: return null
-  val searcher = LOGGER_RESOLVE_TYPE_SEARCHERS.mapFirst(uCallExpression) ?: return null
 
-  val arguments = uCallExpression.valueArguments
-  if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return null
+  val log4jHasImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
 
-  val log4jAsImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
-  val loggerType = searcher.findType(uCallExpression, LoggerContext(log4jAsImplementationForSlf4j)) ?: return null
+  val context = getPlaceholderContext(uCallExpression, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j) ?: return null
 
-  val placeholderContext = getPlaceholderContext(uCallExpression, searcher, loggerType) ?: return null
-  val parts = collectParts(placeholderContext.logStringArgument) ?: return null
-
-  if (parts.size > 1) return null
-
-  val placeholderCountResult = solvePlaceholderCount(loggerType, placeholderContext.placeholderParameters.size, parts)
+  if (context.partHolderList.size > 1) return null
+  val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, context.partHolderList)
   if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY || placeholderCountResult.placeholderRangesInPartHolderList.size != 1) return null
 
   val placeholderRanges = placeholderCountResult.placeholderRangesInPartHolderList.single()
-  val parameterExpressions = placeholderContext.placeholderParameters
+  val parameterExpressions = context.placeholderParameters
   val zipped = placeholderRanges.rangeList.zip(parameterExpressions)
 
   val psiLiteralExpression = literalExpression.sourcePsi ?: return null
   val value = literalExpression.evaluateString() ?: return null
 
-  val result = when (loggerType) {
+  val result = when (context.loggerType) {
     SLF4J -> {
       zipped.map { (range, parameter) ->
         if (range == null) return null

@@ -47,25 +47,17 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
   ) : AbstractUastNonRecursiveVisitor() {
 
     override fun visitCallExpression(node: UCallExpression): Boolean {
-      val searcher = LOGGER_TYPE_SEARCHERS.mapFirst(node) ?: return true
-
-      val arguments = node.valueArguments
-
-      if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return true
-
       val log4jAsImplementationForSlf4j = when (slf4jToLog4J2Type) {
         Slf4jToLog4J2Type.AUTO -> LoggingUtil.hasBridgeFromSlf4jToLog4j2(node)
         Slf4jToLog4J2Type.YES -> true
         Slf4jToLog4J2Type.NO -> false
       }
-      val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return true
+      val context = getPlaceholderContext(node, LOGGER_TYPE_SEARCHERS, log4jAsImplementationForSlf4j) ?: return true
 
-      val context = getPlaceholderContext(node, searcher, loggerType) ?: return true
-
-      val parts = collectParts(context.logStringArgument) ?: return true
       var finalArgumentCount = context.placeholderParameters.size
 
-      val placeholderCountHolder = solvePlaceholderCount(loggerType, finalArgumentCount, parts)
+      val placeholderCountHolder = solvePlaceholderCount(context.loggerType, finalArgumentCount, context.partHolderList)
+
       if (placeholderCountHolder.status == PlaceholdersStatus.EMPTY) {
         return true
       }
@@ -74,7 +66,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
         return true
       }
 
-      val resultType = when (loggerType) {
+      val resultType = when (context.loggerType) {
         PlaceholderLoggerType.SLF4J -> { //according to the reference, an exception should not have a placeholder
           finalArgumentCount = if (context.lastArgumentIsException) finalArgumentCount - 1 else finalArgumentCount
           if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {

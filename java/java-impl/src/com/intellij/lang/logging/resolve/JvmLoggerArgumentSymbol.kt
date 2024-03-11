@@ -24,14 +24,10 @@ class JvmLoggerArgumentSymbol(val expression: PsiElement) : Symbol, NavigatableS
   fun getPlaceholderString() : UExpression? {
     val uExpression = expression.toUElementOfType<UExpression>() ?: return null
     val uCallExpression = uExpression.getParentOfType<UCallExpression>() ?: return null
-    val searcher = LOGGER_RESOLVE_TYPE_SEARCHERS.mapFirst(uCallExpression) ?: return null
 
-    val arguments = uCallExpression.valueArguments
-    if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return null
+    val log4jHasImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
 
-    val loggerType = searcher.findType(uCallExpression, LoggerContext(false)) ?: return null
-
-    return getPlaceholderContext(uCallExpression, searcher, loggerType)?.logStringArgument
+    return getPlaceholderContext(uCallExpression, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j)?.logStringArgument
   }
 
   override fun createPointer(): Pointer<JvmLoggerArgumentSymbol> {
