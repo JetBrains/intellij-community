@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.caches
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -188,6 +189,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
             scope,
             filter
           ) { ktNamedFunction ->
+              ProgressManager.checkCanceled()
               val methods = LightClassUtil.getLightClassMethodsByName(ktNamedFunction, name).toList()
               methods.all(processor::process)
           }
@@ -198,6 +200,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         for (propertyName in getPropertyNamesCandidatesByAccessorName(Name.identifier(name))) {
             val allProcessed =
               KotlinPropertyShortNameIndex.processElements(propertyName.asString(), project, scope, filter) { ktNamedDeclaration ->
+                  ProgressManager.checkCanceled()
                   if (ktNamedDeclaration is KtValVarKeywordOwner) {
                       if (ktNamedDeclaration.isPrivate() || KotlinPsiHeuristics.hasJvmFieldAnnotation(ktNamedDeclaration)) {
                           return@processElements true
