@@ -10,19 +10,14 @@ import com.intellij.navigation.SymbolNavigationService
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
 
-class JvmLoggerArgumentSymbol(val expression: PsiExpression) : Symbol, NavigatableSymbol, SearchTarget {
+class JvmLoggerArgumentSymbol(val expression: PsiElement) : Symbol, NavigatableSymbol, SearchTarget {
   override val usageHandler: UsageHandler = UsageHandler.createEmptyUsageHandler(expression.text)
 
   override fun createPointer(): Pointer<JvmLoggerArgumentSymbol> {
     return Pointer.delegatingPointer(SmartPointerManager.createPointer(expression), ::JvmLoggerArgumentSymbol)
-  }
-
-  fun getFormatString(): PsiLiteralExpression? {
-    val expressionList = expression.parent as? PsiExpressionList ?: return null
-    if (expressionList.parent !is PsiCallExpression) return null
-    return expressionList.expressions[0] as? PsiLiteralExpression
   }
 
   override fun presentation(): TargetPresentation = TargetPresentation.builder(expression.text).presentation()

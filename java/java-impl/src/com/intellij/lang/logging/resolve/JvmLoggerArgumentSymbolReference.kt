@@ -5,12 +5,11 @@ import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiExpression
 
 class JvmLoggerArgumentSymbolReference(
-  private val literalExpression: PsiExpression,
+  private val literalExpression: PsiElement,
   private val literalRange : TextRange,
-  private val externalReference : PsiExpression,
+  private val externalReference : PsiElement,
 
 ) : PsiSymbolReference {
   override fun getElement(): PsiElement = literalExpression
