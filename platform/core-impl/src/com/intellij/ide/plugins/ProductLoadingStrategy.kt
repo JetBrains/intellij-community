@@ -40,6 +40,12 @@ abstract class ProductLoadingStrategy {
       set(value) {
         ourStrategy = value
       }
+
+    /**
+     * Creates an instance of the old path-based strategy even if module-based strategy is used in the product.
+     * This is needed to load plugin descriptors from another IDE during settings import.
+     */
+    internal fun createPathBasedLoadingStrategy(): ProductLoadingStrategy = PathBasedProductLoadingStrategy()
   }
 
   /**

@@ -493,7 +493,8 @@ private suspend fun loadDescriptors(
       isRunningFromSources = isRunningFromSources,
       zipFilePool = zipFilePool,
       bundledPluginDir = null,
-      mainClassLoader = mainClassLoader
+      mainClassLoader = mainClassLoader,
+      loadingStrategy = ProductLoadingStrategy.strategy
     )
     extraListDeferred = loadDescriptorsFromProperty(context = context, pool = zipFilePool)
   }
@@ -556,6 +557,7 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
   isRunningFromSources: Boolean = PluginManagerCore.isRunningFromSources(),
   zipFilePool: ZipFilePool,
   mainClassLoader: ClassLoader,
+  loadingStrategy: ProductLoadingStrategy,
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
   val platformPrefix = if (platformPrefixProperty == PlatformUtils.QODANA_PREFIX) {
@@ -575,14 +577,14 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
     pool = zipFilePool,
     classLoader = mainClassLoader,
   ))
-  result.addAll(ProductLoadingStrategy.strategy.loadCustomPluginDescriptors(
+  result.addAll(loadingStrategy.loadCustomPluginDescriptors(
     scope = this,
     customPluginDir = customPluginDir,
     context = context,
     zipFilePool = zipFilePool,
   ))
 
-  result.addAll(ProductLoadingStrategy.strategy.loadBundledPluginDescriptors(
+  result.addAll(loadingStrategy.loadBundledPluginDescriptors(
     scope = this,
     bundledPluginDir = bundledPluginDir,
     isUnitTestMode = isUnitTestMode,
@@ -791,6 +793,7 @@ fun loadDescriptorsFromOtherIde(
           bundledPluginDir = bundledPluginDir,
           zipFilePool = ZipFilePool.POOL ?: NonShareableJavaZipFilePool(),
           mainClassLoader = DescriptorListLoadingContext::class.java.classLoader,
+          loadingStrategy = ProductLoadingStrategy.createPathBasedLoadingStrategy(),
         )
       }, isMainProcess()),
       overrideUseIfCompatible = false,
