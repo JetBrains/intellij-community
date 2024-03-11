@@ -15,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
@@ -26,6 +25,7 @@ import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
@@ -51,7 +51,7 @@ fun WelcomeView() {
             contentScale = ContentScale.Crop,
         )
 
-        Text("Meet Jewel", fontSize = 20.sp)
+        Text("Meet Jewel", style = Typography.h1TextStyle())
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Theme:")
