@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("IjentProcessUtil")
 
 package com.intellij.platform.ijent
@@ -24,7 +24,7 @@ fun getIjentGrpcArgv(
 
   return listOfNotNull(
     "/usr/bin/env",
-    "RUST_LOG=ijent=$debuggingLogLevel",
+    "RUST_LOG=$debuggingLogLevel,server_handshake=info,h2=info,hyper=info,reserve_capacity=info,tokio_util=info",
     if (backtrace) "RUST_BACKTRACE=1" else null,
     *additionalEnv.entries.map2Array { (k, v) -> "$k=$v" },
     // "gdbserver", "0.0.0.0:12345",  // https://sourceware.org/gdb/onlinedocs/gdb/Connecting.html
