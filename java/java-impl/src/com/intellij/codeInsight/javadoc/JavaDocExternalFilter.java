@@ -61,7 +61,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
             String[] parts = href.substring(2).split("/", 2);
             if (parts.length != 2) return href;
             Url relativeUrl = Urls.newUrl(scheme, parts[0], parts[1]);
-            return relativeUrl.toString();
+            return relativeUrl.toDecodedForm();
           }
           else if (href.startsWith("/")) {
             Url rootUrl = Urls.parse(root, false);
@@ -70,7 +70,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
             String authority = rootUrl.getAuthority();
             if (scheme == null || authority == null) return href;
             Url relativeUrl = Urls.newUrl(scheme, authority, href);
-            return relativeUrl.toString();
+            return relativeUrl.toDecodedForm();
           }
           else {
             String nakedRoot = ourHtmlFileSuffix.matcher(root).replaceAll("/");
