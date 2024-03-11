@@ -20,7 +20,6 @@ fun addParcelizeLibraries(module: Module) {
     ConfigLibraryUtil.addLibrary(module, "androidExtensionsRuntime") {
         addRoot(TestKotlinArtifacts.androidExtensionsRuntime, OrderRootType.CLASSES)
     }
-
 }
 
 fun removeParcelizeLibraries(module: Module) {
