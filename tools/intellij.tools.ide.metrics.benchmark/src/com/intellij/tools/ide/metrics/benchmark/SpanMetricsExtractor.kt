@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.tool.withRetryAsync
 import com.intellij.tools.ide.metrics.collector.metrics.*
-import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetryJsonParser
+import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetrySpanJsonParser
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
 import java.nio.file.Path
 import kotlin.math.absoluteValue
@@ -63,7 +63,7 @@ class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathT
   }
 
   private fun extractOpenTelemetrySpanMetrics(spanName: String, forWarmup: Boolean): List<PerformanceMetrics.Metric> {
-    val originalMetrics = OpentelemetryJsonParser(SpanFilter.any())
+    val originalMetrics = OpentelemetrySpanJsonParser(SpanFilter.any())
       .getSpanElements(telemetryJsonFile, spanElementFilter = { it.name == spanName && it.isWarmup == forWarmup })
       .map { PerformanceMetrics.newDuration(it.name, it.duration) }
       .toList()

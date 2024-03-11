@@ -71,7 +71,7 @@ private fun getParentToSpanMap(spans: List<SpanData>): Object2ObjectLinkedOpenHa
   return indexParentToChild
 }
 
-open class OpentelemetryJsonParser(private val spanFilter: SpanFilter) {
+open class OpentelemetrySpanJsonParser(private val spanFilter: SpanFilter) {
   fun getSpanElements(file: Path, spanElementFilter: Predicate<SpanElement> = Predicate { true }): Set<SpanElement> {
     val rawSpans = getSpans(file)
     val index = getParentToSpanMap(rawSpans)

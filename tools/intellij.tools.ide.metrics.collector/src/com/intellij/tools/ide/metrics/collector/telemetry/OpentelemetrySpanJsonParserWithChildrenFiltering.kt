@@ -2,10 +2,10 @@
 
 package com.intellij.tools.ide.metrics.collector.telemetry
 
-internal class OpentelemetryJsonParserWithChildrenFiltering(
+internal class OpentelemetrySpanJsonParserWithChildrenFiltering(
   spanFilter: SpanFilter,
   private val childFilter: SpanFilter,
-) : OpentelemetryJsonParser(spanFilter) {
+) : OpentelemetrySpanJsonParser(spanFilter) {
   override fun processChild(result: MutableSet<SpanElement>, parent: SpanElement, index: Map<String, Collection<SpanElement>>) {
     index.get(parent.spanId)?.forEach {
       if (parent.isWarmup) {
