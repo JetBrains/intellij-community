@@ -12,9 +12,27 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElementOfType
 
 class JvmLoggerArgumentSymbol(val expression: PsiElement) : Symbol, NavigatableSymbol, SearchTarget {
   override val usageHandler: UsageHandler = UsageHandler.createEmptyUsageHandler(expression.text)
+
+
+  fun getPlaceholderString() : UExpression? {
+    val uExpression = expression.toUElementOfType<UExpression>() ?: return null
+    val uCallExpression = uExpression.getParentOfType<UCallExpression>() ?: return null
+    val searcher = LOGGER_RESOLVE_TYPE_SEARCHERS.mapFirst(uCallExpression) ?: return null
+
+    val arguments = uCallExpression.valueArguments
+    if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return null
+
+    val loggerType = searcher.findType(uCallExpression, LoggerContext(false)) ?: return null
+
+    return getPlaceholderContext(uCallExpression, searcher, loggerType)?.logStringArgument
+  }
 
   override fun createPointer(): Pointer<JvmLoggerArgumentSymbol> {
     return Pointer.delegatingPointer(SmartPointerManager.createPointer(expression), ::JvmLoggerArgumentSymbol)

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class DefUsage implements PsiUsage {
   private final @NotNull PsiElement myArg;
 
-  DefUsage(@NotNull PsiElement arg) {
+  public DefUsage(@NotNull PsiElement arg) {
     myArg = arg;
   }
 

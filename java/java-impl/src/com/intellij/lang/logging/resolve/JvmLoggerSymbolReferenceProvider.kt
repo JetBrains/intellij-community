@@ -13,7 +13,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.uast.*
 
-class JvmLoggerFormatSymbolReferenceProvider : PsiSymbolReferenceProvider {
+class JvmLoggerSymbolReferenceProvider : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
     if (!hintsCheck(hints)) return listOf()
 
@@ -35,16 +35,16 @@ class JvmLoggerFormatSymbolReferenceProvider : PsiSymbolReferenceProvider {
 }
 
 fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolReference>? {
-  val node = literalExpression.getParentOfType<UCallExpression>() ?: return null
-  val searcher = LOGGER_RESOLVE_TYPE_SEARCHERS.mapFirst(node) ?: return null
+  val uCallExpression = literalExpression.getParentOfType<UCallExpression>() ?: return null
+  val searcher = LOGGER_RESOLVE_TYPE_SEARCHERS.mapFirst(uCallExpression) ?: return null
 
-  val arguments = node.valueArguments
+  val arguments = uCallExpression.valueArguments
   if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return null
 
-  val log4jAsImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(node)
-  val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return null
+  val log4jAsImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
+  val loggerType = searcher.findType(uCallExpression, LoggerContext(log4jAsImplementationForSlf4j)) ?: return null
 
-  val placeholderContext = getPlaceholderContext(node, searcher, loggerType) ?: return null
+  val placeholderContext = getPlaceholderContext(uCallExpression, searcher, loggerType) ?: return null
   val parts = collectParts(placeholderContext.logStringArgument) ?: return null
 
   if (parts.size > 1) return null
@@ -61,10 +61,10 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
 
   val result = when (loggerType) {
     SLF4J -> {
-      zipped.mapNotNull { (range, parameter) ->
-        if (range == null) return@mapNotNull null
-        val alignedRange = mapTextRange(psiLiteralExpression, value, range.startOffset, range.endOffset) ?: return@mapNotNull null
-        val parameterPsi = parameter.sourcePsi ?: return@mapNotNull null
+      zipped.map { (range, parameter) ->
+        if (range == null) return null
+        val alignedRange = mapTextRange(psiLiteralExpression, value, range.startOffset, range.endOffset) ?: return null
+        val parameterPsi = parameter.sourcePsi ?: return null
         JvmLoggerArgumentSymbolReference(psiLiteralExpression, alignedRange, parameterPsi)
       }
     }
