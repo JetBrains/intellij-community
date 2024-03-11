@@ -39,7 +39,7 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     myWord = word;
   }
 
-  public SaveTo(String word, @NotNull DictionaryLayer layer) {
+  public SaveTo(String word, @Nullable DictionaryLayer layer) {
     myWord = word;
     myLayer = layer;
   }
