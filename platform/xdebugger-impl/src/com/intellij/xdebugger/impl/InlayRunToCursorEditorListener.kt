@@ -249,20 +249,6 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       actionsToShow = actions.take(numberOfActionsToShow)
     }
 
-    if (needShowOnGutter) {
-      val breakpointInsertionZoneRightOffset = if (EditorSettingsExternalizable.getInstance().isLineNumbersShown && UISettings.getInstance().showBreakpointsOverLineNumbers)
-        editorGutterComponentEx.lineNumberAreaOffset + editorGutterComponentEx.lineNumberAreaWidth
-      else
-        editorGutterComponentEx.whitespaceSeparatorOffset
-      if (editorGutterComponentEx.width + xPosition < breakpointInsertionZoneRightOffset) {
-        val fillingNumberOfActions = (editorGutterComponentEx.width + JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) - breakpointInsertionZoneRightOffset) / JBUI.scale(ACTION_BUTTON_SIZE)
-        if (fillingNumberOfActions <= 0) {
-          return
-        }
-        actionsToShow = actionsToShow.take(fillingNumberOfActions)
-      }
-    }
-
     val group = DefaultActionGroup(actionsToShow)
 
     val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
