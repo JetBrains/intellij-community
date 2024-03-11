@@ -9,10 +9,9 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.getParentOfType
-import org.jetbrains.uast.toUElementOfType
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
+import org.jetbrains.uast.*
 
 class JvmLoggerFormatSymbolReferenceProvider : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
@@ -40,45 +39,51 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
   val searcher = LOGGER_RESOLVE_TYPE_SEARCHERS.mapFirst(node) ?: return emptyList()
 
   val arguments = node.valueArguments
-
   if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return emptyList()
 
   val log4jAsImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(node)
   val loggerType = searcher.findType(node, LoggerContext(log4jAsImplementationForSlf4j)) ?: return emptyList()
 
   val placeholderCountContext = getPlaceholderCountContext(node, searcher, loggerType) ?: return emptyList()
-
   val parts = collectParts(placeholderCountContext.logStringArgument) ?: return emptyList()
 
   if (parts.size > 1) {
     return emptyList()
   }
-  val placeholderCountResult = solvePlaceholderCount(loggerType, placeholderCountContext.placeholderParameters.size, parts)
 
+  val placeholderCountResult = solvePlaceholderCount(loggerType, placeholderCountContext.placeholderParameters.size, parts)
   if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY || placeholderCountResult.placeholderRangesInPartHolderList.size != 1) {
     return emptyList()
   }
 
-
   val placeholderRanges = placeholderCountResult.placeholderRangesInPartHolderList.single()
-
   val parameterExpressions = placeholderCountContext.placeholderParameters
-
   val zipped = placeholderRanges.rangeList.zip(parameterExpressions)
 
   val literalExpressionPsi = literalExpression.sourcePsi ?: return emptyList()
+  val value = literalExpression.evaluateString() ?: return emptyList()
 
   val result = when (loggerType) {
     SLF4J -> {
-       zipped.mapNotNull {(range, parameter) ->
-         if (range == null) return@mapNotNull null
-         val parameterPsi = parameter.sourcePsi ?: return@mapNotNull null
-        JvmLoggerArgumentSymbolReference(literalExpressionPsi, range, parameterPsi)
+      zipped.mapNotNull { (range, parameter) ->
+        if (range == null) return@mapNotNull null
+        val alignedRange = mapTextRange(literalExpressionPsi, value, range.startOffset, range.endOffset) ?: return@mapNotNull null
+        val parameterPsi = parameter.sourcePsi ?: return@mapNotNull null
+        JvmLoggerArgumentSymbolReference(literalExpressionPsi, alignedRange, parameterPsi)
       }
     }
     else -> {
       emptyList()
     }
   }
+
   return result
+}
+
+private fun mapTextRange(expression: PsiElement, value: String, from: Int, to: Int): TextRange? {
+  val text = expression.text
+  if (text == null) return null
+
+  val offset = text.indexOf(value)
+  return TextRange(from + offset, to + offset)
 }
