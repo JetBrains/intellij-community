@@ -54,7 +54,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, connection, prepareTaskState)
     val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters,
                                                                 progressIndicator)
-    runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler,classpathInferer)
+    runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler, classpathInferer)
   }
 
   private fun runTargetProcess(targetedCommandLine: TargetedCommandLine,
@@ -166,31 +166,38 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     buf.append(text.substring(pathIndexEnd))
     return buf.toString()
   }
+
   private class GradleServerEventsListener(private val targetBuildParameters: TargetBuildParameters,
                                            private val connectionAddressResolver: (HostPort) -> HostPort,
                                            private val classpathInferer: GradleServerClasspathInferer,
                                            private val buildEventConsumer: BuildEventConsumer) {
+
     private lateinit var listenerTask: Future<*>
+
     fun start(hostName: String, port: Int, resultHandler: ResultHandler<Any?>) {
       check(!::listenerTask.isInitialized) { "Gradle server events listener has already been started" }
       listenerTask = ApplicationManager.getApplication().executeOnPooledThread {
         try {
-          val hostPort = connectionAddressResolver.invoke(HostPort(hostName, port))
-          doRun(targetBuildParameters, hostPort, resultHandler, buildEventConsumer)
+          doRun(hostName, port, resultHandler)
         }
         catch (t: Throwable) {
           resultHandler.onFailure(GradleConnectionException(t.message, t))
         }
       }
     }
-    private fun doRun(targetBuildParameters: TargetBuildParameters,
-                      hostName: HostPort,
-                      resultHandler: ResultHandler<Any?>,
-                      buildEventConsumer: BuildEventConsumer) {
-      val inetAddress = InetAddress.getByName(hostName.host)
-      val connectCompletion = connectRetrying(5000) { TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostName.port)) }
+
+    private fun createConnection(hostName: String, port: Int): RemoteConnection<Message> {
+      val hostPort = connectionAddressResolver.invoke(HostPort(hostName, port))
+      val inetAddress = InetAddress.getByName(hostPort.host)
+      val connectCompletion = connectRetrying(5000) { TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostPort.port)) }
       val serializer = DaemonMessageSerializer.create(BuildActionSerializer.create())
-      val connection = connectCompletion.create(Serializers.stateful(serializer))
+      return connectCompletion.create(Serializers.stateful(serializer))
+    }
+
+    private fun doRun(hostName: String, port: Int, resultHandler: ResultHandler<Any?>) {
+
+      val connection = createConnection(hostName, port)
+
       connection.dispatch(BuildEvent(targetBuildParameters))
       connection.flush()
 
