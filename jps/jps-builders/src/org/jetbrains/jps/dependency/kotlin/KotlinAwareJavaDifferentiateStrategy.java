@@ -130,6 +130,18 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         affectSubclasses(context, future, change.getNow().getReferenceID(), true);
       }
 
+      for (KmFunction removedFunction : metaDiff.functions().removed()) {
+        JvmMethod method = getJvmMethod(change.getNow(), JvmExtensionsKt.getSignature(removedFunction));
+        if (method != null && !method.isPrivate()) {
+          // a function in kotlin code was replaced with a property, but at the bytecode level corresponding methods are preserved
+          for (JvmClass subClass : filter(flat(map(future.allSubclasses(changedClass.getReferenceID()), id -> future.getNodes(id, JvmClass.class))), n -> isKotlinNode(n))) {
+            if (find(subClass.getMethods(), m -> !m.isPrivate() && method.isSameByJavaRules(m)) != null) {
+              affectNodeSources(context, subClass.getReferenceID(), "Kotlin function " + removedFunction.getName() + " has been removed. Affecting corresponding method in subclasses: ");
+            }
+          }
+        }
+      }
+
       for (Difference.Change<KmFunction, KotlinMeta.KmFunctionsDiff> funChange : metaDiff.functions().changed()) {
         KmFunction changedKmFunction = funChange.getPast();
         Visibility visibility = Attributes.getVisibility(changedKmFunction);
@@ -158,6 +170,20 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         if (funDiff.receiverParameterChanged()) {
           debug("Function's receiver parameter changed: ", changedKmFunction.getName());
           affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future);
+        }
+      }
+
+      for (KmProperty removedProp : metaDiff.properties().removed()) {
+        List<JvmMethodSignature> propertyAccessors = Arrays.asList(JvmExtensionsKt.getGetterSignature(removedProp), JvmExtensionsKt.getSetterSignature(removedProp));
+        List<JvmMethod> accessorMethods = collect(filter(map(propertyAccessors, acc -> acc != null? getJvmMethod(change.getNow(), acc) : null), m -> m != null && !m.isPrivate()), new SmartList<>());
+
+        if (!accessorMethods.isEmpty()) {
+          // property in kotlin code was replaced with a function(s), but at the bytecode level corresponding methods are preserved
+          for (JvmClass subClass : filter(flat(map(future.allSubclasses(changedClass.getReferenceID()), id -> future.getNodes(id, JvmClass.class))), n -> isKotlinNode(n))) {
+            if (find(subClass.getMethods(), m -> !m.isPrivate() && find(accessorMethods, m::isSameByJavaRules) != null) != null) {
+              affectNodeSources(context, subClass.getReferenceID(), "Kotlin property " + removedProp.getName() + " has been removed. Affecting corresponding accessor method(s) in subclasses: ");
+            }
+          }
         }
       }
 
