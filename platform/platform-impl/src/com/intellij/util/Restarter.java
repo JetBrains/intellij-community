@@ -171,11 +171,11 @@ public final class Restarter {
     
     var runProcessCommand = new ArrayList<String>();
     runProcessCommand.add("/usr/bin/open");
-    if (PlatformUtils.isJetBrainsClient()) {
-      /* JetBrains Client process may be started from the same bundle as the full IDE, so we need to force 'open' command to run a new 
-         process from that bundle instead of focusing on the existing application if it's running */
-      runProcessCommand.add("-n");
-    }
+
+    /* JetBrains Client process may be started from the same bundle as the full IDE, so we need to force 'open' command to run a new 
+       process from that bundle instead of focusing on the existing application if it's running */
+    runProcessCommand.add("-n");
+    
     runProcessCommand.add(appDir.toString());
     if (!args.isEmpty()) {
       runProcessCommand.add("--args");
