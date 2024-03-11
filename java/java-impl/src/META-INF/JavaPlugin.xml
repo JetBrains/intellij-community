@@ -757,8 +757,6 @@
       order="first" id="VmOptionsCompletionContributor"/>
     <applicationService serviceInterface="com.intellij.execution.vmOptions.VMOptionsService"
                         serviceImplementation="com.intellij.execution.vmOptions.VMOptionsServiceImpl"/>
-    <applicationService serviceInterface="com.intellij.execution.vmModules.VmModulesService"
-                        serviceImplementation="com.intellij.execution.vmModules.VmModulesServiceImpl"/>
 
     <runDashboardCustomizer implementation="com.intellij.execution.CommonJavaRunDashboardCustomizer" id="commonJavaCustomizer"/>
 
