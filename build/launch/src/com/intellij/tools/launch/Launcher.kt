@@ -2,6 +2,7 @@ package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
 import com.intellij.util.JavaModuleOptions
+import com.intellij.util.SystemProperties
 import com.intellij.util.system.OS
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -71,6 +72,12 @@ object Launcher {
       "-Dshared.indexes.download.auto.consent=true"
     )
 
+    if (options is DockerLauncherOptions && options.productMode != null) {
+      /* the module-based loader adds JARs from Maven repository (${user.home}/.m2/repository) to the classpath, so we need to ensure that 
+         the proper value of 'user.home' is passed to it (otherwise, it may point to /root) */
+      cmd.add("-Duser.home=${SystemProperties.getUserHome()}")
+    }
+    
     val straceValue = System.getProperty(STRACE_PROPERTY_KEY, "false")?.lowercase(Locale.ROOT) ?: "false"
     if (straceValue == "true" || straceValue == "1") {
       cmd.addAll(0,
