@@ -347,10 +347,14 @@ data class BuildOptions(
   val incrementalCompilationTimeout: Long = SystemProperties.getLongProperty("intellij.build.incremental.compilation.timeoutMin", Long.MAX_VALUE)
 
   /**
-   * Build number without product code (e.g. '162.500.10'); if `null`, `<baseline>.SNAPSHOT` will be used.
    * Use [BuildContext.buildNumber] to get the actual build number in build scripts.
    */
   var buildNumber: String? = System.getProperty("build.number")
+
+  /**
+   * Use [BuildContext.pluginBuildNumber] to get the actual build number in build scripts.
+   */
+  var pluginBuildNumber: String? = buildNumber
 
   /**
    * If `true`, the build is running as a unit test.

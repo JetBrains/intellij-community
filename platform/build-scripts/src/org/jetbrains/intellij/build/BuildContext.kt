@@ -34,9 +34,16 @@ interface BuildContext : CompilationContext {
   fun getExtraExecutablePattern(os: OsFamily): List<String>
 
   /**
-   * Build number without product code (e.g. '162.500.10')
+   * IDE build number without product code (e.g. '162.500.10').
+   * [org.jetbrains.intellij.build.impl.SnapshotBuildNumber.VALUE] by default.
    */
   val buildNumber: String
+
+  /**
+   * Build number used for all plugins being built.
+   * [buildNumber] by default.
+   */
+  val pluginBuildNumber: String get() = buildNumber
 
   /**
    * Build number with product code (e.g. 'IC-162.500.10')

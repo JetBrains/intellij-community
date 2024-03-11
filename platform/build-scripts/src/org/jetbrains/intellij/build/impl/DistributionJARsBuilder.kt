@@ -395,7 +395,7 @@ suspend fun buildNonBundledPlugins(
       val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
       val pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
       val pluginVersion = if (Files.exists(pluginXmlPath)) {
-        plugin.versionEvaluator.evaluate(pluginXmlPath, context.buildNumber, context)
+        plugin.versionEvaluator.evaluate(pluginXmlPath, context.pluginBuildNumber, context)
       }
       else {
         context.buildNumber
@@ -408,7 +408,7 @@ suspend fun buildNonBundledPlugins(
 
     archivePlugins(items = dirToJar, compress = compressPluginArchive, withBlockMap = compressPluginArchive, context = context)
 
-    val helpPlugin = buildHelpPlugin(pluginVersion = context.buildNumber, context = context)
+    val helpPlugin = buildHelpPlugin(pluginVersion = context.pluginBuildNumber, context = context)
     if (helpPlugin != null) {
       val spec = buildHelpPlugin(
         helpPlugin = helpPlugin,
