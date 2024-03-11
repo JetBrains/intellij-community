@@ -35,6 +35,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -180,13 +181,24 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   @Internal
   suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T {
     LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
-    blockingContext { // because we need correct modality
-      application.invokeAndWait {
+
+    suspend fun incrementCounter() {
+      blockingContext { // because we need correct modality
         // Because we need to avoid additional dispatch. UNDISPATCHED coroutine is not a solution, because
         // multiple UNDISPATCHED coroutines in the same (EDT) thread ends up in some strange state (as revealed by unit tests)
         incrementDumbCounter(trace = Throwable())
       }
     }
+
+    if (EDT.isCurrentThreadEdt()) {
+      incrementCounter()
+    }
+    else {
+      withContext(Dispatchers.EDT) {
+        incrementCounter()
+      }
+    }
+
     try {
       return block()
     }
