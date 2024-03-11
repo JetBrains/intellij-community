@@ -324,10 +324,6 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
       debug("Method: ", changedMethod.getName());
 
-      if (!processChangedMethod(context, clsChange, change, future, present)) {
-        return false;
-      }
-
       if (changedClass.isAnnotation()) {
         if (diff.valueRemoved())  {
           debug("Class is annotation, default value is removed => adding annotation query");
@@ -360,8 +356,20 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         debug("Return type, throws list or signature changed --- affecting method usages");
         affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
 
-        for (JvmNodeReferenceID subClass : unique(map(future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules), p -> p.getFirst().getReferenceID()))) {
-          affectNodeSources(context, subClass, "Affect source file of a class which overrides the changed method: ");
+        if (!changedMethod.isPrivate() && !changedMethod.isStatic()) {
+          for (JvmNodeReferenceID subClass : unique(map(future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules), p -> p.getFirst().getReferenceID()))) {
+            affectNodeSources(context, subClass, "Affect source file of a class which overrides the changed method: ");
+          }
+          for (JvmNodeReferenceID id : propagated) {
+            for (JvmClass subClass : future.getNodes(id, JvmClass.class)) {
+              Iterable<Pair<JvmClass, JvmMethod>> overriddenInSubclass = filter(future.getOverriddenMethods(subClass, changedMethod::isSameByJavaRules), p -> !Objects.equals(p.getFirst().getReferenceID(), id));
+              if (!isEmpty(overriddenInSubclass)) {
+                debug("Changed method is inherited in some subclass & overrides/implements some interface method which this subclass implements. ", subClass.getName());
+                affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ");
+                break;
+              }
+            }
+          }
         }
       }
       else if (diff.flagsChanged()) {
@@ -486,10 +494,6 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     for (JvmMethod removedMethod : removed) {
       debug("Method ", removedMethod.getName());
 
-      if (!processRemovedMethod(context, change, removedMethod, future, present)) {
-        return false;
-      }
-
       Iterable<JvmNodeReferenceID> propagated = lazy(() -> {
         return future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), removedMethod);
       });
@@ -532,8 +536,8 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
             if (allOverriddenAbstract || future.inheritsFromLibraryClass(subClass)) {
               debug("Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass ", subClass.getName());
               affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ");
+              break;
             }
-            break;
           }
         }
       }
