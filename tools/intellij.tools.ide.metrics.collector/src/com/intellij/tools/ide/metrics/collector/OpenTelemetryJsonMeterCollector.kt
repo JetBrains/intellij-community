@@ -22,7 +22,7 @@ open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: Metrics
   private fun getOpenTelemetryJsonReportFiles(logsDirPath: Path): List<Path> {
     val metricsFiles = logsDirPath.listDirectoryEntries("*.json").filter { it.name.startsWith("open-telemetry-meter") }
     require(metricsFiles.isNotEmpty()) {
-      "JSON files with metrics `open-telemetry-metrics.***.json` must exist in directory '$logsDirPath'"
+      "JSON files with metrics `open-telemetry-meters.***.json` must exist in directory '$logsDirPath'"
     }
 
     return metricsFiles

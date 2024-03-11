@@ -11,13 +11,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.common.InstrumentationScopeInfo
 import io.opentelemetry.sdk.metrics.data.*
-import io.opentelemetry.sdk.metrics.internal.data.ImmutableDoublePointData
-import io.opentelemetry.sdk.metrics.internal.data.ImmutableGaugeData
-import io.opentelemetry.sdk.metrics.internal.data.ImmutableHistogramData
-import io.opentelemetry.sdk.metrics.internal.data.ImmutableHistogramPointData
-import io.opentelemetry.sdk.metrics.internal.data.ImmutableLongPointData
-import io.opentelemetry.sdk.metrics.internal.data.ImmutableMetricData
-import io.opentelemetry.sdk.metrics.internal.data.ImmutableSumData
+import io.opentelemetry.sdk.metrics.internal.data.*
 import io.opentelemetry.sdk.resources.Resource
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -99,7 +93,7 @@ internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
 
         ImmutableMetricData.createDoubleGauge(emptyResource, emptyInstrumentationScope, name, description, unit, gaugeData)
       }
-      MetricDataType.SUMMARY -> TODO("Summary isn't supported yet")
+      MetricDataType.SUMMARY -> TODO("Summary deserialization isn't supported yet")
       MetricDataType.HISTOGRAM -> {
         val pointsData = points.map { dataPoint ->
           val startEpoch = getStartEpoch(dataPoint)

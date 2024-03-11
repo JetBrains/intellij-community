@@ -102,14 +102,16 @@ public class PerformanceTestInfo {
       // remove content of the previous tests from the idea.log
       MetricsPublisher.Companion.truncateTestLog();
 
-      var filesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) -> it.toString().contains("-metrics")).toList();
+      var filesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) ->
+                                                                          it.toString().contains("-metrics") ||
+                                                                          it.toString().contains("-meters")).toList();
       for (Path file : filesWithMetrics) {
         Files.deleteIfExists(file);
       }
     }
     catch (Exception e) {
       System.err.println(
-        "Error during removing Telemetry .csv files with meters before start of perf test. This might affect metrics value");
+        "Error during removing Telemetry files with meters before start of perf test. This might affect collected metrics value.");
       e.printStackTrace();
     }
   }

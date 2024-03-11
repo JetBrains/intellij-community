@@ -44,7 +44,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
     val testName = testInfo.testMethod.get().name
     val customSpanName = "custom span"
 
-    val histogram = meter.histogramBuilder("custom.example.of.histogram")
+    val histogram = meter.histogramBuilder("custom.histogram")
       .setDescription("Histogram example")
       .setUnit("ns")
       .ofLongs()
@@ -60,13 +60,14 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
 
       runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
     }
+      .attempts(5)
       .withTelemetryMeters(meterCollector)
       .start()
 
     SpanExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, testName), withWarmup = true, customSpanName)
     val meters = meterCollector.convertToCompleteMetricsCollector().collect(PathManager.getLogDir())
 
-    Assertions.assertTrue(meters.count { it.id.name == "custom.counter" } == 1, "Counter meter should be present in .csv metrics file")
+    Assertions.assertTrue(meters.count { it.id.name == "custom.counter" } == 1, "Counter meter should be present in .json meters file")
   }
 
   @Test

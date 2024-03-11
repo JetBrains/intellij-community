@@ -5,11 +5,11 @@ import io.opentelemetry.sdk.metrics.data.HistogramPointData
 import io.opentelemetry.sdk.metrics.data.MetricData
 
 class DoubleHistogramMeterToMetricConverter : MeterToMetricConverter {
-  private fun MetricData.getMetricName(additionalMetricName: String): String {
+  private fun MetricData.getMetricName(additionalMetricName: String, addUnitSuffix: Boolean = true): String {
     val unit: String = this.unit
 
     return this.name.removeSuffix(unit)
-      .plus(".$additionalMetricName.$unit")
+      .plus(if (addUnitSuffix) ".$additionalMetricName.$unit" else ".$additionalMetricName")
       .removeSuffix(".")
   }
 
@@ -21,8 +21,12 @@ class DoubleHistogramMeterToMetricConverter : MeterToMetricConverter {
     val maxMetric = PerformanceMetrics.newDuration(metricData.getMetricName("max"),
                                                    dataPoint.max.toLong())
 
+    val measurementsCountMetric = PerformanceMetrics.newDuration(metricData.getMetricName("measurements.count", addUnitSuffix = false),
+                                                                 dataPoint.count)
+
     val medianMetric = PerformanceMetrics.newDuration(metricData.getMetricName("median"),
                                                       metricData.histogramData.median().toLong())
+
     val stdevMetric = PerformanceMetrics.newDuration(metricData.getMetricName("standard.deviation"),
                                                      metricData.histogramData.standardDeviation().toLong())
 
@@ -38,6 +42,6 @@ class DoubleHistogramMeterToMetricConverter : MeterToMetricConverter {
     val rangeMetric = PerformanceMetrics.newDuration(metricData.getMetricName("range"),
                                                      metricData.histogramData.range().toLong())
 
-    return listOf(minMetric, maxMetric, medianMetric, stdevMetric, pctl95, pctl99, madMetric, rangeMetric)
+    return listOf(minMetric, maxMetric, measurementsCountMetric, medianMetric, stdevMetric, pctl95, pctl99, madMetric, rangeMetric)
   }
 }
