@@ -3,7 +3,7 @@ package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -20,12 +20,14 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.intellij.codeInsight.documentation.render.InlineDocumentationImplKt.inlineDocumentationItems;
+import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_SECTIONS;
 
 public final class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory, DumbAware {
   private static final Key<Long> MODIFICATION_STAMP = Key.create("doc.render.modification.stamp");
@@ -113,7 +115,12 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
   }
 
   private static String preProcess(String text) {
-    return DocumentationManager.addExternalLinksIcon(text);
+    var document = Jsoup.parse(text);
+    DocumentationHtmlUtil.addParagraphsIfNeeded$intellij_platform_lang_impl(
+      document, "table." + CLASS_SECTIONS + " td[valign=top]");
+    DocumentationHtmlUtil.addExternalLinkIcons$intellij_platform_lang_impl(document);
+    document.outputSettings().prettyPrint(false);
+    return document.html();
   }
 
   public static void applyItemsToRender(@NotNull Editor editor,

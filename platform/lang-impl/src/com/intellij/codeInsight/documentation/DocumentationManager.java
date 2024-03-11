@@ -84,10 +84,7 @@ import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Comment;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
 
 import javax.swing.*;
 import java.awt.*;
@@ -107,7 +104,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Pattern;
 
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 
@@ -1948,14 +1944,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       document.body().append(getBottom().child(links).toString());
     }
 
-    document.select("." + CLASS_DEFINITION + ", ." + CLASS_CONTENT).forEach(
+    document.select("." + CLASS_DEFINITION + ", ." + CLASS_CONTENT + ", ." + CLASS_SECTIONS).forEach(
       div -> {
         var nextSibling = div.nextElementSibling();
         if (nextSibling == null) {
           return;
         }
         if (nextSibling.hasClass(CLASS_DEFINITION)
-            || nextSibling.hasClass(CLASS_CONTENT)
+            || (nextSibling.hasClass(CLASS_CONTENT) && !div.hasClass(CLASS_SECTIONS))
             || (div.hasClass(CLASS_DEFINITION)
                 && (
                   nextSibling.hasClass(CLASS_SECTIONS)
@@ -1966,44 +1962,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
     );
-    document.select("." + CLASS_CONTENT).forEach(
-      div -> {
-        var child = div.firstChild();
-        var toWrap = new SmartList<Node>();
-        while (child != null && !isBlockElement(child)) {
-          if (!(child instanceof Comment)) {
-            toWrap.add(child);
-          }
-          child = child.nextSibling();
-        }
-        if (!toWrap.isEmpty()
-            && !ContainerUtil.all(toWrap, n -> n instanceof TextNode textNode && textNode.isBlank())
-        ) {
-          var para = new Element("p");
-          para.insertChildren(0, toWrap);
-          div.insertChildren(0, para);
-        }
-      }
-    );
-
+    DocumentationHtmlUtil.addParagraphsIfNeeded$intellij_platform_lang_impl(
+      document, "." + CLASS_CONTENT + ", table." + CLASS_SECTIONS + " td[valign=top]");
+    DocumentationHtmlUtil.addExternalLinkIcons$intellij_platform_lang_impl(document);
     document.outputSettings().prettyPrint(false);
-    return addExternalLinksIcon(document.html());
-  }
-
-  private static boolean isBlockElement(Node node) {
-    if (node instanceof Element element) {
-      var tagName = element.tagName();
-      return tagName.equals("p")
-             || tagName.equals("div")
-             || tagName.equals("pre")
-             || tagName.equals("table")
-             || tagName.equals("blockquote")
-             || tagName.equals("ol")
-             || tagName.equals("ul")
-             || tagName.equals("dl")
-             || (tagName.startsWith("h") && tagName.length() == 2 && Character.isDigit(tagName.charAt(1)));
-    }
-    return false;
+    return document.html();
   }
 
   private static @NlsSafe @NotNull String replaceIgnoreQuotesType(@NotNull String text,
@@ -2136,11 +2099,4 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return HtmlChunk.div().setClass(CLASS_BOTTOM);
   }
 
-  private static final Pattern EXTERNAL_LINK_PATTERN = Pattern.compile("(<a\\s*href=[\"']http[^>]*>)([^>]*)(</a>)");
-  private static final @NlsSafe String EXTERNAL_LINK_REPLACEMENT = "$1$2<icon src='AllIcons.Ide.External_link_arrow'>$3";
-
-  @Contract(pure = true)
-  public static String addExternalLinksIcon(String text) {
-    return EXTERNAL_LINK_PATTERN.matcher(text).replaceAll(EXTERNAL_LINK_REPLACEMENT);
-  }
 }

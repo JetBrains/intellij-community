@@ -7,11 +7,14 @@ import com.intellij.openapi.module.UnknownModuleType
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
+import org.jsoup.nodes.*
+import java.util.*
 import java.util.function.Function
 import javax.swing.Icon
 import javax.swing.text.html.StyleSheet
@@ -97,5 +100,50 @@ object DocumentationHtmlUtil {
         .$CLASS_SECTION { color: $sectionColor; padding-right: 4px; white-space: nowrap; }
       """.trimIndent()
     return StyleSheetUtil.loadStyleSheet(result)
+  }
+
+  @JvmStatic
+  internal fun addExternalLinkIcons(document: Document) {
+    document.select("a").forEach { a ->
+      if (a.attribute("href")?.value?.startsWith("http") == true) {
+        Element("icon").attr("src", "AllIcons.Ide.External_link_arrow")
+          .appendTo(a)
+      }
+    }
+  }
+
+  @JvmStatic
+  internal fun addParagraphsIfNeeded(document: Document, selector: String) {
+    document.select(selector).forEach { element ->
+      var child = element.firstChild()
+      val toWrap = SmartList<Node>()
+      while (child != null && !isBlockElement(child)) {
+        if (child !is Comment) {
+          toWrap.add(child);
+        }
+        child = child.nextSibling();
+      }
+      if (!toWrap.isEmpty() && !toWrap.all { n -> n is TextNode && n.isBlank }) {
+        val para = Element("p");
+        para.insertChildren(0, toWrap);
+        element.insertChildren(0, para);
+      }
+    }
+  }
+
+  private fun isBlockElement(node: Node): Boolean {
+    if (node is Element) {
+      val tagName = node.tagName().lowercase(Locale.US)
+      return tagName == "p"
+             || tagName == "div"
+             || tagName == "pre"
+             || tagName == "table"
+             || tagName == "blockquote"
+             || tagName == "ol"
+             || tagName == "ul"
+             || tagName == "dl"
+             || (tagName.startsWith("h") && tagName.length == 2 && Character.isDigit(tagName[1]))
+    }
+    return false
   }
 }
