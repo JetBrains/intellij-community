@@ -10,10 +10,9 @@ import com.intellij.internal.statistic.local.LanguageUsageStatistics
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.ml.embeddings.utils.convertNameToNaturalLanguage
-import com.intellij.platform.ml.embeddings.utils.generateEmbedding
+import com.intellij.platform.ml.embeddings.utils.generateEmbeddingBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiNamedElement
@@ -81,7 +80,7 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
     }
     else {
       val elementName = getElementName(item)
-      val elementEmbedding = elementName?.let { runBlockingCancellable { generateEmbedding(convertNameToNaturalLanguage(it)) } }
+      val elementEmbedding = elementName?.let { generateEmbeddingBlocking(convertNameToNaturalLanguage(it)) }
       val queryEmbedding = getQueryEmbedding(searchQuery, split = true)
       if (elementEmbedding != null && queryEmbedding != null) {
         result.add(SIMILARITY_SCORE.with(roundDouble(elementEmbedding.cosine(queryEmbedding).toDouble())))

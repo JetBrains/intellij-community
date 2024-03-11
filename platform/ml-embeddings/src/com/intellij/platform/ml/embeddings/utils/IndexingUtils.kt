@@ -2,6 +2,7 @@
 package com.intellij.platform.ml.embeddings.utils
 
 import ai.grazie.emb.FloatTextEmbedding
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import kotlin.math.sqrt
 
@@ -50,6 +51,10 @@ fun convertNameToNaturalLanguage(pattern: String): String {
     pattern.split(".").dropLast(1).joinToString(".")
   } else pattern
   return splitIdentifierIntoTokens(meaningfulName).joinToString(" ")
+}
+
+fun generateEmbeddingBlocking(indexableRepresentation: String, downloadArtifacts: Boolean = false): FloatTextEmbedding? {
+  return runBlockingMaybeCancellable { generateEmbedding(indexableRepresentation, downloadArtifacts) }
 }
 
 suspend fun generateEmbedding(indexableRepresentation: String, downloadArtifacts: Boolean = false): FloatTextEmbedding? {

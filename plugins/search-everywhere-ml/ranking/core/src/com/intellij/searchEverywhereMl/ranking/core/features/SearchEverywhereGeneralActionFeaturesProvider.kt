@@ -11,9 +11,8 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
-import com.intellij.platform.ml.embeddings.utils.generateEmbedding
+import com.intellij.platform.ml.embeddings.utils.generateEmbeddingBlocking
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ENABLED
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_HIGH_PRIORITY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.ITEM_TYPE
@@ -103,7 +102,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
       }
     }
     if (embedding == null && actionText != null) {
-      embedding = runBlockingCancellable { generateEmbedding(actionText) }
+      embedding = generateEmbeddingBlocking(actionText)
     }
     return embedding
   }
