@@ -125,7 +125,7 @@ class CombinedDiffViewer(
       return
     }
 
-    val titles = viewer.request.contentTitles.filter { it.isNotBlank() }
+    val titles = viewer.request.contentTitles.filter { it != null && it.isNotBlank() }
     val newDiffInfo = when (titles.size) {
       0 -> CombinedDiffUIState.DiffInfoState.Empty
       1 -> CombinedDiffUIState.DiffInfoState.SingleTitle(titles[0])
