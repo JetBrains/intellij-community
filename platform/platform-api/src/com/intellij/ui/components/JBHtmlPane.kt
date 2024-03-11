@@ -20,6 +20,7 @@ import com.intellij.util.ui.html.cssPadding
 import com.intellij.util.ui.html.width
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -115,6 +116,7 @@ import javax.swing.text.html.StyleSheet
  *     ```
  *
  */
+@Experimental
 @Suppress("LeakingThis")
 open class JBHtmlPane(
   private val myStyleConfiguration: JBHtmlPaneStyleConfiguration,

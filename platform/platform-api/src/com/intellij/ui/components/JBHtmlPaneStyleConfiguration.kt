@@ -5,8 +5,10 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import org.jetbrains.annotations.ApiStatus.Experimental
 import java.util.*
 
+@Experimental
 data class JBHtmlPaneStyleConfiguration(
   val colorScheme: EditorColorsScheme = EditorColorsManager.getInstance().globalScheme,
   val editorInlineContext: Boolean = false,

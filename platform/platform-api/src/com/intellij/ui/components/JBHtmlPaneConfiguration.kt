@@ -3,6 +3,7 @@ package com.intellij.ui.components
 
 import com.intellij.util.ui.CSSFontResolver
 import com.intellij.util.ui.ExtendableHTMLViewFactory
+import org.jetbrains.annotations.ApiStatus.Experimental
 import java.awt.Color
 import java.awt.Image
 import java.awt.event.ActionListener
@@ -12,6 +13,7 @@ import javax.swing.Icon
 import javax.swing.KeyStroke
 import javax.swing.text.html.StyleSheet
 
+@Experimental
 data class JBHtmlPaneConfiguration(
   val keyboardActions: Map<KeyStroke, ActionListener> = emptyMap(),
   val imageResolverFactory: (JBHtmlPane) -> Dictionary<URL, Image>? = { null },
