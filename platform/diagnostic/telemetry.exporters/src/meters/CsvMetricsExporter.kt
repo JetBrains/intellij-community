@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.diagnostic.telemetry.exporters.RollingFileSupplier
-import com.intellij.platform.diagnostic.telemetry.exporters.initRollingFileSupplier
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.metrics.InstrumentType
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality
@@ -58,7 +57,7 @@ class CsvMetricsExporter(private val writeToFileSupplier: RollingFileSupplier) :
   }
 
   init {
-    initRollingFileSupplier(writeToFileSupplier, OpenTelemetryUtils.csvHeadersLines()).also {
+    writeToFileSupplier.init(OpenTelemetryUtils.csvHeadersLines()).also {
       copyHtmlPlotterToOutputDir(it.parent)
     }
   }

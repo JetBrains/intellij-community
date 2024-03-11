@@ -6,7 +6,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.exporters.RollingFileSupplier
-import com.intellij.platform.diagnostic.telemetry.exporters.initRollingFileSupplier
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.models.MetricDataMixIn
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.models.PointDataMixIn
 import io.opentelemetry.sdk.common.CompletableResultCode
@@ -30,7 +29,7 @@ private val LOG: Logger
 class TelemetryMeterJsonExporter(private val writeToFileSupplier: RollingFileSupplier) : MetricExporter {
 
   init {
-    initRollingFileSupplier(writeToFileSupplier)
+    writeToFileSupplier.init()
   }
 
   override fun getAggregationTemporality(instrumentType: InstrumentType): AggregationTemporality {
@@ -43,7 +42,7 @@ class TelemetryMeterJsonExporter(private val writeToFileSupplier: RollingFileSup
     }
 
     val result = CompletableResultCode()
-    val writeToFile = writeToFileSupplier.get()
+    val writeToFile = writeToFileSupplier.get(forceToGetNewPath = true)
 
     try {
       jacksonObjectMapper()

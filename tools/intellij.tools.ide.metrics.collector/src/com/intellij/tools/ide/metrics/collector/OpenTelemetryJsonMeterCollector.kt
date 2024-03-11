@@ -20,14 +20,13 @@ import kotlin.io.path.name
 open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: MetricsSelectionStrategy,
                                            val meterFilter: (MetricData) -> Boolean) : TelemetryMetricsCollector {
   private fun getOpenTelemetryJsonReportFiles(logsDirPath: Path): List<Path> {
-    val metricsFiles = logsDirPath.listDirectoryEntries("*.json").filter { it.name.startsWith("open-telemetry-metrics") }
+    val metricsFiles = logsDirPath.listDirectoryEntries("*.json").filter { it.name.startsWith("open-telemetry-meter") }
     require(metricsFiles.isNotEmpty()) {
       "JSON files with metrics `open-telemetry-metrics.***.json` must exist in directory '$logsDirPath'"
     }
 
     return metricsFiles
   }
-
 
   override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> {
     val telemetryMetrics: List<MetricData> = getOpenTelemetryJsonReportFiles(logsDirPath).flatMap {

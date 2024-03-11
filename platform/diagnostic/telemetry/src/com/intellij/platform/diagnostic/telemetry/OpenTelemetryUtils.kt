@@ -9,7 +9,6 @@ import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.data.MetricDataType
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.io.path.nameWithoutExtension
 
 @ApiStatus.Internal
 object OpenTelemetryUtils {
@@ -50,20 +49,19 @@ object OpenTelemetryUtils {
   }
 
   /** @return base path for metrics reporting, or null, if metrics reporting is configured to be off */
-  fun metricsCsvReportingPath(): Path? {
-    val metricsReportingPath = System.getProperty("idea.diagnostic.opentelemetry.metrics.file", "open-telemetry-metrics.csv")
-    if (metricsReportingPath.isBlank()) {
+  private fun resolveMetricsReportingPath(rawPath: String): Path? {
+    if (rawPath.isBlank()) {
       return null
     }
     // if a metrics path is relative -> resolve it against IDEA logDir:
-    return PathManager.getLogDir().resolve(metricsReportingPath).toAbsolutePath()
+    return PathManager.getLogDir().resolve(rawPath).toAbsolutePath()
   }
 
-  /** @return base path for metrics reporting, or null, if metrics reporting is configured to be off */
-  fun metricsJsonReportingPath(): Path? {
-    val path = metricsCsvReportingPath()
-    return path?.parent?.resolve("${path.nameWithoutExtension}.json")
-  }
+  fun metricsCsvReportingPath(): Path? =
+    resolveMetricsReportingPath(System.getProperty("idea.diagnostic.opentelemetry.metrics.file", "open-telemetry-metrics.csv"))
+
+  fun metricsJsonReportingPath(): Path? =
+    resolveMetricsReportingPath(System.getProperty("idea.diagnostic.opentelemetry.meters.file.json", "open-telemetry-meters.json"))
 
   fun setupFileLimiterForMetrics(metricsReportingBasePath: Path): FileSetLimiter {
     val suffixDateFormat = System.getProperty("idea.diagnostic.opentelemetry.metrics.suffix-date-format", "yyyy-MM-dd-HH-mm-ss")

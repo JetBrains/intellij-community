@@ -80,7 +80,7 @@ class OpenTelemetryConfigurator(@JvmField internal val sdkBuilder: OpenTelemetry
           metrics = listOf(
             FilteredMetricsExporter(
               underlyingExporter = SynchronizedClearableLazy {
-                CsvMetricsExporter(writeToFileSupplier = RollingFileSupplier(it, OpenTelemetryUtils.csvHeadersLines()))
+                CsvMetricsExporter(RollingFileSupplier(it, OpenTelemetryUtils.csvHeadersLines()))
               },
               predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
             ),
@@ -95,7 +95,7 @@ class OpenTelemetryConfigurator(@JvmField internal val sdkBuilder: OpenTelemetry
         metrics = listOf(
           FilteredMetricsExporter(
             underlyingExporter = SynchronizedClearableLazy {
-              TelemetryMeterJsonExporter(writeToFileSupplier = RollingFileSupplier(it))
+              TelemetryMeterJsonExporter(RollingFileSupplier(basePath = it, maxFilesToKeep = 30))
             },
             predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
           ),

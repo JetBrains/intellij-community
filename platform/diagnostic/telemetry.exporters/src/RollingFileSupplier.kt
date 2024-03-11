@@ -12,11 +12,17 @@ import java.nio.file.StandardOpenOption
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class RollingFileSupplier(private val basePath: Path, private val initialDataToWrite: List<String> = listOf()) : Supplier<Path> {
+class RollingFileSupplier(
+  private val basePath: Path,
+  private val initialDataToWrite: List<String> = listOf(),
+  val maxFilesToKeep: Int = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.metrics.max-files-to-keep", 14)
+) : Supplier<Path> {
   private val maxSizeBeforeRoll: Long = 10 * 1024 * 1024
   private var currentPath: Path? = null
 
-  override fun get(): Path {
+  override fun get(): Path = get(forceToGetNewPath = false)
+
+  fun get(forceToGetNewPath: Boolean = false): Path {
     val generateNewPath = currentPath?.let {
       try {
         Files.exists(it) && Files.size(it) > maxSizeBeforeRoll
@@ -25,12 +31,32 @@ class RollingFileSupplier(private val basePath: Path, private val initialDataToW
         false
       }
     } ?: true
-    if (generateNewPath) {
+
+    if (forceToGetNewPath || generateNewPath) {
       currentPath = generateFileForMetrics(basePath)
       Files.write(currentPath, initialDataToWrite, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
     }
+
     return currentPath!!
   }
+
+  internal fun init(initialDataToWrite: List<String> = listOf()): Path {
+    val pathToWrite = get()
+    if (!Files.exists(pathToWrite)) {
+      val parentDir = pathToWrite.parent
+      if (!Files.isDirectory(parentDir)) {
+        //RC: createDirectories() _does_ throw FileAlreadyExistsException if path is a _symlink_ to a directory, not a directory
+        // itself (JDK-8130464). Check !isDirectory() above should work around that case.
+        Files.createDirectories(parentDir)
+      }
+    }
+    if (!Files.exists(pathToWrite) || Files.size(pathToWrite) == 0L) {
+      Files.write(pathToWrite, initialDataToWrite, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+    }
+
+    return pathToWrite
+  }
+
 
   /**
    * Creates new file for reporting OTel metrics.
@@ -47,28 +73,9 @@ class RollingFileSupplier(private val basePath: Path, private val initialDataToW
    *
    * If metricsReportingBasePath is relative -> method resolves it against IDEA logs folder to make absolute.
    */
-  fun generateFileForMetrics(metricsReportingBasePath: Path): Path {
-    val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.metrics.max-files-to-keep", 14)
-
+  private fun generateFileForMetrics(metricsReportingBasePath: Path): Path {
     val fileLimiterForMetrics = OpenTelemetryUtils.setupFileLimiterForMetrics(metricsReportingBasePath)
     return fileLimiterForMetrics.removeOldFilesBut(maxFilesToKeep, FileSetLimiter.DELETE_ASYNC)
       .createNewFile()
   }
-}
-
-internal fun initRollingFileSupplier(writeToFileSupplier: RollingFileSupplier, initialDataToWrite: List<String> = listOf()): Path {
-  val pathToWrite = writeToFileSupplier.get()
-  if (!Files.exists(pathToWrite)) {
-    val parentDir = pathToWrite.parent
-    if (!Files.isDirectory(parentDir)) {
-      //RC: createDirectories() _does_ throw FileAlreadyExistsException if path is a _symlink_ to a directory, not a directory
-      // itself (JDK-8130464). Check !isDirectory() above should work around that case.
-      Files.createDirectories(parentDir)
-    }
-  }
-  if (!Files.exists(pathToWrite) || Files.size(pathToWrite) == 0L) {
-    Files.write(pathToWrite, initialDataToWrite, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
-  }
-
-  return pathToWrite
 }
