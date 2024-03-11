@@ -1,0 +1,121 @@
+public class SwitchOnStatic {
+   public static void main(String[] args) {
+      staticStringSelector();// 3
+      staticIntSelector();// 4
+      staticIntSelectorNotInlined();// 5
+   }// 6
+
+   public static void staticStringSelector() {
+      switch (getStaticStringSelector()) {// 9
+         case "1" -> System.out.println("a");// 11
+         case "2" -> System.out.println("b");// 14
+      }
+
+   }// 17
+
+   public static String getStaticStringSelector() {
+      return "1";// 20
+   }
+
+   public static void staticIntSelector() {
+      switch (getStaticIntSelector()) {// 24
+         case 1 -> System.out.println("a");// 26
+         case 2 -> System.out.println("b");// 29
+      }
+
+   }// 32
+
+   public static int getStaticIntSelector() {
+      return 1;// 35
+   }
+
+   public static void staticIntSelectorNotInlined() {
+      int cc = getStaticIntSelector();// 39
+      switch (cc) {// 40
+         case 1 -> System.out.println("a");// 42
+         case 2 -> System.out.println("b");// 45
+      }
+
+   }// 48
+}
+
+class 'SwitchOnStatic' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      2
+      3      3
+      6      4
+      9      5
+   }
+
+   method 'staticStringSelector ()V' {
+      0      8
+      3e      8
+      58      9
+      5b      9
+      5d      9
+      63      10
+      66      10
+      68      10
+      6b      13
+   }
+
+   method 'getStaticStringSelector ()Ljava/lang/String;' {
+      0      16
+      2      16
+   }
+
+   method 'staticIntSelector ()V' {
+      0      20
+      3      20
+      1c      21
+      1f      21
+      21      21
+      27      22
+      2a      22
+      2c      22
+      2f      25
+   }
+
+   method 'getStaticIntSelector ()I' {
+      0      28
+      1      28
+   }
+
+   method 'staticIntSelectorNotInlined ()V' {
+      0      32
+      3      32
+      5      33
+      20      34
+      23      34
+      25      34
+      2b      35
+      2e      35
+      30      35
+      33      38
+   }
+}
+
+Lines mapping:
+3 <-> 3
+4 <-> 4
+5 <-> 5
+6 <-> 6
+9 <-> 9
+11 <-> 10
+14 <-> 11
+17 <-> 14
+20 <-> 17
+24 <-> 21
+26 <-> 22
+29 <-> 23
+32 <-> 26
+35 <-> 29
+39 <-> 33
+40 <-> 34
+42 <-> 35
+45 <-> 36
+48 <-> 39
+Not mapped:
+12
+27
+43
