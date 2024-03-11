@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
 import com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.*
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.util.SystemProperties
@@ -13,15 +14,51 @@ import com.sun.jna.platform.win32.Shell32Util
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 internal class WindowsInstaller(scope: CoroutineScope, project: Project) : UltimateInstaller(scope, project) {
   override val postfix = ".exe"
 
   override fun installUltimate(downloadResult: DownloadResult): InstallationResult? {
-    val path = downloadResult.downloadPath
+    val downloadPath = downloadResult.downloadPath
     val installationPath = provideInstallationPath(downloadResult) ?: return null
 
+    val suggestedIde = downloadResult.suggestedIde
+    val pathInfo = providePath(installationPath, suggestedIde) ?: return null
+    if (pathInfo.alreadyInstalled) {
+      return InstallationResult(pathInfo.path, suggestedIde)
+    }
+    
+    return installSilently(downloadPath, installationPath, downloadResult)
+  }
+  
+  
+  private fun providePath(installationPath: Path, suggestedIde: SuggestedIde) : PathInfo? {
+    var path = installationPath
+    var counter = 0
+    while (installationPath.exists() && (counter++ <= 10)) {
+      if (findExePath(path, suggestedIde) != null) return PathInfo(installationPath, true)
+      
+      val fileName = path.fileName
+      path = installationPath.parent.resolve("$fileName $counter")
+    }
+    
+    return null
+  }
+  
+  private fun findExePath(path: Path, suggestedIde: SuggestedIde) : String?  {
+    val exeName = if (suggestedIde.isPycharmProfessional()) "pycharm64" else "idea64"
+    val exePath = path.resolve("bin").resolve("$exeName.exe")
+    
+    return if (exePath.exists()) exePath.pathString else null
+  }
+
+  private fun installSilently(
+    path: Path,
+    installationPath: Path,
+    downloadResult: DownloadResult
+  ): InstallationResult? {
     val command = GeneralCommandLine("cmd.exe", "/c").withParameters("$path /S /D=$installationPath")
 
     val result = runCommand(command)
@@ -43,8 +80,7 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
 
   override fun startUltimate(installationResult: InstallationResult): Boolean {
     val appPath = installationResult.appPath
-    val exeName = if (installationResult.suggestedIde.isPycharmProfessional()) "pycharm64" else "idea64"
-    val exePath = appPath.resolve("bin").resolve("$exeName.exe").pathString
+    val exePath = findExePath(appPath, installationResult.suggestedIde) ?: return false
 
     val basePath = project.basePath
     val parameters = mutableListOf("", exePath).applyIf(basePath != null) {
@@ -52,19 +88,25 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
       this
     }
     parameters.add(trialParameter)
-    
+
     val command = GeneralCommandLine("cmd", "/c", "start").withParameters(parameters)
 
     return runCommand(command)
   }
-
+  
   override fun getUltimateInstallationDirectory(): Path? {
     return try {
       Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_UserProgramFiles)?.toNioPathOrNull()
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
       val localAppData = Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_LocalAppData).toNioPathOrNull()
                          ?: SystemProperties.getUserHome().toNioPathOrNull()?.resolve("AppData/Local")
       localAppData?.resolve("Programs")
     }
   }
 }
+
+private data class PathInfo(
+  val path: Path,
+  val alreadyInstalled: Boolean,
+)
