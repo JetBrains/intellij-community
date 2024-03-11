@@ -10,6 +10,7 @@ import com.intellij.util.io.computeDetached
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
 import kotlin.time.Duration.Companion.seconds
@@ -86,9 +87,19 @@ suspend fun connectToRunningIjent(ijentName: String, platform: IjentExecFileProv
  *
  * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
  * [bindToScope] may be useful for terminating the IJent process earlier.
+ *
+ * [pathMapper] is a workaround function that allows to upload IJent to the remote target explicitly.
+ * The argument passed to the function is the path to the corresponding IJent binary on the local machine.
+ * The function must return a path on the remote machine.
+ * If the function returns null, the binary is transferred to the server directly via the same shell process,
+ * which turned out to be unreliable unfortunately.
  */
 // TODO Change string paths to IjentPath.Absolute.
-suspend fun bootstrapOverShellSession(ijentName: String, shellProcess: Process): Pair<String, IjentApi> {
+suspend fun bootstrapOverShellSession(
+  ijentName: String,
+  shellProcess: Process,
+  pathMapper: suspend (Path) -> String?,
+): Pair<String, IjentApi> {
   val remoteIjentPath: String
   val ijentApi = IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
     val mediator = IjentSessionMediator.create(shellProcess, ijentId)
@@ -97,7 +108,7 @@ suspend fun bootstrapOverShellSession(ijentName: String, shellProcess: Process):
       try {
         mediator.attachStderrOnError {
           mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ANY
-          doBootstrapOverShellSession(shellProcess)
+          doBootstrapOverShellSession(shellProcess, pathMapper)
         }
       }
       catch (err: Throwable) {
@@ -129,6 +140,7 @@ suspend fun bootstrapOverShellSession(ijentName: String, shellProcess: Process):
 
 private suspend fun doBootstrapOverShellSession(
   shellProcess: Process,
+  pathMapper: suspend (Path) -> String?,
 ): Pair<String, IjentExecFileProvider.SupportedPlatform> = withContext(Dispatchers.IO) {
   // The boundary is for skipping various banners, greeting messages, PS1, etc.
   val boundary = (0..31).joinToString("") { "abcdefghijklmnopqrstuvwxyz0123456789".random().toString() }
@@ -163,22 +175,34 @@ private suspend fun doBootstrapOverShellSession(
   // TODO Don't upload a new binary every time if the binary is already on the server. However, hashes must be checked.
   val ijentBinarySize = ijentBinaryOnLocalDisk.fileSize()
 
-  val script =
+  val ijentBinaryPreparedOnTarget = pathMapper(ijentBinaryOnLocalDisk)
+
+  val script = run {
+    val ijentPathUploadScript =
+      pathMapper(ijentBinaryOnLocalDisk)
+        ?.let { "cp ${posixQuote(it)} \$BINARY" }
+      ?: run {
+        "LC_ALL=C head -c $ijentBinarySize > \$BINARY"
+      }
+
     """BINARY="$(mktemp -d)/ijent" """ +
-    """; LC_ALL=C head -c $ijentBinarySize > "${"$"}BINARY" """ +
+    """; $ijentPathUploadScript """ +
     """; chmod 500 "${"$"}BINARY" """ +
     """; echo "${"$"}BINARY" """ +
     "\n"
+  }
 
   LOG.trace { "Executing script inside a shell: ${script.trimEnd()}" }
   shellProcess.outputStream.write(script.toByteArray())
   yield()
   shellProcess.outputStream.flush()
 
-  LOG.debug { "Sending the IJent binary for $targetPlatform" }
-  ijentBinaryOnLocalDisk.inputStream().copyToAsync(shellProcess.outputStream)
-  shellProcess.outputStream.flush()
-  LOG.debug { "Sent the IJent binary for $targetPlatform" }
+  if (ijentBinaryPreparedOnTarget == null) {
+    LOG.debug { "Writing $ijentBinarySize bytes of IJent binary into the stream" }
+    ijentBinaryOnLocalDisk.inputStream().copyToAsync(shellProcess.outputStream)
+    shellProcess.outputStream.flush()
+    LOG.debug { "Sent the IJent binary for $targetPlatform" }
+  }
 
   val remotePathToBinary = readLineWithoutBuffering(shellProcess)
 
