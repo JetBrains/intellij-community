@@ -3,6 +3,9 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.command.impl.UndoManagerImpl
+import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -67,6 +70,9 @@ class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSe
   fun reset() {
     commandText = ""
     editor.caretModel.moveToOffset(document.textLength)
+    // reset Undo/Redo actions queue to not allow undoing the prompt update
+    val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
+    undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
   }
 
   private fun updatePrompt(renderingInfo: PromptRenderingInfo) {
