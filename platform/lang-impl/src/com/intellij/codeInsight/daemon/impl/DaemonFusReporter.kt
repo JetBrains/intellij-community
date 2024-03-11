@@ -7,6 +7,7 @@ import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.StartUpPerformanceService
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.annotation.HighlightSeverity
@@ -22,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
@@ -113,7 +115,8 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
     val warningCount = errorCounts?.getOrNull(warningIndex) ?: -1
     val lines = document.lineCount.roundToOneSignificantDigit()
     val segmentElapsedTime = System.currentTimeMillis() - sessionData.daemonStartTime
-    val fileType = document.let { FileDocumentManager.getInstance().getFile(it)?.fileType }
+    val virtualFile = FileDocumentManager.getInstance().getFile(document)
+    val fileType = virtualFile?.fileType
     val highlightingCompleted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(fileEditor, project)
 
     if (highlightingCompleted && !initialEntireFileHighlightingReported) {
@@ -139,6 +142,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
       EventFields.FileType with fileType,
       DaemonFusCollector.HIGHLIGHTING_COMPLETED with highlightingCompleted,
       DaemonFusCollector.DUMB_MODE with sessionData.isDumbMode,
+      DaemonFusCollector.FILE_ID with (virtualFile as? VirtualFileWithId)?.id
     )
 
     if (highlightingCompleted) {
@@ -157,7 +161,7 @@ private fun Int.roundToOneSignificantDigit(): Int {
 
 private object DaemonFusCollector : CounterUsagesCollector() {
   @JvmField
-  val GROUP: EventLogGroup = EventLogGroup("daemon", 9)
+  val GROUP: EventLogGroup = EventLogGroup("daemon", 10)
   @JvmField
   val ERRORS: IntEventField = EventFields.Int("errors")
   @JvmField
@@ -184,6 +188,17 @@ private object DaemonFusCollector : CounterUsagesCollector() {
   val FULL_DURATION: LongEventField = LongEventField("full_duration_since_started_ms")
 
   @JvmField
+  val FILE_ID: PrimitiveEventField<Int?> = object : PrimitiveEventField<Int?>() {
+    override val name: String = "file_id"
+    override val validationRule: List<String>
+      get() = listOf("{regexp#integer}")
+
+    override fun addData(fuData: FeatureUsageData, value: Int?) {
+      value?.let { fuData.addData(name, it) }
+    }
+  }
+
+  @JvmField
   val FINISHED: VarargEventId = GROUP.registerVarargEvent("finished",
                                                           SEGMENT_DURATION,
                                                           FULL_DURATION,
@@ -192,7 +207,8 @@ private object DaemonFusCollector : CounterUsagesCollector() {
                                                           LINES,
                                                           EventFields.FileType,
                                                           HIGHLIGHTING_COMPLETED,
-                                                          DUMB_MODE)
+                                                          DUMB_MODE,
+                                                          FILE_ID)
 
   override fun getGroup(): EventLogGroup = GROUP
 }
