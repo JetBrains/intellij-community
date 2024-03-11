@@ -130,7 +130,6 @@ internal fun TelemetryMeterCollector.convertToCompleteMetricsCollector(): OpenTe
     MetricsAggregation.MINIMUM -> MetricsSelectionStrategy.MINIMUM
     MetricsAggregation.MAXIMUM -> MetricsSelectionStrategy.MAXIMUM
     MetricsAggregation.SUM -> MetricsSelectionStrategy.SUM
-    MetricsAggregation.AVERAGE -> MetricsSelectionStrategy.AVERAGE
   }
 
   return OpenTelemetryJsonMeterCollector(metricsSelectionStrategy) { meter -> this.metersFilter(meter.name) }

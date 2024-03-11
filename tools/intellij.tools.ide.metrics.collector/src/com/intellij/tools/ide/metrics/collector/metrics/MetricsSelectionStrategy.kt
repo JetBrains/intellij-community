@@ -1,13 +1,11 @@
 package com.intellij.tools.ide.metrics.collector.metrics
 
+import com.intellij.tools.ide.metrics.collector.meters.*
 import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.sdk.common.InstrumentationScopeInfo
-import io.opentelemetry.sdk.metrics.data.HistogramPointData
 import io.opentelemetry.sdk.metrics.data.LongPointData
 import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.data.MetricDataType
-import io.opentelemetry.sdk.metrics.internal.data.*
-import io.opentelemetry.sdk.resources.Resource
+import io.opentelemetry.sdk.metrics.internal.data.ImmutableLongPointData
 
 enum class MetricsSelectionStrategy {
   /** Collecyt the first by date metric reported in OpenTelemetry */
@@ -23,10 +21,7 @@ enum class MetricsSelectionStrategy {
   MAXIMUM,
 
   /** Sum up metrics. Useful to get cumulative metric from counters (that reports diff in telemetry). */
-  SUM,
-
-  /** Calculate average of the reported metrics. */
-  AVERAGE;
+  SUM;
 
   fun selectMetric(metrics: List<LongPointData>): LongPointData {
     return when (this) {
@@ -38,54 +33,19 @@ enum class MetricsSelectionStrategy {
                                            LATEST.selectMetric(metrics).epochNanos,
                                            Attributes.empty(),
                                            metrics.sumOf { it.value })
-      AVERAGE -> ImmutableLongPointData.create(EARLIEST.selectMetric(metrics).startEpochNanos,
-                                               LATEST.selectMetric(metrics).epochNanos,
-                                               Attributes.empty(),
-                                               SUM.selectMetric(metrics).value / metrics.size)
     }
   }
 
-  fun selectMetric(metrics: List<MetricData>): MetricData {
-    return when (this) {
-      EARLIEST -> metrics.minBy { it.data.points.minBy { point -> point.startEpochNanos }.startEpochNanos }
-      LATEST -> metrics.maxBy { it.data.points.maxBy { point -> point.startEpochNanos }.startEpochNanos }
-      MINIMUM -> TODO("MINIMUM operation isn't implemented yet")
-      MAXIMUM -> TODO("MAXIMUM operation isn't implemented yet")
-      SUM -> {
-        when (metrics.first().type) {
-          MetricDataType.LONG_SUM -> {
-            val sum: LongPointData = SUM.selectMetric(metrics.flatMap { it.longSumData.points })
-            val sumData = ImmutableSumData.create(metrics.first().longSumData.isMonotonic,
-                                                  metrics.first().longSumData.aggregationTemporality,
-                                                  listOf(sum))
-
-            ImmutableMetricData.createLongSum(Resource.empty(), InstrumentationScopeInfo.empty(),
-                                              metrics.first().name, metrics.first().description,
-                                              metrics.first().unit, sumData)
-          }
-          MetricDataType.HISTOGRAM -> {
-            val points: List<HistogramPointData> = metrics.flatMap { it.histogramData.points }
-            val mergedCounts: List<Long> = (0..<points.first().counts.size).map { index ->
-              points.sumOf { it.counts[index] }
-            }
-
-            val merged = ImmutableHistogramPointData.create(points.minBy { it.startEpochNanos }.startEpochNanos,
-                                                            points.maxBy { it.epochNanos }.epochNanos,
-                                                            Attributes.empty(), points.sumOf { it.sum },
-                                                            points.any { it.hasMin() }, points.minBy { it.min }.min,
-                                                            points.any { it.hasMax() }, points.maxBy { it.max }.max,
-                                                            points.first().boundaries, mergedCounts
-            )
-            val sumData = ImmutableHistogramData.create(metrics.first().histogramData.aggregationTemporality, listOf(merged))
-
-            ImmutableMetricData.createDoubleHistogram(Resource.empty(), InstrumentationScopeInfo.empty(),
-                                                      metrics.first().name, metrics.first().description,
-                                                      metrics.first().unit, sumData)
-          }
-          else -> TODO("SUM operation isn't supported yet for the type ${metrics.first().type}")
-        }
-      }
-      AVERAGE -> TODO("AVERAGE operation isn't implemented yet")
+  fun selectMetric(metrics: List<MetricData>, metricType: MetricDataType): MetricData {
+    val selector = when (metricType) {
+      MetricDataType.LONG_SUM -> LongCounterMeterSelector()
+      MetricDataType.DOUBLE_SUM -> DoubleCounterMeterSelector()
+      MetricDataType.LONG_GAUGE -> LongGaugeMeterSelector()
+      MetricDataType.DOUBLE_GAUGE -> DoubleGaugeMeterSelector()
+      MetricDataType.HISTOGRAM -> DoubleHistogramMeterSelector()
+      else -> TODO("$metricType meter selector isn't supported yet")
     }
+
+    return selector.selectMetric(this, metrics)
   }
 }

@@ -10,6 +10,5 @@ enum class MetricsAggregation {
 
   MINIMUM,
   MAXIMUM,
-  SUM,
-  AVERAGE;
+  SUM;
 }
