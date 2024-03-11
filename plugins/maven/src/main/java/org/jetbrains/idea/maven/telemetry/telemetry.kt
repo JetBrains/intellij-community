@@ -19,11 +19,11 @@ import java.net.http.HttpResponse
 
 internal val tracer by lazy { TelemetryManager.getSimpleTracer(Scope(MavenUtil.MAVEN_NAME)) }
 
-data class TelemetryIds(val traceId: String?, val spanId: String?)
+internal data class TelemetryIds(@JvmField val traceId: String?, @JvmField val spanId: String?)
 
-private val emptyIds = TelemetryIds(null, null)
+private val emptyIds = TelemetryIds(traceId = null, spanId = null)
 
-suspend fun getCurrentTelemetryIds(): TelemetryIds {
+internal suspend fun getCurrentTelemetryIds(): TelemetryIds {
   val activity = CoroutineTracerShim.coroutineTracer.getTraceActivity()
   if (null == activity) return emptyIds
   if (activity !is ActivityImpl) {
@@ -59,7 +59,7 @@ private fun getOpenTelemetryAddress(): URI? {
   return URI.create("$property/v1/traces")
 }
 
-fun scheduleExportTelemetryTrace(project: Project, binaryTrace: ByteArray) {
+internal fun scheduleExportTelemetryTrace(project: Project, binaryTrace: ByteArray) {
   if (binaryTrace.isEmpty()) return
 
   val telemetryHost = getOpenTelemetryAddress()

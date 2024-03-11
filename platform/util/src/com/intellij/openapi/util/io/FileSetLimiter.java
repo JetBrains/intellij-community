@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -210,7 +211,7 @@ public final class FileSetLimiter {
           return createdPath;
         }
         catch (FileAlreadyExistsException e) {
-          //retry with new candidate
+          // retry with a new candidate
         }
       }
       throw new IOException("Can't create new file like " + basePath + ".X in X=[0.." + maxTries + ") attempts");
@@ -243,21 +244,25 @@ public final class FileSetLimiter {
 
     removeOlderFiles();
 
-    final String fileName = fileNameFormat.format(new Object[]{clock.millis()});
-    final Path newFile = directory.resolve(fileName);
-    return newFile;
+    String fileName = fileNameFormat.format(new Object[]{clock.millis()});
+    return directory.resolve(fileName);
   }
 
   public List<Path> listExistentFiles() throws IOException {
-    if (!Files.exists(directory) || !Files.isDirectory(directory)) {
+    if (!Files.isDirectory(directory)) {
       return Collections.emptyList();
     }
+
     // find files matching fileNameFormat, extract dates of creation, and remove the oldest files
-    try (final Stream<Path> children = Files.list(directory)) {
-      return children.map(this::tryParsePath)
-        .filter(pair -> pair.second != null)
-        .map(pair -> pair.first)
-        .collect(toList());
+    try (DirectoryStream<Path> children = Files.newDirectoryStream(directory)) {
+      List<Path> list = new ArrayList<>();
+      for (Path child : children) {
+        Pair<Path, Date> pair = tryParsePath(child);
+        if (pair.second != null) {
+          list.add(pair.first);
+        }
+      }
+      return list;
     }
   }
 
@@ -323,5 +328,4 @@ public final class FileSetLimiter {
       this.subMillisecondId = subMillisecondId;
     }
   }
-
 }

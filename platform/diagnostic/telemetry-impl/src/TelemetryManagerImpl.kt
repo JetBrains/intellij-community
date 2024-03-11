@@ -3,7 +3,6 @@ package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.PluginException
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
@@ -59,10 +58,13 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
 
     val configurator: OpenTelemetryConfigurator = try {
-      createOpenTelemetryConfigurator(appInfo = ApplicationInfoImpl.getShadowInstance())
+      val appInfo = ApplicationInfoImpl.getShadowInstance()
+      createOpenTelemetryConfigurator(serviceName = ApplicationNamesInfo.getInstance().fullProductName,
+                                      serviceVersion = appInfo.build.asStringWithoutProductCode(),
+                                      serviceNamespace = appInfo.build.productCode)
     }
     catch (e: Throwable) {
-      createOpenTelemetryConfiguratorForPerfTestWithoutApplication()
+      createOpenTelemetryConfigurator(serviceName = "", serviceVersion = "", serviceNamespace = "")
     }
 
     aggregatedMetricExporter = configurator.aggregatedMetricExporter
@@ -248,10 +250,6 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
   return spanExporters
 }
 
-private fun createOpenTelemetryConfiguratorForPerfTestWithoutApplication(): OpenTelemetryConfigurator {
-  return createOpenTelemetryConfigurator("", "", "")
-}
-
 private fun createOpenTelemetryConfigurator(serviceName: String,
                                             serviceVersion: String,
                                             serviceNamespace: String): OpenTelemetryConfigurator {
@@ -270,8 +268,3 @@ private fun createOpenTelemetryConfigurator(serviceName: String,
   )
 }
 
-private fun createOpenTelemetryConfigurator(appInfo: ApplicationInfo): OpenTelemetryConfigurator {
-  return createOpenTelemetryConfigurator(serviceName = ApplicationNamesInfo.getInstance().fullProductName,
-                                         serviceVersion = appInfo.build.asStringWithoutProductCode(),
-                                         serviceNamespace = appInfo.build.productCode)
-}
