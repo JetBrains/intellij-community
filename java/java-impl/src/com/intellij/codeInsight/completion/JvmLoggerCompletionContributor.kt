@@ -28,7 +28,7 @@ class JvmLoggerCompletionContributor : CompletionContributor() {
                val availableLoggers = JvmLogger.findSuitableLoggers(module, true)
 
                val element = parameters.originalPosition ?: return
-               val allPlaces = JvmLogger.getAllNestedClasses(element).toList()
+               val allPlaces = JvmLogger.getAllNamedContainingClasses(element).toList()
                val possiblePlaces = JvmLogger.getPossiblePlacesForLogger(element, availableLoggers)
                if (allPlaces.size != possiblePlaces.size) return
 

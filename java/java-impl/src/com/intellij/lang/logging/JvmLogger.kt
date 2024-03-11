@@ -130,7 +130,7 @@ interface JvmLogger {
      * @param element the [PsiElement] from which to retrieve the nested classes
      * @return [Sequence] of [PsiClass] representing the nested classes
      */
-    fun getAllNestedClasses(element: PsiElement): Sequence<PsiClass> = element.parentsOfType(PsiClass::class.java, true)
+    fun getAllNamedContainingClasses(element: PsiElement): Sequence<PsiClass> = element.parentsOfType(PsiClass::class.java, true)
       .filter { clazz -> clazz !is PsiAnonymousClass && clazz !is PsiImplicitClass }
 
     /**
@@ -139,8 +139,9 @@ interface JvmLogger {
      * @param element the PsiElement indicating the current position for inserting a logger
      * @param loggerList the list of JvmLogger objects representing the available loggers
      * @return a list of PsiClass objects representing the possible places for inserting a logger, in reversed order
+     * @see isOnlyOnStartup
      */
-    fun getPossiblePlacesForLogger(element: PsiElement, loggerList: List<JvmLogger>): List<PsiClass> = getAllNestedClasses(element)
+    fun getPossiblePlacesForLogger(element: PsiElement, loggerList: List<JvmLogger>): List<PsiClass> = getAllNamedContainingClasses(element)
       .filter { clazz -> isPossibleToPlaceLogger(clazz, loggerList) }
       .toList()
       .reversed()
