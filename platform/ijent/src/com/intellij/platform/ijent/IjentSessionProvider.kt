@@ -155,7 +155,6 @@ private suspend fun doBootstrapOverShellSession(
 
     do {
       val line = readLineWithoutBuffering(shellProcess)
-      LOG.trace { "Received greeting line from stdout: $line" }
     }
     while (line != boundary)
 
@@ -192,7 +191,7 @@ private suspend fun doBootstrapOverShellSession(
     "\n"
   }
 
-  LOG.trace { "Executing script inside a shell: ${script.trimEnd()}" }
+  LOG.debug { "Executing script inside a shell: ${script.trimEnd()}" }
   shellProcess.outputStream.write(script.toByteArray())
   yield()
   shellProcess.outputStream.flush()
@@ -212,7 +211,7 @@ private suspend fun doBootstrapOverShellSession(
     """; export SHELL="${'$'}(getent passwd "${'$'}(whoami)" | cut -d: -f7)" """ +
     """; exec "${'$'}SHELL" -c ${posixQuote(joinedCmd)}""" +
     "\n"
-  LOG.trace { "Executing IJent inside a shell: ${commandLineArgs.trimEnd()}" }
+  LOG.debug { "Executing IJent inside a shell: ${commandLineArgs.trimEnd()}" }
 
   shellProcess.outputStream.write(commandLineArgs.toByteArray())
   shellProcess.outputStream.flush()
