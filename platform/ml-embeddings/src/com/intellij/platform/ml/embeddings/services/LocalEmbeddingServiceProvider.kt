@@ -70,7 +70,7 @@ class LocalEmbeddingServiceProvider {
     fun getInstance(): LocalEmbeddingServiceProvider = service()
 
     val testDataPath: Path by lazy {
-      File(PathManager.getHomePath()).resolve("community/platform/ml-embeddings/tests/testResources").toPath()
+      File(PathManager.getCommunityHomePath()).resolve("platform/ml-embeddings/tests/testResources").toPath()
     }
   }
 }
