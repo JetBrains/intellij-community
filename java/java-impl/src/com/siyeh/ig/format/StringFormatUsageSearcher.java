@@ -2,8 +2,6 @@
 package com.siyeh.ig.format;
 
 import com.intellij.find.usages.api.*;
-import com.intellij.lang.logging.resolve.JvmLoggerArgumentSymbol;
-import com.intellij.lang.logging.resolve.JvmLoggerFormatSymbolReferenceProviderKt;
 import com.intellij.model.Pointer;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;

@@ -2517,6 +2517,9 @@
       hostLanguage="UAST"
       implementationClass="com.intellij.lang.logging.resolve.JvmLoggerFormatSymbolReferenceProvider"
       targetClass="com.intellij.lang.logging.resolve.JvmLoggerArgumentSymbol"/>
+
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.intellij.lang.logging.resolve.JvmLoggerUsageSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
