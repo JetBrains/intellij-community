@@ -6,10 +6,7 @@ import com.intellij.model.Pointer;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.*;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,37 +40,5 @@ public final class StringFormatUsageSearcher implements UsageSearcher {
       .<Usage>map(PsiUsage::textUsage)
       .append(List.of(new DefUsage(arg)))
       .toList();
-  }
-
-
-  private static class DefUsage implements PsiUsage {
-    private final @NotNull PsiExpression myArg;
-
-    private DefUsage(@NotNull PsiExpression arg) {
-      myArg = arg;
-    }
-
-    @NotNull
-    @Override
-    public Pointer<? extends PsiUsage> createPointer() {
-      return Pointer.hardPointer(this);
-    }
-
-    @NotNull
-    @Override
-    public PsiFile getFile() {
-      return myArg.getContainingFile();
-    }
-
-    @NotNull
-    @Override
-    public TextRange getRange() {
-      return myArg.getTextRange();
-    }
-
-    @Override
-    public boolean getDeclaration() {
-      return true;
-    }
   }
 }
