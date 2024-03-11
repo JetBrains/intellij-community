@@ -5,8 +5,11 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandlerBase
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtProperty
@@ -21,14 +24,19 @@ class KotlinGotoValVarTypeHandler: GotoDeclarationHandlerBase() {
             val property = sourceElement?.parent as? KtProperty ?: return null
             return analyze(property) {
                 val type = property.getReturnKtType()
-                val psi = when(type) {
-                    is KtTypeParameterType -> type.symbol.psi
-                    is KtNonErrorClassType -> type.classSymbol.psi
-                    else -> null
-                }
+                val psi = type.toPsi()
                 psi
             }
         }
         return null
     }
+
+    context(KtAnalysisSession)
+    private fun KtType.toPsi(): PsiElement? =
+        when (this) {
+            is KtFlexibleType -> lowerBound.toPsi()
+            is KtTypeParameterType -> symbol.psi
+            is KtNonErrorClassType -> classSymbol.psi
+            else -> expandedClassSymbol?.psi
+        }
 }

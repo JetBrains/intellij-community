@@ -73,6 +73,11 @@ public class FirGotoDeclarationTestGenerated extends AbstractFirGotoDeclarationT
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/labeledThisToMemberExtension.test");
     }
 
+    @TestMetadata("platformType.test")
+    public void testPlatformType() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/platformType.test");
+    }
+
     @TestMetadata("thisExtensionFunction.test")
     public void testThisExtensionFunction() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/thisExtensionFunction.test");

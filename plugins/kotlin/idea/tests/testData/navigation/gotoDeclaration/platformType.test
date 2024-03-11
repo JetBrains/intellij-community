@@ -1,0 +1,6 @@
+// FILE: before.kt
+// IGNORE_K1
+va<caret>l threadName /*: String! */ = Thread.currentThread().name
+
+// FILE: after.kt
+public class <caret>String : Comparable<String>, CharSequence {

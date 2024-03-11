@@ -73,6 +73,11 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
         runTest("testData/navigation/gotoDeclaration/labeledThisToMemberExtension.test");
     }
 
+    @TestMetadata("platformType.test")
+    public void testPlatformType() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/platformType.test");
+    }
+
     @TestMetadata("thisExtensionFunction.test")
     public void testThisExtensionFunction() throws Exception {
         runTest("testData/navigation/gotoDeclaration/thisExtensionFunction.test");
