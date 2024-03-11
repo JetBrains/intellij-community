@@ -316,7 +316,8 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       }
     }
 
-    if (editorGutterComponentEx.findFoldingAnchorAt(editorGutterComponentEx.foldingAreaOffset + 1, lineY + 1) != null) {
+    val foldingAnchor = editorGutterComponentEx.findFoldingAnchorAt(editorGutterComponentEx.foldingAreaOffset + 1, lineY + 1)
+    if (foldingAnchor != null && foldingAnchor.document.getLineNumber(foldingAnchor.startOffset) == lineNumber) {
       return true
     }
     return false
