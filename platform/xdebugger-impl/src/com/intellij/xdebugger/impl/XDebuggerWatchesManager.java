@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -104,7 +104,12 @@ public final class XDebuggerWatchesManager {
     }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      inlineWatches.values().stream().flatMap(set -> set.stream()).forEach(InlineWatch::setMarker);
+      List<InlineWatch> allInlines = inlineWatches.values().stream().flatMap(set -> set.stream()).toList();
+      for (InlineWatch i : allInlines) {
+        if (!i.setMarker()) {
+          inlineWatches.get(i.getPosition().getFile().getUrl()).remove(i);
+        }
+      }
     }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
