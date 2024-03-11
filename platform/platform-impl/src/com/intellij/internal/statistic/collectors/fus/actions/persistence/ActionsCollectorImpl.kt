@@ -150,8 +150,12 @@ class ActionsCollectorImpl : ActionsCollector() {
                customDataProvider: (MutableList<EventPair<*>>) -> Unit) {
       if (action == null) return
 
-      val isDumb = project?.let { DumbService.isDumb(project) }
-      val isLookupActive = project?.getServiceIfCreated(LookupManager::class.java)
+      val isDumb = project
+        ?.takeIf { !project.isDisposed }
+        ?.let { DumbService.isDumb(project) }
+      val isLookupActive = project
+        ?.takeIf { !project.isDisposed }
+        ?.getServiceIfCreated(LookupManager::class.java)
         ?.let { event?.dataContext?.getData(CommonDataKeys.HOST_EDITOR) }
         ?.let { LookupManager.getActiveLookup(it) } != null
 
