@@ -143,7 +143,7 @@ public class SpellcheckingStrategy {
 
     final SpellCheckerSettings settings = SpellCheckerSettings.getInstance(element.getProject());
     if (settings.isUseSingleDictionaryToSave()) {
-      result.add(new SaveTo(typo, Objects.requireNonNull(DictionaryLayersProvider.getLayer(element.getProject(), settings.getDictionaryToSave()))));
+      result.add(new SaveTo(typo, DictionaryLayersProvider.getLayer(element.getProject(), settings.getDictionaryToSave())));
       return result.toArray(LocalQuickFix.EMPTY_ARRAY);
     }
 
