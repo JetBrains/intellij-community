@@ -344,7 +344,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       evaluationCallback.errorOccurred(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"));
     }
     else {
-      evaluator.evaluate(expression, evaluationCallback, null);
+      evaluator.evaluate(expression, evaluationCallback, mySourcePosition);
     }
   }
 
