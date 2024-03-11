@@ -61,31 +61,28 @@ internal object ITNProxy {
   private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
   private val TEMPLATE: Map<String, String?> by lazy {
-    val template = LinkedHashMap<String, String?>()
-    template["protocol.version"] = "1.1"
-    template["os.name"] = SystemInfo.OS_NAME
-    template["java.version"] = SystemInfo.JAVA_VERSION
-    template["java.vm.vendor"] = SystemInfo.JAVA_VENDOR
     val appInfo = ApplicationInfoEx.getInstanceEx()
     val namesInfo = ApplicationNamesInfo.getInstance()
     val build = appInfo.build
-    var buildNumberWithAllDetails = build.asString()
-    if (buildNumberWithAllDetails.startsWith(build.productCode + "-")) {
-      buildNumberWithAllDetails = buildNumberWithAllDetails.substring(build.productCode.length + 1)
-    }
-    template["app.name"] = namesInfo.productName
-    template["app.name.full"] = namesInfo.fullProductName
-    template["app.name.version"] = appInfo.versionName
-    template["app.eap"] = java.lang.Boolean.toString(appInfo.isEAP)
-    template["app.internal"] = java.lang.Boolean.toString(ApplicationManager.getApplication().isInternal)
-    template["app.build"] = appInfo.apiVersion
-    template["app.version.major"] = appInfo.majorVersion
-    template["app.version.minor"] = appInfo.minorVersion
-    template["app.build.date"] = (appInfo.buildTime.toInstant().toEpochMilli()).toString()
-    template["app.build.date.release"] = appInfo.majorReleaseBuildDate.time.time.toString()
-    template["app.product.code"] = build.productCode
-    template["app.build.number"] = buildNumberWithAllDetails
-    template
+
+    mapOf(
+      "protocol.version" to "1.1",
+      "os.name" to SystemInfo.OS_NAME,
+      "java.version" to SystemInfo.JAVA_VERSION,
+      "java.vm.vendor" to SystemInfo.JAVA_VENDOR,
+      "app.name" to namesInfo.productName,
+      "app.name.full" to namesInfo.fullProductName,
+      "app.name.version" to appInfo.versionName,
+      "app.eap" to "${appInfo.isEAP}",
+      "app.internal" to "${ApplicationManager.getApplication().isInternal}",
+      "app.build" to appInfo.apiVersion,
+      "app.version.major" to appInfo.majorVersion,
+      "app.version.minor" to appInfo.minorVersion,
+      "app.build.date" to "${appInfo.buildTime.toInstant().toEpochMilli()}",
+      "app.build.date.release" to "${appInfo.majorReleaseBuildDate.time.time}",
+      "app.product.code" to build.productCode,
+      "app.build.number" to build.asString().substringAfter("${build.productCode}-")
+    )
   }
 
   suspend fun fetchDevelopers(): List<Developer> {
