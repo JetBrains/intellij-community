@@ -15,10 +15,12 @@ import com.intellij.openapi.editor.markup.AnalyzerStatus
 import com.intellij.openapi.editor.markup.StatusItem
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -35,7 +37,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
 
   private val actionList = mutableListOf<InspectionAction>()
   private var base: InspectionsBaseAction? = null
-  private var myInspectionsSettingAction: InspectionsSettingAction = InspectionsSettingAction()
+  private var myInspectionsSettingAction: InspectionsSettingAction = InspectionsSettingAction(analyzerGetter)
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     if (!Registry.`is`("ide.redesigned.inspector", false) || PowerSaveMode.isEnabled()) return emptyArray()
@@ -90,7 +92,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
     return arr.toTypedArray()
   }
 
-  private class InspectionsSettingAction() : DumbAwareAction(), CustomComponentAction {
+  private class InspectionsSettingAction(val analyzerGetter: () -> AnalyzerStatus) : DumbAwareAction(), CustomComponentAction {
 
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.BGT
@@ -114,7 +116,13 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      TODO("Not yet implemented")
+      val project = e.project ?: return
+
+      val comp: JComponent =  e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: return
+      val panel = InspectionsSettingContent(analyzerGetter, project).panel
+
+      JBPopupFactory.getInstance()
+        .createComponentPopupBuilder(panel, panel).createPopup().show(RelativePoint.getSouthWestOf(comp))
     }
 
     override fun update(e: AnActionEvent) {
@@ -156,7 +164,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
         }
 
         override fun getInsets(): Insets = JBUI.emptyInsets()
-        override fun getMargins(): Insets = JBUI.insets(0, 3, 0, 3)
+        override fun getMargins(): Insets = JBUI.insets(0, 3)
 
         override fun updateToolTipText() {
           if (Registry.`is`("ide.helptooltip.enabled")) {

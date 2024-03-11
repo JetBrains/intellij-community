@@ -383,6 +383,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
   private void doUpdateTrafficLightVisibility() {
     if (trafficLightVisible) {
+      if(Registry.is("ide.redesigned.inspector", false)) {
+        statusToolbar.updateActionsAsync();
+      }
+
       if (showToolbar && myEditor.myView != null) {
         statusToolbar.setTargetComponent(myEditor.getContentComponent());
         VisualPosition pos = myEditor.getCaretModel().getPrimaryCaret().getVisualPosition();
