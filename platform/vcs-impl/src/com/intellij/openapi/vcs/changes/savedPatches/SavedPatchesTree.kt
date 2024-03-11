@@ -1,21 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
-import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi.Companion.SAVED_PATCHES_UI_PLACE
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.ui.SimpleTextAttributes
@@ -24,9 +17,7 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.render.RenderingHelper
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.speedSearch.SpeedSearchUtil
-import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.FontUtil
-import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -56,19 +47,6 @@ class SavedPatchesTree(project: Project,
     isScrollToSelection = false
     setEmptyText(VcsBundle.message("saved.patch.empty.text"))
     speedSearch = MySpeedSearch.installOn(this)
-
-    doubleClickHandler = Processor { e ->
-      if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
-
-      val diffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON)
-
-      val dataContext = DataManager.getInstance().getDataContext(this)
-      val event = AnActionEvent.createFromAnAction(diffAction, e, SAVED_PATCHES_UI_PLACE, dataContext)
-      val isEnabled = ActionUtil.lastUpdateAndCheckDumb(diffAction, event, true)
-      if (isEnabled) performActionDumbAwareWithCallbacks(diffAction, event)
-
-      isEnabled
-    }
 
     savedPatchesProviders.forEach { provider ->
       provider.subscribeToPatchesListChanges(parentDisposable) {
