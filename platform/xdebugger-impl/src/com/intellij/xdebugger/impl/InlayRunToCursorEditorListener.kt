@@ -251,7 +251,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val group = DefaultActionGroup(actionsToShow)
 
-    if (needShowOnGutter && isGutterComponentOverlapped(editorGutterComponentEx, xPosition, lineY)) {
+    if (needShowOnGutter && isGutterComponentOverlapped(editor, editorGutterComponentEx, xPosition, lineY, lineNumber, actionsToShow.size)) {
       return
     }
 
@@ -303,10 +303,17 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     clientHintManager.showEditorHint(hint, editor, hintInfo, position, flags, 0, true) { }
   }
 
-  private fun isGutterComponentOverlapped(editorGutterComponentEx: EditorGutterComponentEx, xPosition: Int, lineY: Int): Boolean {
-    val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
-    if (gutterRenderer != null) {
-      return true
+  private fun isGutterComponentOverlapped(editor: Editor, editorGutterComponentEx: EditorGutterComponentEx, xPosition: Int, lineY: Int, lineNumber: Int, actionsToShowNumber: Int): Boolean {
+    val visualLine = editor.logicalToVisualPosition(LogicalPosition(lineNumber, 0)).line
+    val renderersAndRectangles = editorGutterComponentEx.getGutterRenderersAndRectangles(visualLine)
+
+    val xStart = editorGutterComponentEx.width + xPosition
+    val toolbarWidth = JBUI.scale(ACTION_BUTTON_SIZE) * actionsToShowNumber
+    val toolbarRectangle = Rectangle(xStart, lineY, toolbarWidth, JBUI.scale(ACTION_BUTTON_SIZE))
+    for (rectangle: Rectangle in renderersAndRectangles.map { it.second }) {
+      if (rectangle.intersects(toolbarRectangle)) {
+        return true
+      }
     }
 
     if (editorGutterComponentEx.findFoldingAnchorAt(editorGutterComponentEx.foldingAreaOffset + 1, lineY + 1) != null) {
