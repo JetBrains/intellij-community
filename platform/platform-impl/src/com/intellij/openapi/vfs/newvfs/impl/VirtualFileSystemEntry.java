@@ -67,7 +67,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VfsDataFlags.CHILDREN_CASE_SENSITIVE;
 
   @MagicConstant(flagsFromClass = VfsDataFlags.class)
-  @interface Flags { }
+  @interface Flags {
+  }
 
   private volatile @NotNull("except `NULL_VIRTUAL_FILE`") VfsData.Segment mySegment;
   private volatile VirtualDirectoryImpl myParent;
@@ -95,7 +96,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myId = -42;
   }
 
-  @NotNull VfsData getVfsData() {
+  @NotNull
+  VfsData getVfsData() {
     VfsData data = mySegment.owningVfsData;
     PersistentFSImpl owningPersistentFS = data.owningPersistentFS();
     if (!owningPersistentFS.isOwnData(data)) {
@@ -110,7 +112,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return getVfsData().owningPersistentFS();
   }
 
-  @NotNull VfsData.Segment getSegment() {
+  @NotNull
+  VfsData.Segment getSegment() {
     VfsData.Segment segment = mySegment;
     if (segment.replacement != null) {
       segment = updateSegmentAndParent(segment);
@@ -433,13 +436,19 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     VirtualDirectoryImpl newParent = (VirtualDirectoryImpl)_newParent;
     VirtualDirectoryImpl oldParent = getParent();
 
-    //TODO RC: both oldParent.myData & newParent.myData locks must be acquired here -- to prevent
-    //         FileAlreadyCreatedException in VirtualDirectoryImpl.createChildImpl()/VfsData$Segment.initFileData()
-    oldParent.removeChild(this);
+    //Both oldParent.myData & newParent.myData locks must be acquired here -- to prevent
+    // FileAlreadyCreatedException in VirtualDirectoryImpl.createChildImpl()/VfsData$Segment.initFileData()
+    // if called concurrently
+    VirtualDirectoryImpl.runUnderAllLocksAcquired(
+      () -> {
+        oldParent.removeChild(this);
 
-    getSegment().changeParent(myId, newParent);
-    newParent.addChild(this);
-
+        getSegment().changeParent(myId, newParent);
+        newParent.addChild(this);
+        return (Void)null;
+      },
+      oldParent, newParent
+    );
     updateLinkStatus(newParent);
 
     owningPersistentFS().incStructuralModificationCount();

@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -81,7 +82,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                                      boolean ensureCanonicalName,
                                                      @NotNull NewVirtualFileSystem fs) {
     owningPersistentFS().incrementFindChildByNameCount();
-    
+
     updateCaseSensitivityIfUnknown(name);
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, fs, isCaseSensitive());
 
@@ -247,7 +248,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @ApiStatus.Internal
-  public @NotNull VirtualFileSystemEntry createChild(int fileId, int nameId, @PersistentFS.Attributes int attributes, boolean isEmptyDirectory) {
+  public @NotNull VirtualFileSystemEntry createChild(int fileId,
+                                                     int nameId,
+                                                     @PersistentFS.Attributes int attributes,
+                                                     boolean isEmptyDirectory) {
     synchronized (myData) {
       return createChildImpl(fileId, nameId, attributes, isEmptyDirectory);
     }
@@ -630,7 +634,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       int[] oldIds = myData.childrenIds;
       IntList mergedIds = new IntArrayList(oldIds.length + added.size());
       FSRecordsImpl vfsPeer = owningPersistentFS().peer();
-      
+
       List<ChildInfo> existingChildren = new AbstractList<>() {
         @Override
         public ChildInfo get(int index) {
@@ -876,6 +880,28 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return isChildrenCaseSensitivityKnown() ?
            isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE
                                             : FileAttributes.CaseSensitivity.UNKNOWN;
+  }
+
+  static <T, E extends Throwable> T runUnderAllLocksAcquired(@NotNull ThrowableComputable<T, E> lambda,
+                                                             @NotNull VirtualDirectoryImpl dir1,
+                                                             @NotNull VirtualDirectoryImpl dir2) throws E {
+    Object lock1 = dir1.myData;
+    Object lock2 = dir2.myData;
+    //order locks acquisition by their identity hash code:
+    if (System.identityHashCode(lock1) <= System.identityHashCode(lock2)) {
+      synchronized (lock1) {
+        synchronized (lock2) {
+          return lambda.compute();
+        }
+      }
+    }
+    else {
+      synchronized (lock2) {
+        synchronized (lock1) {
+          return lambda.compute();
+        }
+      }
+    }
   }
 
   /**
