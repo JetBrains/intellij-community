@@ -4,18 +4,19 @@ package com.intellij.collaboration.ui.codereview.editor
 import com.intellij.diff.util.Range
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.editor.Editor
-import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import java.awt.Color
 
 object ReviewInEditorUtil {
-  val REVIEW_CHANGES_STATUS_COLOR = JBColor.namedColor("Review.Editor.Line.Status.Marker", ColorUtil.fromHex("#A177F4"))
+  val REVIEW_CHANGES_STATUS_COLOR: JBColor =
+    JBColor.namedColor("Review.Editor.Line.Status.Marker", JBColor(0xF8A0DF, 0x8A4175))
 
-  val REVIEW_STATUS_MARKER_COLOR_SCHEME = object : LineStatusMarkerColorScheme() {
-    override fun getColor(editor: Editor, type: Byte): Color = REVIEW_CHANGES_STATUS_COLOR
-    override fun getIgnoredBorderColor(editor: Editor, type: Byte): Color = REVIEW_CHANGES_STATUS_COLOR
-    override fun getErrorStripeColor(type: Byte): Color = REVIEW_CHANGES_STATUS_COLOR
-  }
+  val REVIEW_STATUS_MARKER_COLOR_SCHEME: LineStatusMarkerColorScheme =
+    object : LineStatusMarkerColorScheme() {
+      override fun getColor(editor: Editor, type: Byte): Color = REVIEW_CHANGES_STATUS_COLOR
+      override fun getIgnoredBorderColor(editor: Editor, type: Byte): Color = REVIEW_CHANGES_STATUS_COLOR
+      override fun getErrorStripeColor(type: Byte): Color = REVIEW_CHANGES_STATUS_COLOR
+    }
 
   fun transferLineToAfter(ranges: List<Range>, line: Int): Int {
     if (ranges.isEmpty()) return line
