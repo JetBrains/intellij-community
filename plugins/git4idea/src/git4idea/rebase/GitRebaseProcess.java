@@ -257,7 +257,7 @@ public class GitRebaseProcess {
         // but only once per repository (if the error happens again, that means that the previous stash attempt failed for some reason),
         // and not in the case of --continue (where all local changes are expected to be committed) or --skip.
         LOG.debug("Dirty tree detected in " + repoName);
-        String saveError = saveLocalChanges(singleton(repository.getRoot()));
+        String saveError = mySaver.saveLocalChangesOrError(singleton(repository.getRoot()));
         if (saveError == null) {
           retryWhenDirty = true; // try same repository again
         }
@@ -354,27 +354,12 @@ public class GitRebaseProcess {
     });
     if (repositoriesToSave.isEmpty()) return true;
     Collection<VirtualFile> rootsToSave = getRootsFromRepositories(getDirtyRoots(repositoriesToSave));
-    String error = saveLocalChanges(rootsToSave);
+    String error = mySaver.saveLocalChangesOrError(rootsToSave);
     if (error != null) {
       myNotifier.notifyError(REBASE_NOT_STARTED, GitBundle.message("rebase.notification.not.started.title"), error);
       return false;
     }
     return true;
-  }
-
-  private @Nullable @Nls String saveLocalChanges(@NotNull Collection<? extends VirtualFile> rootsToSave) {
-    try {
-      mySaver.saveLocalChanges(rootsToSave);
-      return null;
-    }
-    catch (VcsException e) {
-      LOG.warn(e);
-      String message = mySaver.getSaveMethod().selectBundleMessage(
-        GitBundle.message("rebase.notification.failed.stash.text"),
-        GitBundle.message("rebase.notification.failed.shelf.text")
-      );
-      return new HtmlBuilder().append(message).br().appendRaw(e.getMessage()).toString();
-    }
   }
 
   private Collection<GitRepository> findRootsWithLocalChanges(@NotNull Collection<GitRepository> repositories) {
