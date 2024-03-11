@@ -115,7 +115,15 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     targetEnvironmentProvider.supplyEnvironmentAndRunHandlers(remoteEnvironment, progressIndicator)
     val pathMapperInitScript = createTargetPathMapperInitScript(request, targetPathMapper, environmentConfiguration)
     targetBuildParametersBuilder.withInitScript("ijtgtmapper", pathMapperInitScript)
-    targetBuildParameters = targetBuildParametersBuilder.build(consumerOperationParameters, targetArguments)
+
+    targetBuildParametersBuilder.withBuildArguments(targetArguments)
+    targetBuildParametersBuilder.withJvmArguments(consumerOperationParameters.jvmArguments ?: emptyList())
+    targetBuildParametersBuilder.withEnvironmentVariables(consumerOperationParameters.environmentVariables ?: emptyMap())
+    (targetBuildParametersBuilder as? TargetBuildParameters.TaskAwareBuilder<*>)
+      ?.withTasks(consumerOperationParameters.tasks ?: emptyList())
+
+    targetBuildParameters = targetBuildParametersBuilder.build()
+
     return targetedCommandLineBuilder.build()
   }
 
@@ -305,11 +313,8 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     return targetBuildArguments
   }
 
-  private fun TargetBuildParameters.Builder<*>.build(
-    operationParameters: ConsumerOperationParameters,
-    arguments: List<Pair<String, TargetValue<String>?>>
-  ): TargetBuildParameters {
-    val resolvedBuildArguments = mutableListOf<String>()
+  private fun TargetBuildParameters.Builder<*>.withBuildArguments(arguments: List<Pair<String, TargetValue<String>?>>) {
+    val resolvedBuildArguments = ArrayList<String>()
     for ((arg, argValue) in arguments) {
       if (argValue == null) {
         resolvedBuildArguments.add(arg)
@@ -320,12 +325,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
         resolvedBuildArguments.add(targetPath)
       }
     }
-
     withArguments(resolvedBuildArguments)
-    withJvmArguments(operationParameters.jvmArguments ?: emptyList())
-    withEnvironmentVariables(operationParameters.environmentVariables ?: emptyMap())
-    (this as? TargetBuildParameters.TaskAwareBuilder<*>)?.withTasks(operationParameters.tasks ?: emptyList())
-    return build()
   }
 
   private fun initJavaParameters() {
