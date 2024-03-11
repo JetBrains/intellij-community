@@ -9,5 +9,5 @@ class IntermediateResult(
 ) : org.gradle.launcher.daemon.protocol.Message(), Serializable
 
 enum class IntermediateResultType {
-  PROJECT_LOADED, BUILD_FINISHED
+  PROJECT_LOADED, BUILD_FINISHED, STREAMED_VALUE
 }

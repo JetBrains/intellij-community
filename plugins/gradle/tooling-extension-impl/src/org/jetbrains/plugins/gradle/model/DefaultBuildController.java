@@ -130,6 +130,11 @@ public class DefaultBuildController implements BuildController {
   }
 
   @Override
+  public <T> void send(T value) {
+    myDelegate.send(value);
+  }
+
+  @Override
   public <T> List<T> run(Collection<? extends BuildAction<? extends T>> collection) {
     if (isParallelModelFetchSupported()) {
       return myDelegate.run(collection);

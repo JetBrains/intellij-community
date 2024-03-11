@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.proxy
 
 import org.gradle.tooling.BuildAction
+import org.gradle.tooling.StreamedValueListener
 import org.gradle.tooling.events.OperationType
 import org.gradle.tooling.internal.consumer.PhasedBuildAction.BuildActionWrapper
 import java.io.Serializable
@@ -127,9 +128,34 @@ sealed class TargetBuildParameters : Serializable {
     }
   }
 
+  abstract class StreamedValueAwareBuilder<This : StreamedValueAwareBuilder<This>> : TaskAwareBuilder<This>() {
+
+    private var streamedValueListener: StreamedValueListener? = null
+
+    fun setStreamedValueListener(streamedValueListener: StreamedValueListener) {
+      this.streamedValueListener = streamedValueListener
+    }
+
+    override fun buildIntermediateResultHandler(): TargetIntermediateResultHandler {
+      return super.buildIntermediateResultHandler()
+        .then(StreamedIntermediateResultHandler(streamedValueListener))
+    }
+
+    private class StreamedIntermediateResultHandler(
+      private val streamedValueListener: StreamedValueListener?
+    ) : TargetIntermediateResultHandler {
+
+      override fun onResult(type: IntermediateResultType, result: Any?) {
+        if (type == IntermediateResultType.STREAMED_VALUE) {
+          streamedValueListener!!.onValue(result!!)
+        }
+      }
+    }
+  }
+
   class BuildActionParametersBuilder<T>(
     private val action: BuildAction<T>
-  ) : TaskAwareBuilder<BuildActionParametersBuilder<T>>() {
+  ) : StreamedValueAwareBuilder<BuildActionParametersBuilder<T>>() {
 
     override fun getThis(): BuildActionParametersBuilder<T> = this
 
@@ -144,7 +170,7 @@ sealed class TargetBuildParameters : Serializable {
   class PhasedBuildActionParametersBuilder(
     private val projectsLoadedAction: BuildActionWrapper<Any>?,
     private val buildFinishedAction: BuildActionWrapper<Any>?
-  ) : TaskAwareBuilder<PhasedBuildActionParametersBuilder>() {
+  ) : StreamedValueAwareBuilder<PhasedBuildActionParametersBuilder>() {
 
     override fun getThis(): PhasedBuildActionParametersBuilder = this
 

@@ -4,15 +4,17 @@ package org.jetbrains.plugins.gradle.execution.target
 import org.gradle.tooling.BuildAction
 import org.gradle.tooling.BuildActionExecuter
 import org.gradle.tooling.ResultHandler
+import org.gradle.tooling.StreamedValueListener
 import org.gradle.tooling.internal.consumer.PhasedBuildAction
-import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters.BuildActionParametersBuilder
-import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters.PhasedBuildActionParametersBuilder
+import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters.*
 
 internal abstract class TargetBuildExecutor<R>(
   connection: TargetProjectConnection,
   entryPoint: String
 ) : AbstractTargetBuildOperation<TargetBuildExecutor<R>, R>(connection, entryPoint),
     BuildActionExecuter<R> {
+
+  abstract override val targetBuildParametersBuilder: StreamedValueAwareBuilder<*>
 
   override fun run(): R {
     return runAndGetResult()
@@ -31,6 +33,10 @@ internal abstract class TargetBuildExecutor<R>(
   override fun forTasks(tasks: Iterable<String>): TargetBuildExecutor<R> {
     operationParamsBuilder.setTasks(tasks.toList())
     return this
+  }
+
+  override fun setStreamedValueListener(listener: StreamedValueListener) {
+    targetBuildParametersBuilder.setStreamedValueListener(listener)
   }
 
   companion object {

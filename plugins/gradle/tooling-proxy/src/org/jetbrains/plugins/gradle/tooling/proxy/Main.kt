@@ -89,6 +89,13 @@ object Main {
         .apply { targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) } }
       is BuildActionParameters<*> -> connection.action(targetBuildParameters.buildAction)
         .apply { targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) } }
+        .apply {
+          setStreamedValueListener { result ->
+            LOG.debug("Streamed value received for the build action: $result")
+            val convertedResult = convertAndSerializeData(result)
+            incomingConnectionHandler.dispatch(IntermediateResult(IntermediateResultType.STREAMED_VALUE, convertedResult))
+          }
+        }
       is PhasedBuildActionParameters -> connection.action()
         .projectsLoaded(targetBuildParameters.projectsLoadedAction, IntermediateResultHandler { result ->
           LOG.debug("Project loading intermediate result: $result")
@@ -102,6 +109,13 @@ object Main {
         })
         .build()
         .apply { targetBuildParameters.tasks.nullize()?.run { forTasks(*toTypedArray()) } }
+        .apply {
+          setStreamedValueListener { result ->
+            LOG.debug("Streamed value received for the phased build action: $result")
+            val convertedResult = convertAndSerializeData(result)
+            incomingConnectionHandler.dispatch(IntermediateResult(IntermediateResultType.STREAMED_VALUE, convertedResult))
+          }
+        }
     }
     val progressEventConverter = ProgressEventConverter()
     operation.apply {
