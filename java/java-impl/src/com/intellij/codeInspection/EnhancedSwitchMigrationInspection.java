@@ -241,7 +241,7 @@ public final class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLoc
       if (branch.isDefault()) return true;
       if (existsDefaultLabelElement(branch.myLabelStatement)) return true;
     }
-    CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(switchStatement);
+    CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(switchStatement, true);
     return completenessResult == CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL || completenessResult == CompletenessResult.COMPLETE_WITH_UNCONDITIONAL;
   }
 

@@ -1410,6 +1410,11 @@ public class SwitchBlockHighlightingModel {
     }
 
     /**
+     * Evaluates the completeness of a switch block.
+     *
+     * @param switchBlock                      the PsiSwitchBlock to evaluate
+     * @param considerNestedDeconstructionPatterns  flag indicating whether to consider nested deconstruction patterns. It is necessary to take into account,
+     *                                              because nested deconstruction patterns don't cover null values
      * @return {@link CompletenessResult#UNEVALUATED}, if switch is incomplete, and it produces a compilation error
      * (this is already covered by highlighting)
      * <p>{@link CompletenessResult#INCOMPLETE}, if selector type is not enum or reference type(except boxing primitives and String) or switch is incomplete
@@ -1417,7 +1422,7 @@ public class SwitchBlockHighlightingModel {
      * <p>{@link CompletenessResult#COMPLETE_WITHOUT_UNCONDITIONAL}, if switch is complete and doesn't contain an unconditional pattern
      */
     @NotNull
-    public static CompletenessResult evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock) {
+    public static CompletenessResult evaluateSwitchCompleteness(@NotNull PsiSwitchBlock switchBlock, boolean considerNestedDeconstructionPatterns) {
       SwitchBlockHighlightingModel switchModel = SwitchBlockHighlightingModel.createInstance(
         PsiUtil.getLanguageLevel(switchBlock), switchBlock, switchBlock.getContainingFile());
       if (switchModel == null) return UNEVALUATED;
@@ -1432,6 +1437,16 @@ public class SwitchBlockHighlightingModel {
       if (switchModel instanceof PatternsInSwitchBlockHighlightingModel patternsInSwitchModel) {
         if (findUnconditionalPatternForType(labelElements, switchModel.mySelectorType) != null) return COMPLETE_WITH_UNCONDITIONAL;
         if (!needToCheckCompleteness && !isEnumSelector) return INCOMPLETE;
+        //it is necessary,
+        // because deconstruction patterns don't cover cases when some of their components are null and deconstructionPattern too
+        if (!considerNestedDeconstructionPatterns) {
+          labelElements =
+            ContainerUtil.filter(labelElements,
+                                 label -> !(label instanceof PsiDeconstructionPattern deconstructionPattern &&
+                                            ContainerUtil.or(
+                                              deconstructionPattern.getDeconstructionList().getDeconstructionComponents(),
+                                              component -> component instanceof PsiDeconstructionPattern)));
+        }
         patternsInSwitchModel.checkCompleteness(labelElements, false, builder -> { if (builder != null) reported.set(true); });
       }
       else {
