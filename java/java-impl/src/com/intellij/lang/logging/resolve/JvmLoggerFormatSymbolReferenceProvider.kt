@@ -54,18 +54,9 @@ fun getLogArgumentReferences(literalExpression: ULiteralExpression): List<PsiSym
     return emptyList()
   }
 
-  val placeholderCountHolder = solvePlaceholderCount(loggerType, context.argumentCount, parts)
+  val placeholderCountHolder = solvePlaceholderCount(loggerType, context.placeholderParameters.size, parts)
 
-  var finalArgumentCount = context.argumentCount
-
-  when (loggerType) {
-    PlaceholderLoggerType.SLF4J ->  {
-
-    }
-    else -> {
-
-    }
-  }
+  var finalArgumentCount = context.placeholderParameters
 
   return listOf()
 }

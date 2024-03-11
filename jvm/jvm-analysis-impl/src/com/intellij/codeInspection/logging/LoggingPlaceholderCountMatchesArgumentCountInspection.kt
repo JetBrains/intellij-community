@@ -63,17 +63,16 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       val context = getPlaceholderCountContext(node, searcher, loggerType) ?: return true
 
       val parts = collectParts(context.logStringArgument) ?: return true
+      var finalArgumentCount = context.placeholderParameters.size
 
-      val placeholderCountHolder = solvePlaceholderCount(loggerType, context.argumentCount, parts)
+      val placeholderCountHolder = solvePlaceholderCount(loggerType, finalArgumentCount, parts)
       if (placeholderCountHolder.status == PlaceholdersStatus.EMPTY) {
         return true
       }
       if (placeholderCountHolder.status == PlaceholdersStatus.ERROR_TO_PARSE_STRING) {
-        registerProblem(holder, context.logStringArgument, Result(context.argumentCount, 0, ResultType.INCORRECT_STRING))
+        registerProblem(holder, context.logStringArgument, Result(finalArgumentCount, 0, ResultType.INCORRECT_STRING))
         return true
       }
-
-      var finalArgumentCount = context.argumentCount
 
       val resultType = when (loggerType) {
         PlaceholderLoggerType.SLF4J -> { //according to the reference, an exception should not have a placeholder

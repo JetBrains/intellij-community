@@ -188,11 +188,11 @@ fun findMessageSetterStringArg(node: UCallExpression,
  */
 fun findAdditionalArgumentCount(node: UCallExpression,
                                 loggerType: LoggerTypeSearcher,
-                                allowIntermediateMessage: Boolean): Int? {
+                                allowIntermediateMessage: Boolean): List<UExpression>? {
+  val uExpressions = mutableListOf<UExpression>()
   if (loggerType != SLF4J_BUILDER_HOLDER) {
-    return 0
+    return emptyList()
   }
-  var additionalArgumentCount = 0
   var currentCall = node.receiver
   for (ignore in 0..MAX_BUILDER_LENGTH) {
     if (currentCall is UQualifiedReferenceExpression) {
@@ -201,12 +201,12 @@ fun findAdditionalArgumentCount(node: UCallExpression,
     if (currentCall is UCallExpression) {
       val methodName = currentCall.methodName ?: return null
       if (methodName == ADD_ARGUMENT) {
-        additionalArgumentCount++
+        uExpressions.add(currentCall)
         currentCall = currentCall.receiver
         continue
       }
       if (methodName.startsWith("at") && LoggingUtil.getLoggerLevel(currentCall) != null) {
-        return additionalArgumentCount
+        return uExpressions
       }
       if (BUILDER_CHAIN.contains(methodName) || (allowIntermediateMessage && methodName == SET_MESSAGE)) {
         currentCall = currentCall.receiver
@@ -345,39 +345,39 @@ fun getPlaceholderCountContext(
   searcher: LoggerTypeSearcher,
   loggerType: PlaceholderLoggerType
 ): PlaceholderCountContext? {
-  // TODO : rewrite it in a way, that context stores references to the uelement
   val method = node.resolveToUElement() as? UMethod ?: return null
   val arguments = node.valueArguments
   val parameters = method.uastParameters
-
-  var argumentCount: Int?
+  var placeholderParameters: List<UExpression>?
   val logStringArgument: UExpression?
   var lastArgumentIsException = false
   var lastArgumentIsSupplier = false
   if (parameters.isEmpty() || arguments.isEmpty()) {
     //try to find String somewhere else
     logStringArgument = findMessageSetterStringArg(node, searcher) ?: return null
-    argumentCount = findAdditionalArgumentCount(node, searcher, true) ?: return null
+    placeholderParameters = findAdditionalArgumentCount(node, searcher, true) ?: return null
   }
   else {
     val index = getLogStringIndex(parameters) ?: return null
 
-    argumentCount = arguments.size - index
+    placeholderParameters = arguments.subList(index, arguments.size)
     lastArgumentIsException = hasThrowableType(arguments[arguments.size - 1])
     lastArgumentIsSupplier = couldBeThrowableSupplier(loggerType, parameters[parameters.size - 1], arguments[arguments.size - 1])
 
-    if (argumentCount == 1 && parameters.size > 1) {
+    if (placeholderParameters.size == 1 && parameters.size > 1) {
       val argument = arguments[index]
       val argumentType = argument.getExpressionType()
       if (argumentType is PsiArrayType) {
         return null
       }
     }
-    val additionalArgumentCount: Int = findAdditionalArgumentCount(node, searcher, false) ?: return null
-    argumentCount += additionalArgumentCount
+    val additionalArgumentCount = findAdditionalArgumentCount(node, searcher, false) ?: return null
+    placeholderParameters += additionalArgumentCount
     logStringArgument = arguments[index - 1]
   }
-  return PlaceholderCountContext(argumentCount, logStringArgument, lastArgumentIsException, lastArgumentIsSupplier)
+
+
+  return PlaceholderCountContext(placeholderParameters, logStringArgument, lastArgumentIsException, lastArgumentIsSupplier)
 }
 
 fun collectParts(logStringArgument: UExpression): List<LoggingStringPartEvaluator.PartHolder>? {
@@ -438,4 +438,4 @@ data class PlaceholderRangesInPartHolder(val rangeList: List<TextRange?>)
 
 data class Result(val argumentCount: Int, val placeholderCount: Int, val result: ResultType)
 
-data class PlaceholderCountContext(val argumentCount: Int, val logStringArgument: UExpression, val lastArgumentIsException: Boolean, val lastArgumentIsSupplier: Boolean)
+data class PlaceholderCountContext(val placeholderParameters: List<UExpression>, val logStringArgument: UExpression, val lastArgumentIsException: Boolean, val lastArgumentIsSupplier: Boolean)
