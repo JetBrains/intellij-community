@@ -112,7 +112,8 @@ open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
    */
   private fun getLegacyComboBoxUI(comboBox: JComboBox<*>): DarculaComboBoxUI? {
     val ui = comboBox.ui as? DarculaComboBoxUI ?: return null
-    return if (comboBox.border !== comboBox || ui.isNewBorderSupported(comboBox)) null else ui
+    val customBorder = comboBox.border !== comboBox && comboBox.border !is DarculaComboBoxBorder
+    return if (customBorder || ui.isNewBorderSupported(comboBox)) null else ui
   }
 
   private fun getType(comboBox: JComboBox<*>): Type {
