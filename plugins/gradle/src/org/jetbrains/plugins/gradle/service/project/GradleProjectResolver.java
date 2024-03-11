@@ -5,13 +5,9 @@ import com.intellij.build.events.MessageEvent;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchActionWithCustomSerializer;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
-import com.intellij.util.*;
-import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.diagnostic.ExternalSystemSyncDiagnostic;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -19,6 +15,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemOperationDescriptor;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemSyncActionsCollector;
@@ -31,6 +28,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -59,8 +60,9 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
-import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleBuildActionRunner;
 import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleBuildActionListener;
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleBuildActionRunner;
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -86,7 +88,6 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 public class GradleProjectResolver implements ExternalSystemProjectResolver<GradleExecutionSettings> {
 
   private static final Logger LOG = Logger.getInstance(GradleProjectResolver.class);
-  private static final ExternalSystemSyncDiagnostic syncMetrics = ExternalSystemSyncDiagnostic.getInstance();
 
   @NotNull private final GradleExecutionHelper myHelper;
   private final GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();
@@ -144,7 +145,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final long activityId = resolverContext.getExternalSystemTaskId().getId();
     ExternalSystemSyncActionsCollector.logSyncStarted(resolverContext.getExternalSystemTaskId().findProject(), activityId);
-    syncMetrics.getOrStartSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName);
 
     Span gradleExecutionSpan = ExternalSystemTelemetryUtil.getTracer(GradleConstants.SYSTEM_ID)
       .spanBuilder("GradleExecution")
@@ -272,7 +272,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final long gradleCallStartTime = System.currentTimeMillis();
 
-    syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.GRADLE_CALL);
 
     int gradleCallErrorsCount = 0;
@@ -297,13 +296,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       gradleCallSpan.setAttribute("error.count", gradleCallErrorsCount);
       gradleCallSpan.recordException(t);
       gradleCallSpan.setStatus(StatusCode.ERROR);
-      syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name()).setAttribute("error.count", gradleCallErrorsCount);
       throw t;
     }
     finally {
       final long gradleCallTimeInMs = (System.currentTimeMillis() - gradleCallStartTime);
       LOG.debug(String.format("Gradle data obtained in %d ms", gradleCallTimeInMs));
-      syncMetrics.getOrStartSpan(Phase.GRADLE_CALL.name()).end();
       ExternalSystemSyncActionsCollector.logPhaseFinished(
         null, activityId, Phase.GRADLE_CALL, gradleCallTimeInMs, gradleCallErrorsCount);
       gradleCallSpan.end();
@@ -313,7 +310,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     final long projectResolversStartTime = System.currentTimeMillis();
 
-    syncMetrics.getOrStartSpan(Phase.PROJECT_RESOLVERS.name(), ExternalSystemSyncDiagnostic.gradleSyncSpanName);
     ExternalSystemSyncActionsCollector.logPhaseStarted(null, activityId, Phase.PROJECT_RESOLVERS);
 
     int projectResolversErrorsCount = 0;
@@ -333,7 +329,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     finally {
       final long projectResolversTimeInMs = (System.currentTimeMillis() - projectResolversStartTime);
       LOG.debug(String.format("Project data resolved in %d ms", projectResolversTimeInMs));
-      syncMetrics.getOrStartSpan(Phase.PROJECT_RESOLVERS.name()).end();
       ExternalSystemSyncActionsCollector.logPhaseFinished(
         null, activityId, Phase.PROJECT_RESOLVERS, projectResolversTimeInMs, projectResolversErrorsCount);
       projectResolversSpan.end();
@@ -892,7 +887,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
         ExternalSystemSyncActionsCollector.logError(taskId.findProject(), activityId, extractCause(e));
         ExternalSystemSyncActionsCollector.logSyncFinished(taskId.findProject(), activityId, false);
-        syncMetrics.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName, (span) -> span.setAttribute("project", ""));
 
         throw myProjectResolverChain.getUserFriendlyError(
           myResolverContext.getBuildEnvironment(), e, myResolverContext.getProjectPath(), null);
