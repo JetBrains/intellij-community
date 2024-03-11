@@ -19,6 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -32,11 +33,16 @@ import com.intellij.xdebugger.breakpoints.*
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
 
 @Service(Service.Level.PROJECT)
-internal class InlineBreakpointInlayManager(private val project: Project, private val scope: CoroutineScope) {
+internal class InlineBreakpointInlayManager(private val project: Project, parentScope: CoroutineScope) {
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val scope = parentScope.namedChildScope("InlineBreakpoints", Dispatchers.Default.limitedParallelism(1))
 
   private val redrawQueue = MergingUpdateQueue(
     "inline breakpoint inlay redraw queue",
