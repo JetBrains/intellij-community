@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.java.JavaBundle
 import com.intellij.java.library.JavaLibraryUtil
-import com.intellij.lang.logging.resolve.*
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandQuickFix
 import com.intellij.openapi.module.ModuleUtilCore
@@ -19,6 +18,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastHintedVisitorAdapter
+import com.intellij.util.logging.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor

@@ -12,6 +12,9 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
+import com.intellij.util.logging.LOGGER_RESOLVE_TYPE_SEARCHERS
+import com.intellij.util.logging.LoggingUtil
+import com.intellij.util.logging.getPlaceholderContext
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.getParentOfType
