@@ -13,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -169,13 +168,22 @@ public final class Restarter {
     var appDir = ourStarter.getValue();
     if (appDir == null) throw new IOException("Application bundle not found: " + PathManager.getHomePath());
     var command = prepareCommand(beforeRestart);
-    command.add(String.valueOf(args.isEmpty() ? 2 : args.size() + 3));
-    command.add("/usr/bin/open");
-    command.add(appDir.toString());
-    if (!args.isEmpty()) {
-      command.add("--args");
-      command.addAll(args);
+    
+    var runProcessCommand = new ArrayList<String>();
+    runProcessCommand.add("/usr/bin/open");
+    if (PlatformUtils.isJetBrainsClient()) {
+      /* JetBrains Client process may be started from the same bundle as the full IDE, so we need to force 'open' command to run a new 
+         process from that bundle instead of focusing on the existing application if it's running */
+      runProcessCommand.add("-n");
     }
+    runProcessCommand.add(appDir.toString());
+    if (!args.isEmpty()) {
+      runProcessCommand.add("--args");
+      runProcessCommand.addAll(args);
+    }
+
+    command.add(String.valueOf(runProcessCommand.size()));
+    command.addAll(runProcessCommand);
     runRestarter(command);
   }
 
