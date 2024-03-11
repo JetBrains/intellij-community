@@ -34,7 +34,6 @@ import com.intellij.xdebugger.impl.XSourcePositionImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.math.max
 
 @Service(Service.Level.PROJECT)
 internal class InlineBreakpointInlayManager(private val project: Project, private val scope: CoroutineScope) {
@@ -270,7 +269,10 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
         emptyList()
       }
 
-    val codeStartOffset = DocumentUtil.getLineStartIndentedOffset(document, line)
+    // Any breakpoint offset from the interval between line start until the first non-whitespace character (code start) is normalized
+    // to the offset of that non-whitespace character.
+    // Any breakpoint offset from the lines below the current line is normalized to the end of this line to prevent inlay migration (like IDEA-348719).
+    val lineRange = DocumentUtil.getLineStartIndentedOffset(document, line)..document.getLineEndOffset(line)
 
     if (!shouldAlwaysShowAllInlays() &&
         breakpoints.size == 1 &&
@@ -289,7 +291,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
         val matchingBreakpoints = breakpoints.filter { areMatching(variant, it) }
         if (matchingBreakpoints.isEmpty()) {
           // Easy case: just draw this inlay as a variant.
-          val offset = getBreakpointVariantRangeStartOffset(variant, codeStartOffset)
+          val offset = getBreakpointVariantRangeStartOffset(variant, lineRange)
           add(SingleInlayDatum(null, variant, offset))
         }
         else {
@@ -304,7 +306,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
             val notYetMatched = remainingBreakpoints.remove(breakpoint)
             if (notYetMatched) {
               // If breakpoint was not matched earlier, just draw this inlay as a breakpoint.
-              val offset = getBreakpointRangeStartOffset(breakpoint, codeStartOffset)
+              val offset = getBreakpointRangeStartOffset(breakpoint, lineRange)
 
               // However, if this breakpoint is the only breakpoint, and all variant highlighters are inside its range, don't draw it.
               val singleLineBreakpoint = breakpoints.size == 1 && breakpointHasTheBiggestRange(breakpoint, variants)
@@ -326,7 +328,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
         // We have some breakpoints without matched variants.
         // Draw them and report an error.
         reportBreakpointWithoutVariants(document, line, breakpoint)
-        val offset = getBreakpointRangeStartOffset(breakpoint, codeStartOffset)
+        val offset = getBreakpointRangeStartOffset(breakpoint, lineRange)
         add(SingleInlayDatum(breakpoint, null, offset))
       }
     }
@@ -354,14 +356,14 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     return type == variant.type && type.variantAndBreakpointMatch(b, v)
   }
 
-  private fun getBreakpointVariantRangeStartOffset(variant: XLineBreakpointType<*>.XLineBreakpointVariant, codeStartOffset: Int): Int {
+  private fun getBreakpointVariantRangeStartOffset(variant: XLineBreakpointType<*>.XLineBreakpointVariant, lineRange: IntRange): Int {
     val range = variant.highlightRange
-    return getLineRangeStartNormalized(range, codeStartOffset)
+    return getBreakpointRangeStartNormalized(range, lineRange)
   }
 
-  private fun getBreakpointRangeStartOffset(breakpoint: XLineBreakpointImpl<*>, codeStartOffset: Int): Int {
+  private fun getBreakpointRangeStartOffset(breakpoint: XLineBreakpointImpl<*>, lineRange: IntRange): Int {
     val range = getBreakpointHighlightRange(breakpoint)
-    return getLineRangeStartNormalized(range, codeStartOffset)
+    return getBreakpointRangeStartNormalized(range, lineRange)
   }
 
   @Suppress("UNCHECKED_CAST") // Casts are required for gods of Kotlin-Java type inference.
@@ -372,11 +374,9 @@ internal class InlineBreakpointInlayManager(private val project: Project, privat
     return type.getHighlightRange(b)
   }
 
-  private fun getLineRangeStartNormalized(range: TextRange?, codeStartOffset: Int): Int {
+  private fun getBreakpointRangeStartNormalized(breakpointRange: TextRange?, lineRange: IntRange): Int {
     // Null range represents the whole line.
-    // Any start offset from the line start until the first non-whitespace character (code start) is normalized
-    // to the offset of that non-whitespace character for ease of comparison of various ranges coming from variants and breakpoints.
-    return range?.let { max(it.startOffset, codeStartOffset) } ?: codeStartOffset
+    return breakpointRange?.startOffset?.coerceIn(lineRange) ?: lineRange.first
   }
 
   private fun reportSingleVariantMultipleBreakpoints(document: Document, line: Int,
