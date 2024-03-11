@@ -391,18 +391,18 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     PsiElement element = node.getPsi();
 
     return !node.textContains('\n') &&
-           (element instanceof PsiCodeBlock body && shouldAddNewLineWhenBodyIsPresented(body) ||
-            element instanceof PsiBlockStatement statement && shouldAddNewLineWhenBodyIsPresented(statement.getCodeBlock()));
+           (element instanceof PsiCodeBlock body && shouldAddNewLineWhenBodyIsPresent(body) ||
+            element instanceof PsiBlockStatement statement && shouldAddNewLineWhenBodyIsPresent(statement.getCodeBlock()));
   }
 
-  private boolean shouldAddNewLineWhenBodyIsPresented(@NotNull PsiCodeBlock body) {
+  private boolean shouldAddNewLineWhenBodyIsPresent(@NotNull PsiCodeBlock body) {
     return !myJavaSettings.NEW_LINE_WHEN_BODY_IS_PRESENTED || body.isEmpty();
   }
 
   private boolean shouldHandleAsSimpleMethod(@NotNull PsiMethod method) {
     if (!mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE) return false;
     PsiCodeBlock body = method.getBody();
-    return body != null && !body.textContains('\n') && shouldAddNewLineWhenBodyIsPresented(body);
+    return body != null && !body.textContains('\n') && shouldAddNewLineWhenBodyIsPresent(body);
   }
 
   private static int getMethodHeaderStartOffset(@NotNull PsiMethod method) {
@@ -1004,7 +1004,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     PsiElement body = lambda.getBody();
     boolean isSimpleLambda = mySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE && !lambda.textContains('\n');
     if (body instanceof PsiCodeBlock block) {
-      return isSimpleLambda && shouldAddNewLineWhenBodyIsPresented(block);
+      return isSimpleLambda && shouldAddNewLineWhenBodyIsPresent(block);
     }
     return isSimpleLambda;
   }
