@@ -3,5 +3,9 @@
 
 fun foo(foo: Foo) {
     val s = foo.eval()
-    <caret>bar(s)
+    bar(s)
+}
+
+fun bar(string: String?) {
+    <selection>TODO("Not yet implemented")<caret></selection>
 }

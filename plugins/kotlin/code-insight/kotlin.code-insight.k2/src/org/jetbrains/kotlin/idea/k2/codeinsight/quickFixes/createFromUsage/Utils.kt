@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.expectedParameter
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -18,12 +20,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtDefinitelyNotNullTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeProjectionRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
@@ -73,7 +70,7 @@ context (KtAnalysisSession)
 internal fun KtType.convertToClass(): KtClass? = expandedClassSymbol?.psi as? KtClass
 
 context (KtAnalysisSession)
-internal fun KtElement.getExpectedJvmType(): JvmType? {
+internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
     var expectedType = getExpectedType()
     if (expectedType == null) {
         val parent = this.parent
@@ -98,7 +95,8 @@ internal fun KtElement.getExpectedJvmType(): JvmType? {
             else -> null
         }
     }
-    return expectedType?.convertToJvmType(this)
+    val jvmType = expectedType?.convertToJvmType(this) ?: return null
+    return ExpectedKotlinType.createExpectedKotlinType(jvmType, expectedType.nullability)
 }
 
 context (KtAnalysisSession)
@@ -106,30 +104,32 @@ private fun KtType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asP
 
 context (KtAnalysisSession)
 internal fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
-    is KtCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
+    //is KtCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
     is KtClassLikeSymbol -> symbol // When the receiver is an object
     else -> getKtType()?.expandedClassSymbol
 }?.psi
 
-internal data class ParameterInfo(val nameCandidates: List<String>, val type: JvmType?)
-
 context (KtAnalysisSession)
-internal fun KtValueArgument.getExpectedParameterInfo(parameterIndex: Int): ParameterInfo {
+internal fun KtValueArgument.getExpectedParameterInfo(parameterIndex: Int): ExpectedParameter {
     val parameterNameAsString = getArgumentName()?.asName?.asString()
     val argumentExpression = getArgumentExpression()
     val expectedArgumentType = argumentExpression?.getKtType()
     val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
     val parameterType = expectedArgumentType?.convertToJvmType(argumentExpression)
-    return ParameterInfo(parameterNames?.toList() ?: listOf("p$parameterIndex"), parameterType)
+    val expectedType = if (parameterType == null) ExpectedKotlinType.INVALID_TYPE else ExpectedKotlinType.createExpectedKotlinType(parameterType, expectedArgumentType.nullability)
+    val names = parameterNames?.toList()?.toTypedArray() ?: arrayOf("p$parameterIndex")
+    return expectedParameter(expectedType, *names)
 }
 
 context (KtAnalysisSession)
-internal fun KtSimpleNameExpression.getReceiverOrContainerClass(): JvmClass? =
-    when (val ktClassOrPsiClass = getReceiverExpression()?.getClassOfExpressionType()) {
+internal fun KtSimpleNameExpression.getReceiverOrContainerClass(): JvmClass? {
+    val receiverExpression = getReceiverExpression()
+    return when (val ktClassOrPsiClass = receiverExpression?.getClassOfExpressionType()) {
         is PsiClass -> ktClassOrPsiClass
-        is KtClassOrObject -> ktClassOrPsiClass.toLightClass()?.let { return it }
+        is KtClassOrObject -> ktClassOrPsiClass.toLightClass()
         else -> getContainerClass()
     }
+}
 
 context (KtAnalysisSession)
 internal fun KtSimpleNameExpression.getReceiverOrContainerClassPackageName(): FqName? =

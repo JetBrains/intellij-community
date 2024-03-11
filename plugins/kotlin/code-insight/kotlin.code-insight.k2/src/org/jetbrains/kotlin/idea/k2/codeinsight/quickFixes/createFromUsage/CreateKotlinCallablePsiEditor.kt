@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.createFromUsage.setupEditorSelection
@@ -42,6 +43,7 @@ internal data class NewCallableInfo(
     val candidatesOfRenderedParameterTypes: List<List<String>>,
     val candidatesOfRenderedReturnType: List<String>,
     val containerClassFqName: FqName?,
+    val isForCompanion: Boolean,
 )
 
 /**
@@ -65,7 +67,12 @@ internal class CreateKotlinCallablePsiEditor(
         } else {
             passedContainerElement
         }
-        function = CreateFromUsageUtil.placeDeclarationInContainer(function, insertContainer, anchor)
+
+        val containerMaybeCompanion = if (insertContainer is KtClass && callableInfo.isForCompanion) {
+            insertContainer.getOrCreateCompanionObject()
+        } else insertContainer
+
+        function = CreateFromUsageUtil.placeDeclarationInContainer(function, containerMaybeCompanion, anchor)
 
         //function = function.addToContainer(container) as? KtNamedFunction ?: return
         function = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function) ?: return

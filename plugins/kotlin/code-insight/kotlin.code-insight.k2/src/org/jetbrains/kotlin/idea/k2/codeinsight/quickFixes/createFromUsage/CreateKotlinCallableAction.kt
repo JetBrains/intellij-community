@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.request.CreateExecutableFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -13,11 +12,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
-import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -55,6 +52,7 @@ internal class CreateKotlinCallableAction(
         is CreateExecutableFromJavaUsageRequest<*> -> false
         else -> null
     }
+    private val isForCompanion: Boolean = (request as? CreateMethodFromKotlinUsageRequest)?.isForCompanion == true
 
     // Note that this property must be initialized after initializing above properties, because it has dependency on them.
     private val callableDefinitionAsString: String? = buildCallableAsString()
@@ -86,6 +84,7 @@ internal class CreateKotlinCallableAction(
                 candidatesOfRenderedParameterTypes,
                 candidatesOfRenderedReturnType,
                 containerClassFqName,
+                isForCompanion
             )
 
             require(call != null)
@@ -104,7 +103,16 @@ internal class CreateKotlinCallableAction(
         val container = getContainer() ?: return List(request.expectedParameters.size) { listOf("Any") }
         return analyze(container) {
             request.expectedParameters.map { expectedParameter ->
-                expectedParameter.expectedTypes.map { it.render(container) }
+                expectedParameter.expectedTypes.map {
+                    val parameterType =
+                    if (it is ExpectedKotlinType) {
+                        it.theType.toKtType(container)?.withNullability(it.nullability)
+                    }
+                    else{
+                        it.theType.toKtType(container)
+                    }
+                    parameterType?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT) ?: "Any"
+                }
             }
         }
     }
@@ -119,25 +127,10 @@ internal class CreateKotlinCallableAction(
         }
     }
 
-    context (KtAnalysisSession)
-    private fun ExpectedType.render(container: KtElement): String {
-        val parameterType = theType.toKtType(container)
-        return parameterType?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT) ?: "Any"
-    }
-
-    companion object {
-        val modifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> = mapOf(
-            JvmModifier.PRIVATE to KtTokens.PRIVATE_KEYWORD,
-            JvmModifier.PACKAGE_LOCAL to KtTokens.INTERNAL_KEYWORD,
-            JvmModifier.PROTECTED to KtTokens.PROTECTED_KEYWORD,
-            JvmModifier.PUBLIC to KtTokens.PUBLIC_KEYWORD
-        )
-    }
-
     private fun buildCallableAsString(): String? {
         if (call == null) return null
         val container = getContainer() ?: return null
-        val modifierListAsString = if (request.modifiers.isEmpty())
+        val modifierListAsString = if (request.modifiers.isEmpty() && (request as? CreateMethodFromKotlinUsageRequest)?.isForCompanion != true)
             CreateFromUsageUtil.computeDefaultVisibilityAsString(container,
                                                                  isAbstract == true,
                                                                  isExtension = false,
@@ -147,24 +140,22 @@ internal class CreateKotlinCallableAction(
         else
             request.modifiers.joinToString(
                 separator = " ",
-                transform = { modifier -> modifierToKotlinToken[modifier]?.let { if (it == KtTokens.PUBLIC_KEYWORD) "" else it.value } ?: "" })
-        return analyze(container) {
-            buildString {
-                append(modifierListAsString)
-                if (abstract) {
-                    if (isNotEmpty()) append(" ")
-                    append("abstract")
-                }
+                transform = { modifier -> CreateFromUsageUtil.modifierToString(modifier) })
+        return buildString {
+            append(modifierListAsString)
+            if (abstract) {
                 if (isNotEmpty()) append(" ")
-                append(KtTokens.FUN_KEYWORD)
-                append(" ")
-                append(request.methodName)
-                append("(")
-                append(renderParameterList())
-                append(")")
-                candidatesOfRenderedReturnType.firstOrNull()?.let { append(": $it") }
-                if (needFunctionBody) append(" {}")
+                append("abstract")
             }
+            if (isNotEmpty()) append(" ")
+            append(KtTokens.FUN_KEYWORD)
+            append(" ")
+            append(request.methodName)
+            append("(")
+            append(renderParameterList())
+            append(")")
+            candidatesOfRenderedReturnType.firstOrNull()?.let { append(": $it") }
+            if (needFunctionBody) append(" {}")
         }
     }
 

@@ -7,14 +7,15 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 
-internal class ExpectedKotlinType(val type: JvmType) : ExpectedType {
+internal class ExpectedKotlinType(val type: JvmType, val nullability: KtTypeNullability) : ExpectedType {
     override fun getTheType(): JvmType = type
 
     override fun getTheKind(): ExpectedType.Kind = ExpectedType.Kind.EXACT
 
     companion object {
-        fun createExpectedKotlinType(type: JvmType): ExpectedKotlinType = ExpectedKotlinType(type)
+        fun createExpectedKotlinType(type: JvmType, nullability: KtTypeNullability): ExpectedKotlinType = ExpectedKotlinType(type, nullability)
 
         /**
          * A placeholder to denote "This type is invalid". Only thing this type does is returning `false` for `isValid()` function.
@@ -35,6 +36,6 @@ internal class ExpectedKotlinType(val type: JvmType) : ExpectedType {
             override fun getResolveScope(): GlobalSearchScope? = null
 
             override fun getSuperTypes(): Array<PsiType> = emptyArray()
-        })
+        }, KtTypeNullability.UNKNOWN)
     }
 }

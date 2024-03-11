@@ -18,9 +18,10 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 internal class CreateMethodFromKotlinUsageRequest (
     private val functionCall: KtCallExpression,
     modifiers: Collection<JvmModifier>,
-    val receiverExpression: KtExpression? = null,
-    val isExtension: Boolean = false,
-    val isAbstractClassOrInterface: Boolean = false,
+    val receiverExpression: KtExpression?,
+    val isExtension: Boolean,
+    val isAbstractClassOrInterface: Boolean,
+    val isForCompanion: Boolean
 ) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers), CreateMethodRequest {
     private val returnType = mutableListOf<ExpectedType>()
 
@@ -32,9 +33,9 @@ internal class CreateMethodFromKotlinUsageRequest (
 
     context (KtAnalysisSession)
     private fun initializeReturnType() {
-        val returnJvmType = functionCall.getExpectedJvmType() ?: return
-        (returnJvmType as? JvmReferenceType)?.let { if (it.resolve() == null) return }
-        returnType.add(ExpectedKotlinType.createExpectedKotlinType(returnJvmType))
+        val returnJvmType = functionCall.getExpectedKotlinType() ?: return
+        (returnJvmType.theType as? JvmReferenceType)?.let { if (it.resolve() == null) return }
+        returnType.add(returnJvmType)
     }
 
     override fun isValid(): Boolean = super.isValid() && getReferenceName() != null
