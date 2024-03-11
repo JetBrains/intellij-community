@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.projectFilter
 
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
@@ -36,15 +35,13 @@ internal abstract class ProjectIndexableFilesFilter(protected val project: Proje
     }
   }
 
-  fun <T> runAndCheckThatNoChangesHappened(action: () -> T): T {
+  fun <T> runAndCheckThatNoChangesHappened(action: () -> T): T? {
     val (numberOfParallelUpdates, version) = parallelUpdatesCounter.getCounterAndVersion()
-    if (numberOfParallelUpdates != 0) throw ProcessCanceledException()
+    if (numberOfParallelUpdates != 0) return null
     val res = action()
     val (numberOfParallelUpdates2, version2) = parallelUpdatesCounter.getCounterAndVersion()
-    if (numberOfParallelUpdates2 != 0 || version2 != version) {
-      throw ProcessCanceledException()
-    }
-    return res
+    return if (numberOfParallelUpdates2 != 0 || version2 != version) null
+    else res
   }
 
   abstract fun getFileStatuses(): Sequence<Pair<Int, Boolean>>
@@ -63,10 +60,10 @@ private class AtomicVersionedCounter {
   fun getCounterAndVersion(): Pair<Int, Int> = counterAndVersion.get()
 }
 
-internal fun <T> runIfScanningScanningIsCompleted(project: Project, action: () -> T): T {
+internal fun <T> runIfScanningScanningIsCompleted(project: Project, action: () -> T): T? {
   val service = project.getService(ProjectIndexingDependenciesService::class.java)
-  if (!service.isScanningCompleted()) throw ProcessCanceledException()
+  if (!service.isScanningCompleted()) return null
   val res = action()
-  if (!service.isScanningCompleted()) throw ProcessCanceledException()
-  return res
+  return if (service.isScanningCompleted()) res
+  else null
 }

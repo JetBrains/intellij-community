@@ -93,7 +93,7 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
       Observation.awaitConfiguration(project) // wait for project import IDEA-348501
       val (nonIndexableFilesInFilter, indexableFilesNotInFilter) = smartReadAction(project) {
         runHealthCheck(project, filter)
-      }
+      } ?: return
 
       nonIndexableFilesInFilter.fix(filter)
       indexableFilesNotInFilter.fix(filter)
@@ -117,7 +117,7 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
     }
   }
 
-  private fun runHealthCheck(project: Project, filter: ProjectIndexableFilesFilter): Pair<NonIndexableFilesInFilterGroup, IndexableFilesNotInFilterGroup> {
+  private fun runHealthCheck(project: Project, filter: ProjectIndexableFilesFilter): Pair<NonIndexableFilesInFilterGroup, IndexableFilesNotInFilterGroup>? {
     return runIfScanningScanningIsCompleted(project) {
       filter.runAndCheckThatNoChangesHappened {
         // It is possible that scanning will start and finish while we are performing healthcheck,
