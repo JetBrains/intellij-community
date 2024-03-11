@@ -107,7 +107,7 @@ public class GitPreservingProcess {
             ProgressManager.getInstance().executeNonCancelableSection(() -> load());
           }
           else {
-            mySaver.notifyLocalChangesAreNotRestored();
+            mySaver.notifyLocalChangesAreNotRestored(myOperationTitle);
           }
         }
       }
