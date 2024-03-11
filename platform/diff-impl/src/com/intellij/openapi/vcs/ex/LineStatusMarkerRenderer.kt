@@ -59,10 +59,15 @@ abstract class LineStatusMarkerRenderer internal constructor(
     updateQueue.queue(DisposableUpdate.createDisposable(updateQueue, "update", Runnable { updateHighlighters() }))
   }
 
+  /**
+   * Recover from an evildoer destroying all the highlighters for the Editor/Project/IDE.
+   * IDEA-331139 IDEA-246614
+   */
   private fun scheduleValidateHighlighter() {
-    // IDEA-246614
     updateQueue.queue(DisposableUpdate.createDisposable(updateQueue, "validate highlighter", Runnable {
       if (disposed || gutterHighlighter.isValid()) return@Runnable
+
+      LOG.warn("Line marker highlighter was recovered. This incident will be reported.")
       disposeHighlighter(gutterHighlighter)
       gutterHighlighter = createGutterHighlighter()
       updateHighlighters()
@@ -93,6 +98,11 @@ abstract class LineStatusMarkerRenderer internal constructor(
   @RequiresEdt
   private fun updateHighlighters() {
     if (disposed) return
+
+    if (!gutterHighlighter.isValid()) {
+      scheduleValidateHighlighter()
+    }
+
     repaintGutter()
     updateErrorStripeHighlighters()
   }
