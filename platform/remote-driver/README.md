@@ -89,7 +89,7 @@ Managing references to objects that exist in another JVM process is a tricky bus
 
 Let's take a look at the example:
 ```kotlin
-val roots = driver.service<ProjectRootManager>.getContentRoots()
+val roots = driver.service<ProjectRootManager>().getContentRoots()
 val name = roots[0].getName() // may throw an error
 ```
 
@@ -192,11 +192,11 @@ class OpenGradleJavaFileTest {
       project = RemoteArchiveProjectInfo(projectURL = "https://repo.labs.intellij.net/artifactory/idea-test-data/lwjgl3-maven-gradle_2.zip")
     }.runIdeWithDriver()
   }
-  
+
   @Test
   fun import() {
-    bgRun.useDriverAndCloseIde{
-      //your test using driver
+    bgRun.useDriverAndCloseIde {
+      // your test using a driver
     }
   }
 }
@@ -205,13 +205,12 @@ class OpenGradleJavaFileTest {
 If you want to reuse IDE between tests and manage IDE run in @BeforeAll/@AfterAll
 ```kotlin
 class OpenGradleJavaFileTest {
-  
   companion object {
     private lateinit var run: BackgroundRun
   
     @BeforeAll
     @JvmStatic
-    fun startIde(){
+    fun startIde() {
       run = Starter.newContext(ideInfo = IdeProductProvider.IU) {
         project = RemoteArchiveProjectInfo(projectURL = "https://repo.labs.intellij.net/artifactory/idea-test-data/lwjgl3-maven-gradle_2.zip")
       }.runIdeWithDriver()
@@ -219,7 +218,7 @@ class OpenGradleJavaFileTest {
 
     @AfterAll
     @JvmStatic
-    fun closeIde(){
+    fun closeIde() {
       run.closeIdeAndWait()
     }
   }
@@ -233,4 +232,4 @@ class OpenGradleJavaFileTest {
 }
 ```
 
-Tests that follows convention will work for local IDE runs and for RemDev with client/host where driver instance will be driver of client.
+Tests that follow convention will work for local IDE runs and for RemDev with client/host where driver instance will be a driver of client.
