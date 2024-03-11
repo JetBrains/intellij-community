@@ -424,7 +424,7 @@ public final class SwitchHelper {
       @Override
       public SwitchOnStringCandidate recognize(@NotNull SwitchStatement firstSwitch,
                                                @NotNull InvocationExprent switchSelector) {
-        if (switchSelector.getInstance().type != Exprent.EXPRENT_VAR) return null;
+        if (switchSelector.getInstance() == null || switchSelector.getInstance().type != Exprent.EXPRENT_VAR) return null;
         if (!switchSelector.isInstanceCall(ClassNameConstants.JAVA_LANG_STRING, "hashCode", 0)) return null;
 
         Set<Object> realCaseValueHashCodes = findRealCaseValuesHashCodes(firstSwitch);
