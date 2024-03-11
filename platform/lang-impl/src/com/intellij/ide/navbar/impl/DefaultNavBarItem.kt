@@ -7,6 +7,8 @@ import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.lang.LangBundle
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES
@@ -34,6 +36,7 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.*
 import com.intellij.util.IconUtil
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.JBUI
@@ -131,6 +134,24 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
 
 internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelExtension?) : DefaultNavBarItem<PsiElement>(
   data) {
+
+  override fun presentation(): NavBarItemPresentation {
+    if (data is PsiFile) {
+      data.virtualFile
+        ?.asSafely<VirtualFileWindow>()
+        ?.let {
+          return NavBarItemPresentation(
+            getIcon(),
+            LangBundle.message("navBar.element.injected.file", data.language.displayName),
+            null,
+            REGULAR_ITALIC_ATTRIBUTES,
+            REGULAR_ITALIC_ATTRIBUTES,
+            true
+          )
+        }
+    }
+    return super.presentation()
+  }
 
   override fun createPointer(): Pointer<out NavBarItem> {
     val data = data
