@@ -703,7 +703,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         if (compilerWorkspaceSettings != null) {
             compilerWorkspaceSettings.setPreciseIncrementalEnabled(enableIncrementalCompilationForJvmCheckBox.isSelected());
             compilerWorkspaceSettings.setIncrementalCompilationForJsEnabled(enableIncrementalCompilationForJsCheckBox.isSelected());
-            extractAndRegisterDaemonVmOptions();
+            compilerWorkspaceSettings.setDaemonVmOptions(extractDaemonVmOptions());
 
             boolean oldEnableDaemon = compilerWorkspaceSettings.getEnableDaemon();
             compilerWorkspaceSettings.setEnableDaemon(keepAliveCheckBox.isSelected());
@@ -954,11 +954,11 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     }
 
     // Expected format is
-    // -XdaemonVmOptions=-Xmx2288m for one argument
+    // -XdaemonVmOptions=-Xmx6000m for one argument
     // and
-    // -XdaemonVmOptions=\"-Xmx2288m -XX:HeapDumpPath=kotlin-build-process-heap-dump.hprof -XX:+HeapDumpOnOutOfMemoryError\"
+    // -XdaemonVmOptions=\"-Xmx6000m -XX:HeapDumpPath=kotlin-build-process-heap-dump.hprof -XX:+HeapDumpOnOutOfMemoryError\"
     // for multiple
-    private void extractAndRegisterDaemonVmOptions() {
+    private @NotNull String extractDaemonVmOptions() {
         String additionalOptions = getAdditionalArgsOptionsField().getText();
         if (additionalOptions.contains("-XdaemonVmOptions")) {
             Pattern pattern = Pattern.compile("-XdaemonVmOptions=(?:\"([^\"]*)\"|([^\\s]*))");
@@ -967,11 +967,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             if (matcher.find()) {
                 String daemonArguments = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
                 if (daemonArguments != null) {
-                    if (compilerWorkspaceSettings != null) {
-                        compilerWorkspaceSettings.setDaemonVmOptions(daemonArguments);
-                    }
+                    return daemonArguments;
                 }
             }
         }
+        return "";
     }
 }
