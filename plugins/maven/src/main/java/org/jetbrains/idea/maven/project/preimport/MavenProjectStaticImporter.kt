@@ -25,6 +25,7 @@ import com.intellij.util.text.nullize
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jdom.Content
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
@@ -155,12 +156,14 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       }
       interpolationJob.join()
 
+      val resolvedPluginsLockCache = Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap<MavenPlugin, Boolean>()))
       val meditationJob = launch {
         tree.forEachProject {
           launch {
             resolveBuildModel(it)
             resolveDependencies(it)
             resolveDirectories(it)
+            resolvePluginConfigurations(it, resolvedPluginsLockCache)
             applyChangesToProject(it)
           }
         }
@@ -178,6 +181,35 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     return@async null
 
 
+  }
+
+  private fun resolvePluginConfigurations(data: MavenProjectData, resolvedPluginsLockCache: MutableSet<MavenPlugin>) {
+    data.plugins.forEach { (_, plugin) ->
+      if (resolvedPluginsLockCache.add(plugin)) {
+        val config = plugin.configurationElement
+        if (config != null) {
+          resolveConfiguration(config, data)
+        }
+
+        plugin.executions.forEach { exec ->
+          val execConfig = exec.configurationElement
+          if (execConfig != null) {
+            resolveConfiguration(execConfig, data)
+          }
+        }
+      }
+    }
+  }
+
+  private fun resolveConfiguration(element: Element, data: MavenProjectData) {
+    element.children.forEach() { child ->
+      if (child.content.size == 1 && child.content[0].cType == Content.CType.Text) {
+        child.setText(resolveProperty(data, child.text))
+      }
+      else if (child.content.size > 0) {
+        resolveConfiguration(child, data)
+      }
+    }
   }
 
   private fun resolveBuildModel(projectData: MavenProjectData) {
@@ -321,7 +353,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
    */
   private fun resolveProperty(project: MavenProjectData, propertyValue: String): String? {
 
-    var value = propertyValue;
+    var value = propertyValue
     val recursionProtector = HashSet<String>()
     while (recursionProtector.add(value)) {
       val start = value.indexOf("${'$'}{")
@@ -331,7 +363,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       val variable = value.substring(start + 2, end)
       val resolvedValue = doResolveVariable(project.properties, variable) ?: return null
       if (start == 0 && end == value.length - 1) {
-        value = resolvedValue;
+        value = resolvedValue
         continue
       }
       val tail = if (end == value.length - 1) {
@@ -418,7 +450,6 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     mavenModel.build.outputDirectory = parentFolder.resolve("target/classes").toString()
     mavenModel.build.testOutputDirectory = parentFolder.resolve("target/test-classes").toString()
 
-    MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency")?.map { extractId(it) }
     declaredDependencies.addAll(
       MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency").map { extractId(it) }
     )
@@ -434,7 +465,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
 
     return MavenProjectData(mavenProject, mavenModel, rootModel).apply {
-      val mavenProjectData = this;
+      val mavenProjectData = this
       this.plugins.putAll(plugins)
       this.dependencyManagement.addAll(dependencyManagement)
       this.declaredDependencies.addAll(declaredDependencies)
@@ -533,7 +564,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
   private fun readPlugins(rootModel: Element): Map<MavenId, MavenPlugin> {
     val plugins = HashMap<MavenId, MavenPlugin>()
-    MavenJDOMUtil.findChildrenByPath(rootModel, "build.plugins", "plugin")?.forEach {
+    MavenJDOMUtil.findChildrenByPath(rootModel, "build.plugins", "plugin").forEach {
       val executions = it.getChild("executions")
                          ?.getChildren("execution")
                          ?.map { execution ->

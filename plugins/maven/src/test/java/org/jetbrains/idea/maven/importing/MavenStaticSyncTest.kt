@@ -1,30 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.build.SyncViewManager
-import com.intellij.build.events.BuildEvent
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.LanguageLevelUtil
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.MavenIndexerWrapper
-import org.jetbrains.idea.maven.server.MavenServerConnector
-import org.jetbrains.idea.maven.server.MavenServerManager
-import org.junit.Assume
 import org.junit.Test
-import java.io.File
-import java.util.function.Predicate
 
 class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
 
@@ -194,6 +175,38 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
   }
 
   @Test
+  fun testImportProjectWithCompilerConfigSetByProperties() = runBlocking {
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                        <java.version>14</java.version>
+                    </properties>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                          <configuration>
+                            <source>${'$'}{java.version}</source>
+                            <target>${'$'}{java.version}</target>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+
+    readAction {
+      val module = getModule("project")
+      assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
+    }
+  }
+
+
+  @Test
   fun testImportProjectWithCompilerConfigWithoutGroupId() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -249,6 +262,53 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
                           <configuration>
                             <source>14</source>
                             <target>14</target>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """.trimIndent())
+
+
+
+
+    readAction {
+      val module = getModule("m1")
+      assertEquals(LanguageLevel.JDK_14, LanguageLevelUtil.getEffectiveLanguageLevel(module))
+    }
+  }
+
+  @Test
+  fun testImportProjectWithCompilerConfigOfParentSetByProperties() = runBlocking {
+
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <properties>
+                        <java.version>14</java.version>
+                    </properties>
+                    <modules>
+                        <module>m1</module>
+                    </modules>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-compiler-plugin</artifactId>
+                          <version>3.11.0</version>
+                          <configuration>
+                            <source>${'$'}{java.version}</source>
+                            <target>${'$'}{java.version}</target>
                           </configuration>
                         </plugin>
                       </plugins>
