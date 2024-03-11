@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.psi.*
 
@@ -68,7 +69,11 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
         analyze(this) {
             val symbol = getSymbol() as? KtCallableSymbol ?: return PsiElement.EMPTY_ARRAY
             val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
-             type.expandedClassSymbol?.psi?.let { return arrayOf(it) }
+            val targetType = when(type) {
+                is KtFlexibleType -> type.lowerBound
+                else -> type
+            }
+            targetType.expandedClassSymbol?.psi?.let { return arrayOf(it) }
         }
         return PsiElement.EMPTY_ARRAY
     }

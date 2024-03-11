@@ -73,6 +73,11 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
         runTest("testData/navigation/gotoTypeDeclaration/noParametersLambda.test");
     }
 
+    @TestMetadata("platformType.test")
+    public void testPlatformType() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/platformType.test");
+    }
+
     @TestMetadata("thisExtensionFunction.test")
     public void testThisExtensionFunction() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/thisExtensionFunction.test");

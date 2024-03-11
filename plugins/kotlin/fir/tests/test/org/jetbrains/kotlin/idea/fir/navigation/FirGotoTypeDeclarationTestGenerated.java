@@ -73,6 +73,11 @@ public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDecl
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/noParametersLambda.test");
     }
 
+    @TestMetadata("platformType.test")
+    public void testPlatformType() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/platformType.test");
+    }
+
     @TestMetadata("thisExtensionFunction.test")
     public void testThisExtensionFunction() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/thisExtensionFunction.test");
