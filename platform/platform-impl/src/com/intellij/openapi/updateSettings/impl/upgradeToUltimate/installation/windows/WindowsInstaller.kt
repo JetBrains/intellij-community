@@ -33,18 +33,18 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
     return installSilently(downloadPath, installationPath, downloadResult)
   }
   
-  
   private fun providePath(installationPath: Path, suggestedIde: SuggestedIde) : PathInfo? {
     var path = installationPath
     var counter = 0
-    while (installationPath.exists() && (counter++ <= 10)) {
+    
+    while (installationPath.exists() && counter++ <= 10) {
       if (findExePath(path, suggestedIde) != null) return PathInfo(installationPath, true)
       
       val fileName = path.fileName
       path = installationPath.parent.resolve("$fileName $counter")
     }
     
-    return null
+    return if (counter > 10) null else PathInfo(path, false)
   }
   
   private fun findExePath(path: Path, suggestedIde: SuggestedIde) : String?  {
