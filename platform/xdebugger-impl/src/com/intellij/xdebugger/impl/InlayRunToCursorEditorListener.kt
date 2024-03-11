@@ -251,12 +251,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val group = DefaultActionGroup(actionsToShow)
 
-    val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
-    if (gutterRenderer != null) {
-      return
-    }
-
-    if (needShowOnGutter && editorGutterComponentEx.findFoldingAnchorAt(editorGutterComponentEx.foldingAreaOffset + 1, lineY + 1) != null) {
+    if (needShowOnGutter && isGutterComponentOverlapped(editorGutterComponentEx, xPosition, lineY)) {
       return
     }
 
@@ -306,6 +301,18 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val hintInfo = HintManagerImpl.createHintHint(editor, position, hint, HintManager.RIGHT)
     clientHintManager.showEditorHint(hint, editor, hintInfo, position, flags, 0, true) { }
+  }
+
+  private fun isGutterComponentOverlapped(editorGutterComponentEx: EditorGutterComponentEx, xPosition: Int, lineY: Int): Boolean {
+    val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
+    if (gutterRenderer != null) {
+      return true
+    }
+
+    if (editorGutterComponentEx.findFoldingAnchorAt(editorGutterComponentEx.foldingAreaOffset + 1, lineY + 1) != null) {
+      return true
+    }
+    return false
   }
 
   private fun calculateEffectiveHoverColorAndStroke(needShowOnGutter: Boolean, editor: Editor, lineNumber: Int): Pair<Color, Color?> {
