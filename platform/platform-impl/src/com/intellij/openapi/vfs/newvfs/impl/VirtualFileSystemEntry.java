@@ -427,17 +427,20 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     pfs.incStructuralModificationCount();
   }
 
-  public void setParent(@NotNull VirtualFile newParent) {
+  public void setParent(@NotNull VirtualFile _newParent) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    VirtualDirectoryImpl parent = getParent();
-    parent.removeChild(this);
+    VirtualDirectoryImpl newParent = (VirtualDirectoryImpl)_newParent;
+    VirtualDirectoryImpl oldParent = getParent();
 
-    VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
-    getSegment().changeParent(myId, directory);
-    directory.addChild(this);
+    //TODO RC: both oldParent.myData & newParent.myData locks must be acquired here -- to prevent
+    //         FileAlreadyCreatedException in VirtualDirectoryImpl.createChildImpl()/VfsData$Segment.initFileData()
+    oldParent.removeChild(this);
 
-    updateLinkStatus(directory);
+    getSegment().changeParent(myId, newParent);
+    newParent.addChild(this);
+
+    updateLinkStatus(newParent);
 
     owningPersistentFS().incStructuralModificationCount();
   }
