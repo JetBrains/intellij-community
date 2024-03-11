@@ -2,7 +2,6 @@
 package com.intellij.ide.navbar
 
 import com.intellij.ui.SimpleTextAttributes
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -30,13 +29,6 @@ class NavBarItemPresentation(
    * Text attributes to highlight the text.
    */
   val textAttributes: SimpleTextAttributes,
-
-  /**
-   * Not used, tobe deleted
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("not used, to be deleted")
-  val selectedTextAttributes: SimpleTextAttributes,
 
   /**
    * Find better place for that.

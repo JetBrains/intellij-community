@@ -137,7 +137,7 @@ internal class ServiceViewRootNavBarItem(
   override val presentation: NavBarItemPresentation = NavBarItemPresentation(
     AllIcons.Nodes.Services, "", null,
     REGULAR_ATTRIBUTES,
-    REGULAR_ATTRIBUTES, false
+    false
   )
 
   override suspend fun children(): List<NavBarVmItem> {
@@ -170,7 +170,7 @@ private class ServiceViewNavBarItem(
   override val presentation: NavBarItemPresentation = run {
     val icon = item.getViewDescriptor().getPresentation().getIcon(false)
     val text = ServiceViewDragHelper.getDisplayName(item.getViewDescriptor().getPresentation())
-    NavBarItemPresentation(icon, text, null, REGULAR_ATTRIBUTES, REGULAR_ATTRIBUTES, false)
+    NavBarItemPresentation(icon, text, null, REGULAR_ATTRIBUTES, false)
   }
 
   override suspend fun children(): List<NavBarVmItem> {

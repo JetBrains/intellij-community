@@ -58,8 +58,7 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
     val text: String = fromOldExtensions { ext -> ext.getPresentableText(data, false) } ?: getText(false)
     val popupText: String = fromOldExtensions { ext -> ext.getPresentableText(data, true) } ?: getText(true)
 
-    val textAttributes = getTextAttributes(selected = false)
-    val selectedTextAttributes = getTextAttributes(selected = true)
+    val textAttributes = getTextAttributes()
 
     val hasContainingFile = (data as? PsiElement)?.containingFile != null
 
@@ -68,7 +67,6 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
       text,
       popupText,
       textAttributes,
-      selectedTextAttributes,
       hasContainingFile
     )
   }
@@ -77,7 +75,7 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
 
   open fun getText(forPopup: Boolean): @Nls String = data.toString()
 
-  open fun getTextAttributes(selected: Boolean): SimpleTextAttributes = REGULAR_ATTRIBUTES
+  open fun getTextAttributes(): SimpleTextAttributes = REGULAR_ATTRIBUTES
 
 }
 
@@ -90,7 +88,7 @@ internal class ProjectNavBarItem(data: Project) : DefaultNavBarItem<Project>(dat
 
   override fun getIcon(): Icon = AllIcons.Nodes.Project
 
-  override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
+  override fun getTextAttributes(): SimpleTextAttributes {
     val problemSolver = WolfTheProblemSolver.getInstanceIfCreated(data) ?: return REGULAR_ATTRIBUTES
     val hasProblems = ModuleManager.getInstance(data)
       .modules
@@ -122,7 +120,7 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
 
   override fun getIcon(): Icon = ModuleType.get(data).icon
 
-  override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
+  override fun getTextAttributes(): SimpleTextAttributes {
     val problemSolver = WolfTheProblemSolver.getInstance(data.project)
     val hasProblems = problemSolver.hasProblemFilesBeneath(data)
 
@@ -159,14 +157,14 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
       null
     }
 
-  override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
+  override fun getTextAttributes(): SimpleTextAttributes {
     val psiFile = data.containingFile
 
     if (psiFile != null) {
       val virtualFile = psiFile.virtualFile ?: return SimpleTextAttributes(null, null, navBarErrorAttributes.waveColor, STYLE_PLAIN)
       val problemSolver = WolfTheProblemSolver.getInstance(data.project)
       val style = if (problemSolver.isProblemFile(virtualFile)) navBarErrorAttributes.style else STYLE_PLAIN
-      val color = if (!selected) FileStatusManager.getInstance(data.project).getStatus(virtualFile).color else null
+      val color = FileStatusManager.getInstance(data.project).getStatus(virtualFile).color
       return SimpleTextAttributes(null, color, navBarErrorAttributes.waveColor, style)
     }
     else {
