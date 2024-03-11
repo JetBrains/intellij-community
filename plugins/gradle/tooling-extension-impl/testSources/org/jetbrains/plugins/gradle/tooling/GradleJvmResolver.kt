@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleOlderThan
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
@@ -82,7 +84,7 @@ class GradleJvmResolver(
 
   private fun isJavaSupportedByGradleToolingApi(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
     // https://github.com/gradle/gradle/issues/9339
-    if (gradleVersion >= GRADLE_5_6 && gradleVersion < GRADLE_7_2) {
+    if (isGradleAtLeast(gradleVersion, "5.6") && isGradleOlderThan(gradleVersion, "7.3")) {
       if (javaVersion.feature < 11) {
         return false
       }
@@ -135,9 +137,6 @@ class GradleJvmResolver(
   }
 
   companion object {
-    private val GRADLE_5_6 = GradleVersion.version("5.6")
-    private val GRADLE_7_2 = GradleVersion.version("7.2")
-
     @JvmStatic
     fun resolveGradleJvm(gradleVersion: GradleVersion, parentDisposable: Disposable): Sdk {
       return GradleJvmResolver(gradleVersion, VersionRestriction.NO)
