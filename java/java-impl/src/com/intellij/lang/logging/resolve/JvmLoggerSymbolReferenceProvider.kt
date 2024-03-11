@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.logging.resolve
 
-import com.intellij.util.logging.PlaceholderLoggerType.SLF4J
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReference
@@ -12,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.util.logging.*
+import com.intellij.util.logging.PlaceholderLoggerType.SLF4J
 import org.jetbrains.uast.*
 
 class JvmLoggerSymbolReferenceProvider : PsiSymbolReferenceProvider {
@@ -44,11 +44,12 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
 
   if (context.partHolderList.size > 1) return null
   val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, context.partHolderList)
+
   if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY || placeholderCountResult.placeholderRangesInPartHolderList.size != 1) return null
 
   val placeholderRanges = placeholderCountResult.placeholderRangesInPartHolderList.single()
-  val parameterExpressions = context.placeholderParameters
-  val zipped = placeholderRanges.rangeList.zip(parameterExpressions)
+
+  val zipped = placeholderRanges.rangeList.zip(context.placeholderParameters)
 
   val psiLiteralExpression = literalExpression.sourcePsi ?: return null
   val value = literalExpression.evaluateString() ?: return null

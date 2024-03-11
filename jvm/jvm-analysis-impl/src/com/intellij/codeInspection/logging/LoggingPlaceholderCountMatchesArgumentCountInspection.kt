@@ -138,4 +138,6 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
   enum class Slf4jToLog4J2Type {
     AUTO, YES, NO
   }
+
+  private data class Result(val argumentCount: Int, val placeholderCount: Int, val result: ResultType)
 }

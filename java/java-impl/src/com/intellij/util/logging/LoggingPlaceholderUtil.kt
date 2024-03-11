@@ -438,12 +438,41 @@ enum class PlaceholdersStatus {
   EXACTLY, PARTIAL, ERROR_TO_PARSE_STRING, EMPTY
 }
 
+
+/**
+ * A data class representing the result of a placeholder count operation.
+ *
+ * @property placeholderRangesInPartHolderList   The list of [PlaceholderRangesInPartHolder] instances.
+ * @property status                              The status of the placeholders ranges extraction.
+ *
+ * @see countPlaceholders
+ */
 data class PlaceholderCountResult(val placeholderRangesInPartHolderList: List<PlaceholderRangesInPartHolder>, val status: PlaceholdersStatus) {
   val count = placeholderRangesInPartHolderList.sumOf { it.rangeList.size }
 }
 
+/**
+ * A data class representing ranges of placeholders ({}, or %s) within the [LoggingStringPartEvaluator.PartHolder].
+ */
 data class PlaceholderRangesInPartHolder(val rangeList: List<TextRange?>)
 
-data class Result(val argumentCount: Int, val placeholderCount: Int, val result: ResultType)
-
-data class PlaceholderContext(val placeholderParameters: List<UExpression>, val logStringArgument: UExpression, val partHolderList: List<LoggingStringPartEvaluator.PartHolder>, val loggerType: PlaceholderLoggerType, val lastArgumentIsException: Boolean, val lastArgumentIsSupplier: Boolean)
+/**
+ * A data class representing the context for a placeholder of the logger.
+ *
+ * @property placeholderParameters   The list of [UExpression] representing the parameters for the placeholder.
+ * @property logStringArgument       The [UExpression] representing the string argument for logging.
+ * @property partHolderList          The list of PartHolder from the [LoggingStringPartEvaluator].
+ * @property loggerType              The type of logger used [PlaceholderLoggerType].
+ * @property lastArgumentIsException Indicates whether the last argument of logger method is an exception or not.
+ * @property lastArgumentIsSupplier  Indicates whether the last argument of logger method is a supplier or not.
+ *
+ * @see getPlaceholderContext
+ */
+data class PlaceholderContext(
+  val placeholderParameters: List<UExpression>,
+  val logStringArgument: UExpression,
+  val partHolderList: List<LoggingStringPartEvaluator.PartHolder>,
+  val loggerType: PlaceholderLoggerType,
+  val lastArgumentIsException: Boolean,
+  val lastArgumentIsSupplier: Boolean,
+)

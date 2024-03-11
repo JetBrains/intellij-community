@@ -8,9 +8,8 @@ import com.intellij.psi.PsiElement
 
 class JvmLoggerArgumentSymbolReference(
   private val literalExpression: PsiElement,
-  private val literalRange : TextRange,
-  private val externalReference : PsiElement,
-
+  private val literalRange: TextRange,
+  private val externalReference: PsiElement,
 ) : PsiSymbolReference {
   override fun getElement(): PsiElement = literalExpression
 

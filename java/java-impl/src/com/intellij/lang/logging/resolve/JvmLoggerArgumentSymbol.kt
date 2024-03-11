@@ -24,7 +24,7 @@ class JvmLoggerArgumentSymbol(val expression: PsiElement) : Symbol, NavigatableS
   override val usageHandler: UsageHandler = UsageHandler.createEmptyUsageHandler(expression.text)
 
 
-  fun getPlaceholderString() : UExpression? {
+  fun getPlaceholderString(): UExpression? {
     val uExpression = expression.toUElementOfType<UExpression>() ?: return null
     val uCallExpression = uExpression.getParentOfType<UCallExpression>() ?: return null
 
