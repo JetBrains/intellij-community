@@ -32,9 +32,19 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
   override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
     return myCache.compute(wslDistribution.id + if (rootUser) ":root" else "") { _, oldHolder ->
       val validOldHolder = when (oldHolder?.isInitialized()) {
-        true ->
-          if (oldHolder.getInitialized().isRunning) oldHolder
+        true -> {
+          val ijentApi =
+            try {
+              oldHolder.getInitialized()
+            }
+            catch (ignored: Exception) {
+              // Something wrong happened. It is supposed that the error is logged by the caller side that called this method the first.
+              // There should be an attempt to start IJent again.
+              null
+            }
+          if (ijentApi?.isRunning == true) oldHolder
           else null
+        }
         false -> oldHolder
         null -> null
       }
