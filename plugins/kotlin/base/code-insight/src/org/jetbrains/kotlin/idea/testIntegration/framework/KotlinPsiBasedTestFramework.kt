@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TestFrameworks
 import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import com.intellij.testIntegration.JavaTestFramework
 import com.intellij.testIntegration.TestFramework
 import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -72,6 +73,8 @@ interface KotlinPsiBasedTestFramework {
                 val checkedFrameworkLanguage = checkedFrameworksByName[frameworkName]
                 // if we've checked framework for more specific language - no reasons to check it again for more general language
                 if (checkedFrameworkLanguage != null && checkedFrameworkLanguage.isSubLanguage(frameworkLanguage)) continue
+
+                if ((framework as? JavaTestFramework)?.isFrameworkAvailable(declaration) == false) continue
 
                 val kotlinPsiBasedTestFramework = framework as? KotlinPsiBasedTestFramework
                 if (psiOnlyChecks && kotlinPsiBasedTestFramework == null) continue
