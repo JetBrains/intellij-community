@@ -30,20 +30,8 @@ internal class GitBranchComparisonResultImpl(private val project: Project,
   override val patchesByChange: Map<RefComparisonChange, GitTextFilePatchWithHistory> = Collections.unmodifiableMap(_diffDataByChange)
 
   init {
-    val commitsHashes = commits.mapTo(mutableSetOf()) { it.sha }
-
-    // One or more merge commit for changes that are included into PR (master merges are ignored)
-    val linearHistory = commits.all { commit ->
-      commit.parents.count { commitsHashes.contains(it) } <= 1
-    }
-
     try {
-      if (linearHistory) {
-        initForLinearHistory(commits)
-      }
-      else {
-        initForHistoryWithMerges(commits)
-      }
+      initForLinearHistory(commits)
     }
     catch (e: Exception) {
       throw RuntimeException("Unable to build branch comparison result between $baseSha and $headSha via $mergeBaseSha - ${e.message}", e)
@@ -57,31 +45,33 @@ internal class GitBranchComparisonResultImpl(private val project: Project,
 
     val commitsHashes = listOf(mergeBaseSha) + commits.map { it.sha }
     for (commitWithPatches in commits) {
-
       val commitSha = commitWithPatches.sha
       val commitChanges = mutableListOf<RefComparisonChange>()
 
-      for (patch in commitWithPatches.patches) {
-        val change = createChangeFromPatch(previousCommitSha, commitSha, patch)
-        commitChanges.add(change)
+      if (commitWithPatches.parents.count { commitsHashes.contains(it) } <= 1) {
+        for (patch in commitWithPatches.patches) {
+          val change = createChangeFromPatch(previousCommitSha, commitSha, patch)
+          commitChanges.add(change)
 
-        if (patch is TextFilePatch) {
-          val beforePath = patch.beforeName
-          val afterPath = patch.afterName
+          if (patch is TextFilePatch) {
+            val beforePath = patch.beforeName
+            val afterPath = patch.afterName
 
-          val historyBefore = beforePath?.let { fileHistoriesByLastKnownFilePath.remove(it) }
-          val fileHistory = (historyBefore ?: MutableLinearGitFileHistory(commitsHashes)).apply {
-            append(previousCommitSha, beforePath)
-            append(commitSha, patch)
+            val historyBefore = beforePath?.let { fileHistoriesByLastKnownFilePath.remove(it) }
+            val fileHistory = (historyBefore ?: MutableLinearGitFileHistory(commitsHashes)).apply {
+              append(previousCommitSha, beforePath)
+              append(commitSha, patch)
+            }
+            val path = (afterPath ?: beforePath)!!
+            fileHistoriesByLastKnownFilePath[path] = fileHistory
+
+            patch.beforeVersionId = previousCommitSha
+            patch.afterVersionId = commitSha
+            _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, false, fileHistory)
           }
-          val path = (afterPath ?: beforePath)!!
-          fileHistoriesByLastKnownFilePath[path] = fileHistory
-
-          patch.beforeVersionId = previousCommitSha
-          patch.afterVersionId = commitSha
-          _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, false, fileHistory)
         }
       }
+
       _changesByCommits[commitWithPatches.sha] = commitChanges
       previousCommitSha = commitSha
     }
@@ -105,27 +95,6 @@ internal class GitBranchComparisonResultImpl(private val project: Project,
         patch.afterVersionId = headSha
 
         _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, true, fileHistory)
-      }
-    }
-  }
-
-  private fun initForHistoryWithMerges(commits: List<GitCommitShaWithPatches>) {
-    val commitsHashes = commits.mapTo(mutableSetOf()) { it.sha }
-    for (commitWithPatches in commits) {
-      val previousCommitSha = commitWithPatches.parents.find { commitsHashes.contains(it) } ?: mergeBaseSha
-      val commitSha = commitWithPatches.sha
-      val commitChanges = commitWithPatches.patches.map { createChangeFromPatch(previousCommitSha, commitSha, it) }
-      _changesByCommits[commitWithPatches.sha] = commitChanges
-    }
-
-    for (patch in headPatches) {
-      val change = createChangeFromPatch(mergeBaseSha, headSha, patch)
-      _changes.add(change)
-
-      if (patch is TextFilePatch) {
-        patch.beforeVersionId = baseSha
-        patch.afterVersionId = headSha
-        _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, true, SinglePatchGitFileHistory(patch))
       }
     }
   }
