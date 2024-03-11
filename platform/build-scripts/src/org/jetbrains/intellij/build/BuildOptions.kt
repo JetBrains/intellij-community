@@ -246,7 +246,14 @@ data class BuildOptions(
      */
     const val RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY: String = "intellij.build.dependencies.resolution.retry.delay.ms"
     const val TARGET_OS_PROPERTY: String = "intellij.build.target.os"
+
+    /**
+     * Use this system property to specify the target JVM architecture. 
+     * Possible values are `x64`, `aarch64` and `current` (which refers to the architecture on which the build scripts are executed). 
+     * If no value is provided, artifacts for all supported architectures will be built.  
+     */
     const val TARGET_ARCH_PROPERTY: String = "intellij.build.target.arch"
+    private const val ARCH_CURRENT: String = "current"
 
     /**
      * If `true`, the project modules will be compiled incrementally.
@@ -445,9 +452,8 @@ data class BuildOptions(
       targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
       else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
-    targetArch = System.getProperty(TARGET_ARCH_PROPERTY)
-      ?.takeIf { it.isNotBlank() }
-      ?.let(JvmArchitecture::valueOf)
+    val targetArchProperty = System.getProperty(TARGET_ARCH_PROPERTY)?.takeIf { it.isNotBlank() }
+    targetArch = if (targetArchProperty == ARCH_CURRENT) JvmArchitecture.currentJvmArch else targetArchProperty?.let(JvmArchitecture::valueOf)
     val randomSeedString = System.getProperty("intellij.build.randomSeed")
     randomSeedNumber = if (randomSeedString == null || randomSeedString.isBlank()) {
       ThreadLocalRandom.current().nextLong()
