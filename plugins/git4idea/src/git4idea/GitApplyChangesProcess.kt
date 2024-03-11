@@ -88,18 +88,27 @@ internal class GitApplyChangesProcess(
     val successfulCommits = mutableListOf<VcsCommitMetadata>()
     val skippedCommits = mutableListOf<VcsCommitMetadata>()
 
-    repoLoop@ for ((repository, repoCommits) in commitsInRoots) {
-      try {
-        for (commit in repoCommits) {
-          val success = executeForCommit(repository, commit, successfulCommits, skippedCommits)
-          if (!success) return
-        }
-      }
-      finally {
-        repository.update()
-      }
+    for ((repository, repoCommits) in commitsInRoots) {
+      val success = executeForRepository(repository, repoCommits, successfulCommits, skippedCommits)
+      if (!success) return
     }
     notifyResult(successfulCommits, skippedCommits)
+  }
+
+  private fun executeForRepository(repository: GitRepository,
+                                   repoCommits: List<VcsCommitMetadata>,
+                                   successfulCommits: MutableList<VcsCommitMetadata>,
+                                   skippedCommits: MutableList<VcsCommitMetadata>): Boolean {
+    try {
+      for (commit in repoCommits) {
+        val success = executeForCommit(repository, commit, successfulCommits, skippedCommits)
+        if (!success) return false
+      }
+      return true
+    }
+    finally {
+      repository.update()
+    }
   }
 
   /**
