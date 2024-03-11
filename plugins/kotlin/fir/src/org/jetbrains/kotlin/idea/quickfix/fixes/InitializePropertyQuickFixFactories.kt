@@ -1,16 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedModCommand
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactories
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -20,59 +19,87 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 object InitializePropertyQuickFixFactories {
 
-    data class AddInitializerInput(
-        val initializerText: String?,
-    ) : KotlinApplicatorInput
+    private class InitializePropertyModCommandAction(
+        element: KtProperty,
+        elementContext: ElementContext,
+    ) : KotlinModCommandAction<KtProperty, InitializePropertyModCommandAction.ElementContext>(element, elementContext) {
 
-    private val addInitializerApplicator = object : KotlinApplicator.ModCommandBased<KtProperty, AddInitializerInput> {
+        data class ElementContext(
+            val initializerText: String,
+        ) : KotlinModCommandAction.ElementContext
 
         override fun getFamilyName(): String = KotlinBundle.message("add.initializer")
 
-        override fun applyTo(
-            psi: KtProperty,
-            input: AddInitializerInput,
+        override fun invoke(
             context: ActionContext,
+            element: KtProperty,
+            elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
             val expression = KtPsiFactory(context.project)
-                .createExpression(input.initializerText ?: "TODO()")
-            val initializer = psi.setInitializer(expression)!!
+                .createExpression(elementContext.initializerText)
+            val initializer = element.setInitializer(expression)!!
             updater.select(TextRange(initializer.startOffset, initializer.endOffset))
             updater.moveCaretTo(initializer.endOffset)
         }
     }
 
-    val initializePropertyFactory =
-        diagnosticModCommandFixFactories(
-            KtFirDiagnostic.MustBeInitialized::class,
-            KtFirDiagnostic.MustBeInitializedWarning::class,
-            KtFirDiagnostic.MustBeInitializedOrBeFinal::class,
-            KtFirDiagnostic.MustBeInitializedOrBeFinalWarning::class,
-            KtFirDiagnostic.MustBeInitializedOrBeAbstract::class,
-            KtFirDiagnostic.MustBeInitializedOrBeAbstractWarning::class,
-            KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class,
-            KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class,
-        ) { diagnostic ->
-            val property: KtProperty = diagnostic.psi
+    // todo refactor
+    val mustBeInitialized = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.MustBeInitialized ->
+        createFixes(diagnostic.psi)
+    }
 
-            // An extension property cannot be initialized because it has no backing field
-            if (property.receiverTypeReference != null) return@diagnosticModCommandFixFactories emptyList()
+    val mustBeInitializedWarning = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.MustBeInitializedWarning ->
+        createFixes(diagnostic.psi)
+    }
 
-            buildList {
-                add(
-                    KotlinApplicatorBasedModCommand(
-                        property,
-                        AddInitializerInput(property.getReturnKtType().defaultInitializer),
-                        addInitializerApplicator
-                    )
-                )
+    val mustBeInitializedOrBeFinal = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.MustBeInitializedOrBeFinal ->
+        createFixes(diagnostic.psi)
+    }
 
-                (property.containingClassOrObject as? KtClass)?.let { ktClass ->
-                    if (ktClass.isAnnotation() || ktClass.isInterface()) return@let
+    val mustBeInitializedOrBeFinalWarning =
+        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.MustBeInitializedOrBeFinalWarning ->
+            createFixes(diagnostic.psi)
+        }
 
-                    // TODO: Add quickfixes MoveToConstructorParameters and InitializeWithConstructorParameter after change signature
-                    //  refactoring is available. See org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory
-                }
+    val mustBeInitializedOrBeAbstract = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.MustBeInitializedOrBeAbstract ->
+        createFixes(diagnostic.psi)
+    }
+
+    val mustBeInitializedOrBeAbstractWarning =
+        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.MustBeInitializedOrBeAbstractWarning ->
+            createFixes(diagnostic.psi)
+        }
+
+    val mustBeInitializedOrFinalOrAbstract =
+        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract ->
+            createFixes(diagnostic.psi)
+        }
+
+    val mustBeInitializedOrFinalOrAbstractWarning =
+        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning ->
+            createFixes(diagnostic.psi)
+        }
+
+    context(KtAnalysisSession)
+    private fun createFixes(
+        element: KtProperty,
+    ): List<KotlinModCommandAction<KtProperty, out KotlinModCommandAction.ElementContext>> {
+        // An extension property cannot be initialized because it has no backing field
+        if (element.receiverTypeReference != null) return emptyList()
+
+        return buildList {
+            val elementContext = InitializePropertyModCommandAction.ElementContext(
+                initializerText = element.getReturnKtType().defaultInitializer ?: "TODO()",
+            )
+            add(InitializePropertyModCommandAction(element, elementContext))
+
+            (element.containingClassOrObject as? KtClass)?.let { ktClass ->
+                if (ktClass.isAnnotation() || ktClass.isInterface()) return@let
+
+                // TODO: Add quickfixes MoveToConstructorParameters and InitializeWithConstructorParameter after change signature
+                //  refactoring is available. See org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory
             }
         }
+    }
 }

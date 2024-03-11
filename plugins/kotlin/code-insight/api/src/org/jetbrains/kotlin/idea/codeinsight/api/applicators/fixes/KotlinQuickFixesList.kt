@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
@@ -97,12 +97,6 @@ class KtQuickFixesListBuilder private constructor() {
 
     fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerApplicators(
         quickFixFactories: Collection<KotlinDiagnosticFixFactory<out DIAGNOSTIC>>
-    ) {
-        quickFixFactories.forEach(::registerApplicator)
-    }
-
-    fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerModCommandApplicators(
-        quickFixFactories: Collection<KotlinDiagnosticModCommandFixFactory<out DIAGNOSTIC>>
     ) {
         quickFixFactories.forEach(::registerApplicator)
     }

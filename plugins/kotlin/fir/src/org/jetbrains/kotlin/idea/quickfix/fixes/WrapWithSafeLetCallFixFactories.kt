@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
@@ -15,9 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedModCommand
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
 import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -27,11 +25,6 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 object WrapWithSafeLetCallFixFactories {
-    class Input(
-        val nullableExpressionPointer: SmartPsiElementPointer<KtExpression>,
-        val suggestedVariableName: String,
-        val isImplicitInvokeCallToMemberProperty: Boolean,
-    ) : KotlinApplicatorInput
 
     private val LOG = Logger.getInstance(this::class.java)
 
@@ -62,28 +55,38 @@ object WrapWithSafeLetCallFixFactories {
      *  `isImplicitInvokeCallToMemberProperty` controls the behavior when hoisting up the nullable expression. It should be set to true
      *  if the call is to a invocable member property.
      */
-    private val applicator = object : KotlinApplicator.ModCommandBased<KtExpression, Input> {
+    private class WrapWithSafeLetCallModCommandAction(
+        element: KtExpression,
+        elementContext: ElementContext,
+    ) : KotlinModCommandAction<KtExpression, WrapWithSafeLetCallModCommandAction.ElementContext>(element, elementContext) {
+
+        data class ElementContext(
+            val nullableExpressionPointer: SmartPsiElementPointer<KtExpression>,
+            val suggestedVariableName: String,
+            val isImplicitInvokeCallToMemberProperty: Boolean,
+        ) : KotlinModCommandAction.ElementContext
 
         override fun getFamilyName(): String = KotlinBundle.message("wrap.with.let.call")
 
-        override fun applyTo(
-            psi: KtExpression,
-            input: Input,
+        override fun invoke(
             context: ActionContext,
+            element: KtExpression,
+            elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
             val nullableExpression =
-                input.nullableExpressionPointer.element?.let<KtExpression, KtExpression?>(updater::getWritable) ?: return@applyTo
-            if (!nullableExpression.parents.contains(psi)) {
+                elementContext.nullableExpressionPointer.element?.let<KtExpression, KtExpression?>(updater::getWritable)
+                    ?: return
+            if (!nullableExpression.parents.contains(element)) {
                 LOG.warn(
                     "Unexpected input for WrapWithSafeLetCall. Nullable expression '${nullableExpression.text}' should be a descendant" +
-                            " of '${psi.text}'."
+                            " of '${element.text}'."
                 )
                 return
             }
 
-            val suggestedVariableName = input.suggestedVariableName
-            val psiFactory = KtPsiFactory(psi.project)
+            val suggestedVariableName = elementContext.suggestedVariableName
+            val psiFactory = KtPsiFactory(element.project)
 
             fun getNewExpression(nullableExpressionText: String, expressionUnderLetText: String): KtExpression {
                 return when (suggestedVariableName) {
@@ -105,7 +108,7 @@ object WrapWithSafeLetCallFixFactories {
             val callExpression = nullableExpression.parentOfType<KtCallExpression>(withSelf = true)
             val qualifiedExpression = callExpression?.getQualifiedExpressionForSelector()
             val receiverExpression = qualifiedExpression?.receiverExpression
-            if (receiverExpression != null && input.isImplicitInvokeCallToMemberProperty) {
+            if (receiverExpression != null && elementContext.isImplicitInvokeCallToMemberProperty) {
                 // In this case, the nullable expression is an invocable member. For example consider the following
                 //
                 // interface Foo {
@@ -135,11 +138,11 @@ object WrapWithSafeLetCallFixFactories {
                             prefix = " "
                         ) { it.text }
                     }"
-                if (qualifiedExpression == psi) {
-                    psi.replace(getNewExpression(nullableExpressionText, newInvokeCallText))
+                if (qualifiedExpression == element) {
+                    element.replace(getNewExpression(nullableExpressionText, newInvokeCallText))
                 } else {
                     qualifiedExpression.replace(psiFactory.createExpression(newInvokeCallText))
-                    psi.replace(getNewExpression(nullableExpressionText, psi.text))
+                    element.replace(getNewExpression(nullableExpressionText, element.text))
                 }
 
             } else {
@@ -148,17 +151,17 @@ object WrapWithSafeLetCallFixFactories {
                     else -> nullableExpression.text
                 }
                 nullableExpression.replace(psiFactory.createExpression(suggestedVariableName))
-                psi.replace(getNewExpression(nullableExpressionText, psi.text))
+                element.replace(getNewExpression(nullableExpressionText, element.text))
             }
         }
     }
 
-    val forUnsafeCall = diagnosticModCommandFixFactory(KtFirDiagnostic.UnsafeCall::class) { diagnostic ->
+    val forUnsafeCall = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.UnsafeCall ->
         val nullableExpression = diagnostic.receiverExpression
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(nullableExpression)
     }
 
-    val forUnsafeImplicitInvokeCall = diagnosticModCommandFixFactory(KtFirDiagnostic.UnsafeImplicitInvokeCall::class) { diagnostic ->
+    val forUnsafeImplicitInvokeCall = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.UnsafeImplicitInvokeCall ->
         val callExpression = diagnostic.psi.parentOfType<KtCallExpression>(withSelf = true) ?: return@diagnosticModCommandFixFactory emptyList()
         val callingFunctionalVariableInLocalScope =
             isCallingFunctionalTypeVariableInLocalScope(callExpression) ?: return@diagnosticModCommandFixFactory emptyList()
@@ -182,15 +185,15 @@ object WrapWithSafeLetCallFixFactories {
         }
     }
 
-    val forUnsafeInfixCall = diagnosticModCommandFixFactory(KtFirDiagnostic.UnsafeInfixCall::class) { diagnostic ->
+    val forUnsafeInfixCall = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.UnsafeInfixCall ->
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(diagnostic.receiverExpression)
     }
 
-    val forUnsafeOperatorCall = diagnosticModCommandFixFactory(KtFirDiagnostic.UnsafeOperatorCall::class) { diagnostic ->
+    val forUnsafeOperatorCall = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.UnsafeOperatorCall ->
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(diagnostic.receiverExpression)
     }
 
-    val forArgumentTypeMismatch = diagnosticModCommandFixFactory(KtFirDiagnostic.ArgumentTypeMismatch::class) { diagnostic ->
+    val forArgumentTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
         if (diagnostic.isMismatchDueToNullability) createWrapWithSafeLetCallInputForNullableExpression(diagnostic.psi.wrappingExpressionOrSelf)
         else emptyList()
     }
@@ -199,7 +202,7 @@ object WrapWithSafeLetCallFixFactories {
     private fun createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
-    ): List<KotlinApplicatorBasedModCommand<KtExpression, Input>> {
+    ): List<WrapWithSafeLetCallModCommandAction> {
         val surroundingExpression = nullableExpression?.surroundingExpression
         if (
             surroundingExpression == null ||
@@ -224,8 +227,8 @@ object WrapWithSafeLetCallFixFactories {
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
         surroundingExpression: KtExpression? = findParentExpressionAtNullablePosition(nullableExpression)
-            ?: nullableExpression?.surroundingExpression
-    ): List<KotlinApplicatorBasedModCommand<KtExpression, Input>> {
+            ?: nullableExpression?.surroundingExpression,
+    ): List<WrapWithSafeLetCallModCommandAction> {
         if (nullableExpression == null || surroundingExpression == null) return emptyList()
         val scope = nullableExpression.containingKtFile.getScopeContextForPosition(nullableExpression).getCompositeScope()
         val existingNames = scope.getPossibleCallableNames().mapNotNull { it.identifierOrNullIfSpecial }
@@ -233,13 +236,14 @@ object WrapWithSafeLetCallFixFactories {
         // Note, the order of the candidate matters. We would prefer the default `it` so the generated code won't need to declare the
         // variable explicitly.
         val candidateNames = listOfNotNull(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier, getDeclaredParameterNameForArgument(nullableExpression))
-        val suggestedName = FirKotlinNameSuggester.suggestNameByMultipleNames(candidateNames) { it !in existingNames }
+
+        val elementContext = WrapWithSafeLetCallModCommandAction.ElementContext(
+            nullableExpressionPointer = nullableExpression.createSmartPointer(),
+            suggestedVariableName = FirKotlinNameSuggester.suggestNameByMultipleNames(candidateNames) { it !in existingNames },
+            isImplicitInvokeCallToMemberProperty = isImplicitInvokeCallToMemberProperty,
+        )
         return listOf(
-            KotlinApplicatorBasedModCommand(
-                surroundingExpression,
-                Input(nullableExpression.createSmartPointer(), suggestedName, isImplicitInvokeCallToMemberProperty),
-                applicator
-            )
+            WrapWithSafeLetCallModCommandAction(surroundingExpression, elementContext),
         )
     }
 

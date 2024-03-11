@@ -1,123 +1,101 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 object ChangeVisibilityFixFactories {
 
-    data class Input(
-        val elementName: String,
-    ) : KotlinApplicatorInput
+    private class ChangeVisibilityModCommandAction(
+        element: KtDeclaration,
+        elementContext: ElementContext,
+        private val forceUsingExplicitModifier: Boolean,
+        private val visibilityModifier: KtModifierKeywordToken,
+    ) : KotlinModCommandAction<KtDeclaration, ChangeVisibilityModCommandAction.ElementContext>(element, elementContext) {
 
-    private abstract class ApplicatorImpl(
-        protected val visibilityModifier: KtModifierKeywordToken,
-    ) : KotlinApplicator.ModCommandBased<KtModifierListOwner, Input> {
+        data class ElementContext(
+            val elementName: String,
+        ) : KotlinModCommandAction.ElementContext
 
-        override fun applyTo(
-            psi: KtModifierListOwner,
-            input: Input,
+        override fun getFamilyName(): String = KotlinBundle.message(
+            if (forceUsingExplicitModifier) "make.0.explicitly" else "make.0",
+            visibilityModifier,
+        )
+
+        override fun getActionName(
             context: ActionContext,
+            element: KtDeclaration,
+            elementContext: ElementContext,
+        ): String = KotlinBundle.message(
+            if (forceUsingExplicitModifier) "make.0.1.explicitly" else "make.0.1",
+            elementContext.elementName,
+            visibilityModifier,
+        )
+
+        override fun invoke(
+            context: ActionContext,
+            element: KtDeclaration,
+            elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            val propertyAccessor = psi as? KtPropertyAccessor
+            // TODO: also add logic to change visibility of expect/actual declarations.
+            if (visibilityModifier == KtTokens.PUBLIC_KEYWORD
+                && !forceUsingExplicitModifier
+            ) {
+                element.visibilityModifierType()?.let { element.removeModifier(it) }
+            } else {
+                element.addModifier(visibilityModifier)
+            }
+
+            val propertyAccessor = element as? KtPropertyAccessor
             if (propertyAccessor?.isRedundantSetter() == true) {
                 removeRedundantSetter(propertyAccessor)
             }
         }
     }
 
-    private fun getForcedApplicator(modifier: KtModifierKeywordToken) = object : ApplicatorImpl(modifier) {
-
-        override fun getFamilyName(): String = KotlinBundle.message("make.0.explicitly", visibilityModifier)
-
-        override fun getActionName(
-            psi: KtModifierListOwner,
-            input: Input,
-        ): String = KotlinBundle.message(
-            "make.0.1.explicitly",
-            input.elementName,
-            visibilityModifier,
-        )
-
-        override fun applyTo(
-            psi: KtModifierListOwner,
-            input: Input,
-            context: ActionContext,
-            updater: ModPsiUpdater,
-        ) {
-            psi.addModifier(visibilityModifier)
-            super.applyTo(psi, input, context, updater)
-        }
-    }
-
-    private fun getApplicator(modifier: KtModifierKeywordToken) = object : ApplicatorImpl(modifier) {
-
-        override fun getFamilyName(): String = KotlinBundle.message("make.0", visibilityModifier)
-
-        override fun getActionName(
-            psi: KtModifierListOwner,
-            input: Input,
-        ): String = KotlinBundle.message(
-            "make.0.1",
-            input.elementName,
-            visibilityModifier,
-        )
-
-        override fun applyTo(
-            psi: KtModifierListOwner,
-            input: Input,
-            context: ActionContext,
-            updater: ModPsiUpdater,
-        ) {
-            // TODO: also add logic to change visibility of expect/actual declarations.
-            when (visibilityModifier) {
-                KtTokens.PUBLIC_KEYWORD -> psi.visibilityModifierType()?.let { psi.removeModifier(it) }
-                else -> psi.addModifier(visibilityModifier)
-            }
-
-            super.applyTo(psi, input, context, updater)
-        }
-    }
-
-    private val makePublicExplicitApplicator = getForcedApplicator(KtTokens.PUBLIC_KEYWORD)
-
     val noExplicitVisibilityInApiMode =
-        diagnosticModCommandFixFactory(KtFirDiagnostic.NoExplicitVisibilityInApiMode::class, makePublicExplicitApplicator) { diagnostic ->
+        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.NoExplicitVisibilityInApiMode ->
             createFixForNoExplicitVisibilityInApiMode(diagnostic.psi)
         }
+
     val noExplicitVisibilityInApiModeWarning =
-        diagnosticModCommandFixFactory(
-            KtFirDiagnostic.NoExplicitVisibilityInApiModeWarning::class,
-            makePublicExplicitApplicator
-        ) { diagnostic ->
+        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.NoExplicitVisibilityInApiModeWarning ->
             createFixForNoExplicitVisibilityInApiMode(diagnostic.psi)
         }
 
-    private fun createFixForNoExplicitVisibilityInApiMode(declaration: KtDeclaration): List<KotlinApplicatorTargetWithInput<KtDeclaration, Input>> {
-        val name = when (declaration) {
+    context(KtAnalysisSession)
+    private fun createFixForNoExplicitVisibilityInApiMode(
+        element: KtDeclaration,
+    ): List<ChangeVisibilityModCommandAction> {
+        val elementName = when (element) {
             is KtConstructor<*> -> SpecialNames.INIT.asString()
-            is KtNamedDeclaration -> declaration.name ?: return emptyList()
-            else -> return emptyList()
-        }
+            is KtNamedDeclaration -> element.name
+            else -> null
+        } ?: return emptyList()
 
-        return listOf(declaration withInput Input(name))
+        return listOf(
+            ChangeVisibilityModCommandAction(
+                element = element,
+                elementContext = ChangeVisibilityModCommandAction.ElementContext(elementName),
+                forceUsingExplicitModifier = true,
+                visibilityModifier = KtTokens.PUBLIC_KEYWORD,
+            )
+        )
     }
 }

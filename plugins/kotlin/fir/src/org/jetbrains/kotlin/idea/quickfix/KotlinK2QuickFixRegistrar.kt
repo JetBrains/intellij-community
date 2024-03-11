@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableM
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
-import org.jetbrains.kotlin.idea.quickfix.fixes.ConvertToBlockBodyFixFactory
 import org.jetbrains.kotlin.idea.quickfix.importFix.ImportQuickFix
 
 class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
@@ -102,7 +101,14 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerModCommandApplicators(InitializePropertyQuickFixFactories.initializePropertyFactory)
+        registerApplicator(InitializePropertyQuickFixFactories.mustBeInitialized)
+        registerApplicator(InitializePropertyQuickFixFactories.mustBeInitializedWarning)
+        registerApplicator(InitializePropertyQuickFixFactories.mustBeInitializedOrBeFinal)
+        registerApplicator(InitializePropertyQuickFixFactories.mustBeInitializedOrBeFinalWarning)
+        registerApplicator(InitializePropertyQuickFixFactories.mustBeInitializedOrBeAbstract)
+        registerApplicator(InitializePropertyQuickFixFactories.mustBeInitializedOrBeAbstractWarning)
+        registerApplicator(InitializePropertyQuickFixFactories.mustBeInitializedOrFinalOrAbstract)
+        registerApplicator(InitializePropertyQuickFixFactories.mustBeInitializedOrFinalOrAbstractWarning)
         registerApplicator(AddLateInitFactory.addLateInitFactory)
         registerApplicators(AddAccessorsFactories.addAccessorsToUninitializedProperty)
 
@@ -138,11 +144,23 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitialized::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinal::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinalWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(
+            KtFirDiagnostic.MustBeInitializedOrBeFinalWarning::class,
+            ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY
+        )
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeAbstract::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeAbstractWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
-        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+        registerPsiQuickFixes(
+            KtFirDiagnostic.MustBeInitializedOrBeAbstractWarning::class,
+            ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY
+        )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class,
+            ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY
+        )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class,
+            ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY
+        )
     }
 
     private val expressions = KtQuickFixesListBuilder.registerPsiQuickFix {

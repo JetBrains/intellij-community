@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.modcommand.ActionContext
@@ -13,11 +10,8 @@ import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames.arrayClassFqNameToPrimitiveType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
@@ -25,33 +19,38 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
 
-    data class Input(
-        val fullyQualifiedArrayOfCall: String,
-        val shortArrayOfCall: String,
-    ) : KotlinApplicatorInput
+    private class SurroundWithArrayModCommandAction(
+        element: KtExpression,
+        elementContext: ElementContext,
+    ) : KotlinModCommandAction<KtExpression, SurroundWithArrayModCommandAction.ElementContext>(element, elementContext) {
 
-    private val applicator = object : KotlinApplicator.ModCommandBased<KtExpression, Input> {
+        data class ElementContext(
+            val fullyQualifiedArrayOfCall: String,
+            val shortArrayOfCall: String,
+        ) : KotlinModCommandAction.ElementContext
 
         override fun getFamilyName(): String = KotlinBundle.message("surround.with.array.of")
 
         override fun getActionName(
-            psi: KtExpression,
-            input: Input,
-        ): String = KotlinBundle.getMessage("surround.with.0", input.shortArrayOfCall)
-
-        override fun applyTo(
-            psi: KtExpression,
-            input: Input,
             context: ActionContext,
+            element: KtExpression,
+            elementContext: ElementContext,
+        ): String = KotlinBundle.getMessage("surround.with.0", elementContext.shortArrayOfCall)
+
+        override fun invoke(
+            context: ActionContext,
+            element: KtExpression,
+            elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            val argument = psi.getParentOfType<KtValueArgument>(false) ?: return@applyTo
-            val argumentName = argument.getArgumentName()?.asName ?: return@applyTo
-            val argumentExpression = argument.getArgumentExpression() ?: return@applyTo
+            val argument = element.getParentOfType<KtValueArgument>(false) ?: return
+            val argumentName = argument.getArgumentName()?.asName ?: return
+            val argumentExpression = argument.getArgumentExpression() ?: return
 
-            val psiFactory = KtPsiFactory(psi.project)
+            val psiFactory = KtPsiFactory(element.project)
 
-            val surroundedWithArrayOf = psiFactory.createExpressionByPattern("${input.fullyQualifiedArrayOfCall}($0)", argumentExpression)
+            val surroundedWithArrayOf =
+                psiFactory.createExpressionByPattern("${elementContext.fullyQualifiedArrayOfCall}($0)", argumentExpression)
             val newArgument = psiFactory.createArgument(surroundedWithArrayOf, argumentName)
 
             val replacedArgument = argument.replace(newArgument) as KtValueArgument
@@ -64,20 +63,30 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
     }
 
     val assigningSingleElementToVarargInNamedFormFunction =
-        diagnosticModCommandFixFactory(KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionError::class, applicator) { diagnostic ->
+        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionError ->
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
+
     val assigningSingleElementToVarargInNamedFormFunctionWarning =
-        diagnosticModCommandFixFactory(KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionWarning::class, applicator) { diagnostic ->
+        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionWarning ->
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
 
     context(KtAnalysisSession)
-    @Suppress("unused")
-    private fun createFix(expectedArrayType: KtType, psi: KtExpression): List<KotlinApplicatorTargetWithInput<KtExpression, Input>> {
+    private fun createFix(
+        expectedArrayType: KtType,
+        element: KtExpression,
+    ): List<SurroundWithArrayModCommandAction> {
         val arrayClassId = (expectedArrayType as? KtUsualClassType)?.classId
         val primitiveType = arrayClassFqNameToPrimitiveType[arrayClassId?.asSingleFqName()?.toUnsafe()]
         val arrayOfCallName = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[primitiveType] ?: ArrayFqNames.ARRAY_OF_FUNCTION
-        return listOf(psi withInput Input("kotlin." + arrayOfCallName.identifier, arrayOfCallName.identifier))
+
+        val elementContext = SurroundWithArrayModCommandAction.ElementContext(
+            fullyQualifiedArrayOfCall = "kotlin." + arrayOfCallName.identifier,
+            shortArrayOfCall = arrayOfCallName.identifier,
+        )
+        return listOf(
+            SurroundWithArrayModCommandAction(element, elementContext),
+        )
     }
 }

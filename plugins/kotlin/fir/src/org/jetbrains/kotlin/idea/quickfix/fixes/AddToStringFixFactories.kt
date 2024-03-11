@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
@@ -6,13 +6,13 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinDiagnosticModCommandFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddToStringFix
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
 
 object AddToStringFixFactories {
+
     context(KtAnalysisSession)
     private fun getFixes(element: PsiElement?, expectedType: KtType, actualType: KtType): List<AddToStringFix> {
         if (element !is KtExpression) return emptyList()
@@ -26,23 +26,23 @@ object AddToStringFixFactories {
         }
     }
 
-    val typeMismatch: KotlinDiagnosticModCommandFixFactory<KtFirDiagnostic.TypeMismatch> = diagnosticModCommandFixFactory(KtFirDiagnostic.TypeMismatch::class) { diagnostic ->
+    val typeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.TypeMismatch ->
         getFixes(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val argumentTypeMismatch: KotlinDiagnosticModCommandFixFactory<KtFirDiagnostic.ArgumentTypeMismatch> = diagnosticModCommandFixFactory(KtFirDiagnostic.ArgumentTypeMismatch::class) { diagnostic ->
+    val argumentTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
         getFixes(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val assignmentTypeMismatch: KotlinDiagnosticModCommandFixFactory<KtFirDiagnostic.AssignmentTypeMismatch> = diagnosticModCommandFixFactory(KtFirDiagnostic.AssignmentTypeMismatch::class) { diagnostic ->
+    val assignmentTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.AssignmentTypeMismatch ->
         getFixes(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val returnTypeMismatch: KotlinDiagnosticModCommandFixFactory<KtFirDiagnostic.ReturnTypeMismatch> = diagnosticModCommandFixFactory(KtFirDiagnostic.ReturnTypeMismatch::class) { diagnostic ->
+    val returnTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.ReturnTypeMismatch ->
         getFixes(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val initializerTypeMismatch: KotlinDiagnosticModCommandFixFactory<KtFirDiagnostic.InitializerTypeMismatch> = diagnosticModCommandFixFactory(KtFirDiagnostic.InitializerTypeMismatch::class) { diagnostic ->
+    val initializerTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.InitializerTypeMismatch ->
         getFixes((diagnostic.psi as? KtProperty)?.initializer, diagnostic.expectedType, diagnostic.actualType)
     }
 }
