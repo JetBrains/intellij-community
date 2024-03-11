@@ -170,9 +170,11 @@ class CombinedDiffViewer(
       newViewer.init()
 
       updateDiffInfo(blockState.currentBlock)
-      val requestFocus = context.removeUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST) == true
-      if (requestFocus && blockState.currentBlock == blockId) {
-        requestFocusInDiffViewer(blockId)
+      if (newViewer !is CombinedDiffLoadingBlock) {
+        val requestFocus = context.removeUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST) == true
+        if (requestFocus && blockState.currentBlock == blockId) {
+          requestFocusInDiffViewer(blockId)
+        }
       }
     }
     if (blockState.currentBlock == blockId) {
