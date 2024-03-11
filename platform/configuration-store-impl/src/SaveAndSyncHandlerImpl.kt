@@ -100,7 +100,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
           val job = currentJob.updateAndGet { oldJob ->
             oldJob?.cancel()
-            launch(start = CoroutineStart.LAZY) { processTasks(forceExecuteImmediately = forceExecuteImmediately) }
+            launch(start = CoroutineStart.LAZY) {
+              processTasks(forceExecuteImmediately)
+            }
           }!!
           try {
             if (job.start()) {
@@ -163,7 +165,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         blockingContext {
           eventPublisher.beforeSave(task, forceExecuteImmediately)
         }
-        saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
+        saveProjectsAndApp(task.forceSavingAllSettings, task.project)
       }.getOrLogException(LOG)
     }
   }

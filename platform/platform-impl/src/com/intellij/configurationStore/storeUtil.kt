@@ -7,7 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.PluginUtil
-import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -99,18 +99,14 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   storeReloadManager?.reloadChangedStorageFiles()
   storeReloadManager?.blockReloadingProjectOnExternalChanges()
   try {
-    componentManager.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
+    componentManager.stateStore.save(forceSavingAllSettings)
     return true
   }
   catch (e: UnresolvedReadOnlyFilesException) {
     LOG.info(e)
   }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: ProcessCanceledException) {
-    throw e
-  }
+  catch (e: CancellationException) { throw e }
+  catch (e: ProcessCanceledException) { throw e }
   catch (e: Throwable) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       LOG.error("Save settings failed", e)
@@ -121,19 +117,16 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
 
     val reason = if (ApplicationManager.getApplication().isInternal) "<p>" + ExceptionUtil.getThrowableText(e) + "</p>" else ""
     val messagePostfix = IdeBundle.message("notification.content.please.restart.0", ApplicationNamesInfo.getInstance().fullProductName, reason)
-
     val pluginId = PluginUtil.getInstance().findPluginId(e)
-    val group = NotificationGroupManager.getInstance().getNotificationGroup("Settings Error")
-    val notification = if (pluginId == null) {
-      group.createNotification(IdeBundle.message("notification.title.unable.to.save.settings"),
-                               IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix),
-                               NotificationType.ERROR)
-    }
-    else {
-      group.createNotification(IdeBundle.message("notification.title.unable.to.save.plugin.settings"),
-                               IdeBundle.message("notification.content.plugin.failed.to.save.settings", pluginId.idString, messagePostfix),
-                               NotificationType.ERROR)
-    }
+    val message =
+      if (pluginId == null) IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix)
+      else IdeBundle.message("notification.content.plugin.failed.to.save.settings", pluginId.idString, messagePostfix)
+    val notification = Notification(
+      "Settings Error",
+      IdeBundle.message("notification.title.unable.to.save.settings"),
+      message,
+      NotificationType.ERROR
+    )
     blockingContext {
       notification.notify(componentManager as? Project)
     }
@@ -144,14 +137,11 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   return false
 }
 
-fun <T> getStateSpec(persistentStateComponent: PersistentStateComponent<T>): State {
-  return getStateSpecOrError(persistentStateComponent.javaClass)
-}
+fun <T> getStateSpec(persistentStateComponent: PersistentStateComponent<T>): State =
+  getStateSpecOrError(persistentStateComponent.javaClass)
 
-fun getStateSpecOrError(componentClass: Class<out PersistentStateComponent<*>>): State {
-  return getStateSpec(componentClass)
-         ?: throw PluginException.createByClass("No @State annotation found in $componentClass", null, componentClass)
-}
+fun getStateSpecOrError(componentClass: Class<out PersistentStateComponent<*>>): State =
+  getStateSpec(componentClass) ?: throw PluginException.createByClass("No @State annotation found in $componentClass", null, componentClass)
 
 fun getStateSpec(originalClass: Class<*>): State? {
   var aClass = originalClass
@@ -175,18 +165,16 @@ fun getStateSpec(originalClass: Class<*>): State? {
  * *NB*: Don't use this method without a strict reason: the storage location is an implementation detail.
  */
 @Internal
-fun getPersistentStateComponentStorageLocation(clazz: Class<*>): Path? {
-  return getDefaultStoragePathSpec(clazz)?.let { fileSpec ->
+fun getPersistentStateComponentStorageLocation(clazz: Class<*>): Path? =
+  getDefaultStoragePathSpec(clazz)?.let { fileSpec ->
     ApplicationManager.getApplication().getService(IComponentStore::class.java).storageManager.expandMacro(fileSpec)
   }
-}
 
 /**
  * Returns the default storage file specification for the given [PersistentStateComponent] as defined by [Storage.value]
  */
-fun getDefaultStoragePathSpec(clazz: Class<*>): String? {
-  return getStateSpec(clazz)?.let { getDefaultStoragePathSpec(it) }
-}
+fun getDefaultStoragePathSpec(clazz: Class<*>): String? =
+  getStateSpec(clazz)?.let { getDefaultStoragePathSpec(it) }
 
 fun getDefaultStoragePathSpec(state: State): String? {
   val storage = state.storages.find { !it.deprecated }
@@ -200,35 +188,29 @@ private fun getStoragePathSpec(storage: Storage): String {
 }
 
 @Internal
-fun getOsDependentStorage(storagePathSpec: String): String {
-  return "${getPerOsSettingsStorageFolderName()}/$storagePathSpec"
-}
+fun getOsDependentStorage(storagePathSpec: String): String =
+  "${getPerOsSettingsStorageFolderName()}/${storagePathSpec}"
 
 @Internal
-fun getPerOsSettingsStorageFolderName(): String {
-  return when {
-    SystemInfoRt.isMac -> "mac"
-    SystemInfoRt.isWindows -> "windows"
-    SystemInfoRt.isLinux -> "linux"
-    SystemInfoRt.isFreeBSD -> "freebsd"
-    else -> if (SystemInfoRt.isUnix) "unix" else "other_os"
-  }
+fun getPerOsSettingsStorageFolderName(): String = when {
+  SystemInfoRt.isMac -> "mac"
+  SystemInfoRt.isWindows -> "windows"
+  SystemInfoRt.isLinux -> "linux"
+  SystemInfoRt.isFreeBSD -> "freebsd"
+  else -> if (SystemInfoRt.isUnix) "unix" else "other_os"
 }
 
 /**
  * Converts fileSpec passed to [StreamProvider]'s methods to a relative path from the root config directory.
  */
 @Internal
-fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String {
+fun getFileRelativeToRootConfig(fileSpecPassedToProvider: String): String =
   // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
   // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/my_keymap.xml'
-  return if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
-    "${PathManager.OPTIONS_DIRECTORY}/$fileSpecPassedToProvider"
+  if (!fileSpecPassedToProvider.contains("/") || fileSpecPassedToProvider.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
+    "${PathManager.OPTIONS_DIRECTORY}/${fileSpecPassedToProvider}"
   }
-  else {
-    fileSpecPassedToProvider
-  }
-}
+  else fileSpecPassedToProvider
 
 /**
  * @param forceSavingAllSettings Whether to force save non-roamable component configuration.
