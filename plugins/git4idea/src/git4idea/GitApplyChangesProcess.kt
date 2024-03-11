@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -48,7 +47,6 @@ import git4idea.util.GitUntrackedFilesHelper
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.*
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -81,11 +79,7 @@ internal class GitApplyChangesProcess(
   fun execute() {
     // ensure there are no stall changes (ex: from recent commit) that prevent changes from being moved into temp changelist
     if (changeListManager.areChangeListsEnabled()) {
-      val semaphore = CountDownLatch(1)
-      changeListManager.invokeAfterUpdate(false) {
-        semaphore.countDown()
-      }
-      ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore)
+      changeListManager.waitForUpdate()
     }
 
     val commitsInRoots = DvcsUtil.groupCommitsByRoots(repositoryManager, commits)
