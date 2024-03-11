@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
+import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.toAnAction
@@ -36,7 +38,12 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
         },
         reviewerNameProvider = { reviewer -> reviewer.name },
         avatarKeyProvider = { reviewer -> reviewer },
-        iconProvider = { iconKey, iconSize -> avatarIconsProvider.getIcon(iconKey, iconSize) }
+        iconProvider = { reviewState, iconKey, iconSize ->
+          CodeReviewAvatarUtils.createIconWithOutline(
+            avatarIconsProvider.getIcon(iconKey, iconSize),
+            ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState)
+          )
+        }
       ))
     }
 

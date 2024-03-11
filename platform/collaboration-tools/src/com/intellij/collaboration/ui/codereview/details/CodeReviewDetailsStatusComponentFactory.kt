@@ -151,7 +151,7 @@ object CodeReviewDetailsStatusComponentFactory {
     reviewerActionProvider: (Reviewer) -> ActionGroup,
     reviewerNameProvider: (Reviewer) -> String,
     avatarKeyProvider: (Reviewer) -> IconKey,
-    iconProvider: (iconKey: IconKey, iconSize: Int) -> Icon,
+    iconProvider: (reviewState: ReviewState, iconKey: IconKey, iconSize: Int) -> Icon,
     statusIconsEnabled: Boolean = true
   ): JComponent {
     val panel = VerticalListPanel().apply {
@@ -180,17 +180,14 @@ object CodeReviewDetailsStatusComponentFactory {
     reviewerActionProvider: (Reviewer) -> ActionGroup,
     reviewerNameProvider: (Reviewer) -> String,
     avatarKeyProvider: (Reviewer) -> IconKey,
-    iconProvider: (iconKey: IconKey, iconSize: Int) -> Icon,
+    iconProvider: (reviewState: ReviewState, iconKey: IconKey, iconSize: Int) -> Icon,
     statusIconsEnabled: Boolean
   ): JComponent {
     return HorizontalListPanel(STATUS_REVIEWER_COMPONENT_GAP).apply {
       border = JBUI.Borders.empty(STATUS_REVIEWER_BORDER, 0)
       val reviewerLabel = ReviewDetailsStatusLabel("Code review status: reviewer").apply {
         iconTextGap = STATUS_REVIEWER_COMPONENT_GAP
-        icon = CodeReviewAvatarUtils.createIconWithOutline(
-          iconProvider(avatarKeyProvider(reviewer), Avatar.Sizes.OUTLINED),
-          ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState)
-        )
+        icon =  iconProvider(reviewState, avatarKeyProvider(reviewer), Avatar.Sizes.OUTLINED)
         text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewerNameProvider(reviewer))
       }
 
