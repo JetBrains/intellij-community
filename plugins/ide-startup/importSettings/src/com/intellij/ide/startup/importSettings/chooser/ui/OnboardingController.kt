@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.StartupWizardService
@@ -90,7 +90,10 @@ class OnboardingController private constructor(){
     val service = StartupWizardService.getInstance() ?: return
 
     val wizardController = WizardController.createController(dl, service, goBackAction)
-    cancelImportCallback = cancelCallback
+    cancelImportCallback = {
+      wizardController.cancelPluginInstallation()
+      cancelCallback?.invoke()
+    }
 
     wizardController.goToThemePage()
 

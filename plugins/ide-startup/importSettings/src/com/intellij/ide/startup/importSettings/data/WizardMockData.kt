@@ -118,7 +118,7 @@ class PluginServiceImpl : PluginService {
 
   override val plugins: List<WizardPlugin> = listOf
 
-  override fun install(ids: List<String>): PluginImportProgress = TestPluginImportProgress(Lifetime.Eternal)
+  override fun install(lifetime: Lifetime, ids: List<String>): PluginImportProgress = TestPluginImportProgress(lifetime)
   override fun skipPlugins() {
 
   }
@@ -186,9 +186,7 @@ class TestWizardKeymap(override val id: String,
                        override val description: @Nls String, val ind: Int? = null) : WizardKeymap {
 
   private val shortCuts = listOf("Shift+Shift", "F12", "Alt+Shift+F12", "Alt+Shift+F1", "F1", "Ctrl+Shift+B")
-  override fun getShortcutValue(id_: String): String {
+  override fun getShortcutValue(id: String): String {
     return ind?.let{ shortCuts[it] } ?: shortCuts.random()
   }
-
 }
-

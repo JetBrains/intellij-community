@@ -7,6 +7,7 @@ import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardPlugin
 import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardProgressPage
 import com.intellij.ide.startup.importSettings.wizard.themeChooser.ThemeChooserPage
 import com.intellij.util.ui.accessibility.ScreenReader
+import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 
 interface WizardController : BaseController {
   companion object {
@@ -24,11 +25,15 @@ interface WizardController : BaseController {
   fun goToPluginPage()
   fun goToInstallPluginPage(ids: List<String>)
   fun skipPlugins()
+
+  fun cancelPluginInstallation()
 }
 
 class WizardControllerImpl(dialog: OnboardingDialog,
                            override val service: StartupWizardService,
                            override val goBackAction: (() -> Unit)?) : WizardController, BaseControllerImpl(dialog) {
+
+  private val installationLifetimes = SequentialLifetimes(lifetime)
 
   init {
     service.shouldClose.advise(lifetime) {
@@ -58,7 +63,8 @@ class WizardControllerImpl(dialog: OnboardingDialog,
 
   override fun goToInstallPluginPage(ids: List<String>) {
     if (ids.isNotEmpty()) {
-      val importProgress = service.getPluginService().install(ids)
+      val lifetime = installationLifetimes.next()
+      val importProgress = service.getPluginService().install(lifetime, ids)
       val page = WizardProgressPage(importProgress, this)
       dialog.changePage(page)
     }
@@ -70,5 +76,9 @@ class WizardControllerImpl(dialog: OnboardingDialog,
   override fun skipPlugins() {
     service.getPluginService().skipPlugins()
     dialog.dialogClose()
+  }
+
+  override fun cancelPluginInstallation() {
+    installationLifetimes.terminateCurrent()
   }
 }

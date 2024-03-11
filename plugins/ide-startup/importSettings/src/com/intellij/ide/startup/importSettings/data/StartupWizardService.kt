@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.openapi.components.service
+import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.IVoidSource
 import com.jetbrains.rd.util.reactive.Signal
@@ -71,7 +72,7 @@ data class WizardScheme (
 
 interface PluginService {
   val plugins: List<WizardPlugin>
-  fun install(ids: List<String>): PluginImportProgress
+  fun install(lifetime: Lifetime, ids: List<String>): PluginImportProgress
   fun skipPlugins()
 }
 
