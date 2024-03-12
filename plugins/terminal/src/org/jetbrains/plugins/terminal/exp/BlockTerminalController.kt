@@ -75,6 +75,8 @@ class BlockTerminalController(
       }
     }, disposable)
     session.model.isCommandRunning = true
+
+    TerminalUsageLocalStorage.getInstance().recordCommandExecuted(session.shellIntegration.shellType.toString())
   }
 
   override fun initialized() {

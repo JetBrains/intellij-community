@@ -12,6 +12,7 @@ import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotificat
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
 import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.exp.TerminalUsageLocalStorage
 
 internal class BlockTerminalFeedbackSurvey : FeedbackSurvey() {
   override val feedbackSurveyType: FeedbackSurveyType<*> = InIdeFeedbackSurveyType(BlockTerminalSurveyConfig())
@@ -36,8 +37,8 @@ internal class BlockTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
   override fun checkIdeIsSuitable(): Boolean = PlatformUtils.isJetBrainsProduct()
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
-    // todo: check that user executed some number of the commands in the new terminal
-    return true
+    val usageStorage = TerminalUsageLocalStorage.getInstance()
+    return !usageStorage.state.feedbackNotificationShown && usageStorage.executedCommandsNumber >= 15
   }
 
   override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
@@ -47,6 +48,6 @@ internal class BlockTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
   }
 
   override fun updateStateAfterNotificationShowed(project: Project) {
-    // do nothing
+    TerminalUsageLocalStorage.getInstance().state.feedbackNotificationShown = true
   }
 }
