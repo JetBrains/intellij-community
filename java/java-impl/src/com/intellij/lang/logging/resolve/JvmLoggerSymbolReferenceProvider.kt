@@ -42,7 +42,10 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
 
   val context = getPlaceholderContext(uCallExpression, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j) ?: return null
 
+  if (literalExpression != context.logStringArgument) return null
+
   if (context.partHolderList.size > 1) return null
+
   val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, context.partHolderList)
 
   if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY || placeholderCountResult.placeholderRangesInPartHolderList.size != 1) return null
