@@ -56,19 +56,6 @@ class KtQuickFixesListBuilder private constructor() {
         }
     }
 
-    fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerApplicators(
-        quickFixFactories: Collection<KotlinDiagnosticFixFactory<out DIAGNOSTIC>>
-    ) {
-        quickFixFactories.forEach(::registerApplicator)
-    }
-
-    fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerApplicator(
-        quickFixFactory: KotlinDiagnosticFixFactory<out DIAGNOSTIC>
-    ) {
-        quickFixes.getOrPut(quickFixFactory.diagnosticClass) { mutableListOf() }
-            .add(quickFixFactory)
-    }
-
     inline fun <reified DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerFactory(
         factory: KotlinQuickFixFactory<DIAGNOSTIC>,
     ) {

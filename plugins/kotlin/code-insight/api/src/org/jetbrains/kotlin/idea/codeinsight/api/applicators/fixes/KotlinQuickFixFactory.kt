@@ -39,59 +39,17 @@ import kotlin.reflect.KClass
     }
 }
 
-@Deprecated("Use KotlinQuickFixFactory.IntentionBased")
-abstract class KotlinDiagnosticFixFactory<DIAGNOSTIC : KtDiagnosticWithPsi<*>> : KotlinQuickFixFactory.IntentionBased<DIAGNOSTIC> {
-
-    context(KtAnalysisSession)
-    abstract override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<QuickFixActionBase<*>>
-
-    abstract val diagnosticClass: KClass<DIAGNOSTIC>
-}
-
-private class KotlinDiagnosticFixFactoryUsingQuickFixActionBase<DIAGNOSTIC : KtDiagnosticWithPsi<*>>(
-    override val diagnosticClass: KClass<DIAGNOSTIC>,
-    private val createQuickFixes: context(KtAnalysisSession)(DIAGNOSTIC) -> List<QuickFixActionBase<*>>
-) : KotlinDiagnosticFixFactory<DIAGNOSTIC>() {
-    context(KtAnalysisSession)
-    override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<QuickFixActionBase<*>> {
-        return createQuickFixes.invoke(this@KtAnalysisSession, diagnostic)
-    }
-}
-
 /**
- * Returns a [Collection] of [KotlinDiagnosticFixFactory] that creates [QuickFixActionBase]s from diagnostics that have the same type of
- * [PsiElement].
- */
-fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PSI>> diagnosticFixFactories(
-    vararg diagnosticClasses: KClass<out DIAGNOSTIC>,
-    createQuickFixes: context(KtAnalysisSession)(DIAGNOSTIC) -> List<QuickFixActionBase<*>>
-): Collection<KotlinDiagnosticFixFactory<out DIAGNOSTIC>> =
-    diagnosticClasses.map { KotlinDiagnosticFixFactoryUsingQuickFixActionBase(it, createQuickFixes) }
-
-/**
- * Returns a [KotlinDiagnosticFixFactory] that creates [IntentionAction]s from a diagnostic.
+ * Returns a [KotlinQuickFixFactory.IntentionBased] that creates [IntentionAction]s from a diagnostic.
  */
 fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> diagnosticFixFactoryFromIntentionActions(
     diagnosticClass: KClass<DIAGNOSTIC>,
-    createIntentionActions: context(KtAnalysisSession)(DIAGNOSTIC) -> List<IntentionAction>
-): KotlinDiagnosticFixFactory<DIAGNOSTIC> {
+    createIntentionActions: context(KtAnalysisSession)(DIAGNOSTIC) -> List<IntentionAction>,
+) = KotlinQuickFixFactory.IntentionBased { diagnostic: DIAGNOSTIC ->
     // Wrap the IntentionActions as QuickFixActionBase. This ensures all fixes are of type QuickFixActionBase.
-    val createQuickFixes: context(KtAnalysisSession) (DIAGNOSTIC) -> List<QuickFixActionBase<*>> = { diagnostic ->
-        val intentionActions = createIntentionActions.invoke(analysisSession, diagnostic)
-        intentionActions.map { IntentionActionAsQuickFixWrapper(it, diagnostic.psi) }
-    }
-    return KotlinDiagnosticFixFactoryUsingQuickFixActionBase(diagnosticClass, createQuickFixes)
+    createIntentionActions(analysisSession, diagnostic)
+        .map { IntentionActionAsQuickFixWrapper(it, diagnostic.psi) }
 }
-
-/**
- * Returns a [Collection] of [KotlinDiagnosticFixFactory] that creates [IntentionAction]s from diagnostics that have the same type of
- * [PsiElement].
- */
-fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PSI>> diagnosticFixFactoriesFromIntentionActions(
-    vararg diagnosticClasses: KClass<out DIAGNOSTIC>,
-    createIntentionActions: context(KtAnalysisSession)(DIAGNOSTIC) -> List<IntentionAction>
-): Collection<KotlinDiagnosticFixFactory<out DIAGNOSTIC>> =
-    diagnosticClasses.map { diagnosticFixFactoryFromIntentionActions(it, createIntentionActions) }
 
 private class IntentionActionAsQuickFixWrapper<T : PsiElement>(val intentionAction: IntentionAction, element: T) :
     QuickFixActionBase<T>(element), ReportingClassSubstitutor {
@@ -100,6 +58,6 @@ private class IntentionActionAsQuickFixWrapper<T : PsiElement>(val intentionActi
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) = intentionAction.invoke(project, editor, file)
     override fun startInWriteAction(): Boolean = intentionAction.startInWriteAction()
     override fun getSubstitutedClass(): Class<*> {
-      return intentionAction.javaClass
+        return intentionAction.javaClass
     }
 }

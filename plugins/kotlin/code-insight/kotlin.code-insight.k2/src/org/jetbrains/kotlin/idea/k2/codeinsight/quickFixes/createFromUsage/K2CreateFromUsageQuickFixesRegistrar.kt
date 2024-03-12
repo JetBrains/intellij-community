@@ -3,12 +3,16 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.psi.KtCallExpression
 
 class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
-    private val createFunctionFromArgumentTypeMismatch: KotlinDiagnosticFixFactory<KtFirDiagnostic.ArgumentTypeMismatch> =
-        diagnosticFixFactoryFromIntentionActions(KtFirDiagnostic.ArgumentTypeMismatch::class) { diagnostic ->
+
+    private val createFunctionFromArgumentTypeMismatch =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
             val psi = diagnostic.psi
             val callExpression = PsiTreeUtil.getParentOfType(psi, KtCallExpression::class.java)
             if (callExpression == null) {
@@ -19,6 +23,6 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
         }
 
     override val list: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerApplicator(createFunctionFromArgumentTypeMismatch)
+        registerFactory(createFunctionFromArgumentTypeMismatch)
     }
 }

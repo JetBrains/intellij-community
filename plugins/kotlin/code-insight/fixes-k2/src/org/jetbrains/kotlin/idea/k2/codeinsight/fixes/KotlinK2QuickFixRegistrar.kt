@@ -84,7 +84,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnFunParameter::class, RemoveValVarFromParameterFix)
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnCatchParameter::class, RemoveValVarFromParameterFix)
         registerPsiQuickFixes(KtFirDiagnostic.ValOrVarOnSecondaryConstructorParameter::class, RemoveValVarFromParameterFix)
-        registerApplicators(MakeSuperTypeOpenFixFactory.makeSuperTypeOpenFixFactory)
+        registerFactory(MakeSuperTypeOpenFixFactory.makeSuperTypeOpenFixFactory)
+        registerFactory(MakeSuperTypeOpenFixFactory.makeUpperBoundOpenFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -111,7 +112,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(InitializePropertyQuickFixFactories.mustBeInitializedOrFinalOrAbstract)
         registerFactory(InitializePropertyQuickFixFactories.mustBeInitializedOrFinalOrAbstractWarning)
         registerFactory(AddLateInitFactory.addLateInitFactory)
-        registerApplicators(AddAccessorsFactories.addAccessorsToUninitializedProperty)
+        registerFactory(AddAccessorsFactories.addAccessorsToUninitializedProperty)
+        registerFactory(AddAccessorsFactories.addAccessorsToUninitializedOrAbstractProperty)
 
         registerPsiQuickFixes(KtFirDiagnostic.LocalVariableWithTypeParameters::class, RemovePsiElementSimpleFix.RemoveTypeParametersFactory)
         registerPsiQuickFixes(
@@ -124,10 +126,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeTypeQuickFixFactories.changeFunctionReturnTypeOnOverride)
         registerFactory(ChangeTypeQuickFixFactories.changePropertyReturnTypeOnOverride)
         registerFactory(ChangeTypeQuickFixFactories.changeVariableReturnTypeOnOverride)
-        registerApplicator(MemberNotImplementedQuickfixFactories.abstractMemberNotImplemented)
-        registerApplicator(MemberNotImplementedQuickfixFactories.abstractClassMemberNotImplemented)
-        registerApplicator(MemberNotImplementedQuickfixFactories.manyInterfacesMemberNotImplemented)
-        registerApplicator(MemberNotImplementedQuickfixFactories.manyImplMemberNotImplemented)
+        registerFactory(MemberNotImplementedQuickfixFactories.abstractMemberNotImplemented)
+        registerFactory(MemberNotImplementedQuickfixFactories.abstractClassMemberNotImplemented)
+        registerFactory(MemberNotImplementedQuickfixFactories.manyInterfacesMemberNotImplemented)
+        registerFactory(MemberNotImplementedQuickfixFactories.manyImplMemberNotImplemented)
     }
 
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -303,8 +305,14 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         )
 
         registerFactory(OptInAnnotationWrongTargetFixFactory.optInAnnotationWrongTargetFixFactory)
-        registerApplicators(OptInFileLevelFixFactories.optInFileLevelFixFactories)
-        registerApplicators(OptInFixFactories.optInFixFactories)
+        registerFactory(OptInFileLevelFixFactories.optInUsageFactory)
+        registerFactory(OptInFileLevelFixFactories.optInUsageErrorFactory)
+        registerFactory(OptInFileLevelFixFactories.optInOverrideFactory)
+        registerFactory(OptInFileLevelFixFactories.optInOverrideErrorFactory)
+        registerFactory(OptInFixFactories.optInUsageFactory)
+        registerFactory(OptInFixFactories.optInUsageErrorFactory)
+        registerFactory(OptInFixFactories.optInOverrideFactory)
+        registerFactory(OptInFixFactories.optInOverrideErrorFactory)
     }
 
     private val multiplatform = KtQuickFixesListBuilder.registerPsiQuickFix {

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactories
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix
 import org.jetbrains.kotlin.idea.quickfix.OptInGeneralUtilsBase
 import org.jetbrains.kotlin.idea.refactoring.isOpen
@@ -24,12 +24,22 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 internal object OptInFixFactories {
-    val optInFixFactories = diagnosticFixFactories(
-        KtFirDiagnostic.OptInUsage::class,
-        KtFirDiagnostic.OptInUsageError::class,
-        KtFirDiagnostic.OptInOverride::class,
-        KtFirDiagnostic.OptInOverrideError::class
-    ) { diagnostic -> createQuickFix(diagnostic) }
+
+    val optInUsageFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInUsage ->
+        createQuickFix(diagnostic)
+    }
+
+    val optInUsageErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInUsageError ->
+        createQuickFix(diagnostic)
+    }
+
+    val optInOverrideFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInOverride ->
+        createQuickFix(diagnostic)
+    }
+
+    val optInOverrideErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.OptInOverrideError ->
+        createQuickFix(diagnostic)
+    }
 
     context(KtAnalysisSession)
     private fun createQuickFix(diagnostic: KtFirDiagnostic<PsiElement>): List<AddAnnotationFix> {

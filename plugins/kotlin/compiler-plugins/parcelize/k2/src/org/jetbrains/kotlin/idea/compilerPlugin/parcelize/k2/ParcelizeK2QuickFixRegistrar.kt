@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compilerPlugin.parcelize.k2
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -60,7 +60,7 @@ class ParcelizeK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             ParcelRemoveCustomCreatorProperty.FACTORY
         )
 
-        registerApplicator(
+        registerFactory(
             createApplicatorForFactory<KtCompilerPluginDiagnostic1>(KtErrorsParcelize.CLASS_SHOULD_BE_PARCELIZE) { diagnostic ->
                 val parameterSymbol = diagnostic.parameter1 as? KtClassOrObjectSymbol
                 val parameterPsi = parameterSymbol?.psi as? KtClassOrObject
@@ -78,7 +78,7 @@ private fun KtQuickFixesListBuilder.registerQuickFixForDiagnosticFactory(
     diagnosticFactory: KtDiagnosticFactory0,
     quickFixFactory: QuickFixesPsiBasedFactory<*>
 ) {
-    registerApplicator(
+    registerFactory(
         createApplicatorForFactory<KtCompilerPluginDiagnostic0>(diagnosticFactory) {
             quickFixFactory.createQuickFix(it.psi)
         }
@@ -89,7 +89,7 @@ private fun KtQuickFixesListBuilder.registerQuickFixForDiagnosticFactory(
     diagnosticFactory: KtDiagnosticFactory1<*>,
     quickFixFactory: QuickFixesPsiBasedFactory<*>
 ) {
-    registerApplicator(
+    registerFactory(
         createApplicatorForFactory<KtCompilerPluginDiagnostic1>(diagnosticFactory) {
             quickFixFactory.createQuickFix(it.psi)
         }
