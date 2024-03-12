@@ -16,9 +16,9 @@ import org.jetbrains.uast.*
 
 class JvmLoggerSymbolReferenceProvider : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
-    if (!hintsCheck(hints)) return listOf()
+    if (!hintsCheck(hints)) return emptyList()
 
-    val literalExpression = element.toUElementOfType<UExpression>() ?: return listOf()
+    val literalExpression = element.toUElementOfType<UExpression>() ?: return emptyList()
     return getLogArgumentReferences(literalExpression) ?: emptyList()
   }
 
@@ -54,14 +54,18 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
   val psiLiteralExpression = literalExpression.sourcePsi ?: return null
   val value = literalExpression.evaluateString() ?: return null
 
+  val offset = getOffsetInText(psiLiteralExpression, value) ?: return null
+
+  val placeholderParametersSize = context.placeholderParameters.size
+
   val result = when (context.loggerType) {
     SLF4J -> {
       zipped.map { (range, parameter) ->
         if (range == null) return null
-        val alignedRange = mapTextRange(psiLiteralExpression, value, range.startOffset, range.endOffset) ?: return null
+        val alignedRange = range.shiftTextRange(offset)
         val parameterPsi = parameter.sourcePsi ?: return null
         JvmLoggerArgumentSymbolReference(psiLiteralExpression, alignedRange, parameterPsi)
-      }
+      }.take(if (context.lastArgumentIsException) placeholderParametersSize - 1 else placeholderParametersSize)
     }
     else -> null
   }
@@ -69,7 +73,9 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
   return result
 }
 
-private fun mapTextRange(expression: PsiElement, value: String, from: Int, to: Int): TextRange? {
+private fun TextRange.shiftTextRange(shift: Int): TextRange = TextRange(this.startOffset + shift, this.endOffset + shift)
+
+private fun getOffsetInText(expression: PsiElement, value: String): Int? {
   val text = expression.text
   if (text == null) return null
 
@@ -77,5 +83,5 @@ private fun mapTextRange(expression: PsiElement, value: String, from: Int, to: I
 
   if (offset == -1) return null
 
-  return TextRange(from + offset, to + offset)
+  return offset
 }
