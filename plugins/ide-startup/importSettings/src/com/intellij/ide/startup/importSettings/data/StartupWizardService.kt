@@ -56,11 +56,7 @@ interface ThemeService {
 
   val schemesList: List<WizardScheme>
 
-  fun finish(schemeId: String, theme: Theme)
-
   fun updateScheme(schemeId: String)
-// Ваня, здесь я не поняла, когда это выставлять, когда на кнопку continue
-// нажмут или сразу при смене схемы? т.е будет ли как-то меняться дизайн при выборе схемы? нужна ли перерисова?
 }
 
 data class WizardScheme (

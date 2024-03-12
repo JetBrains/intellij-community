@@ -1,12 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.wizard.themeChooser
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import com.intellij.ide.startup.importSettings.WizardLookAndFeelUtil
 import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardController
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
 import com.intellij.ide.startup.importSettings.data.ThemeService
+import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.dsl.builder.SegmentedButton
@@ -18,7 +20,10 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.ButtonGroup
+import javax.swing.JButton
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
   private val service = controller.service.getThemeService()
@@ -61,7 +66,7 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
       }
     }
 
-    val centralPane = JPanel(BorderLayout(0, 0)).apply {
+    val centralPane = JPanel(BorderLayout(0, 0)).apply parentPanel@{
       val pane = panel {
         row {
           @Suppress("DialogTitleCapitalization")
@@ -70,7 +75,17 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
             border = UiUtils.HEADER_BORDER
           }.resizableColumn()
           segmentedButton = segmentedButton(service.themeList) { text = it.themeName }
-            .whenItemSelected { service.currentTheme = it }.apply {
+            .whenItemSelected {
+              service.currentTheme = it
+              val lafManager = LafManager.getInstance()
+              val laf = if (it.isDark)
+                lafManager.defaultDarkLaf
+              else lafManager.defaultLightLaf
+
+              if (laf != null) {
+                WizardLookAndFeelUtil.applyLookAndFeelToWizardWindow(laf, this@parentPanel)
+              }
+            }.apply {
               selectedItem = service.currentTheme
             }
         }

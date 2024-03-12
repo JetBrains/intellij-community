@@ -70,9 +70,6 @@ class ThemeServiceImpl : ThemeService {
 
   override val schemesList: List<WizardScheme> = map.values.toList()
 
-  override fun finish(schemeId: String, theme: ThemeService.Theme) {
-  }
-
   override fun updateScheme(schemeId: String) {
 
   }
