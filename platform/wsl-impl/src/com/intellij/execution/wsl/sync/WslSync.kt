@@ -1,13 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.sync
 
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.wsl.AbstractWslDistribution
 import com.intellij.execution.wsl.sync.WslHashFilters.Companion.EMPTY_FILTERS
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.blockingContext
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture.runAsync
-import java.util.concurrent.CompletableFuture.supplyAsync
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import java.util.concurrent.Future
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -95,6 +101,16 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
     dest.createStubs(stubsToCreate)
     dest.removeFiles(stubsToRemove)
   }
+
+  private fun <T> supplyAsync(body: () -> T, executor: Executor): CompletableFuture<T> =
+    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()
+      .async(executor.asCoroutineDispatcher()) {
+        blockingContext { body() }
+      }
+      .asCompletableFuture()
+
+  private inline fun runAsync(crossinline body: () -> Unit, executor: Executor): CompletableFuture<Unit> =
+    supplyAsync({ body() }, executor)
 
   private fun syncFoldersInternal() {
     val sourceSyncDataFuture = supplyAsync({
