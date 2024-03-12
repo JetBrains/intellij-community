@@ -1104,7 +1104,7 @@ private fun copyIfChanged(targetDir: Path, sourceDir: Path, sourceFile: Path): B
   val targetFile = targetDir.resolve(sourceDir.relativize(sourceFile))
   if (Files.exists(targetFile)) {
     val t = Files.getLastModifiedTime(targetFile).toMillis()
-    val s = Files.getLastModifiedTime(sourceDir).toMillis()
+    val s = Files.getLastModifiedTime(sourceFile).toMillis()
     if (t == s) {
       return false
     }
