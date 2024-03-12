@@ -4,7 +4,10 @@ package com.intellij.util.indexing.diagnostic
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.Key
+import com.intellij.testFramework.TestModeFlags
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDateTime
@@ -13,6 +16,8 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.div
 
 object IndexDiagnosticDumperUtils {
+  val testDiagnosticPathFlag: Key<Path> = Key("IndexDiagnosticDumperUtils.testDiagnosticPathFlag")
+
   val jacksonMapper: ObjectMapper by lazy {
     jacksonObjectMapper().registerKotlinModule()
   }
@@ -29,10 +34,18 @@ object IndexDiagnosticDumperUtils {
     return parent / "$prefix$suffix$timestamp.$extension"
   }
 
-  val indexingDiagnosticDir: Path by lazy {
+  private val productionIndexingDiagnosticDir: Path by lazy {
     val logPath = PathManager.getLogPath()
     Paths.get(logPath).resolve("indexing-diagnostic")
   }
+
+  val indexingDiagnosticDir: Path
+    get() {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        TestModeFlags.get(testDiagnosticPathFlag)?.let { return it.resolve("indexing-diagnostic") }
+      }
+      return productionIndexingDiagnosticDir
+    }
 
   val oldVersionIndexingDiagnosticDir: Path by lazy {
     val logPath = PathManager.getLogPath()
