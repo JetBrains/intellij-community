@@ -14,6 +14,18 @@ class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getTabs() = editorTabsComponent.getTabs().map { Tab(it) }
 
+  fun closeTab(text: String = "") {
+    x("//div[@class='EditorTabLabel'][.//div[@visible_text='$text']]//div[@myicon='closeSmall.svg']")
+      .click()
+  }
+
+  fun closeAllTabs() {
+    xx("//div[@class='EditorTabLabel']//div[@myicon='closeSmall.svg']")
+      .list().forEach { it.click() }
+  }
+
+  fun isTabOpened(text: String) = getTabs().any { it.text == text }
+
   inner class Tab(private val data: TabInfoRef) {
     val text: String
       get() = data.getText()
