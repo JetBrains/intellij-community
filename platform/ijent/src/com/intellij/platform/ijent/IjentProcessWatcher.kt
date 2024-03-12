@@ -162,7 +162,7 @@ private suspend fun ijentProcessExitCodeAwaiter(
     ijentCoroutineScope.cancel(CancellationException("The process expectedly exited with code $exitCode"))
   }
   else {
-    val message = "The process suddenly exited with the code $exitCode"
+    val message = "The process $ijentId suddenly exited with the code $exitCode"
 
     // This coroutine must be bound to something that outlives `coroutineScope`, in order to not block its cancellation and
     // to not truncate the last lines of the logs, which are usually the most important.
