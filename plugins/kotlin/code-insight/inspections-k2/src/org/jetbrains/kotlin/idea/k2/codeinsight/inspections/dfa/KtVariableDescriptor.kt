@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.JvmVariableDescripto
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -28,16 +27,21 @@ class KtVariableDescriptor(val module: KtModule,
                            val type: DfType,
                            val hash: Int) : JvmVariableDescriptor() {
     val stable: Boolean by lazy {
-        analyze(module) {
+        when(val result = analyze(module) {
             val symbol = pointer.restoreSymbol() ?: return@analyze false
+            if (symbol is KtValueParameterSymbol || symbol is KtEnumEntrySymbol) return@analyze true
+            if (symbol is KtPropertySymbol) return@analyze symbol.isVal
             if (symbol is KtLocalVariableSymbol) {
                 if (symbol.isVal) return@analyze true
-                val psiElement = symbol.psi?.parent
-                return@analyze psiElement == null || !getVariablesChangedInNestedFunctions(psiElement).contains(this@KtVariableDescriptor)
+                val psiElement = symbol.psi?.parent as? KtElement
+                if (psiElement == null) return@analyze true
+                return@analyze psiElement
             }
-            if (symbol is KtValueParameterSymbol || symbol is KtEnumEntrySymbol || symbol is KtReceiverParameterSymbol) return@analyze true
-            if (symbol is KtPropertySymbol) return@analyze symbol.isVal
             return@analyze false
+        }) {
+            is Boolean -> result
+            is KtElement -> !getVariablesChangedInNestedFunctions(result).contains(this@KtVariableDescriptor)
+            else -> false
         }
     }
 
@@ -89,32 +93,33 @@ class KtVariableDescriptor(val module: KtModule,
                                         this.name.hashCode())
         }
 
-        context(KtAnalysisSession)
-        private fun getVariablesChangedInNestedFunctions(parent: PsiElement): Set<KtVariableDescriptor> =
+        private fun getVariablesChangedInNestedFunctions(parent: KtElement): Set<KtVariableDescriptor> =
             CachedValuesManager.getProjectPsiDependentCache(parent) { scope ->
                 val result = hashSetOf<KtVariableDescriptor>()
-                PsiTreeUtil.processElements(scope) { e ->
-                    if (e is KtSimpleNameExpression && e.readWriteAccess(false).isWrite) {
-                        val target = e.mainReference.resolve()
-                        if (target is KtProperty && target.isLocal && PsiTreeUtil.isAncestor(parent, target, true)) {
-                            var parentScope : KtFunction?
-                            var context = e
-                            while(true) {
-                                parentScope = PsiTreeUtil.getParentOfType(context, KtFunction::class.java)
-                                val maybeLambda = parentScope?.parent as? KtLambdaExpression
-                                val maybeCall = (maybeLambda?.parent as? KtLambdaArgument)?.parent as? KtCallExpression
-                                if (maybeCall != null && getInlineableLambda(maybeCall)?.lambda == maybeLambda) {
-                                    context = maybeCall
-                                    continue
+                analyze(scope) {
+                    PsiTreeUtil.processElements(scope) { e ->
+                        if (e is KtSimpleNameExpression && e.readWriteAccess(false).isWrite) {
+                            val target = e.mainReference.resolve()
+                            if (target is KtProperty && target.isLocal && PsiTreeUtil.isAncestor(scope, target, true)) {
+                                var parentScope: KtFunction?
+                                var context = e
+                                while (true) {
+                                    parentScope = PsiTreeUtil.getParentOfType(context, KtFunction::class.java)
+                                    val maybeLambda = parentScope?.parent as? KtLambdaExpression
+                                    val maybeCall = (maybeLambda?.parent as? KtLambdaArgument)?.parent as? KtCallExpression
+                                    if (maybeCall != null && getInlineableLambda(maybeCall)?.lambda == maybeLambda) {
+                                        context = maybeCall
+                                        continue
+                                    }
+                                    break
                                 }
-                                break
-                            }
-                            if (parentScope != null && PsiTreeUtil.isAncestor(parent, parentScope, true)) {
-                                result.add(target.getVariableSymbol().variableDescriptor())
+                                if (parentScope != null && PsiTreeUtil.isAncestor(scope, parentScope, true)) {
+                                    result.add(target.getVariableSymbol().variableDescriptor())
+                                }
                             }
                         }
+                        return@processElements true
                     }
-                    return@processElements true
                 }
                 return@getProjectPsiDependentCache result
             }
