@@ -7,25 +7,19 @@ import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Path
 
 internal object TestProjectStructureReader {
-    fun <S : TestProjectStructure> read(
-        testDirectory: Path,
-        jsonFileName: String = "structure.json",
-        parser: TestProjectStructureParser<S>,
-    ): S {
-        val jsonFile = testDirectory.resolve(jsonFileName)
-
+    fun readJsonFile(jsonFile: Path): JsonObject {
         @Suppress("DEPRECATION") // AS 4.0
         val json = JsonParser().parse(FileUtil.loadFile(jsonFile.toFile(), /*convertLineSeparators=*/true))
         require(json is JsonObject)
-
-        val libraries = json.getAsJsonArray("libraries")?.map(TestProjectLibraryParser::parse) ?: emptyList()
-        val modules = json.getAsJsonArray("modules")!!.map(TestProjectModuleParser::parse)
-        return parser.parse(libraries, modules, json)
+        return json
     }
 
-    fun <S : TestProjectStructure> readToTestStructure(
-        testDirectory: Path,
-        jsonFileName: String = "structure.json",
-        testProjectStructureParser: TestProjectStructureParser<S>,
-    ): S = read(testDirectory, jsonFileName, testProjectStructureParser)
+    fun <S : TestProjectStructure> parseTestStructure(
+        json: JsonObject,
+        parser: TestProjectStructureParser<S>,
+    ): S {
+        val libraries = json.getAsJsonArray(TestProjectStructureFields.LIBRARIES_FIELD)?.map(TestProjectLibraryParser::parse).orEmpty()
+        val modules = json.getAsJsonArray(TestProjectStructureFields.MODULES_FIELD)!!.map(TestProjectModuleParser::parse)
+        return parser.parse(libraries, modules, json)
+    }
 }

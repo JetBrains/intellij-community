@@ -23,6 +23,16 @@ interface TestProjectStructure {
     val modules: List<TestProjectModule>
 }
 
+object TestProjectStructureFields {
+    /**
+     * Used by [AbstractProjectStructureTest] to check if the test is disabled. Not present in the resulting [TestProjectStructure].
+     */
+    const val IS_DISABLED_FIELD = "is_disabled"
+
+    const val LIBRARIES_FIELD = "libraries"
+    const val MODULES_FIELD = "modules"
+}
+
 fun interface TestProjectStructureParser<S : TestProjectStructure> {
     /**
      * Parses a [TestProjectStructure] from already parsed lists of [TestProjectLibrary]s and [TestProjectModule]s, and the original
