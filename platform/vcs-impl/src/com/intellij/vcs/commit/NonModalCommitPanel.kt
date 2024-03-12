@@ -70,7 +70,7 @@ abstract class NonModalCommitPanel(
   }
 
   init {
-    bottomPanel = JBPanel<JBPanel<*>>(VerticalLayout(0))
+    bottomPanel = JBPanel(VerticalLayout(0))
 
     commitActionsPanel.apply {
       border = getButtonPanelBorder()

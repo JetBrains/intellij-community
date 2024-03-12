@@ -154,7 +154,7 @@ object GHUIUtil {
       .setKeyboardActions(listOf(Pair.create(ActionListener { toggleSelection() }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0))))
       .addListener(object : JBPopupListener {
         override fun beforeShown(event: LightweightWindowEvent) {
-          panel.preferredSize = null // needed that popup does not drop out outside an IDE window
+          panel.setPreferredSize(null) // needed that popup does not drop out outside an IDE window
           list.setPaintBusy(true)
           list.emptyText.text = ApplicationBundle.message("label.loading.page.please.wait")
 

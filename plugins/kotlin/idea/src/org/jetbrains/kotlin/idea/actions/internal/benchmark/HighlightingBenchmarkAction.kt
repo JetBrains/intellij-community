@@ -115,7 +115,7 @@ class HighlightingBenchmarkAction : AnAction() {
         val dialogBuilder = DialogBuilder()
 
 
-        val jPanel = JBPanel<JBPanel<*>>(GridLayoutManager(3, 2)).apply {
+        val jPanel = JBPanel(GridLayoutManager(3, 2)).apply {
             var i = 0
             cSeed = addBoxWithLabel(KotlinBundle.message("random.seed"), default = "0", i = i++)
             cFiles = addBoxWithLabel(KotlinBundle.message("files.to.visit"), default = "20", i = i++)

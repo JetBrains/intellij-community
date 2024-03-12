@@ -1,140 +1,133 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.components;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.components
 
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.components.JBComponent;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import java.awt.*;
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBSwingUtilities
+import com.intellij.util.ui.components.JBComponent
+import java.awt.*
+import javax.swing.JPanel
+import javax.swing.border.Border
 
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("unchecked")
-public class JBPanel<T extends JBPanel> extends JPanel implements JBComponent<T> {
-  private Integer myPreferredWidth;
-  private Integer myPreferredHeight;
-  private Integer myMaximumWidth;
-  private Integer myMaximumHeight;
-  private Integer myMinimumWidth;
-  private Integer myMinimumHeight;
+open class JBPanel<T : JBPanel<T>>(
+  layout: LayoutManager? = null,
+  isDoubleBuffered: Boolean = true
+) : JPanel(layout, isDoubleBuffered), JBComponent<T> {
 
-  public JBPanel(LayoutManager layout, boolean isDoubleBuffered) {
-    super(layout, isDoubleBuffered);
+  constructor(layout: LayoutManager) : this(layout, true)
+  constructor(isDoubleBuffered: Boolean) : this(null, isDoubleBuffered)
+  constructor() : this(null, true)
+
+  private var myPreferredWidth: Int? = null
+  private var myPreferredHeight: Int? = null
+  private var myMaximumWidth: Int? = null
+  private var myMaximumHeight: Int? = null
+  private var myMinimumWidth: Int? = null
+  private var myMinimumHeight: Int? = null
+
+
+
+  @Suppress("UNCHECKED_CAST")
+  private fun self(): T = this as T
+
+  override fun getComponentGraphics(graphics: Graphics): Graphics {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
   }
 
-  public JBPanel(LayoutManager layout) {
-    super(layout);
+  override fun withBorder(border: Border): T {
+    setBorder(border)
+    return self()
   }
 
-  public JBPanel(boolean isDoubleBuffered) {
-    super(isDoubleBuffered);
+  override fun withFont(font: JBFont): T {
+    setFont(font)
+    return self()
   }
 
-  public JBPanel() {
-    super();
+  override fun andTransparent(): T {
+    setOpaque(false)
+    return self()
   }
 
-  @Override
-  protected Graphics getComponentGraphics(Graphics graphics) {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  override fun andOpaque(): T {
+    setOpaque(true)
+    return self()
   }
 
-  @Override
-  public final T withBorder(Border border) {
-    setBorder(border);
-    return (T)this;
+  fun withBackground(background: Color?): T {
+    setBackground(background)
+    return self()
   }
 
-  @Override
-  public final T withFont(JBFont font) {
-    setFont(font);
-    return (T)this;
+  fun withPreferredWidth(width: Int): T {
+    myPreferredWidth = width
+    return self()
   }
 
-  @Override
-  public final T andTransparent() {
-    setOpaque(false);
-    return (T)this;
+  fun withPreferredHeight(height: Int): T {
+    myPreferredHeight = height
+    return self()
   }
 
-  @Override
-  public final T andOpaque() {
-    setOpaque(true);
-    return (T)this;
+  fun withPreferredSize(width: Int, height: Int): T {
+    myPreferredWidth = width
+    myPreferredHeight = height
+    return self()
   }
 
-  public final T withBackground(@Nullable Color background) {
-    setBackground(background);
-    return (T)this;
+  fun withMaximumWidth(width: Int): T {
+    myMaximumWidth = width
+    return self()
   }
 
-  public final T withPreferredWidth(int width) {
-    myPreferredWidth = width;
-    return (T)this;
+  fun withMaximumHeight(height: Int): T {
+    myMaximumHeight = height
+    return self()
   }
 
-  public final T withPreferredHeight(int height) {
-    myPreferredHeight = height;
-    return (T)this;
+  fun withMaximumSize(width: Int, height: Int): T {
+    myMaximumWidth = width
+    myMaximumHeight = height
+    return self()
   }
 
-  public final T withPreferredSize(int width, int height) {
-    myPreferredWidth = width;
-    myPreferredHeight = height;
-    return (T)this;
+  fun withMinimumWidth(width: Int): T {
+    myMinimumWidth = width
+    return self()
   }
 
-  public final T withMaximumWidth(int width) {
-    myMaximumWidth = width;
-    return (T)this;
+  fun withMinimumHeight(height: Int): T {
+    myMinimumHeight = height
+    return self()
   }
 
-  public final T withMaximumHeight(int height) {
-    myMaximumHeight = height;
-    return (T)this;
+  override fun getPreferredSize(): Dimension {
+    return getSize(super.getPreferredSize(), myPreferredWidth, myPreferredHeight, isPreferredSizeSet)
   }
 
-  public final T withMaximumSize(int width, int height) {
-    myMaximumWidth = width;
-    myMaximumHeight = height;
-    return (T)this;
+  override fun getMaximumSize(): Dimension {
+    return getSize(super.getMaximumSize(), myMaximumWidth, myMaximumHeight, isMaximumSizeSet)
   }
 
-  public final T withMinimumWidth(int width) {
-    myMinimumWidth = width;
-    return (T)this;
+  override fun getMinimumSize(): Dimension {
+    return getSize(super.getMinimumSize(), myMinimumWidth, myMinimumHeight, isMinimumSizeSet)
   }
 
-  public final T withMinimumHeight(int height) {
-    myMinimumHeight = height;
-    return (T)this;
+  override fun setPreferredSize(preferredSize: Dimension?) {
+    super.setPreferredSize(preferredSize)
   }
 
-  @Override
-  public Dimension getPreferredSize() {
-    return getSize(super.getPreferredSize(), myPreferredWidth, myPreferredHeight, isPreferredSizeSet());
-  }
 
-  @Override
-  public Dimension getMaximumSize() {
-    return getSize(super.getMaximumSize(), myMaximumWidth, myMaximumHeight, isMaximumSizeSet());
-  }
-
-  @Override
-  public Dimension getMinimumSize() {
-    return getSize(super.getMinimumSize(), myMinimumWidth, myMinimumHeight, isMinimumSizeSet());
-  }
-
-  private static Dimension getSize(Dimension size, Integer width, Integer height, boolean isSet) {
-    if (!isSet && size != null) {
-      if (width != null) size.width = JBUIScale.scale(width);
-      if (height != null) size.height = JBUIScale.scale(height);
+  companion object {
+    private fun getSize(size: Dimension, width: Int?, height: Int?, isSet: Boolean): Dimension {
+      if (!isSet) {
+        if (width != null) size.width = JBUIScale.scale(width)
+        if (height != null) size.height = JBUIScale.scale(height)
+      }
+      return size
     }
-    return size;
   }
 }

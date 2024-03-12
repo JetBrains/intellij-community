@@ -34,7 +34,7 @@ import java.util.function.Supplier
  */
 class VcsLogContentProvider(private val project: Project) : ChangesViewContentProvider {
   private val projectLog = VcsProjectLog.getInstance(project)
-  private val container = JBPanel<JBPanel<*>>(BorderLayout())
+  private val container = JBPanel(BorderLayout())
 
   private var tabContent: Content? = null
   var ui: MainVcsLogUi? = null
