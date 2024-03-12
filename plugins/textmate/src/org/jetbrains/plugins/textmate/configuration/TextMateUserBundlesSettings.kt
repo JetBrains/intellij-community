@@ -22,6 +22,13 @@ class TextMateUserBundlesSettings : SerializablePersistentStateComponent<TextMat
     }
   }
 
+  override fun loadState(state: State) {
+    // It is eccentric, but with a bad textmate.xml, we can get null there
+    // RIDER-106884 Godot project automatically closes after attempting to open it
+    // not sure, why tooling says that value is never null
+    super.loadState(State(state.bundles.filter { it.value != null }))
+  }
+
   fun addBundle(path: String, name: String) {
     val normalizedPath = FileUtil.toSystemIndependentName(path)
     updateState { state ->
