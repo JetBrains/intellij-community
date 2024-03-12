@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
-import org.jetbrains.kotlin.miniStdLib.annotations.PrivateForInline
 import kotlin.reflect.KClass
 
 class KotlinQuickFixesList @ForKtQuickFixesListBuilder constructor(
@@ -47,23 +46,15 @@ class KtQuickFixesListBuilder private constructor() {
             MutableList<KotlinQuickFixFactory<out KtDiagnosticWithPsi<*>>>,
             >()
 
-    @OptIn(PrivateForInline::class)
     fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PSI>> registerPsiQuickFixes(
         diagnosticClass: KClass<DIAGNOSTIC>,
-        vararg quickFixFactories: QuickFixesPsiBasedFactory<in DIAGNOSTIC_PSI>
+        vararg factories: QuickFixesPsiBasedFactory<in DIAGNOSTIC_PSI>,
     ) {
-        for (quickFixFactory in quickFixFactories) {
-            registerPsiQuickFix(diagnosticClass, quickFixFactory)
+        for (factory in factories) {
+            registerFactory(diagnosticClass) { diagnostic: DIAGNOSTIC ->
+                factory.createQuickFix(diagnostic.psi)
+            }
         }
-    }
-
-    @PrivateForInline
-    fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PSI>> registerPsiQuickFix(
-        diagnosticClass: KClass<DIAGNOSTIC>,
-        quickFixFactory: QuickFixesPsiBasedFactory<in DIAGNOSTIC_PSI>
-    ) {
-        quickFixes.getOrPut(diagnosticClass) { mutableListOf() }
-            .add(KotlinQuickFixesPsiBasedFactory(quickFixFactory))
     }
 
     fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerApplicators(
@@ -98,15 +89,6 @@ class KtQuickFixesListBuilder private constructor() {
     companion object {
         fun registerPsiQuickFix(init: KtQuickFixesListBuilder.() -> Unit) = KtQuickFixesListBuilder().apply(init).build()
     }
-}
-
-private class KotlinQuickFixesPsiBasedFactory(
-    private val delegate: QuickFixesPsiBasedFactory<*>,
-) : KotlinQuickFixFactory<KtDiagnosticWithPsi<*>> {
-
-    context(KtAnalysisSession)
-    override fun createQuickFixes(diagnostic: KtDiagnosticWithPsi<*>): List<CommonIntentionAction> =
-        delegate.createQuickFix(diagnostic.psi)
 }
 
 private class KotlinApplicatorBasedFactory<DIAGNOSTIC : KtDiagnosticWithPsi<*>>(
