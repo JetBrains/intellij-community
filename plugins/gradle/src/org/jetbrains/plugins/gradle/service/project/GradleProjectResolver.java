@@ -28,10 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -212,7 +209,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     var buildAction = useCustomSerialization
                       ? new GradleModelFetchActionWithCustomSerializer()
                       : new GradleModelFetchAction();
-    var buildActionListeners = new ArrayList<GradleBuildActionListener>();
+    var buildActionEventDispatcher = EventDispatcher.create(GradleBuildActionListener.class);
 
     GradleExecutionSettings executionSettings = resolverCtx.getSettings();
     if (executionSettings == null) {
@@ -249,7 +246,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
       GradleBuildActionListener buildActionListener = resolverExtension.createBuildListener();
       if (buildActionListener != null) {
-        buildActionListeners.add(buildActionListener);
+        buildActionEventDispatcher.addListener(buildActionListener);
       }
     }
 
@@ -284,7 +281,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       buildAction.setTracingContext(gradleDaemonObservabilityContext);
     }
     try (Scope ignore = gradleCallSpan.makeCurrent()) {
-      var buildActionRunner = new GradleBuildActionRunner(resolverCtx, buildAction, executionSettings, myHelper, buildActionListeners);
+      var buildActionMulticaster = buildActionEventDispatcher.getMulticaster();
+      var buildActionRunner = new GradleBuildActionRunner(resolverCtx, buildAction, executionSettings, myHelper, buildActionMulticaster);
       buildActionRunner.runBuildAction();
       var gradleVersion = ObjectUtils.doIfNotNull(resolverCtx.getProjectGradleVersion(), it -> GradleVersion.version(it));
       if (gradleVersion != null && GradleJvmSupportMatrix.isGradleDeprecatedByIdea(gradleVersion)) {
