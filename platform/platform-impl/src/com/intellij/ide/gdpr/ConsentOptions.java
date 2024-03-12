@@ -386,7 +386,7 @@ public final class ConsentOptions {
       final Version confirmedVersion = confirmedConsent.getVersion();
       final Version defaultVersion = defConsent.getVersion();
       // for test purpose only
-      if ("true".equalsIgnoreCase(System.getProperty(RECONFIRM_CONSENTS_PROPERTY))) {
+      if (Boolean.getBoolean(RECONFIRM_CONSENTS_PROPERTY)) {
         return true;
       }
       // consider only major version differences

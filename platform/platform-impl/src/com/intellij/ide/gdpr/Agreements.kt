@@ -3,6 +3,7 @@
 
 package com.intellij.ide.gdpr
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.SystemLanguage
@@ -131,7 +132,7 @@ private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlC
 }
 
 //test.release.agreements property is only for test purposes. To get release dialogs on EAP versions
+@VisibleForTesting
 internal fun isReleaseAgreementsEnabled(): Boolean {
-  val property = System.getProperty("test.release.agreements")
-  return "true".equals(property, ignoreCase = true)
+  return java.lang.Boolean.getBoolean("test.release.agreements")
 }
