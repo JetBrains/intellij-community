@@ -30,20 +30,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class GradleModelFetchAction implements BuildAction<GradleModelHolderState>, Serializable {
 
   private final Set<ProjectImportModelProvider> myModelProviders = new LinkedHashSet<>();
   private final Set<Class<?>> myTargetTypes = new LinkedHashSet<>();
 
-  private boolean myUseProjectsLoadedPhase;
+  private boolean myUseProjectsLoadedPhase = false;
+
   private @Nullable GradleTracingContext myTracingContext = null;
 
   private transient @Nullable GradleDaemonModelHolder myModels = null;
@@ -55,7 +55,6 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     return this;
   }
 
-  @ApiStatus.Internal
   public Set<Class<?>> getModelProvidersClasses() {
     Set<Class<?>> result = new LinkedHashSet<>();
     for (ProjectImportModelProvider provider : myModelProviders) {
@@ -68,12 +67,8 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     myTargetTypes.addAll(targetTypes);
   }
 
-  public void prepareForPhasedExecuter() {
-    myUseProjectsLoadedPhase = true;
-  }
-
-  public void prepareForNonPhasedExecuter() {
-    myUseProjectsLoadedPhase = false;
+  public void setUseProjectsLoadedPhase(boolean useProjectsLoadedPhase) {
+    myUseProjectsLoadedPhase = useProjectsLoadedPhase;
   }
 
   public void setTracingContext(@NotNull GradleTracingContext tracingContext) {
@@ -147,11 +142,7 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
 
     assert myModels != null;
 
-    BuildController buildController = myModels.createBuildController(controller);
-    GradleModelConsumer modelConsumer = myModels.createModelConsumer(converterExecutor);
-    Collection<? extends GradleBuild> gradleBuilds = myModels.getGradleBuilds();
-
-    executeAction(buildController, telemetry, modelConsumer, gradleBuilds, isProjectsLoadedAction);
+    executeAction(controller, converterExecutor, telemetry, myModels, isProjectsLoadedAction);
 
     if (isProjectsLoadedAction) {
       telemetry.runWithSpan("TurnOffDefaultTasks", __ ->
@@ -244,39 +235,19 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
 
   private void executeAction(
     @NotNull BuildController controller,
+    @NotNull ExecutorService converterExecutor,
     @NotNull GradleOpenTelemetry telemetry,
-    @NotNull GradleModelConsumer modelConsumer,
-    @NotNull Collection<? extends GradleBuild> gradleBuilds,
+    @NotNull GradleDaemonModelHolder models,
     boolean isProjectsLoadedAction
   ) {
+    BuildController buildController = models.createBuildController(controller);
+    GradleModelConsumer modelConsumer = models.createModelConsumer(converterExecutor);
+    Collection<? extends GradleBuild> gradleBuilds = models.getGradleBuilds();
+
     try {
-      forEachModelFetchPhase(isProjectsLoadedAction, (phase, modelProviders) -> {
+      getModelProviders(isProjectsLoadedAction).forEach((phase, modelProviders) -> {
         telemetry.runWithSpan(phase.name(), __ -> {
-          for (GradleBuild gradleBuild : gradleBuilds) {
-            for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
-              for (ProjectImportModelProvider modelProvider : modelProviders) {
-                telemetry.runWithSpan(modelProvider.getName(), span -> {
-                  span.setAttribute("project-name", gradleProject.getName());
-                  span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
-                  span.setAttribute("model-type", "ProjectModel");
-                  modelProvider.populateProjectModels(controller, gradleProject, modelConsumer);
-                });
-              }
-            }
-            for (ProjectImportModelProvider modelProvider : modelProviders) {
-              telemetry.runWithSpan(modelProvider.getName(), span -> {
-                span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
-                span.setAttribute("model-type", "BuildModel");
-                modelProvider.populateBuildModels(controller, gradleBuild, modelConsumer);
-              });
-            }
-          }
-          for (ProjectImportModelProvider modelProvider : modelProviders) {
-            telemetry.runWithSpan(modelProvider.getName(), span -> {
-              span.setAttribute("model-type", "GradleModel");
-              modelProvider.populateModels(controller, gradleBuilds, modelConsumer);
-            });
-          }
+          populateModels(buildController, telemetry, modelConsumer, gradleBuilds, modelProviders);
         });
       });
     }
@@ -285,26 +256,52 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
     }
   }
 
-  private void forEachModelFetchPhase(
-    boolean isProjectsLoadedAction,
-    @NotNull BiConsumer<GradleModelFetchPhase, List<ProjectImportModelProvider>> consumer
+  private static void populateModels(
+    @NotNull BuildController controller,
+    @NotNull GradleOpenTelemetry telemetry,
+    @NotNull GradleModelConsumer modelConsumer,
+    @NotNull Collection<? extends GradleBuild> gradleBuilds,
+    @NotNull List<ProjectImportModelProvider> modelProviders
   ) {
-    getModelProviders(isProjectsLoadedAction)
-      .collect(Collectors.groupingBy(it -> it.getPhase())).entrySet().stream()
-      .sorted(Map.Entry.comparingByKey())
-      .forEachOrdered(it -> consumer.accept(it.getKey(), it.getValue()));
+    telemetry.runWithSpan("PopulateModels", __ -> {
+      for (GradleBuild gradleBuild : gradleBuilds) {
+        for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
+          for (ProjectImportModelProvider modelProvider : modelProviders) {
+            telemetry.runWithSpan(modelProvider.getName(), span -> {
+              span.setAttribute("project-name", gradleProject.getName());
+              span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
+              span.setAttribute("model-type", "ProjectModel");
+              modelProvider.populateProjectModels(controller, gradleProject, modelConsumer);
+            });
+          }
+        }
+        for (ProjectImportModelProvider modelProvider : modelProviders) {
+          telemetry.runWithSpan(modelProvider.getName(), span -> {
+            span.setAttribute("build-name", gradleBuild.getBuildIdentifier().getRootDir().getName());
+            span.setAttribute("model-type", "BuildModel");
+            modelProvider.populateBuildModels(controller, gradleBuild, modelConsumer);
+          });
+        }
+      }
+      for (ProjectImportModelProvider modelProvider : modelProviders) {
+        telemetry.runWithSpan(modelProvider.getName(), span -> {
+          span.setAttribute("model-type", "GradleModel");
+          modelProvider.populateModels(controller, gradleBuilds, modelConsumer);
+        });
+      }
+    });
   }
 
-  private Stream<ProjectImportModelProvider> getModelProviders(boolean isProjectsLoadedAction) {
+  public @NotNull SortedMap<GradleModelFetchPhase, List<ProjectImportModelProvider>> getModelProviders(boolean isProjectsLoadedAction) {
+    NavigableMap<GradleModelFetchPhase, List<ProjectImportModelProvider>> modelProviders = myModelProviders.stream()
+      .collect(Collectors.groupingBy(ProjectImportModelProvider::getPhase, TreeMap::new, Collectors.toList()));
     if (!myUseProjectsLoadedPhase) {
-      return myModelProviders.stream();
+      return modelProviders;
     }
     if (isProjectsLoadedAction) {
-      return myModelProviders.stream()
-        .filter(it -> it.getPhase().equals(GradleModelFetchPhase.PROJECT_LOADED_PHASE));
+      return modelProviders.headMap(GradleModelFetchPhase.PROJECT_LOADED_PHASE, true);
     }
-    return myModelProviders.stream()
-      .filter(it -> !it.getPhase().equals(GradleModelFetchPhase.PROJECT_LOADED_PHASE));
+    return modelProviders.tailMap(GradleModelFetchPhase.PROJECT_LOADED_PHASE, false);
   }
 
   // Use this static class as a simple ThreadFactory to prevent a memory leak when passing an anonymous ThreadFactory object to
