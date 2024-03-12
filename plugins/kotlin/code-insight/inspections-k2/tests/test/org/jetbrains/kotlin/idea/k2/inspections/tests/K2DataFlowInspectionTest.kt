@@ -92,6 +92,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testSuppressionsK2() = doTest()
     fun testTopLevelDeclaration() = doTest()
     fun testTryCatch() = doTest()
+    fun testTryCatchReturnValue() = doTest()
     fun testTryCatchInsideFinally() = doTest()
     fun testTryFinally() = doTest()
     fun testTypeCastK2() = doTest()
