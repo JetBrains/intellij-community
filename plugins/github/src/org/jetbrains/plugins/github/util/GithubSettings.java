@@ -33,6 +33,7 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public int CONNECTION_TIMEOUT = 5000;
     public boolean CLONE_GIT_USING_SSH = false;
     public boolean AUTOMATICALLY_MARK_AS_VIEWED = true;
+    public boolean IS_UNREAD_MARKERS_ENABLED = true;
   }
 
   public static GithubSettings getInstance() {
@@ -71,6 +72,10 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     return myState.AUTOMATICALLY_MARK_AS_VIEWED;
   }
 
+  public boolean isSeenMarkersEnabled() {
+    return myState.IS_UNREAD_MARKERS_ENABLED;
+  }
+
   public void setPrivateGist(final boolean secretGist) {
     myState.PRIVATE_GIST = secretGist;
   }
@@ -85,5 +90,9 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
 
   public void setAutomaticallyMarkAsViewed(final boolean automaticallyMarkAsViewed) {
     myState.AUTOMATICALLY_MARK_AS_VIEWED = automaticallyMarkAsViewed;
+  }
+
+  public void setIsSeenMarkersEnabled(final boolean isUnreadMarkersEnabled) {
+    myState.IS_UNREAD_MARKERS_ENABLED = isUnreadMarkersEnabled;
   }
 }

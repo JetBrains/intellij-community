@@ -115,7 +115,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
     val presentation = presenter(value)
 
     unseen.apply {
-      isVisible = !presentation.seen
+      isVisible = presentation.seen?.not() ?: false
     }
     title.apply {
       text = presentation.title

@@ -50,6 +50,10 @@ internal class GithubSettingsConfigurable internal constructor(
         checkBox(message("settings.automatically.mark.as.viewed"))
           .bindSelected(ghSettings::isAutomaticallyMarkAsViewed, ghSettings::setAutomaticallyMarkAsViewed)
       }
+      row {
+        checkBox(message("settings.enable.pr.seen.markers"))
+          .bindSelected(ghSettings::isSeenMarkersEnabled, ghSettings::setIsSeenMarkersEnabled)
+      }
       row(message("settings.timeout")) {
         intTextField(range = 0..60)
           .columns(2)

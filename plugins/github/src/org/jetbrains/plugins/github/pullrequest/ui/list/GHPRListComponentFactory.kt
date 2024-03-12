@@ -24,6 +24,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInter
 import org.jetbrains.plugins.github.pullrequest.ui.GHReviewersUtils
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
+import org.jetbrains.plugins.github.util.GithubSettings
 import javax.swing.ListModel
 
 internal class GHPRListComponentFactory(
@@ -54,28 +55,32 @@ internal class GHPRListComponentFactory(
     pr: GHPullRequestShort,
     ghostUser: GHUser,
     currentUser: GHUser
-  ): ReviewListItemPresentation =
-    ReviewListItemPresentation.Simple(pr.title, "#" + pr.number, pr.createdAt,
-                                      author = createUserPresentation(avatarIconsProvider, pr.author),
-                                      tagGroup = NamedCollection.create(GithubBundle.message("pull.request.labels.popup", pr.labels.size),
-                                                                        pr.labels.map(::getLabelPresentation)),
-                                      mergeableStatus = getMergeableStatus(pr.mergeable),
-                                      state = getStateText(pr.state, pr.isDraft),
-                                      userGroup1 = getAssigneesPresentation(avatarIconsProvider, pr.assignees),
-                                      userGroup2 = getReviewersPresentation(
-                                        avatarIconsProvider,
-                                        GHReviewersUtils.getReviewsByReviewers(
-                                          pr.author,
-                                          pr.reviews,
-                                          pr.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer),
-                                          ghostUser
-                                        )
-                                      ),
-                                      commentsCounter = ReviewListItemPresentation.CommentsCounter(
-                                        pr.unresolvedReviewThreadsCount,
-                                        GithubBundle.message("pull.request.unresolved.comments", pr.unresolvedReviewThreadsCount)
-                                      ),
-                                      seen = interactionStateService.isSeen(pr, currentUser))
+  ): ReviewListItemPresentation {
+    val isUnreadDotEnabled = GithubSettings.getInstance().isSeenMarkersEnabled
+    return ReviewListItemPresentation.Simple(
+      pr.title, "#" + pr.number, pr.createdAt,
+      author = createUserPresentation(avatarIconsProvider, pr.author),
+      tagGroup = NamedCollection.create(GithubBundle.message("pull.request.labels.popup", pr.labels.size),
+                                        pr.labels.map(::getLabelPresentation)),
+      mergeableStatus = getMergeableStatus(pr.mergeable),
+      state = getStateText(pr.state, pr.isDraft),
+      userGroup1 = getAssigneesPresentation(avatarIconsProvider, pr.assignees),
+      userGroup2 = getReviewersPresentation(
+        avatarIconsProvider,
+        GHReviewersUtils.getReviewsByReviewers(
+          pr.author,
+          pr.reviews,
+          pr.reviewRequests.mapNotNull(GHPullRequestReviewRequest::requestedReviewer),
+          ghostUser
+        )
+      ),
+      commentsCounter = ReviewListItemPresentation.CommentsCounter(
+        pr.unresolvedReviewThreadsCount,
+        GithubBundle.message("pull.request.unresolved.comments", pr.unresolvedReviewThreadsCount)
+      ),
+      seen = if (isUnreadDotEnabled) interactionStateService.isSeen(pr, currentUser) else null
+    )
+  }
 
   private fun getLabelPresentation(label: GHLabel) =
     TagPresentation.Simple(label.name, ColorHexUtil.fromHex(label.color))
