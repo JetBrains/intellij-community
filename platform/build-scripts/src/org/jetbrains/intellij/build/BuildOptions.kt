@@ -177,7 +177,6 @@ data class BuildOptions(
     const val COMMUNITY_DIST_STEP: String = "community_dist"
     const val OS_SPECIFIC_DISTRIBUTIONS_STEP: String = "os_specific_distributions"
     const val PREBUILD_SHARED_INDEXES: String = "prebuild_shared_indexes"
-    const val SETUP_BUNDLED_MAVEN: String = "setup_bundled_maven"
     const val VERIFY_CLASS_FILE_VERSIONS: String = "verify_class_file_versions"
 
     const val ARCHIVE_PLUGINS: String = "archivePlugins"
