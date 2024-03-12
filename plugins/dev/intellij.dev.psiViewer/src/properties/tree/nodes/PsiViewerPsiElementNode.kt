@@ -10,7 +10,7 @@ private const val PSI_ELEMENT_NODE_WEIGHT = 50
 class PsiViewerPsiElementNode(
   private val nodeContext: PsiViewerPropertyNode.Context,
   override val presentation: PsiViewerPropertyNode.Presentation,
-  private val psiElement: PsiElement
+  val psiElement: PsiElement
 ) : PsiViewerPropertyNode {
   class Factory : PsiViewerPropertyNode.Factory {
     override fun isMatchingType(clazz: Class<*>): Boolean {
