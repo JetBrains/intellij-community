@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.openapi.editor.Editor
@@ -10,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
@@ -20,14 +17,21 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 
 object SpecifyExplicitTypeFixFactories {
+
     val ambiguousAnonymousTypeInferred =
-        diagnosticFixFactory(KtFirDiagnostic.AmbiguousAnonymousTypeInferred::class) { createQuickFix(it.psi) }
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.AmbiguousAnonymousTypeInferred ->
+            createQuickFix(diagnostic.psi)
+        }
 
     val noExplicitReturnTypeInApiMode =
-        diagnosticFixFactory(KtFirDiagnostic.NoExplicitReturnTypeInApiMode::class) { createQuickFix(it.psi) }
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NoExplicitReturnTypeInApiMode ->
+            createQuickFix(diagnostic.psi)
+        }
 
     val noExplicitReturnTypeInApiModeWarning =
-        diagnosticFixFactory(KtFirDiagnostic.NoExplicitReturnTypeInApiModeWarning::class) { createQuickFix(it.psi) }
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NoExplicitReturnTypeInApiModeWarning ->
+            createQuickFix(diagnostic.psi)
+        }
 
     context(KtAnalysisSession)
     private fun createQuickFix(declaration: KtDeclaration) =

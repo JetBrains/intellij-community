@@ -23,6 +23,15 @@ import kotlin.reflect.KClass
     fun createQuickFixes(diagnostic: DIAGNOSTIC): List<CommonIntentionAction>
 
     /**
+     * Creates [IntentionAction]s from a diagnostic.
+     */
+    fun interface IntentionBased<DIAGNOSTIC : KtDiagnosticWithPsi<*>> : KotlinQuickFixFactory<DIAGNOSTIC> {
+
+        context(KtAnalysisSession)
+        override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<IntentionAction>
+    }
+
+    /**
      * Creates [ModCommandAction]s from a diagnostic.
      */
     fun interface ModCommandBased<DIAGNOSTIC : KtDiagnosticWithPsi<*>> : KotlinQuickFixFactory<DIAGNOSTIC> {
@@ -32,10 +41,11 @@ import kotlin.reflect.KClass
     }
 }
 
-sealed class KotlinDiagnosticFixFactory<DIAGNOSTIC : KtDiagnosticWithPsi<*>> {
+@Deprecated("Use KotlinQuickFixFactory.IntentionBased")
+sealed class KotlinDiagnosticFixFactory<DIAGNOSTIC : KtDiagnosticWithPsi<*>> : KotlinQuickFixFactory<DIAGNOSTIC> {
 
     context(KtAnalysisSession)
-    abstract fun createQuickFixes(diagnostic: DIAGNOSTIC): List<QuickFixActionBase<*>>
+    abstract override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<QuickFixActionBase<*>>
 
     abstract val diagnosticClass: KClass<DIAGNOSTIC>
 }
@@ -71,15 +81,6 @@ fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>, TARGET_PSI : PsiElement, INPUT : Kotli
     createTargets: context(KtAnalysisSession)(DIAGNOSTIC) -> List<KotlinApplicatorTargetWithInput<TARGET_PSI, INPUT>>
 ): KotlinDiagnosticFixFactory<DIAGNOSTIC> =
     KotlinDiagnosticFixFactoryWithFixedApplicator(diagnosticClass, applicator, createTargets)
-
-/**
- * Returns a [KotlinDiagnosticFixFactory] that creates [QuickFixActionBase]s from a diagnostic.
- */
-fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> diagnosticFixFactory(
-    diagnosticClass: KClass<DIAGNOSTIC>,
-    createQuickFixes: context(KtAnalysisSession)(DIAGNOSTIC) -> List<QuickFixActionBase<*>>
-): KotlinDiagnosticFixFactory<DIAGNOSTIC> =
-    KotlinDiagnosticFixFactoryUsingQuickFixActionBase(diagnosticClass, createQuickFixes)
 
 /**
  * Returns a [Collection] of [KotlinDiagnosticFixFactory] that creates [QuickFixActionBase]s from diagnostics that have the same type of

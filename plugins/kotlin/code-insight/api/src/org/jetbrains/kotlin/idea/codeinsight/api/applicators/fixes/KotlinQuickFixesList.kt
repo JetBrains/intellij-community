@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
-import com.intellij.codeInsight.intention.CommonIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -67,11 +66,11 @@ class KtQuickFixesListBuilder private constructor() {
         quickFixFactory: KotlinDiagnosticFixFactory<out DIAGNOSTIC>
     ) {
         quickFixes.getOrPut(quickFixFactory.diagnosticClass) { mutableListOf() }
-            .add(KotlinApplicatorBasedFactory(quickFixFactory))
+            .add(quickFixFactory)
     }
 
     inline fun <reified DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerFactory(
-        factory: KotlinQuickFixFactory.ModCommandBased<DIAGNOSTIC>,
+        factory: KotlinQuickFixFactory<DIAGNOSTIC>,
     ) {
         registerFactory(DIAGNOSTIC::class, factory)
     }
@@ -89,15 +88,6 @@ class KtQuickFixesListBuilder private constructor() {
     companion object {
         fun registerPsiQuickFix(init: KtQuickFixesListBuilder.() -> Unit) = KtQuickFixesListBuilder().apply(init).build()
     }
-}
-
-private class KotlinApplicatorBasedFactory<DIAGNOSTIC : KtDiagnosticWithPsi<*>>(
-    private val delegate: KotlinDiagnosticFixFactory<DIAGNOSTIC>,
-) : KotlinQuickFixFactory<DIAGNOSTIC> {
-
-    context(KtAnalysisSession)
-    override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<CommonIntentionAction> =
-        delegate.createQuickFixes(diagnostic)
 }
 
 private fun <K, V> List<Map<K, List<V>>>.merge(): Map<K, List<V>> {

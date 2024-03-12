@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.unwrapParenthesesLabelsAndAnnotations
@@ -14,15 +14,16 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object AddExclExclCallFixFactories {
-    val unsafeCallFactory = diagnosticFixFactory(KtFirDiagnostic.UnsafeCall::class) { diagnostic ->
+
+    val unsafeCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnsafeCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    val unsafeInfixCallFactory = diagnosticFixFactory(KtFirDiagnostic.UnsafeInfixCall::class) { diagnostic ->
+    val unsafeInfixCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnsafeInfixCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
-    val unsafeOperatorCallFactory = diagnosticFixFactory(KtFirDiagnostic.UnsafeOperatorCall::class) { diagnostic ->
+    val unsafeOperatorCallFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.UnsafeOperatorCall ->
         getFixForUnsafeCall(diagnostic.psi)
     }
 
@@ -89,14 +90,18 @@ object AddExclExclCallFixFactories {
         return listOfNotNull(target.asAddExclExclCallFix(hasImplicitReceiver = hasImplicitReceiver))
     }
 
-    val iteratorOnNullableFactory = diagnosticFixFactory(KtFirDiagnostic.IteratorOnNullable::class) { diagnostic ->
-        val expression = diagnostic.psi as? KtExpression ?: return@diagnosticFixFactory emptyList()
-        val type = expression?.getKtType() ?: return@diagnosticFixFactory emptyList()
-        if (!type.canBeNull) return@diagnosticFixFactory emptyList()
+    val iteratorOnNullableFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.IteratorOnNullable ->
+        val expression = diagnostic.psi as? KtExpression
+            ?: return@IntentionBased emptyList()
+        val type = expression.getKtType()
+            ?: return@IntentionBased emptyList()
+        if (!type.canBeNull)
+            return@IntentionBased emptyList()
 
         // NOTE: This is different from FE1.0 in that we offer the fix even if the function does NOT have the `operator` modifier.
         // Adding `!!` will then surface the error that `operator` should be added (with corresponding fix).
-        val typeScope = type.getTypeScope()?.getDeclarationScope() ?: return@diagnosticFixFactory emptyList()
+        val typeScope = type.getTypeScope()?.getDeclarationScope()
+            ?: return@IntentionBased emptyList()
         val hasValidIterator = typeScope.getCallableSymbols(OperatorNameConventions.ITERATOR)
             .filter { it is KtFunctionSymbol && it.valueParameters.isEmpty() }.singleOrNull() != null
         if (hasValidIterator) {
