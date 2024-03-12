@@ -18,4 +18,4 @@ fun test(a1: A?, a2: A) {
 
 fun notNull(a: A): A = a
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.WrapWithSafeLetCallFixFactories$WrapWithSafeLetCallModCommandAction
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.WrapWithSafeLetCallFixFactories$WrapWithSafeLetCallModCommandAction
