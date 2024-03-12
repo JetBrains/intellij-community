@@ -176,8 +176,15 @@ fun CoroutineScope.startApplication(
 
   // log initialization must happen only after locking the system directory
   val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
+  if (!isHeadless) {
+    launch {
+      lockSystemDirsJob.join()
 
-  scheduleSvgIconCacheInitAndPreloadPhm(logDeferred, isHeadless)
+      span("SvgCache creation") {
+        SvgCacheManager.svgCache = SvgCacheManager.createSvgCacheManager()
+      }
+    }
+  }
 
   shellEnvDeferred = async {
     // EnvironmentUtil wants logger
@@ -307,19 +314,6 @@ fun CoroutineScope.startApplication(
     }
 
     executeApplicationStarter(starter = starter, args = args)
-  }
-}
-
-private fun CoroutineScope.scheduleSvgIconCacheInitAndPreloadPhm(logDeferred: Deferred<Logger>, isHeadless: Boolean) {
-  launch {
-    // PHM wants logger
-    logDeferred.join()
-
-    if (!isHeadless) {
-      span("SvgCache creation") {
-        SvgCacheManager.svgCache = SvgCacheManager.createSvgCacheManager()
-      }
-    }
   }
 }
 

@@ -46,24 +46,7 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
-    <orderEntry type="module-library">
-      <library name="mvstore" type="repository">
-        <properties maven-id="com.h2database:h2-mvstore:2.2.224">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.2.224/h2-mvstore-2.2.224.jar">
-              <sha256sum>10c78293cb07bbeeb37b0cc2c919a7909e95c9e4eef0467f21bf961b2492214c</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.2.224/h2-mvstore-2.2.224.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.2.224/h2-mvstore-2.2.224-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="mvstore" level="project" />
     <orderEntry type="module-library">
       <library name="kotlinx-serialization-cbor" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-cbor-jvm:1.6.2">

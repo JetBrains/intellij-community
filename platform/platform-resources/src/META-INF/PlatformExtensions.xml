@@ -1757,7 +1757,6 @@
                         listGroupID="MainToolbarQuickActions.Run"/>
 
     <notificationRouter implementation="com.intellij.notification.impl.LocalNotificationRouter" order="last"/>
-    <applicationInitializedListener implementation="com.intellij.ide.ui.IconDbMaintainer"/>
     <ideEventQueueDispatcher implementation="com.intellij.ide.ui.laf.LaFMnemonicDispatcher"/>
 
     <registryKey key="code.toolbar.debugger.actions" defaultValue="true" description="Add debugger actions into floating toolbar."/>

@@ -11,6 +11,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.ide.ui.IconDbMaintainer
 import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -277,6 +278,10 @@ private fun CoroutineScope.postOpenUiTasks() {
 
   launch {
     FUSProjectHotStartUpMeasurer.startWritingStatistics()
+  }
+
+  launch {
+    serviceAsync<IconDbMaintainer>()
   }
 }
 

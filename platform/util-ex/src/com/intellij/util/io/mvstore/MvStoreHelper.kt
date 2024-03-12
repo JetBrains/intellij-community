@@ -1,19 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.settings.local
+package com.intellij.util.io.mvstore
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.ArrayUtilRt
 import org.h2.mvstore.MVMap
 import org.h2.mvstore.MVStore
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.nio.channels.ClosedChannelException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import kotlin.time.Duration.Companion.seconds
 
-//fun markAsInvalid(file: Path) {
-//  if (Files.exists(file)) {
-//    Files.write(getInvalidateMarkerFile(file), ArrayUtilRt.EMPTY_BYTE_ARRAY, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-//  }
-//}
+@Internal
+fun markMvStoreDbAsInvalid(file: Path) {
+  if (Files.exists(file)) {
+    Files.write(getInvalidateMarkerFile(file), ArrayUtilRt.EMPTY_BYTE_ARRAY, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
+  }
+}
 
-internal fun <K, V> openOrResetMap(
+@Internal
+fun <K, V> openOrResetMap(
   store: MVStore,
   name: String,
   mapBuilder: MVMap.Builder<K, V>,
@@ -34,7 +41,8 @@ internal fun <K, V> openOrResetMap(
   return store.openMap(name, mapBuilder)
 }
 
-internal fun createOrResetMvStore(file: Path, logSupplier: () -> Logger): MVStore {
+@Internal
+fun createOrResetMvStore(file: Path, logSupplier: () -> Logger): MVStore {
   val markerFile = getInvalidateMarkerFile(file)
   if (Files.exists(markerFile)) {
     Files.deleteIfExists(file)
@@ -57,12 +65,13 @@ private fun getInvalidateMarkerFile(file: Path): Path = file.resolveSibling("${f
 
 private fun tryOpenMvStore(file: Path, logSupplier: () -> Logger): MVStore {
   val storeErrorHandler = StoreErrorHandler(file, logSupplier)
-  // default cache size is 16MB
   val store = MVStore.Builder()
     .fileName(file.toAbsolutePath().toString())
     .backgroundExceptionHandler(storeErrorHandler)
     // avoid extra thread - db maintainer should use coroutines
     .autoCommitDisabled()
+    // default cache size is 16MB
+    .cacheSize(8)
     .open()
   storeErrorHandler.isStoreOpened = true
   // versioning isn't required, otherwise the file size will be larger than needed
@@ -81,6 +90,20 @@ private class StoreErrorHandler(private val dbFile: Path, private val logSupplie
     }
     else {
       log.warn("Store will be recreated (db=$dbFile)", e)
+    }
+  }
+}
+
+@Internal
+fun compactMvStore(store: MVStore, logSupplier: () -> Logger) {
+  try {
+    store.compactFile(3.seconds.inWholeMilliseconds.toInt())
+  }
+  catch (e: RuntimeException) {
+    /** see [org.h2.mvstore.FileStore.compact] */
+    val cause = e.cause
+    if (cause !is InterruptedException && cause !is ClosedChannelException) {
+      logSupplier().warn("Cannot compact", e)
     }
   }
 }

@@ -51,5 +51,6 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
+    <orderEntry type="library" name="mvstore" level="project" />
   </component>
 </module>

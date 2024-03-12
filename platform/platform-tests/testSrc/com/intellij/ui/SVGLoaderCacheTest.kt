@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UndesirableClassUsage")
 
 package com.intellij.ui
@@ -22,7 +22,7 @@ class SVGLoaderCacheTest {
   fun noEntry(@TempDir dir: Path) = runBlocking {
     val cache = createCache(dir)
     try {
-      assertThat(cache.loadFromCache(longArrayOf(42, 123))).isNull()
+      assertThat(cache.loadFromCache(longArrayOf(42, 123), isPrecomputed = false)).isNull()
     }
     finally {
       cache.close()
@@ -39,16 +39,16 @@ class SVGLoaderCacheTest {
       val imageBytes = byteArrayOf(1, 2, 3)
       val colorPatcherDigest = ArrayUtilRt.EMPTY_LONG_ARRAY
       val svgCacheClassifier = SvgCacheClassifier(1f)
-      cache.storeLoadedImage(createIconCacheKey(imageBytes = imageBytes, compoundKey = svgCacheClassifier, colorPatcherDigest = colorPatcherDigest), i)
+      cache.storeLoadedImage(createIconCacheKey(imageBytes = imageBytes, compoundKey = svgCacheClassifier, colorPatcherDigest = colorPatcherDigest), i, false)
       cache.close()
       cache = createCache(dir)
-      val copy = cache.loadFromCache(createIconCacheKey(imageBytes = imageBytes, colorPatcherDigest = colorPatcherDigest, compoundKey = svgCacheClassifier))!!
+      val copy = cache.loadFromCache(createIconCacheKey(imageBytes = imageBytes, colorPatcherDigest = colorPatcherDigest, compoundKey = svgCacheClassifier), isPrecomputed = false)!!
       assertThat(copy.width).isEqualTo(10)
       assertThat(copy.height).isEqualTo(10)
       ImageComparator.compareAndAssert(AASmootherComparator(0.1, 0.1, Color(0, 0, 0, 0)), i, copy, null)
-      assertThat(cache.loadFromCache((createIconCacheKey(imageBytes, SvgCacheClassifier(1f, false, false), longArrayOf(123))))).isNull()
-      assertThat(cache.loadFromCache(createIconCacheKey(byteArrayOf(6, 7), SvgCacheClassifier(1f, false, false), colorPatcherDigest))).isNull()
-      assertThat(cache.loadFromCache(createIconCacheKey(imageBytes, SvgCacheClassifier(2f, false, false), colorPatcherDigest))).isNull()
+      assertThat(cache.loadFromCache((createIconCacheKey(imageBytes, SvgCacheClassifier(1f, false, false), longArrayOf(123))), isPrecomputed = false)).isNull()
+      assertThat(cache.loadFromCache(createIconCacheKey(byteArrayOf(6, 7), SvgCacheClassifier(1f, false, false), colorPatcherDigest), isPrecomputed = false)).isNull()
+      assertThat(cache.loadFromCache(createIconCacheKey(imageBytes, SvgCacheClassifier(2f, false, false), colorPatcherDigest), isPrecomputed = false)).isNull()
     }
     finally {
       cache.close()

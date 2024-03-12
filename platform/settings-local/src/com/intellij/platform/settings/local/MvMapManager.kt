@@ -8,6 +8,9 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.util.io.mvstore.compactMvStore
+import com.intellij.util.io.mvstore.createOrResetMvStore
+import com.intellij.util.io.mvstore.openOrResetMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -16,12 +19,10 @@ import org.h2.mvstore.MVStore
 import org.h2.mvstore.type.ByteArrayDataType
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.nio.channels.ClosedChannelException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -64,16 +65,7 @@ internal class MvStoreManager {
 
   @VisibleForTesting
   fun compactStore() {
-    try {
-      store.compactFile(3.seconds.inWholeMilliseconds.toInt())
-    }
-    catch (e: RuntimeException) {
-      /** see [org.h2.mvstore.FileStore.compact] */
-      val cause = e.cause
-      if (cause !is InterruptedException && cause !is ClosedChannelException) {
-        thisLogger().warn("Cannot compact", e)
-      }
-    }
+    compactMvStore(store, ::thisLogger)
   }
 
   fun close() {
