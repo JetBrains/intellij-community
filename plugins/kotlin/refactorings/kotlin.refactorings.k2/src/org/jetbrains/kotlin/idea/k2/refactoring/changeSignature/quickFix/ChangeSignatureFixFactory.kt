@@ -166,7 +166,7 @@ object ChangeSignatureFixFactory {
                 val argumentExpression = currentArgument.getArgumentExpression()
                 val ktType = getKtType(argumentExpression) ?: return null
                 return KotlinParameterInfo(
-                    originalType = KotlinTypeInfo(ktType.render(position = Variance.IN_VARIANCE), callElement),
+                    originalType = KotlinTypeInfo(ktType, callElement),
                     name = getNewArgumentName(currentArgument, validator),
                     originalIndex = -1,
                     valOrVar = defaultValOrVar(ktCallableDeclaration),
