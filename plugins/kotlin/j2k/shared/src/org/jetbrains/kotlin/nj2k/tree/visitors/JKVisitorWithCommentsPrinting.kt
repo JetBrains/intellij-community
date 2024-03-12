@@ -594,6 +594,15 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
 
     open fun visitMethodAccessExpressionRaw(methodAccessExpression: JKMethodAccessExpression) = visitExpressionRaw(methodAccessExpression)
 
+    override fun visitTypeQualifierExpression(typeQualifierExpression: JKTypeQualifierExpression) {
+        printLeftNonCodeElements(typeQualifierExpression)
+        visitTypeQualifierExpressionRaw(typeQualifierExpression)
+        printRightNonCodeElements(typeQualifierExpression)
+    }
+
+    open fun visitTypeQualifierExpressionRaw(typeQualifierExpression: JKTypeQualifierExpression) =
+        visitExpressionRaw(typeQualifierExpression)
+
     override fun visitClassAccessExpression(classAccessExpression: JKClassAccessExpression) {
         printLeftNonCodeElements(classAccessExpression)
         visitClassAccessExpressionRaw(classAccessExpression)
