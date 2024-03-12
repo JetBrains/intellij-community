@@ -2,22 +2,16 @@
 package com.intellij.profile.codeInspection.ui
 
 import com.intellij.codeEditor.printing.HTMLTextPainter
-import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.psi.PsiFileFactory
-import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.HTMLEditorKitBuilder
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import java.awt.Color
-import java.awt.Point
 import java.io.IOException
 import java.io.StringReader
 import javax.swing.JEditorPane
@@ -114,12 +108,4 @@ fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
   catch (e: IOException) {
     throw RuntimeException(e)
   }
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "HTMl conversion is handled in JEditorPane.readHTML")
-fun JEditorPane.toHTML(text: @Nls String?, miniFontSize: Boolean): String {
-  val hintHint = HintHint(this, Point(0, 0))
-  hintHint.setFont(if (miniFontSize) UIUtil.getLabelFont(UIUtil.FontSize.SMALL) else StartupUiUtil.labelFont)
-  return HintUtil.prepareHintText(text!!, hintHint)
 }

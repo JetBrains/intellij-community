@@ -752,22 +752,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     TreeUtil.sortRecursively(myRoot, InspectionsConfigTreeComparator.INSTANCE);
   }
 
-  /**
-   * @deprecated Use {@link DescriptionEditorPaneKt#readHTML(JEditorPane, String)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static void readHTML(JEditorPane browser, String text) {
-    DescriptionEditorPaneKt.readHTML(browser, text);
-  }
-
-  /**
-   * @deprecated Use {@link DescriptionEditorPaneKt#toHTML(JEditorPane, String, boolean)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static String toHTML(JEditorPane browser, @Nls String text, boolean miniFontSize) {
-    return DescriptionEditorPaneKt.toHTML(browser, text, miniFontSize);
-  }
-
   private void updateOptionsAndDescriptionPanel() {
     if (isDisposed()) {
       return;
