@@ -166,6 +166,9 @@
       <reference ref="Terminal.CopySelectedText"/>
       <reference ref="Terminal.Paste"/>
     </group>
+
+    <action id="Terminal.ShowFeedbackNotification" internal="true"
+            class="org.jetbrains.plugins.terminal.exp.feedback.ShowBlockTerminalFeedbackNotificationAction"/>
   </actions>
 
 </idea-plugin>
