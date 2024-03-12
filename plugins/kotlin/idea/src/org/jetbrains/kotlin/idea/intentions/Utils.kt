@@ -21,9 +21,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
@@ -164,16 +162,6 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
     val descriptor = resolvedCall.candidateDescriptor
     return (descriptor.containingDeclaration as? PackageFragmentDescriptor)?.fqName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
             ARRAY_OF_FUNCTION_NAMES.contains(descriptor.name)
-}
-
-fun KtBlockExpression.getParentLambdaLabelName(): String? {
-    val lambdaExpression = getStrictParentOfType<KtLambdaExpression>() ?: return null
-    val callExpression = lambdaExpression.getStrictParentOfType<KtCallExpression>() ?: return null
-    val valueArgument = callExpression.valueArguments.find {
-        it.getArgumentExpression()?.unpackFunctionLiteral(allowParentheses = false) === lambdaExpression
-    } ?: return null
-    val lambdaLabelName = (valueArgument.getArgumentExpression() as? KtLabeledExpression)?.getLabelName()
-    return lambdaLabelName ?: callExpression.getCallNameExpression()?.text
 }
 
 internal fun KtExpression.getCallableDescriptor() = resolveToCall()?.resultingDescriptor

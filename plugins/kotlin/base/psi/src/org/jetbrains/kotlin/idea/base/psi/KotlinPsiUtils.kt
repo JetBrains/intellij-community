@@ -275,3 +275,21 @@ fun getCallElement(argument: KtValueArgument): KtCallElement? {
 
 val PsiElement.isInsideKtTypeReference: Boolean
     get() = getNonStrictParentOfType<KtTypeReference>() != null
+
+/**
+ * Returns the name of the label which can be used to perform the labeled return
+ * from the current lambda, if the lambda is present and if the labeled return is possible.
+ *
+ * The name corresponds either to:
+ * - lambda's explicit label (`foo@{ ... }`)
+ * - the name of the outer function call (`foo { ... }`)
+ */
+fun KtBlockExpression.getParentLambdaLabelName(): String? {
+    val lambdaExpression = getStrictParentOfType<KtLambdaExpression>() ?: return null
+    val callExpression = lambdaExpression.getStrictParentOfType<KtCallExpression>() ?: return null
+    val valueArgument = callExpression.valueArguments.find {
+        it.getArgumentExpression()?.unpackFunctionLiteral(allowParentheses = false) === lambdaExpression
+    } ?: return null
+    val lambdaLabelName = (valueArgument.getArgumentExpression() as? KtLabeledExpression)?.getLabelName()
+    return lambdaLabelName ?: callExpression.getCallNameExpression()?.text
+}
