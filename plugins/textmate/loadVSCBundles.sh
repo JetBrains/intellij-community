@@ -31,6 +31,7 @@ for f in *; do
     rm -rf "$ROOT/lib/bundles/$f/src"
     rm -rf "$ROOT/lib/bundles/$f/resources"
     rm -rf "$ROOT/lib/bundles/$f/yarn.lock"
+    rm -rf "$ROOT/lib/bundles/$f/cgmanifest.json"
     find "$ROOT/lib/bundles/$f/" -name "*.js" -type f -delete
     find "$ROOT/lib/bundles/$f/" -name "*.ts" -type f -delete
     find "$ROOT/lib/bundles/$f/" -name "*.png" -type f -delete
@@ -40,7 +41,7 @@ cd ../..
 
 # vim script
 echo "Adding vim script"
-git clone git@github.com:AlexPl292/language-viml.git
+git clone https://github.com/AlexPl292/language-viml
 cd language-viml
 
 mkdir -p "$ROOT/lib/bundles/viml"

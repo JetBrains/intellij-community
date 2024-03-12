@@ -1,6 +1,6 @@
 {
   "name": "terraform",
-  "version": "2.28.2",
+  "version": "2.29.4",
   "description": "Syntax highlighting and autocompletion for Terraform",
   "license": "MPL-2.0",
   "contributes": {
@@ -89,12 +89,12 @@
         "description": "Keyword"
       },
       {
-        "id": "hcl-traversalStep",
+        "id": "hcl-referenceStep",
         "superType": "variable",
-        "description": "Traversal step"
+        "description": "Reference step"
       },
       {
-        "id": "hcl-typeCapsule",
+        "id": "hcl-typeComplex",
         "superType": "keyword",
         "description": "Type (complex)"
       },
@@ -139,10 +139,10 @@
           "hcl-keyword": [
             "keyword.control"
           ],
-          "hcl-traversalStep": [
+          "hcl-referenceStep": [
             "variable.other.readwrite"
           ],
-          "hcl-typeCapsule": [
+          "hcl-typeComplex": [
             "keyword.control"
           ],
           "hcl-typePrimitive": [
@@ -216,6 +216,15 @@
         "description": "Required providers"
       }
     ],
+    "icons": {
+      "run-status-running": {
+        "description": "Run Status icon",
+        "default": {
+          "fontPath": "./assets/icons/running.woff",
+          "fontCharacter": "D"
+        }
+      }
+    },
     "snippets": [
       {
         "language": "terraform",
@@ -354,32 +363,32 @@
     "commands": [
       {
         "command": "terraform.generateBugReport",
-        "title": "Terraform: Generate Bug Report"
+        "title": "HashiCorp Terraform: Generate Bug Report"
       },
       {
         "command": "terraform.enableLanguageServer",
-        "title": "Terraform: Enable Language Server"
+        "title": "HashiCorp Terraform: Enable Language Server"
       },
       {
         "command": "terraform.disableLanguageServer",
-        "title": "Terraform: Disable Language Server"
+        "title": "HashiCorp Terraform: Disable Language Server"
       },
       {
         "command": "terraform.init",
-        "title": "Terraform: init"
+        "title": "HashiCorp Terraform: init"
       },
       {
         "command": "terraform.initCurrent",
-        "title": "Terraform: init current folder",
+        "title": "HashiCorp Terraform: init current folder",
         "icon": "$(cloud-download)"
       },
       {
         "command": "terraform.validate",
-        "title": "Terraform: validate"
+        "title": "HashiCorp Terraform: validate"
       },
       {
         "command": "terraform.plan",
-        "title": "Terraform: plan"
+        "title": "HashiCorp Terraform: plan"
       },
       {
         "command": "terraform.modules.refreshList",
@@ -400,6 +409,70 @@
         "command": "terraform.providers.openDocumentation",
         "title": "Open Documentation",
         "icon": "$(book)"
+      },
+      {
+        "command": "terraform.cloud.login",
+        "title": "HashiCorp Terraform Cloud: Login",
+        "enablement": "terraform.cloud.signed-in === false"
+      },
+      {
+        "command": "terraform.cloud.workspaces.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)",
+        "enablement": "terraform.cloud.signed-in"
+      },
+      {
+        "command": "terraform.cloud.workspaces.viewInBrowser",
+        "title": "View workspace",
+        "icon": "$(globe)",
+        "enablement": "terraform.cloud.signed-in"
+      },
+      {
+        "command": "terraform.cloud.runs.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)",
+        "enablement": "terraform.cloud.signed-in"
+      },
+      {
+        "command": "terraform.cloud.run.viewInBrowser",
+        "title": "View run",
+        "icon": "$(globe)",
+        "enablement": "terraform.cloud.signed-in"
+      },
+      {
+        "command": "terraform.cloud.run.plan.downloadLog",
+        "title": "View raw plan log",
+        "icon": "$(console)",
+        "enablement": "terraform.cloud.signed-in"
+      },
+      {
+        "command": "terraform.cloud.run.viewPlan",
+        "title": "View plan output",
+        "icon": "$(output)",
+        "enablement": "terraform.cloud.signed-in"
+      },
+      {
+        "command": "terraform.cloud.run.apply.downloadLog",
+        "title": "View raw apply log",
+        "icon": "$(output)",
+        "enablement": "terraform.cloud.signed-in"
+      },
+      {
+        "command": "terraform.cloud.run.viewApply",
+        "title": "View apply output",
+        "icon": "$(output)"
+      },
+      {
+        "command": "terraform.cloud.organization.picker",
+        "title": "HashiCorp Terraform Cloud: Pick Organization",
+        "icon": "$(account)",
+        "enablement": "terraform.cloud.signed-in"
+      },
+      {
+        "command": "terraform.cloud.workspaces.filterByProject",
+        "title": "Filter by project",
+        "icon": "$(filter)",
+        "enablement": "terraform.cloud.signed-in"
       }
     ],
     "menus": {
@@ -443,6 +516,50 @@
         {
           "command": "terraform.providers.openDocumentation",
           "when": "false"
+        },
+        {
+          "command": "terraform.cloud.login",
+          "when": "terraform.cloud.signed-in === false && terraform.cloud.views.visible"
+        },
+        {
+          "command": "terraform.cloud.organization.picker",
+          "when": "terraform.cloud.signed-in"
+        },
+        {
+          "command": "terraform.cloud.workspaces.viewInBrowser",
+          "when": "false"
+        },
+        {
+          "command": "terraform.cloud.run.viewInBrowser",
+          "when": "false"
+        },
+        {
+          "command": "terraform.cloud.run.plan.downloadLog",
+          "when": "false"
+        },
+        {
+          "command": "terraform.cloud.run.viewPlan",
+          "when": "false"
+        },
+        {
+          "command": "terraform.cloud.runs.refresh",
+          "when": "false"
+        },
+        {
+          "command": "terraform.cloud.run.apply.downloadLog",
+          "when": "false"
+        },
+        {
+          "command": "terraform.cloud.run.viewApply",
+          "when": "false"
+        },
+        {
+          "command": "terraform.cloud.workspaces.filterByProject",
+          "when": "false"
+        },
+        {
+          "command": "terraform.cloud.workspaces.refresh",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -460,6 +577,26 @@
           "command": "terraform.initCurrent",
           "when": "view == terraform.providers",
           "group": "navigation"
+        },
+        {
+          "command": "terraform.cloud.workspaces.filterByProject",
+          "when": "view == terraform.cloud.workspaces",
+          "group": "navigation"
+        },
+        {
+          "command": "terraform.cloud.organization.picker",
+          "when": "view == terraform.cloud.workspaces",
+          "group": "navigation"
+        },
+        {
+          "command": "terraform.cloud.workspaces.refresh",
+          "when": "view == terraform.cloud.workspaces",
+          "group": "navigation"
+        },
+        {
+          "command": "terraform.cloud.runs.refresh",
+          "when": "view == terraform.cloud.runs",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -470,6 +607,36 @@
         {
           "command": "terraform.providers.openDocumentation",
           "when": "view == terraform.providers && viewItem == moduleProviderHasDocs"
+        },
+        {
+          "command": "terraform.cloud.workspaces.viewInBrowser",
+          "when": "view == terraform.cloud.workspaces && viewItem =~ /hasLink/",
+          "group": "inline"
+        },
+        {
+          "command": "terraform.cloud.run.viewInBrowser",
+          "when": "view == terraform.cloud.runs && viewItem =~ /isRun/",
+          "group": "inline"
+        },
+        {
+          "command": "terraform.cloud.run.plan.downloadLog",
+          "when": "view == terraform.cloud.runs && viewItem =~ /hasRawPlan/",
+          "group": "inline"
+        },
+        {
+          "command": "terraform.cloud.run.viewPlan",
+          "when": "view == terraform.cloud.runs && viewItem =~ /hasStructuredPlan/",
+          "group": "inline"
+        },
+        {
+          "command": "terraform.cloud.run.apply.downloadLog",
+          "when": "view == terraform.cloud.runs && viewItem =~ /hasRawApply/",
+          "group": "inline"
+        },
+        {
+          "command": "terraform.cloud.run.viewApply",
+          "when": "view == terraform.cloud.runs && viewItem =~ /hasStructuredApply/",
+          "group": "inline"
         }
       ]
     },
@@ -483,6 +650,30 @@
           "id": "terraform.modules",
           "name": "Module Calls"
         }
+      ],
+      "terraform-cloud": [
+        {
+          "id": "terraform.cloud.workspaces",
+          "name": "Workspaces",
+          "contextualTitle": "Terraform Cloud workspaces"
+        },
+        {
+          "id": "terraform.cloud.runs",
+          "name": "Runs",
+          "contextualTitle": "Terraform Cloud runs"
+        }
+      ],
+      "terraform-cloud-panel": [
+        {
+          "id": "terraform.cloud.run.plan",
+          "name": "Plan",
+          "when": "terraform.cloud.run.viewingPlan"
+        },
+        {
+          "id": "terraform.cloud.run.apply",
+          "name": "Apply",
+          "when": "terraform.cloud.run.viewingApply"
+        }
       ]
     },
     "viewsContainers": {
@@ -490,18 +681,114 @@
         {
           "id": "terraform",
           "title": "HashiCorp Terraform",
-          "icon": "assets/icons/terraform.svg"
+          "icon": "assets/icons/vs_code_terraform.svg"
+        },
+        {
+          "id": "terraform-cloud",
+          "title": "HashiCorp Terraform Cloud",
+          "icon": "assets/icons/vs_code_terraform_cloud.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "terraform-cloud-panel",
+          "title": "Terraform Cloud",
+          "icon": "assets/icons/vs_code_terraform_cloud.svg"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "terraform.providers",
-        "contents": "The active editor cannot provide information about installed providers. [Learn more about providers](https://www.terraform.io/docs/language/providers/index.html). You may need to update your language server version."
+        "contents": "This view requires the language server to be enabled:\n[Open Settings](command:terraform.openSettingsJson)",
+        "when": "config.terraform.languageServer.enable === false"
+      },
+      {
+        "view": "terraform.providers",
+        "contents": "There are no open Terraform files. Please open a Terraform configuration file to see installed providers.",
+        "when": "config.terraform.languageServer.enable && terraform.providers.documentOpened === false"
+      },
+      {
+        "view": "terraform.providers",
+        "contents": "The active document is not a Terraform file. Please open a Terraform configuration file to see installed providers.",
+        "when": "config.terraform.languageServer.enable && terraform.providers.documentIsTerraform === false"
+      },
+      {
+        "view": "terraform.providers",
+        "contents": "There are no installed providers found for the current open file.\n[Learn more about providers](https://www.terraform.io/docs/language/providers/index.html)",
+        "when": "config.terraform.languageServer.enable && terraform.providers.noProviders === true"
+      },
+      {
+        "view": "terraform.providers",
+        "contents": "The active editor cannot provide information about installed providers.\n[Learn more about providers](https://www.terraform.io/docs/language/providers/index.html)",
+        "when": "config.terraform.languageServer.enable && terraform.providers.noResponse === true"
       },
       {
         "view": "terraform.modules",
-        "contents": "The active editor cannot provide information about installed modules. [Learn more about modules](https://www.terraform.io/docs/language/modules/develop/index.html) You may need to run 'terraform get' or update your language server version."
+        "contents": "This view requires the language server to be enabled:\n[Open Settings](command:terraform.openSettingsJson)",
+        "when": "config.terraform.languageServer.enable === false"
+      },
+      {
+        "view": "terraform.modules",
+        "contents": "There are no open Terraform files. Please open a Terraform configuration file to see installed modules.",
+        "when": "config.terraform.languageServer.enable && terraform.modules.documentOpened === false"
+      },
+      {
+        "view": "terraform.modules",
+        "contents": "The active document is not a Terraform file. Please open a Terraform configuration file to see installed modules.",
+        "when": "config.terraform.languageServer.enable && terraform.modules.documentIsTerraform === false"
+      },
+      {
+        "view": "terraform.modules",
+        "contents": "There are no installed modules found for the current open file.\n[Learn more about modules](https://www.terraform.io/docs/language/modules/develop/index.html)",
+        "when": "config.terraform.languageServer.enable && terraform.modules.noModules === true"
+      },
+      {
+        "view": "terraform.modules",
+        "contents": "The active editor cannot provide information about installed modules.\n[Learn more about modules](https://www.terraform.io/docs/language/modules/develop/index.html)",
+        "when": "config.terraform.languageServer.enable && terraform.modules.noResponse === true"
+      },
+      {
+        "view": "terraform.cloud.workspaces",
+        "contents": "In order to use Terraform Cloud features, you need to be logged in\n[Login to Terraform Cloud](command:terraform.cloud.login)",
+        "when": "terraform.cloud.signed-in === false"
+      },
+      {
+        "view": "terraform.cloud.workspaces",
+        "contents": "No organizations found for this token. Please create a new Terraform Cloud organization to get started\n[Create or select an organization](command:terraform.cloud.organization.picker)",
+        "when": "terraform.cloud.signed-in && !terraform.cloud.organizationsExist && !terraform.cloud.organizationsChosen"
+      },
+      {
+        "view": "terraform.cloud.workspaces",
+        "contents": "Please choose an organization:\n[Select a organization](command:terraform.cloud.organization.picker)",
+        "when": "terraform.cloud.signed-in && terraform.cloud.organizationsExist && !terraform.cloud.organizationsChosen"
+      },
+      {
+        "view": "terraform.cloud.workspaces",
+        "contents": "There are no workspaces in this organization.\n[Create a new workspace](command:terraform.cloud.workspaces.picker)\n[Choose a different organization](command:terraform.cloud.organization.picker)",
+        "when": "terraform.cloud.signed-in && terraform.cloud.organizationsExist && terraform.cloud.organizationsChosen && !terraform.cloud.projectFilterUsed && !terraform.cloud.workspacesExist && !terraform.cloud.pendingOrgMembership"
+      },
+      {
+        "view": "terraform.cloud.workspaces",
+        "contents": "You have not yet accepted the invitation to this organization\n[See pending invitations](command:terraform.cloud.organization.viewInBrowser)\n[Choose a different organization](command:terraform.cloud.organization.picker)",
+        "when": "terraform.cloud.signed-in && terraform.cloud.organizationsExist && terraform.cloud.organizationsChosen && !terraform.cloud.projectFilterUsed && !terraform.cloud.workspacesExist && terraform.cloud.pendingOrgMembership"
+      },
+      {
+        "view": "terraform.cloud.workspaces",
+        "contents": "There are no workspaces in this project\n[Create a new workspace](command:terraform.cloud.workspaces.picker)\n[Clear filter](command:terraform.cloud.workspaces.resetProjectFilter)",
+        "when": "terraform.cloud.signed-in && terraform.cloud.organizationsExist && terraform.cloud.organizationsChosen && terraform.cloud.projectFilterUsed && !terraform.cloud.workspacesExist"
+      },
+      {
+        "view": "terraform.cloud.runs",
+        "contents": "Select a workspace to view a list of runs"
+      },
+      {
+        "view": "terraform.cloud.run.plan",
+        "contents": "Select a run to view a plan"
+      },
+      {
+        "view": "terraform.cloud.run.apply",
+        "contents": "Select a run to view an apply"
       }
     ]
   }

@@ -25,13 +25,14 @@ Read the [Troubleshooting Guide](#troubleshooting) for answers to common questio
 - [Syntax highlighting](#syntax-highlighting) Highlighting syntax from Terraform 0.12 to 1.X
 - [Code Navigation](#code-navigation) Navigate through your codebase with Go to Definition and Symbol support
 - [Code Formatting](#code-formatting) Format your code with `terraform fmt` automatically
-- [Code Snippets](#code-snippets) Shortcuts for commmon snippets like `for_each` and `variable`
+- [Code Snippets](#code-snippets) Shortcuts for common snippets like `for_each` and `variable`
+- [Terraform Cloud Integration](#terraform-cloud-integration) View Terraform Cloud Workspaces and Run details inside VS Code
 - [Terraform Module Explorer](#terraform-module-and-provider-explorer) View all modules and providers referenced in the currently open document.
 - [Terraform commands](#terraform-commands) Directly execute commands like `terraform init` or `terraform plan` from the VS Code Command Palette.
 
 ### IntelliSense and Autocomplete
 
-IntelliSense is a general term for a variety of code editing features including: code completion, parameter info, quick info, and member lists. IntelliSense features are sometimes called by other names such as autcomplete, code completion, and code hinting.
+IntelliSense is a general term for a variety of code editing features including: code completion, parameter info, quick info, and member lists. IntelliSense features are sometimes called by other names such as autocomplete, code completion, and code hinting.
 
 For Terraform constructs like resource and data, labels, blocks and attributes are auto completed both at the root of the document and inside other blocks. This also works for Terraform modules that are installed in the workspace, attributes and other constructs are autocompleted.
 
@@ -114,6 +115,38 @@ The extension provides several snippets to accelerate adding Terraform code to y
 - `vare` - Empty variable
 - `varm` - Map Variable
 
+### Terraform Cloud Integration
+
+Every time you have to switch away from your code, you risk losing momentum and the context about your tasks. Previously, Terraform users needed to have at least two windows open – their editor and a web page – to develop Terraform code. The editor contains all of the Terraform code they are working on, and the web page has the Terraform Cloud workspace loaded. Switching back and forth between the Terraform Cloud website and the text editor can be a frustrating and fragmented experience.
+
+The Terraform Cloud Visual Studio Code integration improves user experience by allowing users to view workspaces directly from within Visual Studio Code. Users can view the status of current and past runs and inspect detailed logs – without ever leaving the comfort of their editor.
+
+To start using Terraform Cloud with VS Code, open the new Terraform Cloud sidebar and click "Login to Terraform Cloud". You can login using a stored token from the Terraform CLI, an existing token you provide, or open the Terraform Cloud website to generate a new token.
+
+![](docs/tfc/login_view.gif)
+
+Once logged in, you are prompted to choose which Organization to view workspaces in.
+
+![](docs/tfc/choose_org_view.png)
+
+Now that your Organization is chosen, the Workspace view populates with all workspaces your token has permission to view. At a glance, you can see the last run status of each Workspace. Hovering over a workspace shows detailed information about each workspace.
+
+![](docs/tfc/workspace_view.gif)
+
+Selecting a workspace populates the Run view with a list of runs for that workspace. At a glance, you can see the status of each Run, and hover over each for more detailed information.
+
+![](docs/tfc/workspace_run_view.gif)
+
+If a Run has been Planned or Applied, you can view the raw log for each by expanding the Run then selecting the 'View Raw Log' button for either the Plan or Apply.
+
+![](docs/tfc/plan_apply_view.gif)
+
+To sign out or log out of your Terraform Cloud session, click the Accounts icon next to the Settings icon in the Activity Bar and select "Sign Out":
+
+![](docs/tfc/log_out.png)
+
+This will clear the currently saved token and allow you to login using a different token.
+
 ### Terraform Module and Provider Explorer
 
 List Terraform modules used in the current open document in the Explorer Pane, or drag to the Side Bar pane for an expanded view.
@@ -145,16 +178,17 @@ The Terraform VS Code extension bundles the [Terraform Language Server](https://
 
 The extension does require the following to be installed before use:
 
-- VS Code v1.75 or greater
+- VS Code v1.82 or greater
 - Terraform v0.12 or greater
 
 ## Platform Support
 
 The extension should work anywhere VS Code itself and Terraform 0.12 or higher is supported. Our test matrix includes the following:
 
-- Windows Server 2019 with Terraform v1.1
-- macOS 10.15 with Terraform v1.1
-- Ubuntu 20.04 with Terraform v1.1
+- Windows Server 2022 with Terraform v1.6
+- macOS 12 with Terraform v1.6
+- macOS 11 with Terraform v1.6
+- Ubuntu 22.04 with Terraform v1.6
 
 Intellisense, error checking and other language features are supported for Terraform v0.12 and greater.
 

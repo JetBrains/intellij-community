@@ -25,7 +25,7 @@
       {
         "language": "vb",
         "scopeName": "source.asp.vb.net",
-        "path": "./syntaxes/asp-vb-net.tmlanguage.json"
+        "path": "./syntaxes/asp-vb-net.tmLanguage.json"
       }
     ],
     "snippets": [
