@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.buildActionRunner
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -13,6 +14,7 @@ import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.junit.jupiter.api.Assertions
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -53,8 +55,21 @@ abstract class GradlePhasedSyncTestCase : GradleImportingTestCase() {
   }
 
   fun addProjectModelProviders(parentDisposable: Disposable, vararg modelProviders: ProjectImportModelProvider) {
+    addProjectModelProviders(parentDisposable, modelProviders.toList())
+  }
+
+  fun addProjectModelProviders(parentDisposable: Disposable, modelProviders: Collection<ProjectImportModelProvider>) {
     TestProjectResolverExtensionService.getInstance(myProject)
-      .addModelProviders(parentDisposable, modelProviders.toList())
+      .addModelProviders(parentDisposable, modelProviders)
+  }
+
+  fun whenPhaseCompleted(parentDisposable: Disposable, action: (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
+    TestProjectResolverExtensionService.getInstance(myProject)
+      .addBuildActionListener(parentDisposable, object : TestBuildActionListener() {
+        override fun onPhaseCompleted(phase: GradleModelFetchPhase) {
+          action(resolverContext, phase)
+        }
+      })
   }
 
   fun whenProjectLoaded(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
@@ -116,7 +131,7 @@ abstract class GradlePhasedSyncTestCase : GradleImportingTestCase() {
       return modelProviders
     }
 
-    fun addModelProviders(parentDisposable: Disposable, modelProviders: List<ProjectImportModelProvider>) {
+    fun addModelProviders(parentDisposable: Disposable, modelProviders: Collection<ProjectImportModelProvider>) {
       for (modelProvider in modelProviders) {
         this.modelProviders.add(modelProvider, parentDisposable)
       }
@@ -125,6 +140,11 @@ abstract class GradlePhasedSyncTestCase : GradleImportingTestCase() {
     fun createBuildActionListener(resolverContext: ProjectResolverContext): GradleBuildActionListener {
       buildActionListeners.forEach { it.resolverContext = resolverContext }
       return object : GradleBuildActionListener {
+
+        override fun onPhaseCompleted(phase: GradleModelFetchPhase) {
+          buildActionListeners.forEach { it.onPhaseCompleted(phase) }
+        }
+
         override fun onProjectLoaded() {
           buildActionListeners.forEach { it.onProjectLoaded() }
         }
@@ -171,11 +191,12 @@ abstract class GradlePhasedSyncTestCase : GradleImportingTestCase() {
       }
     }
 
+    fun assertListenerFailures() {
+      runAll(failures) { throw it }
+    }
+
     fun assertListenerState(expectedCount: Int, messageSupplier: () -> String) {
-      runAll(
-        { assertEquals(messageSupplier(), expectedCount, counter.get()) },
-        { runAll(failures) { throw it } }
-      )
+      Assertions.assertEquals(expectedCount, counter.get(), messageSupplier)
     }
   }
 }
