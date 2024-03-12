@@ -67,7 +67,6 @@ object DocumentationHtmlUtil {
   @JvmStatic
   fun getDocumentationPaneAdditionalCssRules(): StyleSheet {
     val linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED)
-    val borderColor = ColorUtil.toHtmlColor(UIUtil.getTooltipSeparatorColor())
     val sectionColor = ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR)
 
     // When updating styles here, consider updating styles in DocRenderer#getStyleSheet
@@ -103,6 +102,15 @@ object DocumentationHtmlUtil {
   }
 
   @JvmStatic
+  internal fun removeEmptySections(document: Document) {
+    document.select(".$CLASS_SECTIONS").forEach { sections ->
+      if (sections.childNodes().all { node -> node is Comment || node is TextNode && node.isBlank }) {
+        sections.remove()
+      }
+    }
+  }
+
+  @JvmStatic
   internal fun addExternalLinkIcons(document: Document) {
     document.select("a").forEach { a ->
       if (a.attribute("href")?.value?.startsWith("http") == true) {
@@ -119,14 +127,14 @@ object DocumentationHtmlUtil {
       val toWrap = SmartList<Node>()
       while (child != null && !isBlockElement(child)) {
         if (child !is Comment) {
-          toWrap.add(child);
+          toWrap.add(child)
         }
-        child = child.nextSibling();
+        child = child.nextSibling()
       }
       if (!toWrap.isEmpty() && !toWrap.all { n -> n is TextNode && n.isBlank }) {
-        val para = Element("p");
-        para.insertChildren(0, toWrap);
-        element.insertChildren(0, para);
+        val para = Element("p")
+        para.insertChildren(0, toWrap)
+        element.insertChildren(0, para)
       }
     }
   }

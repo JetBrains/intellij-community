@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
@@ -85,6 +84,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.TextNode;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1906,8 +1906,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                      @Nullable String downloadDocumentationActionLink) {
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
-    text = replaceIgnoreQuotesType(text, SECTIONS_START + SECTIONS_END, "");
-    text = replaceIgnoreQuotesType(text, SECTIONS_START + "<p>" + SECTIONS_END, ""); //NON-NLS
 
     var document = Jsoup.parse(text);
     if (document.select("." + CLASS_DEFINITION + ", ." + CLASS_CONTENT + ", ." + CLASS_SECTIONS).isEmpty()) {
@@ -1925,17 +1923,18 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       document = Jsoup.parse(text);
     }
 
+    DocumentationHtmlUtil.removeEmptySections$intellij_platform_lang_impl(document);
+
     if (downloadDocumentationActionLink != null) {
-      document.body().append(
-        HtmlChunk.div()
-          .children(
-            HtmlChunk.icon("AllIcons.Plugins.Downloads", AllIcons.Plugins.Downloads),
-            HtmlChunk.nbsp(),
-            HtmlChunk.link(downloadDocumentationActionLink, CodeInsightBundle.message("documentation.download.button.label"))
-          )
-          .setClass(CLASS_DOWNLOAD_DOCUMENTATION)
-          .toString()
-      );
+      document.body().appendChild(
+        new Element("div")
+          .addClass(CLASS_DOWNLOAD_DOCUMENTATION)
+          .appendChildren(Arrays.asList(
+            new Element("icon").attr("src", "AllIcons.Plugins.Downloads"),
+            new TextNode("&nbsp;"),
+            new Element("a").attr("href", downloadDocumentationActionLink)
+              .text(CodeInsightBundle.message("documentation.download.button.label"))
+          )));
     }
     if (location != null) {
       document.body().append(getBottom().child(location).toString());
@@ -1967,24 +1966,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     DocumentationHtmlUtil.addExternalLinkIcons$intellij_platform_lang_impl(document);
     document.outputSettings().prettyPrint(false);
     return document.html();
-  }
-
-  private static @NlsSafe @NotNull String replaceIgnoreQuotesType(@NotNull String text,
-                                                                  @NotNull String oldString,
-                                                                  @NotNull String newString) {
-    String replaced;
-    if (!text.contains(oldString)) {
-      if (oldString.contains("\"")) {
-        replaced = oldString.replace("\"", "'");
-      }
-      else {
-        replaced = oldString.replace("'", "\"");
-      }
-    }
-    else {
-      replaced = oldString;
-    }
-    return StringUtil.replaceIgnoreCase(text, replaced, newString);
   }
 
   @RequiresReadLock
@@ -2098,5 +2079,4 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static @NotNull HtmlChunk.Element getBottom() {
     return HtmlChunk.div().setClass(CLASS_BOTTOM);
   }
-
 }

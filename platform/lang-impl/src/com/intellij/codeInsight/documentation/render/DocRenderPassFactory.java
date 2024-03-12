@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.platform.backend.documentation.InlineDocumentation;
@@ -114,8 +115,9 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
     }
   }
 
-  private static String preProcess(String text) {
+  private static @NlsSafe String preProcess(@Nls String text) {
     var document = Jsoup.parse(text);
+    DocumentationHtmlUtil.removeEmptySections$intellij_platform_lang_impl(document);
     DocumentationHtmlUtil.addParagraphsIfNeeded$intellij_platform_lang_impl(
       document, "table." + CLASS_SECTIONS + " td[valign=top]");
     DocumentationHtmlUtil.addExternalLinkIcons$intellij_platform_lang_impl(document);
