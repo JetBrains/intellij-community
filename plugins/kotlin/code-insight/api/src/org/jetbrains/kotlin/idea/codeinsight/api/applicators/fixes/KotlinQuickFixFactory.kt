@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
+import com.intellij.codeInsight.intention.CommonIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
@@ -16,22 +17,27 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInp
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import kotlin.reflect.KClass
 
+/*sealed*/ fun interface KotlinQuickFixFactory<DIAGNOSTIC : KtDiagnosticWithPsi<*>> {
+
+    context(KtAnalysisSession)
+    fun createQuickFixes(diagnostic: DIAGNOSTIC): List<CommonIntentionAction>
+
+    /**
+     * Creates [ModCommandAction]s from a diagnostic.
+     */
+    fun interface ModCommandBased<DIAGNOSTIC : KtDiagnosticWithPsi<*>> : KotlinQuickFixFactory<DIAGNOSTIC> {
+
+        context(KtAnalysisSession)
+        override fun createQuickFixes(diagnostic: DIAGNOSTIC): List<ModCommandAction>
+    }
+}
+
 sealed class KotlinDiagnosticFixFactory<DIAGNOSTIC : KtDiagnosticWithPsi<*>> {
+
     context(KtAnalysisSession)
     abstract fun createQuickFixes(diagnostic: DIAGNOSTIC): List<QuickFixActionBase<*>>
 
     abstract val diagnosticClass: KClass<DIAGNOSTIC>
-}
-
-// todo make fun interface
-// todo common base interface
-// todo add second type argument
-interface KotlinDiagnosticModCommandFixFactory<DIAGNOSTIC : KtDiagnosticWithPsi<*>> {
-
-    context(KtAnalysisSession)
-    fun createModCommandQuickFixes(diagnostic: DIAGNOSTIC): List<ModCommandAction>
-
-    val diagnosticClass: KClass<DIAGNOSTIC> // todo to be extracted
 }
 
 private class KotlinDiagnosticFixFactoryWithFixedApplicator<DIAGNOSTIC : KtDiagnosticWithPsi<*>, TARGET_PSI : PsiElement, INPUT : KotlinApplicatorInput>(
@@ -54,18 +60,6 @@ private class KotlinDiagnosticFixFactoryUsingQuickFixActionBase<DIAGNOSTIC : KtD
         return createQuickFixes.invoke(this@KtAnalysisSession, diagnostic)
     }
 }
-
-context(KtAnalysisSession)
-internal fun <DIAGNOSTIC : KtDiagnosticWithPsi<PsiElement>> createPlatformQuickFixes(
-    diagnostic: DIAGNOSTIC,
-    factory: KotlinDiagnosticFixFactory<DIAGNOSTIC>
-): List<IntentionAction> = with(factory) { createQuickFixes(diagnostic) }
-
-context(KtAnalysisSession)
-internal fun <DIAGNOSTIC : KtDiagnosticWithPsi<PsiElement>> createPlatformQuickFixes(
-    diagnostic: DIAGNOSTIC,
-    factory: KotlinDiagnosticModCommandFixFactory<DIAGNOSTIC>
-): List<IntentionAction> = with(factory) { createModCommandQuickFixes(diagnostic).map { it.asIntention() } }
 
 /**
  * Returns a [KotlinDiagnosticFixFactory] that creates targets and inputs ([KotlinApplicatorTargetWithInput]) from a diagnostic.
@@ -96,20 +90,6 @@ fun <DIAGNOSTIC_PSI : PsiElement, DIAGNOSTIC : KtDiagnosticWithPsi<DIAGNOSTIC_PS
     createQuickFixes: context(KtAnalysisSession)(DIAGNOSTIC) -> List<QuickFixActionBase<*>>
 ): Collection<KotlinDiagnosticFixFactory<out DIAGNOSTIC>> =
     diagnosticClasses.map { KotlinDiagnosticFixFactoryUsingQuickFixActionBase(it, createQuickFixes) }
-
-/**
- * Returns a [KotlinDiagnosticModCommandFixFactory] that creates [ModCommandAction]s from a diagnostic.
- */
-// todo to be inlined as Kotlin...Factory { ... }
-inline fun <reified TARGET_PSI : PsiElement, reified DIAGNOSTIC : KtDiagnosticWithPsi<TARGET_PSI>> diagnosticModCommandFixFactory(
-    crossinline createTargets: context(KtAnalysisSession)(DIAGNOSTIC) -> List<ModCommandAction>,
-): KotlinDiagnosticModCommandFixFactory<DIAGNOSTIC> = object : KotlinDiagnosticModCommandFixFactory<DIAGNOSTIC> {
-
-    override val diagnosticClass: KClass<DIAGNOSTIC> get() = DIAGNOSTIC::class
-
-    context(KtAnalysisSession)
-    override fun createModCommandQuickFixes(diagnostic: DIAGNOSTIC): List<ModCommandAction> = createTargets(analysisSession, diagnostic)
-}
 
 /**
  * Returns a [KotlinDiagnosticFixFactory] that creates [IntentionAction]s from a diagnostic.

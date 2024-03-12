@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -156,15 +156,18 @@ object WrapWithSafeLetCallFixFactories {
         }
     }
 
-    val forUnsafeCall = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.UnsafeCall ->
+    val forUnsafeCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeCall ->
         val nullableExpression = diagnostic.receiverExpression
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(nullableExpression)
     }
 
-    val forUnsafeImplicitInvokeCall = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.UnsafeImplicitInvokeCall ->
-        val callExpression = diagnostic.psi.parentOfType<KtCallExpression>(withSelf = true) ?: return@diagnosticModCommandFixFactory emptyList()
+    val forUnsafeImplicitInvokeCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeImplicitInvokeCall ->
+        val callExpression = diagnostic.psi.parentOfType<KtCallExpression>(withSelf = true)
+            ?: return@ModCommandBased emptyList()
         val callingFunctionalVariableInLocalScope =
-            isCallingFunctionalTypeVariableInLocalScope(callExpression) ?: return@diagnosticModCommandFixFactory emptyList()
+            isCallingFunctionalTypeVariableInLocalScope(callExpression)
+                ?: return@ModCommandBased emptyList()
+
         createWrapWithSafeLetCallInputForNullableExpression(
             callExpression.calleeExpression,
             isImplicitInvokeCallToMemberProperty = !callingFunctionalVariableInLocalScope
@@ -185,15 +188,15 @@ object WrapWithSafeLetCallFixFactories {
         }
     }
 
-    val forUnsafeInfixCall = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.UnsafeInfixCall ->
+    val forUnsafeInfixCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeInfixCall ->
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(diagnostic.receiverExpression)
     }
 
-    val forUnsafeOperatorCall = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.UnsafeOperatorCall ->
+    val forUnsafeOperatorCall = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UnsafeOperatorCall ->
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(diagnostic.receiverExpression)
     }
 
-    val forArgumentTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
+    val forArgumentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
         if (diagnostic.isMismatchDueToNullability) createWrapWithSafeLetCallInputForNullableExpression(diagnostic.psi.wrappingExpressionOrSelf)
         else emptyList()
     }

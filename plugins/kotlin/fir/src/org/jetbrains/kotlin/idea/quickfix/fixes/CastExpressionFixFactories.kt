@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
@@ -65,33 +65,36 @@ object CastExpressionFixFactories {
         }
     }
 
-    val smartcastImpossible = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.SmartcastImpossible ->
-        val actualType = diagnostic.subject.getKtType() ?: return@diagnosticModCommandFixFactory emptyList()
+    val smartcastImpossible = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.SmartcastImpossible ->
+        val actualType = diagnostic.subject.getKtType()
+            ?: return@ModCommandBased emptyList()
         createFixes(diagnostic.isCastToNotNull, actualType, diagnostic.desiredType, diagnostic.psi)
     }
 
-    val typeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.TypeMismatch ->
+    val typeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.TypeMismatch ->
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
     }
 
-    val throwableTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.ThrowableTypeMismatch ->
+    val throwableTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ThrowableTypeMismatch ->
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, builtinTypes.THROWABLE, diagnostic.psi)
     }
 
-    val argumentTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
+    val argumentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
     }
 
-    val assignmentTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.AssignmentTypeMismatch ->
+    val assignmentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.AssignmentTypeMismatch ->
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
     }
 
-    val returnTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.ReturnTypeMismatch ->
+    val returnTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ReturnTypeMismatch ->
         createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, diagnostic.expectedType, diagnostic.psi)
     }
 
-    val initializerTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.InitializerTypeMismatch ->
-        val initializer = (diagnostic.psi as? KtProperty)?.initializer ?: return@diagnosticModCommandFixFactory emptyList()
+    val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.InitializerTypeMismatch ->
+        val initializer = (diagnostic.psi as? KtProperty)?.initializer
+            ?: return@ModCommandBased emptyList()
+
         createFixes(
             diagnostic.isMismatchDueToNullability,
             diagnostic.actualType,

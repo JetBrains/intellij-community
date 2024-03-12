@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -70,12 +70,12 @@ object ChangeVisibilityFixFactories {
     }
 
     val noExplicitVisibilityInApiMode =
-        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.NoExplicitVisibilityInApiMode ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.NoExplicitVisibilityInApiMode ->
             createFixForNoExplicitVisibilityInApiMode(diagnostic.psi)
         }
 
     val noExplicitVisibilityInApiModeWarning =
-        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.NoExplicitVisibilityInApiModeWarning ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.NoExplicitVisibilityInApiModeWarning ->
             createFixForNoExplicitVisibilityInApiMode(diagnostic.psi)
         }
 

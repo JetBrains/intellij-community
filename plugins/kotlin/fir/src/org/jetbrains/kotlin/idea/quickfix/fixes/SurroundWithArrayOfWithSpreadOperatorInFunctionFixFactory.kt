@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.builtins.StandardNames.FqNames.arrayClassFqNameToPri
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
@@ -63,12 +63,12 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
     }
 
     val assigningSingleElementToVarargInNamedFormFunction =
-        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionError ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionError ->
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
 
     val assigningSingleElementToVarargInNamedFormFunctionWarning =
-        diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionWarning ->
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionWarning ->
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
 

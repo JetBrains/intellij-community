@@ -14,22 +14,22 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperTypeEntry
 
 internal object SuperClassNotInitializedFactories {
 
-    val addParenthesis = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.SupertypeNotInitialized ->
+    val addParenthesis = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.SupertypeNotInitialized ->
         val typeReference = diagnostic.psi
         val superTypeEntry = typeReference.parent as? KtSuperTypeEntry
-            ?: return@diagnosticModCommandFixFactory emptyList()
+            ?: return@ModCommandBased emptyList()
         val superClassSymbol = typeReference.getKtType().expandedClassSymbol as? KtNamedClassOrObjectSymbol
-            ?: return@diagnosticModCommandFixFactory emptyList()
+            ?: return@ModCommandBased emptyList()
 
         if (!superClassSymbol.isInheritableWithSuperConstructorCall(superTypeEntry)) {
-            return@diagnosticModCommandFixFactory emptyList()
+            return@ModCommandBased emptyList()
         }
 
         val constructors = superClassSymbol.getDeclaredMemberScope().getConstructors()

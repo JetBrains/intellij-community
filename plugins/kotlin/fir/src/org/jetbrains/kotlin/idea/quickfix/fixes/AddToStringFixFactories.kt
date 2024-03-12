@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddToStringFix
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtProperty
@@ -26,23 +26,23 @@ object AddToStringFixFactories {
         }
     }
 
-    val typeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.TypeMismatch ->
+    val typeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.TypeMismatch ->
         getFixes(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val argumentTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
+    val argumentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
         getFixes(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val assignmentTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.AssignmentTypeMismatch ->
+    val assignmentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.AssignmentTypeMismatch ->
         getFixes(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val returnTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.ReturnTypeMismatch ->
+    val returnTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.ReturnTypeMismatch ->
         getFixes(diagnostic.psi, diagnostic.expectedType, diagnostic.actualType)
     }
 
-    val initializerTypeMismatch = diagnosticModCommandFixFactory { diagnostic: KtFirDiagnostic.InitializerTypeMismatch ->
+    val initializerTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.InitializerTypeMismatch ->
         getFixes((diagnostic.psi as? KtProperty)?.initializer, diagnostic.expectedType, diagnostic.actualType)
     }
 }
