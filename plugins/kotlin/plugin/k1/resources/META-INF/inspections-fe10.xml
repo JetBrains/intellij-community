@@ -926,20 +926,6 @@
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.intentions.ConvertLambdaToMultiLineIntention</className>
-      <bundleName>messages.KotlinBundle</bundleName>
-      <categoryKey>group.names.kotlin</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.intentions.ConvertLambdaToSingleLineIntention</className>
-      <bundleName>messages.KotlinBundle</bundleName>
-      <categoryKey>group.names.kotlin</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ExpandBooleanExpressionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>

@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
 
-sealed class ConvertLambdaLineIntention(private val toMultiLine: Boolean) : SelfTargetingIntention<KtLambdaExpression>(
+internal sealed class ConvertLambdaLineIntention(private val toMultiLine: Boolean) : SelfTargetingIntention<KtLambdaExpression>(
     KtLambdaExpression::class.java,
     KotlinBundle.lazyMessage("intention.convert.lambda.line", 1.takeIf { toMultiLine } ?: 0),
 ) {
@@ -60,6 +60,6 @@ sealed class ConvertLambdaLineIntention(private val toMultiLine: Boolean) : Self
     }
 }
 
-class ConvertLambdaToMultiLineIntention : ConvertLambdaLineIntention(toMultiLine = true)
+internal class ConvertLambdaToMultiLineIntention : ConvertLambdaLineIntention(toMultiLine = true)
 
-class ConvertLambdaToSingleLineIntention : ConvertLambdaLineIntention(toMultiLine = false)
+internal class ConvertLambdaToSingleLineIntention : ConvertLambdaLineIntention(toMultiLine = false)

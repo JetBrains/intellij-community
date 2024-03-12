@@ -5811,49 +5811,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/convertLambdaToMultiLine")
-    public static class ConvertLambdaToMultiLine extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("multiLine.kt")
-        public void testMultiLine() throws Exception {
-            runTest("testData/intentions/convertLambdaToMultiLine/multiLine.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/convertLambdaToMultiLine/simple.kt");
-        }
-
-        @TestMetadata("simple2.kt")
-        public void testSimple2() throws Exception {
-            runTest("testData/intentions/convertLambdaToMultiLine/simple2.kt");
-        }
-
-        @TestMetadata("simple3.kt")
-        public void testSimple3() throws Exception {
-            runTest("testData/intentions/convertLambdaToMultiLine/simple3.kt");
-        }
-
-        @TestMetadata("simple4.kt")
-        public void testSimple4() throws Exception {
-            runTest("testData/intentions/convertLambdaToMultiLine/simple4.kt");
-        }
-
-        @TestMetadata("simple5.kt")
-        public void testSimple5() throws Exception {
-            runTest("testData/intentions/convertLambdaToMultiLine/simple5.kt");
-        }
-
-        @TestMetadata("simple6.kt")
-        public void testSimple6() throws Exception {
-            runTest("testData/intentions/convertLambdaToMultiLine/simple6.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertLambdaToReference")
     public abstract static class ConvertLambdaToReference extends AbstractK1IntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -6550,69 +6507,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             public void testOuterClassFunction() throws Exception {
                 runTest("testData/intentions/convertLambdaToReference/version1_1/outerClassFunction.kt");
             }
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/convertLambdaToSingleLine")
-    public static class ConvertLambdaToSingleLine extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("hasEolComment.kt")
-        public void testHasEolComment() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/hasEolComment.kt");
-        }
-
-        @TestMetadata("multiLineBody.kt")
-        public void testMultiLineBody() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/multiLineBody.kt");
-        }
-
-        @TestMetadata("multiLineBody2.kt")
-        public void testMultiLineBody2() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/multiLineBody2.kt");
-        }
-
-        @TestMetadata("multiLineBody3.kt")
-        public void testMultiLineBody3() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/multiLineBody3.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/simple.kt");
-        }
-
-        @TestMetadata("simple2.kt")
-        public void testSimple2() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/simple2.kt");
-        }
-
-        @TestMetadata("simple3.kt")
-        public void testSimple3() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/simple3.kt");
-        }
-
-        @TestMetadata("simple4.kt")
-        public void testSimple4() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/simple4.kt");
-        }
-
-        @TestMetadata("simple5.kt")
-        public void testSimple5() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/simple5.kt");
-        }
-
-        @TestMetadata("simple6.kt")
-        public void testSimple6() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/simple6.kt");
-        }
-
-        @TestMetadata("singleLine.kt")
-        public void testSingleLine() throws Exception {
-            runTest("testData/intentions/convertLambdaToSingleLine/singleLine.kt");
         }
     }
 
