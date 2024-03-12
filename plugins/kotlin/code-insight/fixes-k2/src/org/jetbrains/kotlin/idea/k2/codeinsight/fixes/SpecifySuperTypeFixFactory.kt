@@ -14,10 +14,8 @@ import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSuperExpression
@@ -32,15 +30,18 @@ object SpecifySuperTypeFixFactory {
 
     data class Input(
         val superTypes: List<TypeStringWithoutArgs>,
-    ) : KotlinApplicatorInput
+    ) : KotlinApplicatorBasedQuickFix.Input
 
-    private val applicator = object : KotlinApplicator.PsiBased<KtSuperExpression, Input> {
+    private class SpecifySuperTypeQuickFix(
+        element: KtSuperExpression,
+        input: SpecifySuperTypeFixFactory.Input,
+    ) : KotlinApplicatorBasedQuickFix<KtSuperExpression, Input>(element, input) {
 
         override fun getFamilyName(): String = KotlinBundle.message("intention.name.specify.supertype")
 
-        override fun applyTo(
-            psi: KtSuperExpression,
-            input: Input,
+        override fun invoke(
+            element: KtSuperExpression,
+            input: SpecifySuperTypeFixFactory.Input,
             project: Project,
             editor: Editor?,
         ) {
@@ -48,9 +49,9 @@ object SpecifySuperTypeFixFactory {
 
             when (input.superTypes.size) {
                 0 -> return
-                1 -> psi.specifySuperType(input.superTypes.single())
+                1 -> element.specifySuperType(input.superTypes.single())
                 else -> JBPopupFactory.getInstance()
-                    .createListPopup(createListPopupStep(psi, input.superTypes))
+                    .createListPopup(createListPopupStep(element, input.superTypes))
                     .showInBestPositionFor(editor)
             }
         }
@@ -82,7 +83,7 @@ object SpecifySuperTypeFixFactory {
         }
     }
 
-    val ambiguousSuper = diagnosticFixFactory(KtFirDiagnostic.AmbiguousSuper::class, applicator) { diagnostic ->
+    val ambiguousSuper = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.AmbiguousSuper ->
         val candidates = diagnostic.candidates.toMutableSmartList()
         // TODO: the following logic would become unnecessary if feature https://youtrack.jetbrains.com/issue/KT-49314 is accepted because
         //  the candidate would not contain those being removed here.
@@ -91,7 +92,7 @@ object SpecifySuperTypeFixFactory {
                 !superType.isEqualTo(otherSuperType) && otherSuperType isSubTypeOf superType
             }
         }
-        if (candidates.isEmpty()) return@diagnosticFixFactory listOf()
+        if (candidates.isEmpty()) return@IntentionBased emptyList()
         val superTypes = candidates.mapNotNull { superType ->
             when (superType) {
                 is KtErrorType -> null
@@ -101,6 +102,9 @@ object SpecifySuperTypeFixFactory {
                 else -> error("Expected KtClassType but ${superType::class} was found")
             }
         }
-        listOf(diagnostic.psi withInput Input(superTypes))
+
+        listOf(
+            SpecifySuperTypeQuickFix(diagnostic.psi, Input(superTypes)),
+        )
     }
 }

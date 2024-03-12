@@ -8,10 +8,10 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesL
 class ChangeSignatureQuickFixesRegistrar: KotlinQuickFixRegistrar() {
 
     private val changeSignature = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerApplicator(ChangeSignatureFixFactory.addParameterFactory)
-        registerApplicator(ChangeSignatureFixFactory.removeParameterFactory)
-        registerApplicator(ChangeSignatureFixFactory.typeMismatchFactory)
-        registerApplicator(ChangeSignatureFixFactory.nullForNotNullFactory)
+        registerFactory(ChangeSignatureFixFactory.addParameterFactory)
+        registerFactory(ChangeSignatureFixFactory.removeParameterFactory)
+        registerFactory(ChangeSignatureFixFactory.typeMismatchFactory)
+        registerFactory(ChangeSignatureFixFactory.nullForNotNullFactory)
         registerFactory(ChangeParameterTypeFixFactory.typeMismatchFactory)
         registerFactory(ChangeParameterTypeFixFactory.nullForNotNullTypeFactory)
     }

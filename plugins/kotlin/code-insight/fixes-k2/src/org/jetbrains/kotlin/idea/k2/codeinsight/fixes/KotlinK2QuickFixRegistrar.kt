@@ -241,7 +241,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     }
 
     private val superKeyword = KtQuickFixesListBuilder.registerPsiQuickFix {
-        registerApplicator(SpecifySuperTypeFixFactory.ambiguousSuper)
+        registerFactory(SpecifySuperTypeFixFactory.ambiguousSuper)
     }
 
     private val superType = KtQuickFixesListBuilder.registerPsiQuickFix {
