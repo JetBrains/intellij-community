@@ -8,6 +8,5 @@
 
   <extensions defaultExtensionNs="com.intellij.dev">
     <lang.goodCodeRedVisitor language="kotlin" implementationClass="org.jetbrains.idea.dev.kotlin.internal.KotlinGoodCodeRedVisitor"/>
-    <psiViewer.propertyNodeFactory implementation="org.jetbrains.idea.dev.kotlin.internal.PsiViewerKotlinTypeNode$Factory"/>
   </extensions>
 </idea-plugin>
