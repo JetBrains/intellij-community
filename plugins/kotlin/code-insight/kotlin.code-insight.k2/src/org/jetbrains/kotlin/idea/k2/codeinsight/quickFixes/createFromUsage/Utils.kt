@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.actions.ExpectedParameter
 import com.intellij.lang.jvm.actions.expectedParameter
 import com.intellij.lang.jvm.types.JvmType
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
@@ -173,7 +174,9 @@ internal fun JvmType.toKtType(useSitePosition: PsiElement): KtType? = when (this
     is PsiType -> if (isValid) {
         try {
             asKtType(useSitePosition)
-        } catch (e: Error) {
+        } catch (e: Throwable) {
+            if (e is ControlFlowException) throw e
+
             // Some requests from Java side do not have a type. For example, in `var foo = dep.<caret>foo();`, we cannot guess
             // the type of `foo()`. In this case, the request passes "PsiType:null" whose name is "null" as a text. The analysis
             // API cannot get a KtType from this weird type. We return `Any?` for this case.
