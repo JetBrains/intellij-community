@@ -467,34 +467,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     showJavaDocInfo(element, original, null);
   }
 
-  /**
-   * Asks to show quick doc for the target element.
-   *
-   * @param editor             editor with an element for which quick do should be shown
-   * @param element            target element which documentation should be shown
-   * @param original           element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
-   *                           A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
-   *                           declaration but {@code 'element'} argument is a {@code Runnable} descriptor
-   * @param closeCallback      callback to be notified on target hint close (if any)
-   * @param documentation      precalculated documentation
-   * @param closeOnSneeze      flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
-   *                           two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
-   *                           on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
-   *                           at the first situation but don't want to do that at the second
-   * @param useStoredPopupSize whether popup size previously set by user (via mouse-dragging) should be used, or default one should be used
-   */
-  public void showJavaDocInfo(@NotNull Editor editor,
-                              @NotNull PsiElement element,
-                              @NotNull PsiElement original,
-                              @Nullable Runnable closeCallback,
-                              @Nullable @Nls String documentation,
-                              boolean closeOnSneeze,
-                              boolean useStoredPopupSize) {
-    myEditor = editor;
-    myCloseOnSneeze = closeOnSneeze;
-    showJavaDocInfo(element, original, false, closeCallback, documentation, useStoredPopupSize);
-  }
-
   public void showJavaDocInfo(@NotNull PsiElement element,
                               PsiElement original,
                               @Nullable Runnable closeCallback) {
@@ -512,15 +484,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                               PsiElement original,
                               boolean requestFocus,
                               @Nullable Runnable closeCallback) {
-    showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
-  }
-
-  public void showJavaDocInfo(@NotNull Editor editor,
-                              @NotNull PsiElement element,
-                              PsiElement original,
-                              boolean requestFocus,
-                              @Nullable Runnable closeCallback) {
-    myEditor = editor;
     showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
   }
 
