@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
 import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
 import java.io.File
+import kotlin.io.path.Path
 
 /**
  * Attaches sources to the IntelliJ Platform dependencies in projects using IntelliJ Platform Gradle Plugin 2.x.
@@ -80,7 +81,7 @@ class IntelliJPlatformAttachSourcesProvider : AttachSourcesProvider {
         val project = psiFile.project
         val sourceArtifactNotation = "$productCoordinates:${libraryCoordinates.version}:sources"
 
-        GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, externalProjectPath).whenComplete { path, error ->
+        GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, Path(externalProjectPath)).whenComplete { path, error ->
           if (error != null) {
             executionResult.reject(error.message)
           }

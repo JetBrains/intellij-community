@@ -25,6 +25,7 @@ import java.nio.file.Path
 import java.util.EnumSet
 import java.util.function.Predicate
 import java.util.function.Supplier
+import kotlin.io.path.Path
 
 class GradleDownloadSourceAction(
   private val orderEntries: List<LibraryOrderEntry>,
@@ -86,7 +87,7 @@ class GradleDownloadSourceAction(
       return ActionCallback.DONE
     }
     val executionResult = ActionCallback()
-    GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, externalProjectPath)
+    GradleDependencySourceDownloader.downloadSources(project, name, sourceArtifactNotation, Path(externalProjectPath))
       .whenComplete { path, error ->
         if (error != null) {
           executionResult.setRejected()

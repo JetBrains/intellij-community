@@ -14,7 +14,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.service.execution.loadDownloadSourcesInitScript
@@ -35,13 +35,11 @@ object GradleDependencySourceDownloader {
   private const val INIT_SCRIPT_FILE_PREFIX = "ijDownloadSources"
 
   @JvmStatic
-  fun downloadSources(project: Project, executionName: @Nls String, sourceArtifactNotation: String, projectPath: String)
+  fun downloadSources(project: Project, executionName: @Nls String, sourceArtifactNotation: String, externalProjectPath: Path)
     : CompletableFuture<File> {
-    var sourcesLocationFilePath: String
     var sourcesLocationFile: File
     try {
       sourcesLocationFile = File(FileUtil.createTempDirectory("sources", "loc"), "path.tmp")
-      sourcesLocationFilePath = StringUtil.escapeBackSlashes(sourcesLocationFile.getCanonicalPath())
       Runtime.getRuntime().addShutdownHook(Thread({ FileUtil.delete(sourcesLocationFile) }, "GradleAttachSourcesProvider cleanup"))
     }
     catch (e: IOException) {
@@ -51,12 +49,12 @@ object GradleDependencySourceDownloader {
     val taskName = "ijDownloadSources" + UUID.randomUUID().toString().substring(0, 12)
     val settings = ExternalSystemTaskExecutionSettings().also {
       it.executionName = executionName
-      it.externalProjectPath = projectPath
+      it.externalProjectPath = externalProjectPath.toCanonicalPath()
       it.taskNames = listOf(taskName)
       it.vmOptions = GradleSettings.getInstance(project).getGradleVmOptions()
       it.externalSystemIdString = GradleConstants.SYSTEM_ID.id
     }
-    val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFilePath, projectPath)
+    val userData = prepareUserData(sourceArtifactNotation, taskName, sourcesLocationFile.toPath(), externalProjectPath)
     val resultWrapper = CompletableFuture<File>()
     val callback = object : TaskCallback {
       override fun onSuccess() {
@@ -94,15 +92,15 @@ object GradleDependencySourceDownloader {
     return resultWrapper
   }
 
-  private fun prepareUserData(sourceArtifactNotation: String, taskName: String, sourcesLocationFilePath: String, projectPath: String)
+  private fun prepareUserData(sourceArtifactNotation: String, taskName: String, sourcesLocationFilePath: Path, externalProjectPath: Path)
     : UserDataHolderBase {
     val legacyInitScript = LazyVersionSpecificInitScript(
-      scriptSupplier = { loadLegacyDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, projectPath) },
+      scriptSupplier = { loadLegacyDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, externalProjectPath) },
       filePrefix = INIT_SCRIPT_FILE_PREFIX,
       isApplicable = { GRADLE_5_6 > it }
     )
     val initScript = LazyVersionSpecificInitScript(
-      scriptSupplier = { loadDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, projectPath) },
+      scriptSupplier = { loadDownloadSourcesInitScript(sourceArtifactNotation, taskName, sourcesLocationFilePath, externalProjectPath) },
       filePrefix = INIT_SCRIPT_FILE_PREFIX,
       isApplicable = { GRADLE_5_6 <= it }
     )
