@@ -8,6 +8,7 @@ import com.jediterm.terminal.TerminalCustomCommandListener
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptState
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration

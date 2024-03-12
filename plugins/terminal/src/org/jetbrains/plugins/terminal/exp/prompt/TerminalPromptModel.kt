@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.exp
+package org.jetbrains.plugins.terminal.exp.prompt
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
@@ -21,6 +21,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
+import org.jetbrains.plugins.terminal.exp.HighlightingInfo
+import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 
 class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSession) {
   private val renderer: TerminalPromptRenderer = BuiltInPromptRenderer(session)

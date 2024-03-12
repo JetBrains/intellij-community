@@ -7,8 +7,8 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
-import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
+import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import kotlin.math.max

@@ -10,6 +10,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
 import java.awt.Rectangle
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList

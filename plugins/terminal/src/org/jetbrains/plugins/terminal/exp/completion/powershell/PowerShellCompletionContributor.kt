@@ -13,9 +13,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentUtil
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
-import org.jetbrains.plugins.terminal.exp.TerminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.io.File
 import javax.swing.Icon

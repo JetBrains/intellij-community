@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController
 
 object TerminalDataContextUtils {
   val IS_PROMPT_EDITOR_KEY: Key<Boolean> = Key.create("PromptEditor")

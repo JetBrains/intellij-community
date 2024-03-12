@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.exp
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.exp.prompt
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
@@ -16,12 +16,15 @@ import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
+import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
+import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
+import org.jetbrains.plugins.terminal.exp.TerminalInlineCompletion
+import org.jetbrains.plugins.terminal.exp.TerminalUi
 import org.jetbrains.plugins.terminal.exp.TerminalUi.useTerminalDefaultBackground
-import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
-import org.jetbrains.plugins.terminal.exp.*
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter
 import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController.PromptStateListener
+import org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptLanguage
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics

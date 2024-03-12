@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.exp.hyperlinks.TerminalHyperlinkHighlighter
+import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
 import java.util.*
 
 class TerminalOutputController(

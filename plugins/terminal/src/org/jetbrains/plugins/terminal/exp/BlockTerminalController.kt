@@ -16,6 +16,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
 import org.jetbrains.plugins.terminal.exp.TerminalOutputModel.TerminalOutputListener
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController
 import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.util.concurrent.CopyOnWriteArrayList

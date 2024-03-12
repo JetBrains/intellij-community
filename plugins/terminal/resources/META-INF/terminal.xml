@@ -39,7 +39,7 @@
     <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
 
     <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
-    <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalEnterHandler"
+    <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.exp.prompt.TerminalEnterHandler"
                          id="terminalEnter" order="first"/>
     <editorActionHandler action="EditorUp" implementationClass="org.jetbrains.plugins.terminal.exp.history.TerminalCaretUpHandler"
                          id="terminalUp" order="first"/>
@@ -56,7 +56,7 @@
     <editorActionHandler action="Terminal.SearchInCommandHistory"
                          implementationClass="org.jetbrains.plugins.terminal.exp.history.CommandSearchSelectNextHandler"
                          id="terminalCommandSearchSelectNext" order="first"/>
-    <editorActionHandler action="$SelectAll" implementationClass="org.jetbrains.plugins.terminal.exp.TerminalPromptSelectAllHandler"
+    <editorActionHandler action="$SelectAll" implementationClass="org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptSelectAllHandler"
                          id="terminalSelectAll" order="first"/>
     <typedHandler implementation="org.jetbrains.plugins.terminal.exp.TerminalCompletionAutoPopupHandler"
                   id="terminalCompletionAutoPopup" order="first"/>
@@ -82,9 +82,9 @@
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackSurvey"/>
 
     <fileType name="Terminal Prompt" language="Terminal Prompt" extensions="prompt" fieldName="INSTANCE"
-              implementationClass="org.jetbrains.plugins.terminal.exp.TerminalPromptFileType"/>
+              implementationClass="org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptFileType"/>
     <lang.fileViewProviderFactory language="Terminal Prompt"
-                                  implementationClass="org.jetbrains.plugins.terminal.exp.TerminalPromptFileViewProviderFactory"/>
+                                  implementationClass="org.jetbrains.plugins.terminal.exp.prompt.lang.TerminalPromptFileViewProviderFactory"/>
 
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
@@ -112,7 +112,7 @@
   </extensionPoints>
 
   <projectListeners>
-    <listener class="org.jetbrains.plugins.terminal.exp.TerminalLookupManagerListener"
+    <listener class="org.jetbrains.plugins.terminal.exp.prompt.TerminalLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
   </projectListeners>
 

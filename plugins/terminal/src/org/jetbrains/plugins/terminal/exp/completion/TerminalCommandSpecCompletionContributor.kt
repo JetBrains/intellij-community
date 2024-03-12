@@ -12,9 +12,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.CommandSpecCompletion
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
-import org.jetbrains.plugins.terminal.exp.TerminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.getNextSuggestionsString
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.jetbrains.terminal.completion.BaseSuggestion
 import java.io.File

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.exp
+package org.jetbrains.plugins.terminal.exp.prompt.lang
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
@@ -10,7 +10,9 @@ import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
+import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import kotlin.math.min
 
 internal class TerminalPromptFileViewProviderFactory : FileViewProviderFactory {

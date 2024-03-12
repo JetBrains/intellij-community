@@ -26,7 +26,9 @@ import org.jetbrains.plugins.terminal.action.TerminalInterruptCommandAction
 import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineEndAction
 import org.jetbrains.plugins.terminal.action.TerminalMoveCaretToLineStartAction
 import org.jetbrains.plugins.terminal.exp.BlockTerminalController.BlockTerminalControllerListener
-import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController.PromptStateListener
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptView
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.awt.Dimension
 import java.awt.Rectangle

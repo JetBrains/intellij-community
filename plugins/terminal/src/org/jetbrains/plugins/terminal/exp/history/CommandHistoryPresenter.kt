@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
-import org.jetbrains.plugins.terminal.exp.TerminalPromptModel
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.exp.getDisposed
 import org.jetbrains.plugins.terminal.exp.invokeLater
 
