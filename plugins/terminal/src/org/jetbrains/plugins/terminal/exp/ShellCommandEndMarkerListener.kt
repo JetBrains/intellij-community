@@ -20,7 +20,7 @@ internal class ShellCommandEndMarkerListener(private val session: BlockTerminalS
   }
 
   private fun findCommandEndMarker(): Boolean {
-    val output = ShellCommandOutputScraper.scrapeOutput(session)
+    val output = session.model.withContentLock { ShellCommandOutputScraper.scrapeOutput(session) }
     if (output.commandEndMarkerFound && found.compareAndSet(false, true)) {
       Disposer.dispose(disposable)
       onFound()

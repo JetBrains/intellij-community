@@ -10,7 +10,6 @@ import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
 import com.jediterm.terminal.util.CharUtils
 import org.jetbrains.plugins.terminal.TerminalUtil
-import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -60,24 +59,25 @@ internal class ShellCommandOutputScraper(private val session: BlockTerminalSessi
     }
   }
 
-  fun scrapeOutput(): StyledCommandOutput = scrapeOutput(session)
+  fun scrapeOutput(): StyledCommandOutput = session.model.withContentLock { scrapeOutput(session) }
 
   companion object {
     fun scrapeOutput(session: BlockTerminalSession): StyledCommandOutput {
-      session.model.withContentLock {
-        val textBuffer = session.model.textBuffer
-        val outputBuilder = OutputBuilder()
-        if (!textBuffer.isUsingAlternateBuffer) {
-          outputBuilder.addLines(textBuffer.historyBuffer)
-        }
-        outputBuilder.addLines(textBuffer.screenBuffer)
-        return outputBuilder.build(session.commandBlockIntegration)
+      return scrapeOutput(session.model.textBuffer, session.commandBlockIntegration.commandEndMarker)
+    }
+
+    fun scrapeOutput(textBuffer: TerminalTextBuffer, commandEndMarker: String? = null): StyledCommandOutput {
+      val outputBuilder = OutputBuilder(commandEndMarker)
+      if (!textBuffer.isUsingAlternateBuffer) {
+        outputBuilder.addLines(textBuffer.historyBuffer)
       }
+      outputBuilder.addLines(textBuffer.screenBuffer)
+      return outputBuilder.build()
     }
   }
 }
 
-private class OutputBuilder {
+private class OutputBuilder(private val commandEndMarker: String?) {
   private val output: StringBuilder = StringBuilder()
   private val styles: MutableList<StyleRange> = mutableListOf()
   private var pendingNewLines: Int = 0
@@ -118,18 +118,18 @@ private class OutputBuilder {
     }
   }
 
-  fun build(commandBlockIntegration: CommandBlockIntegration): StyledCommandOutput {
+  fun build(): StyledCommandOutput {
     val text = output.toString()
-    if (commandBlockIntegration.commandEndMarker != null) {
+    if (commandEndMarker != null) {
       val trimmedText = text.trimEnd()
-      val commandEndMarkerFound = trimmedText.endsWith(commandBlockIntegration.commandEndMarker)
+      val commandEndMarkerFound = trimmedText.endsWith(commandEndMarker)
       if (commandEndMarkerFound) {
-        val outputText = trimmedText.dropLast(commandBlockIntegration.commandEndMarker.length)
+        val outputText = trimmedText.dropLast(commandEndMarker.length)
         return StyledCommandOutput(outputText, true, styles)
       }
       else {
         // investigate why ConPTY inserts hard line breaks sometimes
-        val suffixStartInd = findSuffixStartIndIgnoringLF(trimmedText, commandBlockIntegration.commandEndMarker)
+        val suffixStartInd = findSuffixStartIndIgnoringLF(trimmedText, commandEndMarker)
         if (suffixStartInd >= 0) {
           val commandText = trimmedText.substring(0, suffixStartInd)
           return StyledCommandOutput(commandText, true, styles)
