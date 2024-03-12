@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.DictionaryLayer;
 import com.intellij.spellchecker.DictionaryLayersProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
@@ -101,7 +102,7 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     SpellCheckerManager.getInstance(project).acceptWordAsCorrect$intellij_spellchecker(word, file.getViewProvider().getVirtualFile(), project, layer);
 
     TextRange range = descriptor.getTextRangeInElement().shiftRight(psi.getTextRange().getStartOffset());
-    UpdateHighlightersUtil.removeHighlightersWithExactRange(file.getViewProvider().getDocument(), project, range);
+    UpdateHighlightersUtil.removeHighlightersWithExactRange(file.getViewProvider().getDocument(), project, range, SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
   }
 
   @Override
