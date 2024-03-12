@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util.wsl
 
+import com.intellij.util.ExceptionUtil
 import java.net.ConnectException
 
 /**
@@ -19,15 +20,20 @@ import java.net.ConnectException
 fun <T> connectRetrying(timeoutMillis: Long, step: Long = 100, action: () -> T): T {
   val start = System.currentTimeMillis()
   var result: T?
-  var lastException: Exception? = null
+  var lastException: Throwable? = null
   do {
     result = try {
       action()
     }
-    catch (e: ConnectException) {
-      lastException = e
-      Thread.sleep(step)
-      null
+    catch (e: Throwable) {
+      val rootCause = ExceptionUtil.getRootCause(e)
+      if (rootCause is ConnectException) {
+        lastException = e
+        Thread.sleep(step)
+        null
+      } else {
+        throw e
+      }
     }
   } while (result == null && (System.currentTimeMillis() - start < timeoutMillis))
 
