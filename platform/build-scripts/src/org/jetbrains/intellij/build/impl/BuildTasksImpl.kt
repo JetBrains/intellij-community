@@ -47,6 +47,7 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.*
+import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.*
@@ -56,10 +57,14 @@ import java.nio.file.attribute.FileTime
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.stream.Stream
 import java.util.zip.Deflater
 import kotlin.io.NoSuchFileException
 import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.exists
+import kotlin.io.path.extension
 import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.walk
 import kotlin.time.Duration.Companion.seconds
 
@@ -88,6 +93,9 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
                                                                        "intellij.tools.launcherGenerator"),
     )
 
+    context.project.modules.forEach { m ->
+      localizeModule(m, context)
+    }
     buildProjectArtifacts(
       platform = distState.platform,
       enabledPluginModules = getEnabledPluginModules(pluginsToPublish = distState.pluginsToPublish,
@@ -605,6 +613,9 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       context.notifyArtifactBuilt(artifactPath = providedModuleFile)
       if (!productLayout.buildAllCompatiblePlugins) {
         val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
+        context.project.modules.forEach { m ->
+          localizeModule(m, context)
+        }
         buildProjectArtifacts(platform = distState.platform,
                               enabledPluginModules = enabledPluginModules,
                               compilationTasks = compilationTasks,
@@ -628,6 +639,9 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
   compilationTasks.compileModules(distState.getModulesForPluginsToPublish())
 
+  context.project.modules.forEach { m ->
+    localizeModule(m, context)
+  }
   buildProjectArtifacts(platform = distState.platform,
                         enabledPluginModules = enabledPluginModules,
                         compilationTasks = compilationTasks,
@@ -1392,4 +1406,84 @@ internal fun copyInspectScript(context: BuildContext, distBinDir: Path) {
     Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.REPLACE_EXISTING)
     context.patchInspectScript(targetPath)
   }
+}
+
+private fun localizeModule(module: JpsModule, buildContext: BuildContext) {
+  val localizationsDir = buildContext.paths.communityHomeDir.parent.resolve("localization")
+  if (!localizationsDir.exists()) {
+    Span.current().addEvent("unable to find 'localization' directory, skip localization bundling")
+    return
+  }
+
+  spanBuilder("bundle localization: ${module.name}").use {
+    module.buildInBundlePropertiesLocalization(buildContext, localizationsDir.resolve("properties"))
+    module.buildInInspectionsIntentionsLocalization(buildContext, localizationsDir.resolve("inspections_intentions"))
+  }
+}
+
+private fun JpsModule.buildInInspectionsIntentionsLocalization(buildContext: BuildContext, inspectionsIntentionsLocalization: Path) {
+  this.sourceRoots.asSequence().filter { it.rootType == JavaResourceRootType.RESOURCE }.forEach { resourcesRoot ->
+
+    val isInspectionsIntentionsPresentInModule = sequenceOf("fileTemplates", "intentionDescriptions", "inspectionDescriptions")
+      .map { resourcesRoot.path.resolve(it) }
+      .any { it.exists() }
+    if (!isInspectionsIntentionsPresentInModule)
+      return
+
+    inspectionsIntentionsLocalization.findFiles { Files.isDirectory(it) && it.name == this.name }.use { moduleLocalizations ->
+      moduleLocalizations.forEach { moduleLocalizationSources ->
+        val sourcesLang = inspectionsIntentionsLocalization.relativize(moduleLocalizationSources).getName(0)
+        val moduleTargetLangLocalizationDir = resourcesRoot.path.relativize(resourcesRoot.path.resolve("localization").resolve(sourcesLang))
+
+        moduleLocalizationSources.findFiles { Files.isRegularFile(it) }.use { localizationSourceFile ->
+          localizationSourceFile.forEach { localizationFileSourceByLangAndModule ->
+            // e.g.
+            // localization/inspections_intentions/ja/fleet.plugins.kotlin.backend/inspectionDescriptions/NewEntityRequiredProperties.html
+            // ->
+            // out/classes/production/fleet.plugins.kotlin.backend/localization/ja/inspectionDescriptions/NewEntityRequiredProperties.html
+
+            val localizationFileTargetRelativePath = moduleTargetLangLocalizationDir.resolve(
+              moduleLocalizationSources.relativize(localizationFileSourceByLangAndModule)
+            )
+            val localizationFileTargetAbsolutePath = buildContext.getModuleOutputDir(this).resolve(localizationFileTargetRelativePath)
+
+            Files.createDirectories(localizationFileTargetAbsolutePath.parent)
+            Files.copy(localizationFileSourceByLangAndModule, localizationFileTargetAbsolutePath, StandardCopyOption.REPLACE_EXISTING)
+          }
+        }
+      }
+    }
+  }
+}
+
+private fun JpsModule.buildInBundlePropertiesLocalization(buildContext: BuildContext, bundlePropertiesLocalization: Path) {
+  this.sourceRoots.asSequence().filter { it.rootType == JavaResourceRootType.RESOURCE }.forEach { resourcesRoot ->
+
+    resourcesRoot.path.findFiles { Files.isRegularFile(it) && it.name.endsWith("Bundle.properties") }.use { bundles ->
+      bundles.forEach { knownBundleProperties ->
+        bundlePropertiesLocalization.findFiles { Files.isRegularFile(it) && it.name == knownBundleProperties.name }.use { localizedBundleProperties ->
+          localizedBundleProperties.forEach {
+            // e.g.
+            // localization/properties/ja/PersonBundle.properties
+            // ->
+            // out/classes/production/intellij.ae.personalization.main/messages/PersonBundle_ja.properties
+
+            val origRelativePath = resourcesRoot.path.relativize(knownBundleProperties)
+
+            val localizedRelative = bundlePropertiesLocalization.relativize(it)
+            val lang = localizedRelative.getName(0)
+
+            val targetNameWithLangSuffix = origRelativePath.nameWithoutExtension + "_$lang." + origRelativePath.extension
+            val localizedBundleDstPath = buildContext.getModuleOutputDir(this).resolve(origRelativePath.parent.resolve(targetNameWithLangSuffix))
+            Files.createDirectories(localizedBundleDstPath.parent)
+            Files.copy(it, localizedBundleDstPath, StandardCopyOption.REPLACE_EXISTING)
+          }
+        }
+      }
+    }
+  }
+}
+
+private fun Path.findFiles(condition: (Path) -> Boolean): Stream<Path> {
+  return Files.walk(this).filter { condition.invoke(it) }
 }
