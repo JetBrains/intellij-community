@@ -1,6 +1,8 @@
 package com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
+import kotlinx.coroutines.CancellationException
 
 fun Class<*>.psiViewerApiMethods(instance: Any): List<PsiViewerApiMethod> {
   return PsiViewerApiMethod.Provider.EP_NAME.extensionList.flatMap { it.apiMethods(instance, this) }
@@ -25,6 +27,15 @@ class PsiViewerApiMethod(
   }
 
   suspend fun invoke(): Any? {
-    return evaluator.invoke()
+    return try {
+      evaluator.invoke()
+    }
+    catch (ce : CancellationException) {
+      throw ce
+    }
+    catch (e : Exception) {
+      thisLogger().warn("Failed to evaluate method $name", e)
+      null
+    }
   }
 }

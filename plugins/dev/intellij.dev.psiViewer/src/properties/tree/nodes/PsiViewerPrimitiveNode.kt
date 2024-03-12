@@ -7,7 +7,8 @@ class PsiViewerPrimitiveNode(private val primitive: Any) : PsiViewerPropertyNode
     override fun isMatchingType(clazz: Class<*>): Boolean {
       return clazz == String::class.java ||
              (clazz.isPrimitive && clazz != Void.TYPE) ||
-             clazz.isEnum
+             clazz.isEnum ||
+             clazz in primitiveClassWrappers()
     }
 
     override suspend fun createNode(nodeContext: PsiViewerPropertyNode.Context, returnedValue: Any): PsiViewerPropertyNode {
@@ -33,4 +34,17 @@ class PsiViewerPrimitiveNode(private val primitive: Any) : PsiViewerPropertyNode
         else -> 4
       }
     }
+}
+
+private fun primitiveClassWrappers(): Set<Class<*>> {
+  return setOf(
+    java.lang.Boolean::class.java,
+    java.lang.Integer::class.java,
+    java.lang.Character::class.java,
+    java.lang.Byte::class.java,
+    java.lang.Short::class.java,
+    java.lang.Double::class.java,
+    java.lang.Long::class.java,
+    java.lang.Float::class.java
+  )
 }

@@ -9,42 +9,46 @@ import java.lang.reflect.WildcardType
 
 class PsiViewerApiMethodsReflectionProvider : PsiViewerApiMethod.Provider {
   override fun apiMethods(instance: Any, clazz: Class<*>): List<PsiViewerApiMethod> {
-    return clazz.declaredMethods
-      .filter {
-        Modifier.isPublic(it.modifiers) && it.parameterCount == 0 && it.name != "hashCode"
-      }
-      .map {
-        fromReflectionMethod(instance, it)
-      }
+    return psiViewerApiReflectionMethods(clazz).map {
+      fromReflectionMethod(instance, it)
+    }
   }
 
   private fun fromReflectionMethod(instance: Any, method: Method): PsiViewerApiMethod {
-    return PsiViewerApiMethod(method.name, method.returnType()) {
+    return PsiViewerApiMethod(method.name, psiViewerReflectionMethodReturnType(method)) {
       checkCancelled()
       return@PsiViewerApiMethod readAction {
         method.invoke(instance)
       }
     }
   }
+}
 
-  private fun Method.returnType(): PsiViewerApiMethod.ReturnType {
-    val noCollectionReturnTypeDescriptor = PsiViewerApiMethod.ReturnType(returnType, null)
-
-    if (returnType.isArray) {
-      return PsiViewerApiMethod.ReturnType(returnType, returnType.componentType)
+fun psiViewerApiReflectionMethods(clazz: Class<*>): List<Method> {
+  return clazz.declaredMethods
+    .filter {
+      Modifier.isPublic(it.modifiers) && it.parameterCount == 0 && it.name != "hashCode" && !it.name.endsWith("\$default")
     }
+}
 
-    val isCollectionReturnType = Collection::class.java.isAssignableFrom(returnType)
-    if (!isCollectionReturnType) return noCollectionReturnTypeDescriptor
+fun psiViewerReflectionMethodReturnType(method: Method): PsiViewerApiMethod.ReturnType {
+  val returnType = method.returnType
+  val noCollectionReturnTypeDescriptor = PsiViewerApiMethod.ReturnType(returnType, null)
 
-    val genericType = genericReturnType
-    if (genericType !is ParameterizedType) return noCollectionReturnTypeDescriptor
-
-    val actualTypeArguments = genericType.actualTypeArguments
-    if (actualTypeArguments.size != 1) return noCollectionReturnTypeDescriptor
-
-    val firstTypeArgument = actualTypeArguments.firstOrNull() ?: return noCollectionReturnTypeDescriptor
-    val collectionType = (firstTypeArgument as? Class<*>) ?: (firstTypeArgument as? WildcardType)?.upperBounds?.firstOrNull() as? Class<*>
-    return PsiViewerApiMethod.ReturnType(returnType, collectionType)
+  if (returnType.isArray) {
+    return PsiViewerApiMethod.ReturnType(returnType, returnType.componentType)
   }
+
+  val isCollectionReturnType = Collection::class.java.isAssignableFrom(returnType)
+  if (!isCollectionReturnType) return noCollectionReturnTypeDescriptor
+
+  val genericType = method.genericReturnType
+  if (genericType !is ParameterizedType) return noCollectionReturnTypeDescriptor
+
+  val actualTypeArguments = genericType.actualTypeArguments
+  if (actualTypeArguments.size != 1) return noCollectionReturnTypeDescriptor
+
+  val firstTypeArgument = actualTypeArguments.firstOrNull() ?: return noCollectionReturnTypeDescriptor
+  val collectionType = (firstTypeArgument as? Class<*>) ?: (firstTypeArgument as? WildcardType)?.upperBounds?.firstOrNull() as? Class<*>
+  return PsiViewerApiMethod.ReturnType(returnType, collectionType)
 }

@@ -103,15 +103,7 @@ suspend fun computePsiViewerApiClassesNodes(
       .mapIndexed { idx, apiClass ->
         async {
           val apiMethods = apiClass.psiViewerApiMethods(instance)
-          val childrenNodesForApiClass = computePsiViewerPropertyNodesByCallingApiMethods(nodeContext, apiMethods)
-          if (childrenNodesForApiClass.isEmpty()) return@async null
-
-          val presentation = PsiViewerPropertyNode.Presentation {
-            it.icon = if (apiClass.isInterface) AllIcons.Nodes.Interface else AllIcons.Nodes.Class
-            it.append(apiClass.canonicalName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-          }
-
-          PsiViewerPropertyNodeImpl(presentation, childrenNodesForApiClass, weight = idx)
+          psiViewerPropertyNodeForApiClass(nodeContext, apiClass, apiMethods, weight = idx)
         }
       }
       .awaitAll()
@@ -122,7 +114,24 @@ suspend fun computePsiViewerApiClassesNodes(
   }
 }
 
-private suspend fun computePsiViewerPropertyNodesByCallingApiMethods(
+suspend fun psiViewerPropertyNodeForApiClass(
+  nodeContext: PsiViewerPropertyNode.Context,
+  apiClass: Class<*>,
+  apiMethods: List<PsiViewerApiMethod>,
+  weight: Int,
+): PsiViewerPropertyNodeImpl? {
+  val childrenNodesForApiClass = computePsiViewerPropertyNodesByCallingApiMethods(nodeContext, apiMethods)
+  if (childrenNodesForApiClass.isEmpty()) return null
+
+  val presentation = PsiViewerPropertyNode.Presentation {
+    it.icon = if (apiClass.isInterface) AllIcons.Nodes.Interface else AllIcons.Nodes.Class
+    it.append(apiClass.canonicalName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+  }
+
+  return PsiViewerPropertyNodeImpl(presentation, childrenNodesForApiClass, weight)
+}
+
+suspend fun computePsiViewerPropertyNodesByCallingApiMethods(
   nodeContext: PsiViewerPropertyNode.Context,
   methods: List<PsiViewerApiMethod>,
 ): List<PsiViewerPropertyNode> {
