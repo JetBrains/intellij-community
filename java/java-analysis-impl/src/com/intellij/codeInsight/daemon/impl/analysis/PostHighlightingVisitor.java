@@ -176,10 +176,11 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     return custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
   }
 
-  private String message;
+  @NlsContexts.DetailedDescription private String message;
   private final List<IntentionAction> quickFixes = new ArrayList<>();
   private final List<IntentionAction> quickFixOptions = new ArrayList<>();
 
+  @Override
   public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
     if (myUnusedSymbolInspection.LOCAL_VARIABLE) {
       processLocalVariable(variable);
@@ -330,7 +331,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
           quickFixes.add(QuickFixFactory.getInstance().createAddToImplicitlyWrittenFieldsFix(project, annoName)));
       }
     }
-    else if (!UnusedSymbolUtil.isFieldUsed(myProject, myFile, field, ProgressManager.getGlobalProgressIndicator(), myGlobalUsageHelper)) {
+    else if (!UnusedSymbolUtil.isFieldUsed(myProject, myFile, field, ProgressIndicatorProvider.getGlobalProgressIndicator(), myGlobalUsageHelper)) {
       if (UnusedSymbolUtil.isImplicitWrite(myProject, field)) {
         message = getNotUsedForReadingMessage(field);
         quickFixes.add(QuickFixFactory.getInstance().createSafeDeleteFix(field));
@@ -481,9 +482,13 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     int options = PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES;
     String symbolName = HighlightMessageUtil.getSymbolName(method, PsiSubstitutor.EMPTY, options);
     message = JavaErrorBundle.message(key, symbolName);
-    quickFixes.add(QuickFixFactory.getInstance().createSafeDeleteFix(method));
+    QuickFixFactory factory = QuickFixFactory.getInstance();
+    quickFixes.add(factory.createSafeDeleteFix(method));
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && method.hasModifierProperty(PsiModifier.PRIVATE)) {
+      quickFixes.add(factory.createDeletePrivateMethodFix(method).asIntention());
+    }
     SpecialAnnotationsUtilBase.processUnknownAnnotations(method, annoName ->
-      quickFixes.add(QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName)));
+      quickFixes.add(factory.createAddToDependencyInjectionAnnotationsFix(project, annoName)));
   }
 
   private void processClass(@NotNull Project project, @NotNull PsiClass aClass) {
