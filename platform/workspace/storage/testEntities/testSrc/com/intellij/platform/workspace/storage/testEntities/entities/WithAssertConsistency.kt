@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 
 // ------------------- Entity with consistency assertion --------------------------------
@@ -49,9 +44,3 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(AssertConsistencyEntity.Builder::class.java, entity, modification)
 }
 //endregion
-
-fun MutableEntityStorage.addAssertConsistencyEntity(passCheck: Boolean, source: EntitySource = MySource): AssertConsistencyEntity {
-  val assertConsistencyEntity = AssertConsistencyEntity(passCheck, source)
-  this.addEntity(assertConsistencyEntity)
-  return assertConsistencyEntity
-}

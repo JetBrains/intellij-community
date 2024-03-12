@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -112,18 +107,6 @@ fun MutableEntityStorage.modifyEntity(
 //endregion
 
 
-fun MutableEntityStorage.addOoChildEntity(
-  OoParentEntity: OoParentEntity,
-  childProperty: String = "child",
-  source: EntitySource = MySource
-): OoChildEntity {
-  val ooChildEntity = OoChildEntity(childProperty, source) {
-    this.parentEntity = OoParentEntity
-  }
-  this.addEntity(ooChildEntity)
-  return ooChildEntity
-}
-
 //region ----------------- Child entity with a nullable parent -----------------------------
 interface OoChildWithNullableParentEntity : WorkspaceEntity {
   val parentEntity: OoParentEntity?
@@ -161,18 +144,6 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(OoChildWithNullableParentEntity.Builder::class.java, entity, modification)
 }
 //endregion
-
-fun MutableEntityStorage.addOoChildWithNullableParentEntity(
-  OoParentEntity: OoParentEntity,
-  source: EntitySource = MySource
-): OoChildWithNullableParentEntity {
-  val ooChildWithNullableParentEntity = OoChildWithNullableParentEntity(source) {
-    this.parentEntity = OoParentEntity
-  }
-  this.addEntity(ooChildWithNullableParentEntity)
-  return ooChildWithNullableParentEntity
-}
-
 
 //region ------------------- Parent Entity with SymbolicId --------------------------------
 
@@ -281,18 +252,6 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-fun MutableEntityStorage.addOoChildForParentWithPidEntity(
-  parentEntity: OoParentWithPidEntity,
-  childProperty: String = "child",
-  source: EntitySource = MySource
-): OoChildForParentWithPidEntity {
-  val ooChildForParentWithPidEntity = OoChildForParentWithPidEntity(childProperty, source) {
-    this.parentEntity = parentEntity
-  }
-  this.addEntity(ooChildForParentWithPidEntity)
-  return ooChildForParentWithPidEntity
-}
-
 // ---------------- Child with SymbolicId for parent with SymbolicId ----------------------
 
 interface OoChildAlsoWithPidEntity : WorkspaceEntityWithSymbolicId {
@@ -338,18 +297,6 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-fun MutableEntityStorage.addOoChildAlsoWithPidEntity(
-  parentEntity: OoParentWithPidEntity,
-  childProperty: String = "child",
-  source: EntitySource = MySource
-): OoChildAlsoWithPidEntity {
-  val ooChildAlsoWithPidEntity = OoChildAlsoWithPidEntity(childProperty, source) {
-    this.parentEntity = parentEntity
-  }
-  this.addEntity(ooChildAlsoWithPidEntity)
-  return ooChildAlsoWithPidEntity
-}
-
 // ------------------- Parent Entity without SymbolicId for Nullable ref --------------------------------
 
 
@@ -394,15 +341,6 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-
-fun MutableEntityStorage.addOoParentWithoutPidEntity(
-  parentProperty: String = "parent",
-  source: EntitySource = MySource
-): OoParentWithoutPidEntity {
-  val ooParentWithoutPidEntity = OoParentWithoutPidEntity(parentProperty, source)
-  this.addEntity(ooParentWithoutPidEntity)
-  return ooParentWithoutPidEntity
-}
 
 // ---------------- Child entity with SymbolicId for Nullable ref----------------------
 
@@ -453,15 +391,3 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(OoChildWithPidEntity.Builder::class.java, entity, modification)
 }
 //endregion
-
-fun MutableEntityStorage.addOoChildWithPidEntity(
-  parentEntity: OoParentWithoutPidEntity,
-  childProperty: String = "child",
-  source: EntitySource = MySource
-): OoChildWithPidEntity {
-  val ooChildWithPidEntity = OoChildWithPidEntity(childProperty, source) {
-    this.parentEntity = parentEntity
-  }
-  this.addEntity(ooChildWithPidEntity)
-  return ooChildWithPidEntity
-}

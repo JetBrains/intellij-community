@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EntityStorageInstrumentationApi::class)
 
 package com.intellij.platform.workspace.storage.tests.propertyBased
@@ -228,7 +228,7 @@ private object NamedEntityManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         return try {
-          storage.addNamedEntity(someProperty, source = source) to "Set property for NamedEntity: $someProperty"
+          storage addEntity NamedEntity(someProperty, entitySource = source) to "Set property for NamedEntity: $someProperty"
         }
         catch (e: SymbolicIdAlreadyExistsException) {
           val symbolicId = e.id as NameId
@@ -347,7 +347,9 @@ private object OoChildWithNullableParentManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parentEntity = selectParent(storage, env) ?: return null to "Cannot select parent"
-        return storage.addOoChildWithNullableParentEntity(parentEntity, source) to "Selected parent: $parentEntity"
+        return storage addEntity OoChildWithNullableParentEntity(source) {
+          this.parentEntity = parentEntity
+        } to "Selected parent: $parentEntity"
       }
     }
   }
@@ -375,7 +377,7 @@ private object MiddleEntityManipulation : EntityManipulation {
       override fun makeEntity(source: EntitySource,
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-        return storage.addMiddleEntity(someProperty, source) to "Property: $someProperty"
+        return storage addEntity MiddleEntity(someProperty, source) to "Property: $someProperty"
       }
     }
   }
@@ -396,8 +398,10 @@ private object AbstractEntities {
         override fun makeEntity(source: EntitySource,
                                 someProperty: String,
                                 env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-          val children = selectChildren(env, storage).asSequence()
-          return storage.addLeftEntity(children, source) to "Children: ${children.toList()}"
+          val children = selectChildren(env, storage).toList()
+          return storage addEntity LeftEntity(source) {
+            this@LeftEntity.children = children
+          } to "Children: ${children.toList()}"
         }
       }
     }
@@ -420,8 +424,10 @@ private object AbstractEntities {
         override fun makeEntity(source: EntitySource,
                                 someProperty: String,
                                 env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-          val children = selectChildren(env, storage).asSequence()
-          return storage.addRightEntity(children, source) to "Children: ${children.toList()}"
+          val children = selectChildren(env, storage).toList()
+          return storage addEntity RightEntity(source) {
+            this@RightEntity.children = children
+          } to "Children: ${children.toList()}"
         }
       }
     }

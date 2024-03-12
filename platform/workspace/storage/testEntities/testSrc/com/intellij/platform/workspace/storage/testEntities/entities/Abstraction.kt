@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 
@@ -159,12 +154,6 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-fun MutableEntityStorage.addMiddleEntity(property: String = "prop", source: EntitySource = MySource): MiddleEntity {
-  val middleEntity = MiddleEntity(property, source)
-  this.addEntity(middleEntity)
-  return middleEntity
-}
-
 // ---------------------------
 
 interface LeftEntity : CompositeBaseEntity {
@@ -204,14 +193,6 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-fun MutableEntityStorage.addLeftEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): LeftEntity {
-  val leftEntity = LeftEntity(source) {
-    this.children = children.toList()
-  }
-  this.addEntity(leftEntity)
-  return leftEntity
-}
-
 // ---------------------------
 
 interface RightEntity : CompositeBaseEntity {
@@ -250,11 +231,3 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(RightEntity.Builder::class.java, entity, modification)
 }
 //endregion
-
-fun MutableEntityStorage.addRightEntity(children: Sequence<BaseEntity>, source: EntitySource = MySource): RightEntity {
-  val rightEntity = RightEntity(source) {
-    this.children = children.toList()
-  }
-  this.addEntity(rightEntity)
-  return rightEntity
-}

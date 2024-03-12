@@ -39,7 +39,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `add plus delete`() {
-    val entity = builder.addNamedEntity("Parent")
+    val entity = builder addEntity NamedEntity("Parent", MySource)
     builder.removeEntity(entity)
 
     val log = builder.changeLog.changeLog
@@ -498,7 +498,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps empty modify`() {
-    val entity = builder.addNamedEntity("Parent")
+    val entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {}
@@ -509,7 +509,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps two modify`() {
-    val entity = builder.addNamedEntity("Parent")
+    val entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -525,9 +525,11 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps two modify with parent refs`() {
-    val parent1 = builder.addNamedEntity("Parent")
-    val parent2 = builder.addNamedEntity("Parent2")
-    val child1 = builder.addNamedChildEntity(parent1)
+    val parent1 = builder addEntity NamedEntity("Parent", MySource)
+    val parent2 = builder addEntity NamedEntity("Parent2", MySource)
+    val child1 = builder addEntity NamedChildEntity("child", MySource) {
+      this.parentEntity = parent1
+    }
     builder.changeLog.clear()
 
     builder.modifyEntity(child1) {
@@ -571,7 +573,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps three modify`() {
-    val entity = builder.addNamedEntity("Parent")
+    val entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -590,7 +592,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps two modify and source change`() {
-    val entity = builder.addNamedEntity("Parent")
+    val entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -610,7 +612,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps two modify and two source change`() {
-    val entity = builder.addNamedEntity("Parent")
+    val entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -632,7 +634,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps two modify and two source change in mix`() {
-    val entity = builder.addNamedEntity("Parent")
+    val entity = builder addEntity NamedEntity("Parent", MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -654,7 +656,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps empty source change`() {
-    val entity = builder.addNamedEntity("Parent", source = MySource)
+    val entity = builder addEntity NamedEntity("Parent", entitySource = MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {
@@ -667,7 +669,7 @@ class WorkspaceBuilderChangeLogTest {
 
   @Test
   fun `collaps source change twice`() {
-    val entity = builder.addNamedEntity("Parent", source = MySource)
+    val entity = builder addEntity NamedEntity("Parent", entitySource = MySource)
     builder.changeLog.clear()
 
     builder.modifyEntity(entity) {

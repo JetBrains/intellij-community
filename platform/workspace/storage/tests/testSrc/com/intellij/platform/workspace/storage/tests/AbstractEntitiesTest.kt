@@ -14,8 +14,10 @@ class AbstractEntitiesTest {
   fun `simple adding`() {
     val builder = MutableEntityStorage.create()
 
-    val middleEntity = builder.addMiddleEntity()
-    builder.addLeftEntity(sequenceOf(middleEntity))
+    val middleEntity = builder addEntity MiddleEntity("prop", MySource)
+    builder addEntity LeftEntity(MySource) {
+      children = listOf(middleEntity)
+    }
 
     val storage = builder.toSnapshot()
 
@@ -27,10 +29,12 @@ class AbstractEntitiesTest {
   fun `modifying left entity`() {
     val builder = MutableEntityStorage.create()
 
-    val middleEntity = builder.addMiddleEntity("first")
-    val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
+    val middleEntity = builder addEntity MiddleEntity("first", MySource)
+    val leftEntity = builder addEntity LeftEntity(MySource) {
+      children = listOf(middleEntity)
+    }
 
-    val anotherMiddleEntity = builder.addMiddleEntity("second")
+    val anotherMiddleEntity = builder addEntity MiddleEntity("second", MySource)
     builder.modifyEntity(leftEntity) {
 
     }
@@ -50,10 +54,12 @@ class AbstractEntitiesTest {
   fun `modifying abstract entity`() {
     val builder = MutableEntityStorage.create()
 
-    val middleEntity = builder.addMiddleEntity()
-    val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
+    val middleEntity = builder addEntity MiddleEntity("prop", MySource)
+    val leftEntity = builder addEntity LeftEntity(MySource) {
+      children = listOf(middleEntity)
+    }
 
-    val anotherMiddleEntity = builder.addMiddleEntity()
+    val anotherMiddleEntity = builder addEntity MiddleEntity("prop", MySource)
     builder.modifyEntity(leftEntity) {
       this.children = listOf(anotherMiddleEntity)
     }
@@ -69,16 +75,18 @@ class AbstractEntitiesTest {
   @Test
   fun `children replace in applyChangesFrom`() {
     val builder = MutableEntityStorage.create()
-    val middleEntity = builder.addMiddleEntity()
-    val leftEntity = builder.addLeftEntity(sequenceOf(middleEntity))
+    val middleEntity = builder addEntity MiddleEntity("prop", MySource)
+    val leftEntity = builder addEntity LeftEntity(MySource) {
+      children = listOf(middleEntity)
+    }
 
     val anotherBuilder = MutableEntityStorage.from(builder.toSnapshot())
-    val anotherMiddleEntity = anotherBuilder.addMiddleEntity("Another")
+    val anotherMiddleEntity = anotherBuilder addEntity MiddleEntity("Another", MySource)
     anotherBuilder.modifyEntity(leftEntity.from(anotherBuilder)) {
       this.children = listOf(middleEntity, anotherMiddleEntity)
     }
 
-    val initialMiddleEntity = builder.addMiddleEntity("Initial")
+    val initialMiddleEntity = builder addEntity MiddleEntity("Initial", MySource)
     builder.modifyEntity(leftEntity) {
       this.children = listOf(middleEntity, initialMiddleEntity)
     }
@@ -95,9 +103,11 @@ class AbstractEntitiesTest {
   @Test
   fun `keep children ordering when making storage`() {
     val builder = MutableEntityStorage.create()
-    val middleEntity1 = builder.addMiddleEntity("One")
-    val middleEntity2 = builder.addMiddleEntity("Two")
-    builder.addLeftEntity(sequenceOf(middleEntity1, middleEntity2))
+    val middleEntity1 = builder addEntity MiddleEntity("One", MySource)
+    val middleEntity2 = builder addEntity MiddleEntity("Two", MySource)
+    builder addEntity LeftEntity(MySource) {
+      children = listOf(middleEntity1, middleEntity2)
+    }
 
     val storage = builder.toSnapshot()
     val children = storage.entities(LeftEntity::class.java).single().children.toList()
@@ -108,13 +118,17 @@ class AbstractEntitiesTest {
   @Test
   fun `keep children ordering when making storage 2`() {
     val builder = MutableEntityStorage.create()
-    val middleEntity1 = builder.addMiddleEntity("Two")
-    val middleEntity2 = builder.addMiddleEntity("One")
-    builder.addLeftEntity(sequenceOf(middleEntity1, middleEntity2))
+    val middleEntity1 = builder addEntity MiddleEntity("Two", MySource)
+    val middleEntity2 = builder addEntity MiddleEntity("One", MySource)
+    builder addEntity LeftEntity(MySource) {
+      children = listOf(middleEntity1, middleEntity2)
+    }
 
 
     val anotherBuilder = makeBuilder(builder) {
-      addLeftEntity(sequenceOf(middleEntity2, middleEntity1))
+      this addEntity LeftEntity(MySource) {
+        children = listOf(middleEntity2, middleEntity1)
+      }
     }
 
     builder.applyChangesFrom(anotherBuilder)
@@ -128,9 +142,11 @@ class AbstractEntitiesTest {
   @Test
   fun `keep children ordering after rbs 1`() {
     val builder = MutableEntityStorage.create()
-    val middleEntity1 = builder.addMiddleEntity("One")
-    val middleEntity2 = builder.addMiddleEntity("Two")
-    builder.addLeftEntity(sequenceOf(middleEntity1, middleEntity2))
+    val middleEntity1 = builder addEntity MiddleEntity("One", MySource)
+    val middleEntity2 = builder addEntity MiddleEntity("Two", MySource)
+    builder addEntity LeftEntity(MySource) {
+      children = listOf(middleEntity1, middleEntity2)
+    }
 
     val target = MutableEntityStorage.create()
 
@@ -144,9 +160,11 @@ class AbstractEntitiesTest {
   @Test
   fun `keep children ordering after rbs 2`() {
     val builder = MutableEntityStorage.create()
-    val middleEntity1 = builder.addMiddleEntity("One")
-    val middleEntity2 = builder.addMiddleEntity("Two")
-    builder.addLeftEntity(sequenceOf(middleEntity2, middleEntity1))
+    val middleEntity1 = builder addEntity MiddleEntity("One", MySource)
+    val middleEntity2 = builder addEntity MiddleEntity("Two", MySource)
+    builder addEntity LeftEntity(MySource) {
+      children = listOf(middleEntity2, middleEntity1)
+    }
 
     val target = MutableEntityStorage.create()
 

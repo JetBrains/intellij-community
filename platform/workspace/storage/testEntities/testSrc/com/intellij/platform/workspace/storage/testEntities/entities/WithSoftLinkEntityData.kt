@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
@@ -82,20 +77,6 @@ fun MutableEntityStorage.modifyEntity(
 //endregion
 
 
-fun MutableEntityStorage.addNamedEntity(
-  name: String,
-  additionalProperty: String? = null,
-  source: EntitySource = MySource
-): NamedEntity {
-  val namedEntity = NamedEntity(name, source) {
-    this.additionalProperty = additionalProperty
-    this.children = emptyList()
-  }
-  this.addEntity(namedEntity)
-  return namedEntity
-}
-
-
 //val NamedEntity.children: List<NamedChildEntity>
 //    get() = TODO()
 //  get() = referrers(NamedChildEntity::parent)
@@ -145,18 +126,6 @@ fun MutableEntityStorage.modifyEntity(
 //endregion
 
 
-fun MutableEntityStorage.addNamedChildEntity(
-  parentEntity: NamedEntity,
-  childProperty: String = "child",
-  source: EntitySource = MySource
-): NamedChildEntity {
-  val namedChildEntity = NamedChildEntity(childProperty, source) {
-    this.parentEntity = parentEntity
-  }
-  this.addEntity(namedChildEntity)
-  return namedChildEntity
-}
-
 // ------------------------------ Entity with soft link --------------------
 
 interface WithSoftLinkEntity : WorkspaceEntity {
@@ -198,12 +167,6 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-fun MutableEntityStorage.addWithSoftLinkEntity(link: NameId, source: EntitySource = MySource): WithSoftLinkEntity {
-  val withSoftLinkEntity = WithSoftLinkEntity(link, source)
-  this.addEntity(withSoftLinkEntity)
-  return withSoftLinkEntity
-}
-
 interface ComposedLinkEntity : WorkspaceEntity {
   val link: ComposedId
 
@@ -242,12 +205,6 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ComposedLinkEntity.Builder::class.java, entity, modification)
 }
 //endregion
-
-fun MutableEntityStorage.addComposedLinkEntity(link: ComposedId, source: EntitySource = MySource): ComposedLinkEntity {
-  val composedLinkEntity = ComposedLinkEntity(link, source)
-  this.addEntity(composedLinkEntity)
-  return composedLinkEntity
-}
 
 // ------------------------- Entity with SymbolicId and the list of soft links ------------------
 
@@ -297,16 +254,6 @@ fun MutableEntityStorage.modifyEntity(
 //endregion
 
 
-fun MutableEntityStorage.addWithListSoftLinksEntity(
-  name: String,
-  links: List<NameId>,
-  source: EntitySource = MySource
-): WithListSoftLinksEntity {
-  val withListSoftLinksEntity = WithListSoftLinksEntity(name, links, source)
-  this.addEntity(withListSoftLinksEntity)
-  return withListSoftLinksEntity
-}
-
 // --------------------------- Entity with composed persistent id via soft reference ------------------
 
 
@@ -353,13 +300,3 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ComposedIdSoftRefEntity.Builder::class.java, entity, modification)
 }
 //endregion
-
-fun MutableEntityStorage.addComposedIdSoftRefEntity(
-  name: String,
-  link: NameId,
-  source: EntitySource = MySource
-): ComposedIdSoftRefEntity {
-  val composedIdSoftRefEntity = ComposedIdSoftRefEntity(name, link, source)
-  this.addEntity(composedIdSoftRefEntity)
-  return composedIdSoftRefEntity
-}

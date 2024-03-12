@@ -2,15 +2,9 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
 
 interface VFUEntity : WorkspaceEntity {
@@ -228,50 +222,3 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(SetVFUEntity.Builder::class.java, entity, modification)
 }
 //endregion
-
-fun MutableEntityStorage.addVFUEntity(
-  data: String,
-  fileUrl: String,
-  virtualFileManager: VirtualFileUrlManager,
-  source: EntitySource = SampleEntitySource("test")
-): VFUEntity {
-  val vfuEntity = VFUEntity(data, virtualFileManager.getOrCreateFromUrl(fileUrl), source)
-  this.addEntity(vfuEntity)
-  return vfuEntity
-}
-
-fun MutableEntityStorage.addVFU2Entity(
-  data: String,
-  fileUrl: String,
-  secondFileUrl: String,
-  virtualFileManager: VirtualFileUrlManager,
-  source: EntitySource = SampleEntitySource("test")
-): VFUWithTwoPropertiesEntity {
-  val vfuWithTwoPropertiesEntity = VFUWithTwoPropertiesEntity(data, virtualFileManager.getOrCreateFromUrl(fileUrl), virtualFileManager.getOrCreateFromUrl(secondFileUrl), source)
-  this.addEntity(vfuWithTwoPropertiesEntity)
-  return vfuWithTwoPropertiesEntity
-}
-
-fun MutableEntityStorage.addNullableVFUEntity(
-  data: String,
-  fileUrl: String?,
-  virtualFileManager: VirtualFileUrlManager,
-  source: EntitySource = SampleEntitySource("test")
-): NullableVFUEntity {
-  val nullableVFUEntity = NullableVFUEntity(data, source) {
-    this.fileProperty = fileUrl?.let { virtualFileManager.getOrCreateFromUrl(it) }
-  }
-  this.addEntity(nullableVFUEntity)
-  return nullableVFUEntity
-}
-
-fun MutableEntityStorage.addListVFUEntity(
-  data: String,
-  fileUrl: List<String>,
-  virtualFileManager: VirtualFileUrlManager,
-  source: EntitySource = SampleEntitySource("test")
-): ListVFUEntity {
-  val listVFUEntity = ListVFUEntity(data, fileUrl.map { virtualFileManager.getOrCreateFromUrl(it) }, source)
-  this.addEntity(listVFUEntity)
-  return listVFUEntity
-}
