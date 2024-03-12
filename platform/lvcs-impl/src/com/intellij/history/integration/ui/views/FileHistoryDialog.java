@@ -171,20 +171,24 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private void updateEditorSearch() {
     Editor editor = findLeftEditor();
     if (editor == null) return;
-    String filter = mySearchTextArea.getTextArea().getText();
+    updateEditorSearch(myProject, mySearchTextArea, editor);
+  }
+
+  public static void updateEditorSearch(@NotNull Project project, @NotNull SearchTextArea searchTextArea, @NotNull Editor editor) {
+    String filter = searchTextArea.getTextArea().getText();
     EditorSearchSession session = EditorSearchSession.get(editor);
     if (StringUtil.isEmpty(filter)) {
       if (session != null) {
-        boolean focused = mySearchTextArea.getTextArea().isFocusOwner();
+        boolean focused = searchTextArea.getTextArea().isFocusOwner();
         session.close();
         if (focused) {
-          IdeFocusManager.getInstance(myProject).requestFocus(mySearchTextArea.getTextArea(), false);
+          IdeFocusManager.getInstance(project).requestFocus(searchTextArea.getTextArea(), false);
         }
       }
       return;
     }
     if (session == null) {
-      session = EditorSearchSession.start(editor, myProject);
+      session = EditorSearchSession.start(editor, project);
       editor.getCaretModel().moveToOffset(0);
       session.searchForward();
     }
@@ -192,13 +196,17 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   private @Nullable Editor findLeftEditor() {
-    DiffSplitter splitter = UIUtil.findComponentOfType(myDiffPanel.getComponent(), DiffSplitter.class);
+    return findLeftEditor(myDiffPanel.getComponent());
+  }
+
+  public static @Nullable Editor findLeftEditor(JComponent component) {
+    DiffSplitter splitter = UIUtil.findComponentOfType(component, DiffSplitter.class);
     JComponent editorPanel;
     if (splitter != null) {
       editorPanel = splitter.getFirstComponent();
     }
     else {
-      editorPanel = UIUtil.findComponentOfType(myDiffPanel.getComponent(), UnifiedDiffPanel.class);
+      editorPanel = UIUtil.findComponentOfType(component, UnifiedDiffPanel.class);
     }
     EditorComponentImpl comp = editorPanel == null ? null : UIUtil.findComponentOfType(editorPanel, EditorComponentImpl.class);
     return comp == null ? null : comp.getEditor();

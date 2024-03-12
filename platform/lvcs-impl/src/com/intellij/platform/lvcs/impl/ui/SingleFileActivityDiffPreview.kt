@@ -3,6 +3,8 @@ package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffEditorViewer
+import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.impl.DiffRequestProcessorListener
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
@@ -16,18 +18,25 @@ import com.intellij.platform.lvcs.impl.ActivityScope
 import com.intellij.platform.lvcs.impl.ActivitySelection
 import com.intellij.platform.lvcs.impl.filePath
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
 
 internal class SingleFileActivityDiffPreview(project: Project, private val model: ActivityViewModel, disposable: Disposable) : EditorTabDiffPreview(project) {
+  private val eventDispatcher = EventDispatcher.create(DiffRequestProcessorListener::class.java)
+
   init {
     Disposer.register(disposable, this)
   }
 
   override fun hasContent() = model.selection != null
 
-  override fun createViewer() = createViewer(project, model)
+  override fun createViewer(): DiffEditorViewer {
+    return createViewer(project, model).also { viewer ->
+      viewer.addListener(DiffRequestProcessorListener { eventDispatcher.multicaster.onViewerChanged() }, this)
+    }
+  }
 
   override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<DiffRequestProducer>? {
     val diffRequestProducer = model.getSingleDiffRequestProducer() ?: return null
@@ -42,6 +51,10 @@ internal class SingleFileActivityDiffPreview(project: Project, private val model
   override fun getEditorTabName(processor: DiffEditorViewer?) = getDiffTitleFor((model.activityScope as? ActivityScope.File)?.filePath,
                                                                                 model.activityScope)
 
+  internal fun addListener(listener: DiffRequestProcessorListener, disposable: Disposable) {
+    eventDispatcher.addListener(listener, disposable)
+  }
+
   companion object {
     const val DIFF_PLACE = "ActivityView"
 
@@ -51,7 +64,7 @@ internal class SingleFileActivityDiffPreview(project: Project, private val model
       return LocalHistoryBundle.message("activity.diff.tab.title")
     }
 
-    internal fun createViewer(project: Project, model: ActivityViewModel): DiffEditorViewer {
+    internal fun createViewer(project: Project, model: ActivityViewModel): DiffRequestProcessor {
       val processor = SingleFileActivityDiffRequestProcessor(project, model)
       model.addListener(object : ActivityModelListener {
         override fun onSelectionChanged(selection: ActivitySelection?) = processor.updatePreview()
