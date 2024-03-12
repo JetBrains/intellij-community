@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// IS_APPLICABLE: FALSE
+// PROBLEM: none
 
 fun foo(): Boolean {
     listOf(1,2,3).find {

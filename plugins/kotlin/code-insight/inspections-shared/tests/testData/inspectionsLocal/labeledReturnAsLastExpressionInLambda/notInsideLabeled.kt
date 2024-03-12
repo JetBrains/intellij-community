@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// IS_APPLICABLE: FALSE
+// PROBLEM: none
 
 fun foo(): Boolean {
     return@foo <caret>true

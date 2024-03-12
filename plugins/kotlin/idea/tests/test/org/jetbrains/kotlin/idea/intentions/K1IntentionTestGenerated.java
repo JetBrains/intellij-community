@@ -15666,54 +15666,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/removeLabeledReturnInLambda")
-    public static class RemoveLabeledReturnInLambda extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("labeledLambda.kt")
-        public void testLabeledLambda() throws Exception {
-            runTest("testData/intentions/removeLabeledReturnInLambda/labeledLambda.kt");
-        }
-
-        @TestMetadata("multipleBlocks.kt")
-        public void testMultipleBlocks() throws Exception {
-            runTest("testData/intentions/removeLabeledReturnInLambda/multipleBlocks.kt");
-        }
-
-        @TestMetadata("normal.kt")
-        public void testNormal() throws Exception {
-            runTest("testData/intentions/removeLabeledReturnInLambda/normal.kt");
-        }
-
-        @TestMetadata("notInsideLabeled.kt")
-        public void testNotInsideLabeled() throws Exception {
-            runTest("testData/intentions/removeLabeledReturnInLambda/notInsideLabeled.kt");
-        }
-
-        @TestMetadata("notLabeled.kt")
-        public void testNotLabeled() throws Exception {
-            runTest("testData/intentions/removeLabeledReturnInLambda/notLabeled.kt");
-        }
-
-        @TestMetadata("notLastLine.kt")
-        public void testNotLastLine() throws Exception {
-            runTest("testData/intentions/removeLabeledReturnInLambda/notLastLine.kt");
-        }
-
-        @TestMetadata("outerLambda.kt")
-        public void testOuterLambda() throws Exception {
-            runTest("testData/intentions/removeLabeledReturnInLambda/outerLambda.kt");
-        }
-
-        @TestMetadata("unit.kt")
-        public void testUnit() throws Exception {
-            runTest("testData/intentions/removeLabeledReturnInLambda/unit.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/removeRedundantCallsOfConversionMethods")
     public static class RemoveRedundantCallsOfConversionMethods extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

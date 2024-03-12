@@ -517,6 +517,54 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda")
+    public static class LabeledReturnAsLastExpressionInLambda extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("labeledLambda.kt")
+        public void testLabeledLambda() throws Exception {
+            runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/labeledLambda.kt");
+        }
+
+        @TestMetadata("multipleBlocks.kt")
+        public void testMultipleBlocks() throws Exception {
+            runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/multipleBlocks.kt");
+        }
+
+        @TestMetadata("normal.kt")
+        public void testNormal() throws Exception {
+            runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/normal.kt");
+        }
+
+        @TestMetadata("notInsideLabeled.kt")
+        public void testNotInsideLabeled() throws Exception {
+            runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/notInsideLabeled.kt");
+        }
+
+        @TestMetadata("notLabeled.kt")
+        public void testNotLabeled() throws Exception {
+            runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/notLabeled.kt");
+        }
+
+        @TestMetadata("notLastLine.kt")
+        public void testNotLastLine() throws Exception {
+            runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/notLastLine.kt");
+        }
+
+        @TestMetadata("outerLambda.kt")
+        public void testOuterLambda() throws Exception {
+            runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/outerLambda.kt");
+        }
+
+        @TestMetadata("unit.kt")
+        public void testUnit() throws Exception {
+            runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/unit.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantConstructorKeyword")
     public static class RedundantConstructorKeyword extends AbstractSharedK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

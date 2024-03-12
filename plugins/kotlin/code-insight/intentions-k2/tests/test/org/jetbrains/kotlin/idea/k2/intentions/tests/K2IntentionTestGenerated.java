@@ -6372,6 +6372,4 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
-
-
 }
