@@ -356,9 +356,11 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         debug("Return type, throws list or signature changed --- affecting method usages");
         affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
 
-        if (!changedMethod.isPrivate() && !changedMethod.isStatic()) {
-          for (JvmNodeReferenceID subClass : unique(map(future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules), p -> p.getFirst().getReferenceID()))) {
-            affectNodeSources(context, subClass, "Affect source file of a class which overrides the changed method: ");
+        if (!changedMethod.isPrivate() && !changedMethod.isConstructor() && !changedMethod.isStatic()) {
+          if (!changedMethod.isFinal()) {
+            for (JvmNodeReferenceID subClass : unique(map(future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules), p -> p.getFirst().getReferenceID()))) {
+              affectNodeSources(context, subClass, "Affect source file of a class which overrides the changed method: ");
+            }
           }
           for (JvmNodeReferenceID id : propagated) {
             for (JvmClass subClass : future.getNodes(id, JvmClass.class)) {
@@ -434,7 +436,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         if (toRecompile.contains(AnnotationChangesTracker.Recompile.USAGES)) {
           affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
           if (changedMethod.isAbstract() || toRecompile.contains(AnnotationChangesTracker.Recompile.SUBCLASSES)) {
-            for (Pair<JvmClass, JvmMethod> pair : recurse(Pair.create(changedClass, changedMethod), p -> future.getOverridingMethods(p.first, p.second, p.second::isSameByJavaRules), false)) {
+            for (Pair<JvmClass, JvmMethod> pair : recurse(Pair.create(changedClass, changedMethod), p -> p.second.isOverridable()? future.getOverridingMethods(p.first, p.second, p.second::isSameByJavaRules) : Collections.emptyList(), false)) {
               JvmNodeReferenceID clsId = pair.first.getReferenceID();
               JvmMethod meth = pair.getSecond();
               affectMemberUsages(context, clsId, meth, future.collectSubclassesWithoutMethod(clsId, meth));
@@ -524,8 +526,10 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         }
       }
 
-      for (Pair<JvmClass, JvmMethod> overriding : future.getOverridingMethods(changedClass, removedMethod, removedMethod::isSameByJavaRules)) {
-        affectNodeSources(context, overriding.getFirst().getReferenceID(), "Affecting file by overriding: ");
+      if (removedMethod.isOverridable()) {
+        for (Pair<JvmClass, JvmMethod> overriding : future.getOverridingMethods(changedClass, removedMethod, removedMethod::isSameByJavaRules)) {
+          affectNodeSources(context, overriding.getFirst().getReferenceID(), "Affecting file by overriding: ");
+        }
       }
 
       if (!removedMethod.isConstructor() && !removedMethod.isAbstract() && !removedMethod.isStatic()) {
