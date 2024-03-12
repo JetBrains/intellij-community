@@ -47,7 +47,7 @@
     <idIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer"/>
     <indexPatternBuilder implementation="org.jetbrains.plugins.textmate.TextMatePatternBuilder"/>
     <spellchecker.support language="textmate" implementationClass="org.jetbrains.plugins.textmate.spellchecker.TextMateSpellingStrategy"/>
-    <completion.contributor language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCompletionContributor"/>
+    <completion.contributor id="TextMateCompletionContributor" language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCompletionContributor" order="last"/>
     <notificationGroup id="TextMate Bundles" displayType="BALLOON" bundle="messages.TextMateBundle" key="notification.group.textmate.bundles"/>
     <fileIconProvider implementation="org.jetbrains.plugins.textmate.TextMateBackedFileIconProvider" order="last"/>
     <lineIndentProvider implementation="org.jetbrains.plugins.textmate.editor.TextMateLineIndentProvider" />
