@@ -34,6 +34,9 @@ internal class AIAssistant241 : PluginMigration() {
       descriptor.addPluginIfNeeded(PLUGIN_ID)
     }
     else {
+      descriptor.removePlugin(PLUGIN_ID)
+      descriptor.removePluginToDownload(PLUGIN_ID)
+
       try {
         Files.createFile(descriptor.options.newConfigDir.resolve(NOT_MIGRATED_FILENAME))
       }
