@@ -230,6 +230,23 @@ public abstract class SharedK2InspectionTestGenerated extends AbstractSharedK2In
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/redundantSuspendModifier")
+        public abstract static class RedundantSuspendModifier extends AbstractSharedK2InspectionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../testData/inspections/redundantSuspendModifier/inspectionData")
+            public static class InspectionData extends AbstractSharedK2InspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inspections.test")
+                public void testInspections_test() throws Exception {
+                    runTest("../testData/inspections/redundantSuspendModifier/inspectionData/inspections.test");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/inspections/removeSetterParameterType")
         public abstract static class RemoveSetterParameterType extends AbstractSharedK2InspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)

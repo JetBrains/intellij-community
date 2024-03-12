@@ -988,6 +988,134 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/redundantSuspend")
+    public static class RedundantSuspend extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("actual.kt")
+        public void testActual() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/actual.kt");
+        }
+
+        @TestMetadata("coroutineContext.kt")
+        public void testCoroutineContext() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
+        }
+
+        @TestMetadata("interface.kt")
+        public void testInterface() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/interface.kt");
+        }
+
+        @TestMetadata("interfaceNoBody.kt")
+        public void testInterfaceNoBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/interfaceNoBody.kt");
+        }
+
+        @TestMetadata("invokeOperator.kt")
+        public void testInvokeOperator() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/invokeOperator.kt");
+        }
+
+        @TestMetadata("invokingByQualified.kt")
+        public void testInvokingByQualified() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
+        }
+
+        @TestMetadata("lambdaCall.kt")
+        public void testLambdaCall() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/lambdaCall.kt");
+        }
+
+        @TestMetadata("nonSuspendingLoop.kt")
+        public void testNonSuspendingLoop() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/nonSuspendingLoop.kt");
+        }
+
+        @TestMetadata("nonSuspendingLoopExtensionProperty.kt")
+        public void testNonSuspendingLoopExtensionProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/nonSuspendingLoopExtensionProperty.kt");
+        }
+
+        @TestMetadata("nonSuspendingLoopIteratorOtherClass.kt")
+        public void testNonSuspendingLoopIteratorOtherClass() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/nonSuspendingLoopIteratorOtherClass.kt");
+        }
+
+        @TestMetadata("nonSuspendingLoopLocalExtensionProperty.kt")
+        public void testNonSuspendingLoopLocalExtensionProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/nonSuspendingLoopLocalExtensionProperty.kt");
+        }
+
+        @TestMetadata("nullableFunctionType.kt")
+        public void testNullableFunctionType() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/nullableFunctionType.kt");
+        }
+
+        @TestMetadata("operator.kt")
+        public void testOperator() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/operator.kt");
+        }
+
+        @TestMetadata("operatorAssignment.kt")
+        public void testOperatorAssignment() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/operatorAssignment.kt");
+        }
+
+        @TestMetadata("override.kt")
+        public void testOverride() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/override.kt");
+        }
+
+        @TestMetadata("parenthesized.kt")
+        public void testParenthesized() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/parenthesized.kt");
+        }
+
+        @TestMetadata("recursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/recursiveCall.kt");
+        }
+
+        @TestMetadata("recursiveOperator.kt")
+        public void testRecursiveOperator() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/recursiveOperator.kt");
+        }
+
+        @TestMetadata("recursiveOperatorAssignment.kt")
+        public void testRecursiveOperatorAssignment() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/recursiveOperatorAssignment.kt");
+        }
+
+        @TestMetadata("selfCallWithDifferentReceiver.kt")
+        public void testSelfCallWithDifferentReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/selfCallWithDifferentReceiver.kt");
+        }
+
+        @TestMetadata("suspendingLoop.kt")
+        public void testSuspendingLoop() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/suspendingLoop.kt");
+        }
+
+        @TestMetadata("suspendingLoopExtensionProperty.kt")
+        public void testSuspendingLoopExtensionProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/suspendingLoopExtensionProperty.kt");
+        }
+
+        @TestMetadata("suspendingLoopIteratorOtherClass.kt")
+        public void testSuspendingLoopIteratorOtherClass() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/suspendingLoopIteratorOtherClass.kt");
+        }
+
+        @TestMetadata("suspendingLoopLocalExtensionProperty.kt")
+        public void testSuspendingLoopLocalExtensionProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/suspendingLoopLocalExtensionProperty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/redundantValueArgument")
     public static class RedundantValueArgument extends AbstractSharedK1LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -10493,64 +10493,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/redundantSuspend")
-    public static class RedundantSuspend extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("actual.kt")
-        public void testActual() throws Exception {
-            runTest("testData/inspectionsLocal/redundantSuspend/actual.kt");
-        }
-
-        @TestMetadata("coroutineContext.kt")
-        public void testCoroutineContext() throws Exception {
-            runTest("testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
-        }
-
-        @TestMetadata("invokeOperator.kt")
-        public void testInvokeOperator() throws Exception {
-            runTest("testData/inspectionsLocal/redundantSuspend/invokeOperator.kt");
-        }
-
-        @TestMetadata("invokingByQualified.kt")
-        public void testInvokingByQualified() throws Exception {
-            runTest("testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
-        }
-
-        @TestMetadata("lambdaCall.kt")
-        public void testLambdaCall() throws Exception {
-            runTest("testData/inspectionsLocal/redundantSuspend/lambdaCall.kt");
-        }
-
-        @TestMetadata("nullableFunctionType.kt")
-        public void testNullableFunctionType() throws Exception {
-            runTest("testData/inspectionsLocal/redundantSuspend/nullableFunctionType.kt");
-        }
-
-        @TestMetadata("override.kt")
-        public void testOverride() throws Exception {
-            runTest("testData/inspectionsLocal/redundantSuspend/override.kt");
-        }
-
-        @TestMetadata("parenthesized.kt")
-        public void testParenthesized() throws Exception {
-            runTest("testData/inspectionsLocal/redundantSuspend/parenthesized.kt");
-        }
-
-        @TestMetadata("recursiveCall.kt")
-        public void testRecursiveCall() throws Exception {
-            runTest("testData/inspectionsLocal/redundantSuspend/recursiveCall.kt");
-        }
-
-        @TestMetadata("selfCallWithDifferentReceiver.kt")
-        public void testSelfCallWithDifferentReceiver() throws Exception {
-            runTest("testData/inspectionsLocal/redundantSuspend/selfCallWithDifferentReceiver.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantUnitExpression")
     public static class RedundantUnitExpression extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

@@ -1562,64 +1562,6 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/inspectionsLocal/redundantSuspend")
-    public static class RedundantSuspend extends AbstractFe10BindingLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("actual.kt")
-        public void testActual() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/actual.kt");
-        }
-
-        @TestMetadata("coroutineContext.kt")
-        public void testCoroutineContext() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
-        }
-
-        @TestMetadata("invokeOperator.kt")
-        public void testInvokeOperator() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/invokeOperator.kt");
-        }
-
-        @TestMetadata("invokingByQualified.kt")
-        public void testInvokingByQualified() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
-        }
-
-        @TestMetadata("lambdaCall.kt")
-        public void testLambdaCall() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/lambdaCall.kt");
-        }
-
-        @TestMetadata("nullableFunctionType.kt")
-        public void testNullableFunctionType() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/nullableFunctionType.kt");
-        }
-
-        @TestMetadata("override.kt")
-        public void testOverride() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/override.kt");
-        }
-
-        @TestMetadata("parenthesized.kt")
-        public void testParenthesized() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/parenthesized.kt");
-        }
-
-        @TestMetadata("recursiveCall.kt")
-        public void testRecursiveCall() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/recursiveCall.kt");
-        }
-
-        @TestMetadata("selfCallWithDifferentReceiver.kt")
-        public void testSelfCallWithDifferentReceiver() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/selfCallWithDifferentReceiver.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/inspectionsLocal/redundantExplicitType")
     public static class RedundantExplicitType extends AbstractFe10BindingLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
