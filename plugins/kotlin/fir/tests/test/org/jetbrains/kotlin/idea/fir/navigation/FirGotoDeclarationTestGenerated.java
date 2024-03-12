@@ -33,6 +33,11 @@ public class FirGotoDeclarationTestGenerated extends AbstractFirGotoDeclarationT
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/dataClassToString.test");
     }
 
+    @TestMetadata("flexibleType.test")
+    public void testFlexibleType() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/flexibleType.test");
+    }
+
     @TestMetadata("importAlias.test")
     public void testImportAlias() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/importAlias.test");
@@ -73,9 +78,9 @@ public class FirGotoDeclarationTestGenerated extends AbstractFirGotoDeclarationT
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/labeledThisToMemberExtension.test");
     }
 
-    @TestMetadata("platformType.test")
-    public void testPlatformType() throws Exception {
-        runTest("../../idea/tests/testData/navigation/gotoDeclaration/platformType.test");
+    @TestMetadata("listFlexibleType.test")
+    public void testListFlexibleType() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/listFlexibleType.test");
     }
 
     @TestMetadata("thisExtensionFunction.test")
