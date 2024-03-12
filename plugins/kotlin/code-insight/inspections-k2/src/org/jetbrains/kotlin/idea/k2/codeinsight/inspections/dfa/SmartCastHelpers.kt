@@ -55,18 +55,18 @@ private fun getValuesInExpression(expr: KtExpression): Map<KtSymbol, KtType> {
     val map = hashMapOf<KtSymbol, KtType>()
     SyntaxTraverser.psiTraverser(expr)
         .filter(KtReferenceExpression::class.java)
-        .forEach { e -> 
+        .forEach { e ->
             val symbol = e.mainReference.resolveToSymbol()
             if (symbol != null) {
                 val type = e.getKtType()
                 if (type != null) {
                     map[symbol] = type
                 }
-                
+
             }
         }
     return map
-        
+
 }
 
 
@@ -80,8 +80,10 @@ private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtElem
             } else {
                 emptyList()
             }
+
         is KtParenthesizedExpression ->
             getConditionScopes(parent, value)
+
         is KtBinaryExpression -> {
             if (parent.operationToken != KtTokens.ANDAND && parent.operationToken != KtTokens.OROR) emptyList()
             else {
@@ -90,13 +92,16 @@ private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtElem
                 else getConditionScopes(parent, newValue)
             }
         }
+
         is KtWhenConditionWithExpression ->
             when (value) {
-                false -> (generateSequence(parent.nextSibling) {it.nextSibling}.filterIsInstance<KtWhenCondition>() +
-                        generateSequence(parent.parent.nextSibling) {it.nextSibling}.filterIsInstance<KtWhenEntry>()).toList()
+                false -> (generateSequence(parent.nextSibling) { it.nextSibling }.filterIsInstance<KtWhenCondition>() +
+                        generateSequence(parent.parent.nextSibling) { it.nextSibling }.filterIsInstance<KtWhenEntry>()).toList()
+
                 true -> listOfNotNull((parent.parent as? KtWhenEntry)?.expression)
                 else -> emptyList()
             }
+
         is KtContainerNode ->
             when (val gParent = parent.parent) {
                 is KtIfExpression ->
@@ -117,14 +122,17 @@ private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtElem
                         }
                         result
                     } else emptyList()
+
                 is KtWhileExpression ->
                     if (gParent.condition == expr && value != false) {
                         listOfNotNull(gParent.body)
                     } else {
                         emptyList()
                     }
+
                 else -> emptyList()
             }
+
         else -> emptyList()
     }
 }

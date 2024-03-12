@@ -7,14 +7,10 @@ import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor
 
-class KtThisDescriptor(private val dfType : DfType) : VariableDescriptor  {
-    override fun isStable(): Boolean {
-        return true
-    }
+class KtThisDescriptor(private val dfType: DfType) : VariableDescriptor {
+    override fun isStable(): Boolean = true
 
-    override fun isImplicitReadPossible(): Boolean {
-        return true
-    }
+    override fun isImplicitReadPossible(): Boolean = true
 
     override fun getDfType(qualifier: DfaVariableValue?): DfType = dfType
 
@@ -23,9 +19,10 @@ class KtThisDescriptor(private val dfType : DfType) : VariableDescriptor  {
     override fun hashCode(): Int = dfType.hashCode()
 
     override fun toString(): String {
-        if (dfType is DfReferenceType) {
-            return "${dfType.constraint}${if(dfType.nullability == DfaNullability.NULLABLE) "?" else ""}.this"
-        }
-        return "$dfType.this"
+        val receiver = if (dfType is DfReferenceType)
+            dfType.constraint.toString() + if (dfType.nullability == DfaNullability.NULLABLE) "?" else ""
+        else
+            dfType.toString()
+        return "$receiver.this"
     }
 }

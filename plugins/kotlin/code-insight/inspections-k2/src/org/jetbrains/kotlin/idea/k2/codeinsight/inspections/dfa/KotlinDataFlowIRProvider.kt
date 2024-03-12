@@ -29,11 +29,14 @@ class KotlinDataFlowIRProvider : DataFlowIRProvider {
             parent is KtContainerNode &&
                     (gParent is KtIfExpression || gParent is KtWhileExpression || gParent is KtForExpression)
                     || parent is KtWhenEntry -> element.textRange
+
             parent is KtBinaryExpression && parent.right == element &&
                     SHORT_CIRCUITING_TOKENS.contains(parent.operationToken) ->
                 parent.operationReference.textRange.union(element.textRange)
+
             parent is KtSafeQualifiedExpression && parent.selectorExpression == element ->
                 parent.operationTokenNode.textRange.union(element.textRange)
+
             parent is KtBlockExpression -> {
                 val prevExpression = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element) as? KtExpression
                 if (prevExpression != null && unreachableElements.contains(prevExpression)) null
@@ -47,6 +50,7 @@ class KotlinDataFlowIRProvider : DataFlowIRProvider {
                     }
                 }
             }
+
             else -> null
         }
     }

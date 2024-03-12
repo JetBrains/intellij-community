@@ -10,8 +10,10 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 
-class KotlinClassToJavaClassInstruction(ktAnchor: KotlinAnchor.KotlinExpressionAnchor,
-        private val targetClassType: TypeConstraint): EvalInstruction(ktAnchor, 1) {
+class KotlinClassToJavaClassInstruction(
+    ktAnchor: KotlinAnchor.KotlinExpressionAnchor,
+    private val targetClassType: TypeConstraint
+) : EvalInstruction(ktAnchor, 1) {
     override fun eval(factory: DfaValueFactory, state: DfaMemoryState, vararg arguments: DfaValue): DfaValue {
         val arg = state.getDfType(arguments[0]).getConstantOfType(KtClassDef::class.java)
         if (arg != null) {

@@ -26,7 +26,13 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import java.util.stream.Stream
 
-class KtClassDef(val module: KtModule, val hash: Int, val cls: KtSymbolPointer<KtClassOrObjectSymbol>) : TypeConstraints.ClassDef {
+class KtClassDef(
+    private val module: KtModule,
+    private val hash: Int,
+    private val cls: KtSymbolPointer<KtClassOrObjectSymbol>,
+    private val kind: KtClassKind,
+    private val modality: Modality?
+) : TypeConstraints.ClassDef {
     override fun isInheritor(superClassQualifiedName: String): Boolean =
         analyze(module) {
             val classLikeSymbol = cls.restoreSymbol() ?: return@analyze false
@@ -51,26 +57,13 @@ class KtClassDef(val module: KtModule, val hash: Int, val cls: KtSymbolPointer<K
         return isInheritor(other) || other.isInheritor(this)
     }
 
-    override fun isInterface(): Boolean = analyze(module) {
-        val classLikeSymbol = cls.restoreSymbol() ?: return@analyze false
-        classLikeSymbol.classKind == KtClassKind.INTERFACE || classLikeSymbol.classKind == KtClassKind.ANNOTATION_CLASS
-    }
+    override fun isInterface(): Boolean = kind == KtClassKind.INTERFACE || kind == KtClassKind.ANNOTATION_CLASS
 
-    override fun isEnum(): Boolean = analyze(module) {
-        val classLikeSymbol = cls.restoreSymbol() ?: return@analyze false
-        classLikeSymbol.classKind == KtClassKind.ENUM_CLASS
-    }
+    override fun isEnum(): Boolean = kind == KtClassKind.ENUM_CLASS
 
-    override fun isFinal(): Boolean = analyze(module) {
-        val classLikeSymbol = cls.restoreSymbol() ?: return@analyze false
-        classLikeSymbol.classKind != KtClassKind.ANNOTATION_CLASS &&
-                classLikeSymbol is KtSymbolWithModality && classLikeSymbol.modality == Modality.FINAL
-    }
+    override fun isFinal(): Boolean = kind != KtClassKind.ANNOTATION_CLASS && modality == Modality.FINAL
 
-    override fun isAbstract(): Boolean = analyze(module) {
-        val classLikeSymbol = cls.restoreSymbol() ?: return@analyze false
-        classLikeSymbol is KtSymbolWithModality && classLikeSymbol.modality == Modality.ABSTRACT
-    }
+    override fun isAbstract(): Boolean = modality == Modality.ABSTRACT
 
     override fun getEnumConstant(ordinal: Int): PsiEnumConstant? = analyze(module) {
         val classLikeSymbol = cls.restoreSymbol() ?: return@analyze null
@@ -127,7 +120,8 @@ class KtClassDef(val module: KtModule, val hash: Int, val cls: KtSymbolPointer<K
     companion object {
         context(KtAnalysisSession)
         fun KtClassOrObjectSymbol.classDef(): KtClassDef = KtClassDef(
-            useSiteModule, classIdIfNonLocal?.hashCode() ?: name.hashCode(), createPointer()
+            useSiteModule, classIdIfNonLocal?.hashCode() ?: name.hashCode(), createPointer(),
+            classKind, (this as? KtSymbolWithModality)?.modality
         )
 
         fun fromJvmClassName(context: KtElement, jvmClassName: String): KtClassDef? {
@@ -142,29 +136,26 @@ class KtClassDef(val module: KtModule, val hash: Int, val cls: KtSymbolPointer<K
 
         fun typeConstraintFactory(context: KtElement): TypeConstraints.TypeConstraintFactory {
             return object : TypeConstraints.TypeConstraintFactory {
-                override fun create(def: TypeConstraints.ClassDef): TypeConstraint.Exact {
-                    if (def is KtClassDef) {
-                        return analyze(def.module) {
-                            var symbol = def.cls.restoreSymbol() ?: return@analyze TypeConstraints.unresolved(def.qualifiedName ?: "???")
-                            var correctedDef = def
-                            val classId = symbol.classIdIfNonLocal
-                            if (classId != null) {
-                                val correctedClassId = JavaToKotlinClassMap.mapJavaToKotlin(classId.asSingleFqName())
-                                if (correctedClassId != null) {
-                                    val correctedSymbol = getClassOrObjectSymbolByClassId(correctedClassId)
-                                    if (correctedSymbol != null) {
-                                        correctedDef = correctedSymbol.classDef()
-                                        symbol = correctedSymbol
-                                    }
-                                }
-                            }
-                            return@analyze when {
-                                symbol.classKind == KtClassKind.OBJECT -> TypeConstraints.singleton(correctedDef)
-                                else -> TypeConstraints.exactClass(correctedDef)
+                override fun create(def: TypeConstraints.ClassDef): TypeConstraint.Exact = if (def !is KtClassDef) {
+                    super.create(def)
+                } else analyze(def.module) {
+                    var symbol = def.cls.restoreSymbol() ?: return@analyze TypeConstraints.unresolved(def.qualifiedName ?: "???")
+                    var correctedDef = def
+                    val classId = symbol.classIdIfNonLocal
+                    if (classId != null) {
+                        val correctedClassId = JavaToKotlinClassMap.mapJavaToKotlin(classId.asSingleFqName())
+                        if (correctedClassId != null) {
+                            val correctedSymbol = getClassOrObjectSymbolByClassId(correctedClassId)
+                            if (correctedSymbol != null) {
+                                correctedDef = correctedSymbol.classDef()
+                                symbol = correctedSymbol
                             }
                         }
                     }
-                    return super.create(def)
+                    when {
+                        symbol.classKind == KtClassKind.OBJECT -> TypeConstraints.singleton(correctedDef)
+                        else -> TypeConstraints.exactClass(correctedDef)
+                    }
                 }
 
                 override fun create(fqn: String): TypeConstraint.Exact {

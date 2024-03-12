@@ -619,7 +619,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                         // var x2 = x1 -- let's suppress this
                         return true
                     }
-                    val typeParameterType = when(kotlinType) {
+                    val typeParameterType = when (kotlinType) {
                         is KtTypeParameterType -> kotlinType
                         is KtIntersectionType -> kotlinType.conjuncts.find { it is KtTypeParameterType }
                         else -> null
