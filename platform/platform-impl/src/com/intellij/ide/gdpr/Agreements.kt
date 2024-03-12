@@ -54,7 +54,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
       }
     )
 
-    if (ApplicationInfoImpl.getShadowInstance().isEAP && !ApplicationInfoImpl.getShadowInstanceImpl().isEapLikeRelease) {
+    if (ApplicationInfoImpl.getShadowInstance().isEAP && isReleaseAgreementsEnabled()) {
       acceptButton(
         text = bundle.getString("userAgreement.dialog.continue"),
         isEnabled = false,
@@ -128,4 +128,10 @@ private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlC
     .append(allProductChunk)
     .append(preferenceChunk)
     .wrapWithHtmlBody()
+}
+
+//test.release.agreements property is only for test purposes. To get release dialogs on EAP versions
+internal fun isReleaseAgreementsEnabled(): Boolean {
+  val property = System.getProperty("test.release.agreements")
+  return "true".equals(property, ignoreCase = true)
 }
