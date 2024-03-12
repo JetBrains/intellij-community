@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -375,9 +376,13 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
         LoadingState.PROJECT_OPENED.isOccurred()) {
       ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
       if (actionManager != null && actionManager.getId(this) != null) {
-        LOG.warn("ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
-                 "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
-                 "using `use-shortcut-of` or wrapping with EmptyAction.wrap().", new Throwable(this.toString()));
+        LOG.warn(PluginException.createByClass(
+          "ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
+          "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
+          "using `use-shortcut-of` or wrapping with EmptyAction.wrap(). Action: " + this,
+          null,
+          getClass())
+        );
       }
     }
     myShortcutSet = shortcutSet;
@@ -428,7 +433,10 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace, String id) {
     Supplier<String> value = myActionTextOverrides.get(fromPlace);
     if (value == null) {
-      LOG.error("Missing override-text for action " + id + " and place specified in use-text-of-place: " + fromPlace);
+      LOG.error(PluginException.createByClass(
+        "Missing override-text for action id: " + id + ", use-text-of-place: " + fromPlace,
+        null,
+        getClass()));
       return;
     }
     myActionTextOverrides = myActionTextOverrides.plus(toPlace, value);
