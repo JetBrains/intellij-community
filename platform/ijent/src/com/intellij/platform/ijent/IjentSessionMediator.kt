@@ -180,7 +180,10 @@ private suspend fun ijentProcessExitAwaiter(
       }
       finally {
         // There's `LOG.error(message, Attachment)`, but it doesn't work well with `LoggedErrorProcessor.executeAndReturnLoggedError`.
-        LOG.error(RuntimeExceptionWithAttachments("The process suddenly exited with the code $exitCode", Attachment("stderr", stderr.toString())))
+        LOG.error(RuntimeExceptionWithAttachments(
+          "The process $ijentId suddenly exited with the code $exitCode",
+          Attachment("stderr", stderr.toString()),
+        ))
       }
     }
   }
