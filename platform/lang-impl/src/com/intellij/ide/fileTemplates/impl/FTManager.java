@@ -67,7 +67,7 @@ final class FTManager {
       String qName = bundled.getQualifiedName();
       FileTemplateBase previous = templates.put(qName, bundled);
       if (previous != null) {
-        LOG.warn("Duplicate bundled template " + qName + " [" + template + ", " + previous + ']');
+        LOG.error("Duplicate bundled template " + qName + " [" + template + ", " + previous + ']');
       }
     }
   }
