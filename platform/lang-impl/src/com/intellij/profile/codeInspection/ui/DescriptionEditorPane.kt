@@ -1,31 +1,40 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui
 
-import com.intellij.codeEditor.printing.HTMLTextPainter
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
+import com.intellij.lang.documentation.QuickDocHighlightingHelper
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.DefaultProjectFactory
-import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.JBColor
-import com.intellij.util.ui.HTMLEditorKitBuilder
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.components.JBHtmlPane
+import com.intellij.ui.components.JBHtmlPaneConfiguration
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+import com.intellij.util.ui.StyleSheetUtil
+import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import java.awt.Color
 import java.io.IOException
-import java.io.StringReader
+import java.util.*
 import javax.swing.JEditorPane
-import javax.swing.text.html.HTMLEditorKit
 
-open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
+/**
+ * A custom editor pane used for displaying descriptions in HTML format.
+ *
+ * @see JBHtmlPane
+ */
+open class DescriptionEditorPane : JBHtmlPane(
+  JBHtmlPaneStyleConfiguration(),
+  JBHtmlPaneConfiguration(
+    emptyMap(), { null }, { null },
+    { StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre, a {overflow-wrap: anywhere;}") },
+    null, Collections.emptyList()
+  )
+) {
 
   init {
     isEditable = false
     isOpaque = false
-    editorKit = HTMLEditorKitBuilder().withGapsBetweenParagraphs().withoutContentCss().build()
-    val css = (this.editorKit as HTMLEditorKit).styleSheet
-    css.addRule("a {overflow-wrap: anywhere;}")
-    css.addRule("pre {padding:10px;}")
   }
 
   override fun getBackground(): Color = JBColor.PanelBackground
@@ -42,15 +51,9 @@ open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
  * @param text The HTML content as a [String] to be displayed in the [JEditorPane].
  * @throws RuntimeException if an exception occurs while parsing or displaying the HTML content.
  */
-fun JEditorPane.readHTML(text: String) {
-  val document = Jsoup.parse(text)
-
-  for (pre in document.select("pre")) {
-    if ("editor-background" !in pre.classNames()) pre.addClass("editor-background")
-  }
-
+fun JEditorPane.readHTML(text: @Nls String) {
   try {
-    read(StringReader(document.html()), null)
+    setText(text)
   }
   catch (e: IOException) {
     throw RuntimeException(e)
@@ -79,31 +82,15 @@ fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
   document.select("pre code").forEach { codeSnippet ->
     if (codeSnippet.hasAttr("lang")) lang = LanguageUtil.findRegisteredLanguage(codeSnippet.attr("lang")) ?: lang
     val defaultProject = DefaultProjectFactory.getInstance().defaultProject
-    val psiFileFactory = PsiFileFactory.getInstance(defaultProject)
 
-    val defaultFile = psiFileFactory.createFileFromText(PlainTextLanguage.INSTANCE, "")
-    val content = codeSnippet.wholeText()
-      .trimIndent()
-      .trimEnd()
-      .replaceIndent("  ")
-    var snippet: String
-
-    try {
-      val file = psiFileFactory.createFileFromText(lang, "") ?: defaultFile
-      snippet = HTMLTextPainter.convertCodeFragmentToHTMLFragmentWithInlineStyles(file, content)
-    } catch (e: IllegalStateException) {
-      snippet = HTMLTextPainter.convertCodeFragmentToHTMLFragmentWithInlineStyles(defaultFile, content)
-    }
-
-    codeSnippet.parent()?.html(
-      snippet.removePrefix("<pre>").removeSuffix("</pre>").trimMargin()
-    )
+    val styledBlock = Jsoup.parse(QuickDocHighlightingHelper.getStyledCodeBlock(defaultProject, lang, codeSnippet.wholeText()))
+    val styledHtml = styledBlock.select("pre code").first()?.html()
+    if (styledHtml != null) codeSnippet.html(styledHtml)
   }
 
-  document.select("pre").forEach { it.addClass("editor-background") }
-
   try {
-    read(StringReader(document.html()), null)
+    @Suppress("HardCodedStringLiteral")
+    setText(document.html())
   }
   catch (e: IOException) {
     throw RuntimeException(e)
