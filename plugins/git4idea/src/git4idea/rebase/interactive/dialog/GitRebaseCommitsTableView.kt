@@ -273,7 +273,7 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
         else -> {
         }
       }
-      append(IndexedDetails.getSubject(commitsTable.model.getCommitMessage(row)), attributes, true)
+      append(IndexedDetails.getSubject(commitsTable.model.getPresentation(row)), attributes, true)
       SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
     }
   }

@@ -132,7 +132,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
 
   protected @Nullable List<? extends GitRebaseEntry> collectNewEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
     Ref<List<? extends GitRebaseEntry>> newText = Ref.create();
-    List<GitRebaseEntryWithDetails> entriesWithDetails = loadDetailsForEntries(entries);
+    List<GitRebaseEntry> entriesWithDetails = loadDetailsForEntries(entries);
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
       newText.set(showInteractiveRebaseDialog(entriesWithDetails));
@@ -140,19 +140,19 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     return newText.get();
   }
 
-  private @Nullable List<? extends GitRebaseEntry> showInteractiveRebaseDialog(List<GitRebaseEntryWithDetails> entriesWithDetails) {
-    GitInteractiveRebaseDialog<GitRebaseEntryWithDetails> editor = new GitInteractiveRebaseDialog<>(myProject, myRoot, entriesWithDetails);
+  private @Nullable List<? extends GitRebaseEntry> showInteractiveRebaseDialog(List<GitRebaseEntry> entries) {
+    GitInteractiveRebaseDialog<GitRebaseEntry> editor = new GitInteractiveRebaseDialog<>(myProject, myRoot, entries);
     DialogManager.show(editor);
     if (editor.isOK()) {
-      GitRebaseTodoModel<GitRebaseEntryWithDetails> rebaseTodoModel = editor.getModel();
+      GitRebaseTodoModel<GitRebaseEntry> rebaseTodoModel = editor.getModel();
       processModel(rebaseTodoModel);
       return convertToEntries(rebaseTodoModel);
     }
     return null;
   }
 
-  protected void processModel(@NotNull GitRebaseTodoModel<? extends GitRebaseEntryWithDetails> rebaseTodoModel) {
-    processModel(rebaseTodoModel, (entry) -> entry.getCommitDetails().getFullMessage());
+  protected void processModel(@NotNull GitRebaseTodoModel<? extends GitRebaseEntry> rebaseTodoModel) {
+    processModel(rebaseTodoModel, (entry) -> ((GitRebaseEntryWithDetails)entry).getCommitDetails().getFullMessage());
   }
 
   protected <T extends GitRebaseEntry> void processModel(
@@ -171,15 +171,18 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
     myRewordedCommitMessageProvider.save(myProject, myRoot, messages);
   }
 
-  private @NotNull List<GitRebaseEntryWithDetails> loadDetailsForEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
-    List<? extends VcsCommitMetadata> details = GitLogUtil.collectMetadata(
-      myProject,
-      myRoot,
-      ContainerUtil.map(entries, entry -> entry.getCommit())
-    );
-    List<GitRebaseEntryWithDetails> entriesWithDetails = new ArrayList<>();
-    for (int i = 0; i < entries.size(); i++) {
-      entriesWithDetails.add(new GitRebaseEntryWithDetails(entries.get(i), details.get(i)));
+  private @NotNull List<GitRebaseEntry> loadDetailsForEntries(@NotNull List<GitRebaseEntry> entries) throws VcsException {
+    List<String> commitList = entries.stream().filter(entry -> entry.getAction().isCommit()).map(GitRebaseEntry::getCommit).toList();
+    List<? extends VcsCommitMetadata> details = GitLogUtil.collectMetadata(myProject, myRoot, commitList);
+    List<GitRebaseEntry> entriesWithDetails = new ArrayList<>();
+    int detailsIndex = 0;
+    for (GitRebaseEntry entry : entries) {
+      if (entry.getAction().isCommit()) {
+        entriesWithDetails.add(new GitRebaseEntryWithDetails(entry, details.get(detailsIndex++)));
+      }
+      else {
+        entriesWithDetails.add(entry);
+      }
     }
     return entriesWithDetails;
   }
