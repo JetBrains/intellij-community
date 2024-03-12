@@ -15,6 +15,7 @@ import io.opentelemetry.sdk.metrics.internal.data.*
 import io.opentelemetry.sdk.resources.Resource
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import kotlin.io.path.fileSize
 
 internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
   companion object {
@@ -128,6 +129,8 @@ internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
 object MetricsJsonImporter {
   fun fromJsonFile(jsonPath: Path): Collection<MetricData> {
     val module = SimpleModule().apply { addDeserializer(MetricData::class.java, MetricDataDeserializer()) }
+
+    if (jsonPath.fileSize() == 0L) return emptyList()
 
     return jacksonObjectMapper()
       .registerModule(module)
