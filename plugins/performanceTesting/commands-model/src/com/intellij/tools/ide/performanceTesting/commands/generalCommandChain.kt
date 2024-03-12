@@ -564,6 +564,10 @@ fun <T : CommandChain> T.setModuleJdk(moduleName: String, jdk: SdkObject): T {
   return this
 }
 
+fun <T : CommandChain> T.addModuleContentRoot(moduleName: String, contentRootPath: String): T = apply {
+  addCommand("${CMD_PREFIX}addContentRootToModule $moduleName,$contentRootPath")
+}
+
 fun <T : CommandChain> T.toggleMavenProfiles(profileIds: Set<String>, enable: Boolean = true): T = apply {
   addCommand("${CMD_PREFIX}toggleMavenProfiles ${profileIds.joinToString(",")} $enable")
 }
