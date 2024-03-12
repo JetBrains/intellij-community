@@ -7,8 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -27,10 +25,10 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.BorderLayout
-import java.awt.Dimension
 import java.awt.FlowLayout
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 class CombinedBlockProducer(
   val id: CombinedBlockId,
@@ -57,7 +55,7 @@ interface CombinedDiffBlockFactory<ID : CombinedBlockId> {
   fun createBlock(project: Project, content: CombinedDiffBlockContent): CombinedDiffBlock<ID>
 }
 
-class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
+internal class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
   override fun createBlock(project: Project,
                            content: CombinedDiffBlockContent): CombinedDiffBlock<CombinedPathBlockId> =
     with(content.blockId as CombinedPathBlockId) {
@@ -155,54 +153,40 @@ internal class CombinedSimpleDiffBlock(project: Project,
                                        override val id: CombinedPathBlockId,
                                        initialContent: JComponent,
                                        isPathOnlyHeader: Boolean
-) : CombinedDiffBlock<CombinedPathBlockId>,
-    CombinedDiffRoundedPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), CombinedDiffUI.BLOCK_ARC) {
+) : CombinedDiffBlock<CombinedPathBlockId> {
 
   private val pathOnlyHeader: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, true)
   private val headerWithToolbar: CombinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false)
 
   override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
 
-  override val stickyHeader: JComponent = CombinedDiffRoundedPanel(BorderLayout(0, 0), CombinedDiffUI.BLOCK_ARC, true)
+  override val stickyHeader: JComponent = CombinedDiffStickyHeaderPanel(BorderLayout(0, 0), CombinedDiffUI.BLOCK_ARC)
     .apply {
-      add(CombinedSimpleDiffHeader(project, id, false), BorderLayout.CENTER)
+      background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
+      val combinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false).apply {
+        background = null
+        isOpaque = false
+      }
+      add(combinedSimpleDiffHeader, BorderLayout.CENTER)
     }
 
   override val body: Wrapper = Wrapper(initialContent)
 
-  private var editors: List<Editor> = emptyList()
-
-  override fun getPreferredSize(): Dimension {
-    val preferredSize = super.getPreferredSize()
-    if (editors.isEmpty()) return preferredSize
-
-    // TODO: investigate why sometimes the size of the editor's viewport is calculated incorrectly
-    var someError = 0
-    editors.forEach { e ->
-      someError = maxOf((e as EditorEx).gutterComponentEx.preferredSize.height - body.targetComponent.preferredSize.height, someError)
-    }
-    if (someError > 0) {
-      preferredSize.height += someError
-    }
-    return preferredSize
+  override val component: JPanel = FillingRoundedRectanglePanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), CombinedDiffUI.BLOCK_ARC).apply {
+    fillColor = UIUtil.getPanelBackground()
   }
 
-
   init {
-    add(header)
-    add(body)
-    isOpaque = true
+    component.add(header)
+    component.add(body)
   }
 
   override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
     val viewer = newContent.viewer
-    editors = viewer.editors
     body.setContent(viewer.component)
     header.setContent(if (viewer is CombinedDiffLoadingBlock) pathOnlyHeader else headerWithToolbar)
-    validate()
+    component.validate()
   }
-
-  override val component = this
   override fun dispose() {}
 }
 
