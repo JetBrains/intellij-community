@@ -10,7 +10,7 @@ LangString create_desktop_shortcut ${LANG_JAPANESE} "デスクトップショー
 LangString update_path_var_group ${LANG_JAPANESE} "PATH 変数の更新 (再起動が必要です)"
 LangString update_path_var_label ${LANG_JAPANESE} 'PATH に "bin" フォルダーを追加'
 LangString update_context_menu_group ${LANG_JAPANESE} "コンテキストメニューの更新"
-LangString update_context_menu_label ${LANG_JAPANESE} '"プロジェクトとしてフォルダーを開く" の追加’
+LangString update_context_menu_label ${LANG_JAPANESE} '"プロジェクトとしてフォルダーを開く" の追加'
 LangString create_associations_group ${LANG_JAPANESE} "関連付けの作成"
 ; Rider-specific
 LangString additional_features ${LANG_JAPANESE} "追加機能"
@@ -27,13 +27,13 @@ LangString confirm_delete_rider_build_tools ${LANG_JAPANESE} "${MUI_PRODUCT} ${M
 LangString share_uninstall_feedback ${LANG_JAPANESE} "アンインストールのフィードバックを共有"
 
 ; Installation message boxes
-LangString current_version_already_installed ${LANG_JAPANESE} "${MUI_PRODUCT} の現在のバージョンはすでにインストールされています。 続行しますか？"
+LangString current_version_already_installed ${LANG_JAPANESE} "${MUI_PRODUCT} の現在のバージョンはすでにインストールされています。続行しますか？"
 LangString uninstall_previous_installations_title ${LANG_JAPANESE} "古いバージョンのアンインストール"
 LangString uninstall_previous_installations_prompt ${LANG_JAPANESE} "アンインストールする ${MUI_PRODUCT} バージョンを選択してください。"
 LangString uninstall_previous_installations_silent ${LANG_JAPANESE} "サイレントモードでアンインストール (古いバージョンの設定と構成は削除されません)"
-LangString uninstaller_relocated ${LANG_JAPANESE} "アンインストールにより ${MUI_PRODUCT} インストールのフォルダーが検出されませんでした。 uninstall.exe がインストールフォルダーから移動された可能性があります。"
+LangString uninstaller_relocated ${LANG_JAPANESE} "アンインストールにより ${MUI_PRODUCT} インストールのフォルダーが検出されませんでした。uninstall.exe がインストールフォルダーから移動された可能性があります。"
 LangString choose_empty_folder ${LANG_JAPANESE} "$INSTDIR が空ではありません。$\n空のフォルダーを選択してください。"
-LangString application_running ${LANG_JAPANESE} "${MUI_PRODUCT} が実行中です。 アプリケーションを閉じて、アンインストールを再試行するために OK を押すか、キャンセルを押して中止してください。"
+LangString application_running ${LANG_JAPANESE} "${MUI_PRODUCT} が実行中です。アプリケーションを閉じて、アンインストールを再試行するために OK を押すか、キャンセルを押して中止してください。"
 LangString not_supported_32bit_win_version ${LANG_JAPANESE} "${MUI_PRODUCT} は Microsoft Windows 32 ビットバージョンをサポートしていません。"
 LangString path_var_too_long ${LANG_JAPANESE} "PATH の長さが 8192 バイトよりも大きいです。$\nインストーラーが更新できません。"
 LangString out_of_disk_space ${LANG_JAPANESE} "エラー: ディスクに十分な空き容量がありません！"
