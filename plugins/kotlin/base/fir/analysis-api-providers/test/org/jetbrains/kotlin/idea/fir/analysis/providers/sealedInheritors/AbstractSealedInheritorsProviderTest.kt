@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
-import org.jetbrains.kotlin.idea.test.projectStructureTest.ModulesByName
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibrary
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModule
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructure
@@ -21,20 +20,19 @@ import org.jetbrains.kotlin.psi.KtClass
 import java.io.File
 import kotlin.io.path.Path
 
-abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTest<SealedInheritorsProviderTestProjectStructure>() {
+abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTest<SealedInheritorsProviderTestProjectStructure>(
+    SealedInheritorsProviderTestProjectStructureParser,
+) {
     override fun isFirPlugin(): Boolean = true
 
     override fun getTestDataDirectory(): File =
         KotlinRoot.DIR.resolve("fir-low-level-api-ide-impl").resolve("testData").resolve("sealedInheritors")
 
-    protected fun doTest(testDirectory: String) {
-        val (testStructure, _, modulesByName) =
-            initializeProjectStructure(testDirectory, SealedInheritorsProviderTestProjectStructureParser)
-
-        testStructure.targets.forEach { checkTargetFile(it, modulesByName, testDirectory) }
+    override fun doTestWithProjectStructure(testDirectory: String) {
+        testProjectStructure.targets.forEach { checkTargetFile(it, testDirectory) }
     }
 
-    private fun checkTargetFile(testTarget: SealedInheritorsProviderTestTarget, modulesByName: ModulesByName, testDirectory: String) {
+    private fun checkTargetFile(testTarget: SealedInheritorsProviderTestTarget, testDirectory: String) {
         val module = modulesByName[testTarget.moduleName] ?: error("The target module `${testTarget.moduleName}` does not exist.")
         val ktFile = module.findSourceKtFile(testTarget.filePath)
 

@@ -38,13 +38,37 @@ typealias ModulesByName = Map<String, Module>
  * Each source module file may contain an optional `<caret>`. Its position will be memorized by the test (see [getCaretPosition]), and it
  * will be removed from the file for test execution.
  */
-abstract class AbstractProjectStructureTest<S : TestProjectStructure> : AbstractMultiModuleTest() {
+abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
+    private val testProjectStructureParser: TestProjectStructureParser<S>,
+) : AbstractMultiModuleTest() {
     private val caretProvider = CaretProvider()
 
-    protected fun initializeProjectStructure(
+    private lateinit var _testProjectStructure: S
+
+    protected val testProjectStructure: S get() = _testProjectStructure
+
+    private lateinit var _projectLibrariesByName: ProjectLibrariesByName
+
+    protected val projectLibrariesByName: ProjectLibrariesByName get() = _projectLibrariesByName
+
+    private lateinit var _modulesByName: ModulesByName
+
+    protected val modulesByName: ModulesByName get() = _modulesByName
+
+    /**
+     * Executes the test with a parsed and initialized [testProjectStructure], [projectLibrariesByName], and [modulesByName].
+     */
+    protected abstract fun doTestWithProjectStructure(testDirectory: String)
+
+    protected fun doTest(testDirectory: String) {
+        initializeProjectStructure(testDirectory, testProjectStructureParser)
+        doTestWithProjectStructure(testDirectory)
+    }
+
+    private fun initializeProjectStructure(
         testDirectory: String,
         parser: TestProjectStructureParser<S>,
-    ): Triple<S, ProjectLibrariesByName, ModulesByName> {
+    ) {
         val testStructure = TestProjectStructureReader.readToTestStructure(
             Paths.get(testDirectory),
             testProjectStructureParser = parser,
@@ -89,7 +113,9 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
             setUpSpecialDependenciesAndPlatform(module, moduleData.targetPlatform, modulesByName, refinementMap, directFriendDependencies)
         }
 
-        return Triple(testStructure, projectLibrariesByName, modulesByName)
+        _testProjectStructure = testStructure
+        _projectLibrariesByName = projectLibrariesByName
+        _modulesByName = modulesByName
     }
 
     private class LibraryRoot(val classRoot: File, val sourceRoot: File?)

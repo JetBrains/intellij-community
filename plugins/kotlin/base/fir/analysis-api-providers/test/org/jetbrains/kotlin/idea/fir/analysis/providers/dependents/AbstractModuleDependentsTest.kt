@@ -12,8 +12,6 @@ import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getAsStringList
 import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
-import org.jetbrains.kotlin.idea.test.projectStructureTest.ModulesByName
-import org.jetbrains.kotlin.idea.test.projectStructureTest.ProjectLibrariesByName
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectEntityReference
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectEntityReferenceParser
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibrary
@@ -23,7 +21,9 @@ import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModuleRefe
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructure
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructureParser
 
-abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<ModuleDependentsTestProjectStructure>() {
+abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<ModuleDependentsTestProjectStructure>(
+    ModuleDependentsTestProjectStructureParser,
+) {
     override fun isFirPlugin(): Boolean = true
 
     override fun getTestDataDirectory(): File =
@@ -31,20 +31,12 @@ abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<Modul
 
     private val moduleDependentsProvider get() = KotlinModuleDependentsProvider.getInstance(project)
 
-    protected fun doTest(path: String) {
-        val (testStructure, projectLibrariesByName, modulesByName) =
-            initializeProjectStructure(path, ModuleDependentsTestProjectStructureParser)
-
-        assertNotEmpty(testStructure.targets)
-
-        testStructure.targets.forEach { checkTarget(it, projectLibrariesByName, modulesByName) }
+    override fun doTestWithProjectStructure(testDirectory: String) {
+        assertNotEmpty(testProjectStructure.targets)
+        testProjectStructure.targets.forEach(::checkTarget)
     }
 
-    private fun checkTarget(
-        target: ModuleDependentsTestTarget,
-        projectLibrariesByName: ProjectLibrariesByName,
-        modulesByName: ModulesByName,
-    ) {
+    private fun checkTarget(target: ModuleDependentsTestTarget) {
         val entityReference = target.entityReference
 
         val targetModule = when (entityReference) {
