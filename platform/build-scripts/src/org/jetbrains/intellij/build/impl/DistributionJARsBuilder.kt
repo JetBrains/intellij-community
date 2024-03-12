@@ -40,6 +40,7 @@ import java.io.DataOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
@@ -1102,14 +1103,17 @@ fun layoutResourcePaths(layout: BaseLayout, context: BuildContext, targetDirecto
 
 private fun copyIfChanged(targetDir: Path, sourceDir: Path, sourceFile: Path): Boolean {
   val targetFile = targetDir.resolve(sourceDir.relativize(sourceFile))
-  if (Files.exists(targetFile)) {
-    val t = Files.getLastModifiedTime(targetFile).toMillis()
-    val s = Files.getLastModifiedTime(sourceFile).toMillis()
-    if (t == s) {
-      return false
-    }
-    Files.delete(targetFile)
+  val t = try {
+    Files.getLastModifiedTime(targetFile).toMillis()
   }
+  catch (_: NoSuchFileException) {
+    return true
+  }
+  val s = Files.getLastModifiedTime(sourceFile).toMillis()
+  if (t == s) {
+    return false
+  }
+  Files.delete(targetFile)
   return true
 }
 
