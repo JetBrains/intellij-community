@@ -1,14 +1,17 @@
 //file:noinspection GrPackage
 
+import java.nio.file.Path
+import java.nio.file.Paths
+
 interface Properties {
-//noinspection GrUnresolvedAccess
-  public static final String dependencyNotation = DEPENDENCY_NOTATION
-//noinspection GrUnresolvedAccess
-  public static final String targetPath = TARGET_PATH
-//noinspection GrUnresolvedAccess
-  public static final String gradleTaskName = GRADLE_TASK_NAME
   //noinspection GrUnresolvedAccess
-  public static final String projectPath = GRADLE_PROJECT_PATH
+  public static final String dependencyNotation = DEPENDENCY_NOTATION
+  //noinspection GrUnresolvedAccess
+  public static final String targetPath = TARGET_PATH
+  //noinspection GrUnresolvedAccess
+  public static final String gradleTaskName = GRADLE_TASK_NAME
+  @SuppressWarnings('GroovyAssignabilityCheck')
+  public static final Path projectPath = Paths.get(GRADLE_PROJECT_PATH)
 }
 
 // Requires Gradle 5.6+
@@ -43,7 +46,7 @@ abstract class IjDownloadTask extends DefaultTask {
 }
 
 afterProject {
-  if (it.projectDir.path == Properties.projectPath) {
+  if (it.projectDir.toPath().normalize() == Properties.projectPath) {
     Configuration configuration = it.configurations.create('downloadSources_' + UUID.randomUUID())
     configuration.transitive = false
     it.dependencies.add(configuration.name, Properties.dependencyNotation)
