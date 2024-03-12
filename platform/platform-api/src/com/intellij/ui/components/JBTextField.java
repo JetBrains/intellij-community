@@ -3,6 +3,7 @@ package com.intellij.ui.components;
 
 import com.intellij.ui.TextAccessor;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,14 @@ import java.awt.event.MouseEvent;
 import java.util.Objects;
 
 public class JBTextField extends JTextField implements ComponentWithEmptyText, TextAccessor {
+
   private TextComponentEmptyText myEmptyText;
+
+  /**
+   * Forces paint inner background for disabled or non-editable text field
+   */
+  @ApiStatus.Internal
+  public static final String IS_FORCE_INNER_BACKGROUND_PAINT = "JTextField.isForceInnerBackgroundPaint";
 
   public JBTextField() {
     init();

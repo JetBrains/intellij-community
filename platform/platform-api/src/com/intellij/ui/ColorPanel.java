@@ -10,13 +10,8 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Highlighter;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -38,8 +33,8 @@ public class ColorPanel extends JComponent {
     myTextField.addMouseListener(create(MouseListener.class, this, "onPressed", null, "mousePressed"));
     myTextField.addKeyListener(create(KeyListener.class, this, "onPressed", "keyCode", "keyPressed"));
     myTextField.setEditable(false);
+    myTextField.putClientProperty(JBTextField.IS_FORCE_INNER_BACKGROUND_PAINT, true);
     MONOSPACED_FONT.install(myTextField);
-    Painter.BACKGROUND.install(myTextField, true);
   }
 
   @SuppressWarnings("unused") // used from event handler
@@ -158,40 +153,5 @@ public class ColorPanel extends JComponent {
 
   public void setSupportTransparency(boolean supportTransparency) {
     mySupportTransparency = supportTransparency;
-  }
-
-  private static class Painter implements Highlighter.HighlightPainter, PropertyChangeListener {
-    private static final String PROPERTY = "highlighter";
-    private static final Painter BACKGROUND = new Painter();
-
-    @Override
-    public void paint(Graphics g, int p0, int p1, Shape shape, JTextComponent component) {
-      Color color = component.getBackground();
-      if (color != null) {
-        g.setColor(color);
-        Rectangle bounds = shape instanceof Rectangle ? (Rectangle)shape : shape.getBounds();
-        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-      }
-    }
-
-    @Override
-    public void propertyChange(PropertyChangeEvent event) {
-      Object source = event.getSource();
-      if ((source instanceof JTextComponent) && PROPERTY.equals(event.getPropertyName())) {
-        install((JTextComponent)source, false);
-      }
-    }
-
-    private void install(JTextComponent component, boolean listener) {
-      try {
-        Highlighter highlighter = component.getHighlighter();
-        if (highlighter != null) highlighter.addHighlight(0, 0, this);
-      }
-      catch (BadLocationException ignored) {
-      }
-      if (listener) {
-        component.addPropertyChangeListener(PROPERTY, this);
-      }
-    }
   }
 }
