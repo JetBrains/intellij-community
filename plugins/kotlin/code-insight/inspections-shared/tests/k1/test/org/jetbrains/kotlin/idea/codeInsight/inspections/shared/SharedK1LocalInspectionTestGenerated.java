@@ -523,6 +523,16 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("inLabelRange.kt")
+        public void testInLabelRange() throws Exception {
+            runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/inLabelRange.kt");
+        }
+
+        @TestMetadata("inReturnedExpressionRange.kt")
+        public void testInReturnedExpressionRange() throws Exception {
+            runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/inReturnedExpressionRange.kt");
+        }
+
         @TestMetadata("labeledLambda.kt")
         public void testLabeledLambda() throws Exception {
             runTest("../testData/inspectionsLocal/labeledReturnAsLastExpressionInLambda/labeledLambda.kt");

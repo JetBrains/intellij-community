@@ -2,5 +2,5 @@
 // PROBLEM: none
 
 fun foo(): Boolean {
-    return@foo <caret>true
+    <caret>return@foo true
 }

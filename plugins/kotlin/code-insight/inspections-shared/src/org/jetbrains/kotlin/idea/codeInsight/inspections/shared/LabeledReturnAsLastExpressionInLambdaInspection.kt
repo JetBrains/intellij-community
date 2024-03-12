@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.psi.getParentLambdaLabelName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -51,7 +51,12 @@ internal class LabeledReturnAsLastExpressionInLambdaInspection : AbstractKotlinA
         return true
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtReturnExpression> = ApplicabilityRanges.SELF
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtReturnExpression> = applicabilityRange { returnExpression ->
+        val keywordRange = returnExpression.returnKeyword.textRangeInParent
+        val labelRange = returnExpression.labeledExpression?.textRangeInParent
+
+        if (labelRange != null) keywordRange.union(labelRange) else null
+    }
 
     override fun apply(
         element: KtReturnExpression,

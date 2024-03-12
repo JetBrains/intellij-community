@@ -3,7 +3,7 @@
 fun foo() {
     listOf(1,2,3).find {
         if (it > 0) {
-            return@find <caret>true
+            <caret>return@find true
         } else {
             false
         }

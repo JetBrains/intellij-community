@@ -1,9 +1,8 @@
 // WITH_STDLIB
 // PROBLEM: none
 
-fun foo(): Boolean {
+fun foo() {
     listOf(1,2,3).find {
-        <caret>return true
+        return@find <caret>true
     }
-    return false
 }

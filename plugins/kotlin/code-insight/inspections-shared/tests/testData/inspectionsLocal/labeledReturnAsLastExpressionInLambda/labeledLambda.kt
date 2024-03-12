@@ -3,6 +3,6 @@
 
 fun foo() {
     listOf(1,2,3).find label@{
-        return@label <caret>true
+        <caret>return@label true
     }
 }

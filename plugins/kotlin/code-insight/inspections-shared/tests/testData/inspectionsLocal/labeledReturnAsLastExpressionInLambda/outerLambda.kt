@@ -4,7 +4,7 @@
 fun foo() {
     listOf(1,2,3).forEach {
         listOf(1,2,3).find {
-            return@forEach<caret>
+            <caret>return@forEach
         }
     }
 }
