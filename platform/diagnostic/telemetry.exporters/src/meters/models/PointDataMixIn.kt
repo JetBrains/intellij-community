@@ -8,7 +8,7 @@ import io.opentelemetry.sdk.metrics.data.ExemplarData
  * Jackson mixin for ignoring some fields during serialization.
  * Counterpart of io.opentelemetry.sdk.metrics.data.PointData
  */
-abstract class PointDataMixIn {
+internal abstract class PointDataMixIn {
   @JsonIgnore
   abstract fun getExemplars(): List<ExemplarData>
 }

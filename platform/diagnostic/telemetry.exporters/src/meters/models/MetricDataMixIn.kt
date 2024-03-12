@@ -10,7 +10,7 @@ import io.opentelemetry.sdk.resources.Resource
  * Jackson mixin for ignoring some fields during serialization.
  * Counterpart of io.opentelemetry.sdk.metrics.data.MetricData
  */
-abstract class MetricDataMixIn {
+internal abstract class MetricDataMixIn {
   @JsonIgnore
   abstract fun getResource(): Resource?
 

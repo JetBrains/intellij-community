@@ -57,7 +57,6 @@ class RollingFileSupplier(
     return pathToWrite
   }
 
-
   /**
    * Creates new file for reporting OTel metrics.
    *
