@@ -1,6 +1,8 @@
 // FILE: before.kt
 // IGNORE_K1
-val <caret>threadName /*: String! */ = Thread.currentThread().name
+fun foo(list: java.util.List<String>) {
+     val <caret>item /*: String! */ = list[0]
+}
 
 // FILE: after.kt
 public class <caret>String : Comparable<String>, CharSequence {

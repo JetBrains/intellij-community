@@ -5,11 +5,11 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.psi.*
 
@@ -67,14 +67,22 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
 
     private fun KtCallableDeclaration.getTypeDeclarationFromCallable(typeFromSymbol: (KtCallableSymbol) -> KtType?): Array<PsiElement> {
         analyze(this) {
-            val symbol = getSymbol() as? KtCallableSymbol ?: return PsiElement.EMPTY_ARRAY
-            val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
-            val targetType = when(type) {
-                is KtFlexibleType -> type.lowerBound
-                else -> type
-            }
-            targetType.expandedClassSymbol?.psi?.let { return arrayOf(it) }
+            //val symbol = getSymbol() as? KtCallableSymbol ?: return PsiElement.EMPTY_ARRAY
+            //val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
+            //val upperBoundIfFlexible = type.upperBoundIfFlexible()
+            //upperBoundIfFlexible.expandedClassSymbol?.psi?.let { return arrayOf(it) }
+            xxx(typeFromSymbol)?.let { return it }
         }
         return PsiElement.EMPTY_ARRAY
+    }
+
+
+    context(KtAnalysisSession)
+    private fun KtCallableDeclaration.xxx(typeFromSymbol: (KtCallableSymbol) -> KtType?): Array<PsiElement>? {
+        val symbol = getSymbol() as? KtCallableSymbol ?: return PsiElement.EMPTY_ARRAY
+        val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
+        val upperBoundIfFlexible = type.upperBoundIfFlexible()
+        upperBoundIfFlexible.expandedClassSymbol?.psi?.let { return arrayOf(it) }
+        return null
     }
 }

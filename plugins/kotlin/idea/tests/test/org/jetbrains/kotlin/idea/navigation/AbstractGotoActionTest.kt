@@ -17,7 +17,7 @@ import java.nio.file.Path
 abstract class AbstractGotoActionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected abstract val actionName: String
 
-    protected open fun getIgnoreDirective(): String =
+    private fun getIgnoreDirective(): String =
         if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
 
     protected fun doTest(testPath: String) {
