@@ -46,7 +46,7 @@ class LoggingUtil {
       SLF4J_BUILDER_MATCHER,
     )
 
-    internal val LOG_MATCHERS_WITHOUT_BUILDERS: CallMatcher = CallMatcher.anyOf(
+    val LOG_MATCHERS_WITHOUT_BUILDERS: CallMatcher = CallMatcher.anyOf(
       SLF4J_MATCHER,
       LOG4J_MATCHER,
     )
@@ -92,7 +92,7 @@ class LoggingUtil {
       }
     }
 
-    internal fun getLoggerType(uCall: UCallExpression?): LoggerType? {
+    fun getLoggerType(uCall: UCallExpression?): LoggerType? {
       return if (SLF4J_MATCHER.uCallMatches(uCall)) {
         LoggerType.SLF4J_LOGGER_TYPE
       }
