@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -19,6 +20,8 @@ public class GradleModelHolderState implements Serializable {
   private final @Nullable BuildEnvironment myBuildEnvironment;
   private final @NotNull Map<GradleModelId, Object> myModels;
 
+  private final @Nullable GradleModelFetchPhase myPhase;
+
   private final byte[] myOpenTelemetryTraces;
 
   public GradleModelHolderState(
@@ -27,7 +30,7 @@ public class GradleModelHolderState implements Serializable {
     @Nullable BuildEnvironment buildEnvironment,
     @NotNull Map<GradleModelId, Object> models
   ) {
-    this(rootBuild, nestedBuilds, buildEnvironment, models, new byte[0]);
+    this(rootBuild, nestedBuilds, buildEnvironment, models, null, new byte[0]);
   }
 
   public GradleModelHolderState(
@@ -35,8 +38,10 @@ public class GradleModelHolderState implements Serializable {
     @NotNull Collection<DefaultBuild> nestedBuilds,
     @Nullable BuildEnvironment buildEnvironment,
     @NotNull Map<GradleModelId, Object> models,
+    @Nullable GradleModelFetchPhase phase,
     byte[] openTelemetryTraces
   ) {
+    myPhase = phase;
     myRootBuild = rootBuild;
     myNestedBuilds = nestedBuilds;
     myBuildEnvironment = buildEnvironment;
@@ -60,12 +65,21 @@ public class GradleModelHolderState implements Serializable {
     return myModels;
   }
 
+  public @Nullable GradleModelFetchPhase getPhase() {
+    return myPhase;
+  }
+
   public byte[] getOpenTelemetryTraces() {
     return myOpenTelemetryTraces;
   }
 
   @Contract(pure = true)
   public @NotNull GradleModelHolderState withOpenTelemetryTraces(byte[] traces) {
-    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, traces);
+    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, myPhase, traces);
+  }
+
+  @Contract(pure = true)
+  public @NotNull GradleModelHolderState withPhase(@NotNull GradleModelFetchPhase phase) {
+    return new GradleModelHolderState(myRootBuild, myNestedBuilds, myBuildEnvironment, myModels, phase, myOpenTelemetryTraces);
   }
 }

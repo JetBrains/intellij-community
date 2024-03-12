@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import org.gradle.tooling.BuildActionExecuter
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.LongRunningOperation
+import org.gradle.tooling.StreamedValueListener
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
@@ -77,6 +78,7 @@ class GradleBuildActionRunner(
       .build()
       .prepareOperationForSync()
       .withCancellationToken(resolverCtx.cancellationTokenSource.token())
+      .withStreamedValueListener(resultHandler.createStreamValueListener())
       .forTasks(emptyList()) // this will allow setting up Gradle StartParameter#taskNames using model builders
       .run(resultHandler.createResultHandler())
     resultHandler.waitForBuildFinish()
@@ -87,6 +89,7 @@ class GradleBuildActionRunner(
     resolverCtx.connection.action(buildAction)
       .prepareOperationForSync()
       .withCancellationToken(resolverCtx.cancellationTokenSource.token())
+      .withStreamedValueListener(resultHandler.createStreamValueListener())
       .run(resultHandler.createResultHandler())
     resultHandler.waitForBuildFinish()
   }
@@ -101,6 +104,15 @@ class GradleBuildActionRunner(
     )
     GradleOperationHelperExtension.EP_NAME.forEachExtensionSafe {
       it.prepareForSync(this, resolverCtx)
+    }
+    return this
+  }
+
+  private fun <T : BuildActionExecuter<*>> T.withStreamedValueListener(listener: StreamedValueListener): T {
+    val gradleVersion = resolverCtx.projectGradleVersion
+    if (gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "8.6")) {
+      buildAction.isUseStreamedValues = true
+      setStreamedValueListener(listener)
     }
     return this
   }

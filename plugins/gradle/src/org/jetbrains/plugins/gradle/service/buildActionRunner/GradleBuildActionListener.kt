@@ -1,10 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.buildActionRunner
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import org.gradle.tooling.GradleConnectionException
 import java.util.*
 
 interface GradleBuildActionListener : EventListener {
+
+  /**
+   * Called when Gradle model building phase is completed.
+   * Guaranteed that all phases will be handled for the successful execution in the strict order.
+   *
+   * Note: This method is called from a Gradle connection thread, within the [org.gradle.tooling.StreamedValueListener] passed to the
+   * tooling api.
+   */
+  fun onPhaseCompleted(phase: GradleModelFetchPhase) {}
 
   /**
    * Called once Gradle has loaded projects but before any task execution.

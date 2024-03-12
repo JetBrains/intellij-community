@@ -3,11 +3,13 @@ package org.jetbrains.plugins.gradle.service.buildActionRunner
 
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.IntermediateResultHandler
 import org.gradle.tooling.ResultHandler
+import org.gradle.tooling.StreamedValueListener
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import java.util.concurrent.CountDownLatch
@@ -26,8 +28,20 @@ class GradleBuildActionResultHandler(
   private val isBuildActionInterrupted = AtomicBoolean(true)
   private val buildFailure = AtomicReference<Throwable>(null)
 
+  private fun onPhaseCompleted(phase: GradleModelFetchPhase, state: GradleModelHolderState) {
+    resolverCtx.models.addState(state)
+    buildActionMulticaster.onPhaseCompleted(phase)
+  }
+
   private fun onProjectLoaded(state: GradleModelHolderState) {
     resolverCtx.models.addState(state)
+
+    if (!buildAction.isUseStreamedValues) {
+      for (phase in buildAction.projectLoadedModelProviders.keys) {
+        buildActionMulticaster.onPhaseCompleted(phase)
+      }
+    }
+
     buildActionMulticaster.onProjectLoaded()
   }
 
@@ -35,8 +49,18 @@ class GradleBuildActionResultHandler(
     resolverCtx.models.addState(state)
     isBuildActionInterrupted.set(false)
 
+    if (!buildAction.isUseProjectsLoadedPhase && !buildAction.isUseStreamedValues) {
+      for (phase in buildAction.projectLoadedModelProviders.keys) {
+        buildActionMulticaster.onPhaseCompleted(phase)
+      }
+    }
     if (!buildAction.isUseProjectsLoadedPhase) {
       buildActionMulticaster.onProjectLoaded()
+    }
+    if (!buildAction.isUseStreamedValues) {
+      for (phase in buildAction.buildFinishedModelProviders.keys) {
+        buildActionMulticaster.onPhaseCompleted(phase)
+      }
     }
 
     buildActionMulticaster.onBuildCompleted()
@@ -60,6 +84,16 @@ class GradleBuildActionResultHandler(
     val buildFailure = buildFailure.get()
     if (buildFailure != null && isBuildActionInterrupted.get()) {
       throw buildFailure
+    }
+  }
+
+  fun createStreamValueListener(): StreamedValueListener {
+    return StreamedValueListener { state ->
+      if (state is GradleModelHolderState) {
+        runCancellable {
+          onPhaseCompleted(state.phase!!, state)
+        }
+      }
     }
   }
 
