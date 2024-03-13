@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -18,10 +13,10 @@ interface ParentWithNulls : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ParentWithNulls, WorkspaceEntity.Builder<ParentWithNulls> {
+  interface Builder : WorkspaceEntity.Builder<ParentWithNulls> {
     override var entitySource: EntitySource
-    override var parentData: String
-    override var child: ChildWithNulls?
+    var parentData: String
+    var child: ChildWithNulls.Builder?
   }
 
   companion object : EntityType<ParentWithNulls, Builder>() {
@@ -32,7 +27,7 @@ interface ParentWithNulls : WorkspaceEntity {
       parentData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ParentWithNulls {
+    ): Builder {
       val builder = builder()
       builder.parentData = parentData
       builder.entitySource = entitySource
@@ -58,9 +53,9 @@ interface ChildWithNulls : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChildWithNulls, WorkspaceEntity.Builder<ChildWithNulls> {
+  interface Builder : WorkspaceEntity.Builder<ChildWithNulls> {
     override var entitySource: EntitySource
-    override var childData: String
+    var childData: String
   }
 
   companion object : EntityType<ChildWithNulls, Builder>() {
@@ -71,7 +66,7 @@ interface ChildWithNulls : WorkspaceEntity {
       childData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChildWithNulls {
+    ): Builder {
       val builder = builder()
       builder.childData = childData
       builder.entitySource = entitySource
@@ -91,8 +86,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ChildWithNulls.Builder::class.java, entity, modification)
 }
 
-var ChildWithNulls.Builder.parentEntity: ParentWithNulls?
-  by WorkspaceEntity.extension()
+var ChildWithNulls.Builder.parentEntity: ParentWithNulls.Builder?
+  by WorkspaceEntity.extensionBuilder(ParentWithNulls::class.java)
 //endregion
 
 val ChildWithNulls.parentEntity: ParentWithNulls?

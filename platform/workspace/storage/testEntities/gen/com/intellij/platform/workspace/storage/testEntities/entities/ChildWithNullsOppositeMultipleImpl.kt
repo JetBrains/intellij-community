@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -18,6 +19,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -124,15 +126,17 @@ open class ChildWithNullsOppositeMultipleImpl(private val dataSource: ChildWithN
         changedProperty.add("childData")
       }
 
-    override var parentEntity: ParentWithNullsOppositeMultiple?
+    override var parentEntity: ParentWithNullsOppositeMultiple.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                        PARENTENTITY_CONNECTION_ID)] as? ParentWithNullsOppositeMultiple
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? ParentWithNullsOppositeMultiple.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentWithNullsOppositeMultiple.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentWithNullsOppositeMultiple
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ParentWithNullsOppositeMultiple.Builder
         }
       }
       set(value) {
@@ -206,9 +210,9 @@ class ChildWithNullsOppositeMultipleData : WorkspaceEntityData<ChildWithNullsOpp
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ChildWithNullsOppositeMultiple(childData, entitySource) {
-      this.parentEntity = parents.filterIsInstance<ParentWithNullsOppositeMultiple>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<ParentWithNullsOppositeMultiple.Builder>().singleOrNull()
     }
   }
 

@@ -14,9 +14,9 @@ interface SubsetEnumEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SubsetEnumEntity, WorkspaceEntity.Builder<SubsetEnumEntity> {
+  interface Builder : WorkspaceEntity.Builder<SubsetEnumEntity> {
     override var entitySource: EntitySource
-    override var someEnum: SubsetEnumEnum
+    var someEnum: SubsetEnumEnum
   }
 
   companion object : EntityType<SubsetEnumEntity, Builder>() {
@@ -27,7 +27,7 @@ interface SubsetEnumEntity: WorkspaceEntity {
       someEnum: SubsetEnumEnum,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SubsetEnumEntity {
+    ): Builder {
       val builder = builder()
       builder.someEnum = someEnum
       builder.entitySource = entitySource

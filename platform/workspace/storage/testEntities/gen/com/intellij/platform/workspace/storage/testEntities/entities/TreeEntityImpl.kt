@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -20,6 +21,7 @@ import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfPar
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -142,17 +144,18 @@ open class TreeEntityImpl(private val dataSource: TreeEntityData) : TreeEntity, 
 
     // List of non-abstract referenced types
     var _children: List<TreeEntity>? = emptyList()
-    override var children: List<TreeEntity>
+    override var children: List<TreeEntity.Builder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<TreeEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                             CHILDREN_CONNECTION_ID)] as? List<TreeEntity>
-                                                                                                 ?: emptyList())
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<TreeEntity.Builder>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeEntity.Builder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<TreeEntity.Builder> ?: emptyList()
         }
       }
       set(value) {
@@ -186,15 +189,16 @@ open class TreeEntityImpl(private val dataSource: TreeEntityData) : TreeEntity, 
         changedProperty.add("children")
       }
 
-    override var parentEntity: TreeEntity?
+    override var parentEntity: TreeEntity.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                        PARENTENTITY_CONNECTION_ID)] as? TreeEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? TreeEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? TreeEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? TreeEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? TreeEntity.Builder
         }
       }
       set(value) {
@@ -268,9 +272,9 @@ class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return TreeEntity(data, entitySource) {
-      this.parentEntity = parents.filterIsInstance<TreeEntity>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<TreeEntity.Builder>().singleOrNull()
     }
   }
 

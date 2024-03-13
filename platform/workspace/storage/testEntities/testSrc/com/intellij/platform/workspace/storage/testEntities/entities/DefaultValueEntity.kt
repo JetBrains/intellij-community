@@ -19,11 +19,11 @@ interface DefaultValueEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : DefaultValueEntity, WorkspaceEntity.Builder<DefaultValueEntity> {
+  interface Builder : WorkspaceEntity.Builder<DefaultValueEntity> {
     override var entitySource: EntitySource
-    override var name: String
-    override var isGenerated: Boolean
-    override var anotherName: String
+    var name: String
+    var isGenerated: Boolean
+    var anotherName: String
   }
 
   companion object : EntityType<DefaultValueEntity, Builder>() {
@@ -34,7 +34,7 @@ interface DefaultValueEntity: WorkspaceEntity {
       name: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): DefaultValueEntity {
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.entitySource = entitySource

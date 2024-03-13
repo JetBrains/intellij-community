@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -19,6 +20,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToAbstractOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneChildOfParent
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -105,15 +107,17 @@ open class ParentChainEntityImpl(private val dataSource: ParentChainEntityData) 
 
       }
 
-    override var root: CompositeAbstractEntity?
+    override var root: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractOneChild(ROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                      ROOT_CONNECTION_ID)] as? CompositeAbstractEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(ROOT_CONNECTION_ID,
+                                                                             this) as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
+          ?: (this.entityLinks[EntityLink(true, ROOT_CONNECTION_ID)] as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
         }
         else {
-          this.entityLinks[EntityLink(true, ROOT_CONNECTION_ID)] as? CompositeAbstractEntity
+          this.entityLinks[EntityLink(true, ROOT_CONNECTION_ID)] as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>
         }
       }
       set(value) {
@@ -181,7 +185,7 @@ class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ParentChainEntity(entitySource) {
     }
   }

@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -19,6 +20,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToAbstractOneParen
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -145,15 +147,17 @@ open class ChildSingleFirstEntityImpl(private val dataSource: ChildSingleFirstEn
         changedProperty.add("commonData")
       }
 
-    override var parentEntity: ParentSingleAbEntity
+    override var parentEntity: ParentSingleAbEntity.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                               PARENTENTITY_CONNECTION_ID)]!! as ParentSingleAbEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? ParentSingleAbEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSingleAbEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSingleAbEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSingleAbEntity.Builder
         }
       }
       set(value) {
@@ -233,9 +237,9 @@ class ChildSingleFirstEntityData : WorkspaceEntityData<ChildSingleFirstEntity>()
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ChildSingleFirstEntity(commonData, firstData, entitySource) {
-      parents.filterIsInstance<ParentSingleAbEntity>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<ParentSingleAbEntity.Builder>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

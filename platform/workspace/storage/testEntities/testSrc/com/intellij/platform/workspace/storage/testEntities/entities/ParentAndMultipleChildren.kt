@@ -16,10 +16,10 @@ interface ParentMultipleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ParentMultipleEntity, WorkspaceEntity.Builder<ParentMultipleEntity> {
+  interface Builder : WorkspaceEntity.Builder<ParentMultipleEntity> {
     override var entitySource: EntitySource
-    override var parentData: String
-    override var children: List<ChildMultipleEntity>
+    var parentData: String
+    var children: List<ChildMultipleEntity.Builder>
   }
 
   companion object : EntityType<ParentMultipleEntity, Builder>() {
@@ -30,7 +30,7 @@ interface ParentMultipleEntity : WorkspaceEntity {
       parentData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ParentMultipleEntity {
+    ): Builder {
       val builder = builder()
       builder.parentData = parentData
       builder.entitySource = entitySource
@@ -58,10 +58,10 @@ interface ChildMultipleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChildMultipleEntity, WorkspaceEntity.Builder<ChildMultipleEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChildMultipleEntity> {
     override var entitySource: EntitySource
-    override var childData: String
-    override var parentEntity: ParentMultipleEntity
+    var childData: String
+    var parentEntity: ParentMultipleEntity.Builder
   }
 
   companion object : EntityType<ChildMultipleEntity, Builder>() {
@@ -72,7 +72,7 @@ interface ChildMultipleEntity : WorkspaceEntity {
       childData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChildMultipleEntity {
+    ): Builder {
       val builder = builder()
       builder.childData = childData
       builder.entitySource = entitySource

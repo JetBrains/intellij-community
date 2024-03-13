@@ -15,11 +15,11 @@ interface NullToNotNullEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : NullToNotNullEntity, WorkspaceEntity.Builder<NullToNotNullEntity> {
+  interface Builder : WorkspaceEntity.Builder<NullToNotNullEntity> {
     override var entitySource: EntitySource
-    override var nullString: String
-    override var notNullBoolean: Boolean
-    override var notNullInt: Int
+    var nullString: String
+    var notNullBoolean: Boolean
+    var notNullInt: Int
   }
 
   companion object : EntityType<NullToNotNullEntity, Builder>() {
@@ -32,7 +32,7 @@ interface NullToNotNullEntity: WorkspaceEntity {
       notNullInt: Int,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): NullToNotNullEntity {
+    ): Builder {
       val builder = builder()
       builder.nullString = nullString
       builder.notNullBoolean = notNullBoolean

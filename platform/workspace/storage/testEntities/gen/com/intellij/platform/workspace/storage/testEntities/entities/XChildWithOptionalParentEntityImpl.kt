@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -18,6 +19,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -124,15 +126,16 @@ open class XChildWithOptionalParentEntityImpl(private val dataSource: XChildWith
         changedProperty.add("childProperty")
       }
 
-    override var optionalParent: XParentEntity?
+    override var optionalParent: XParentEntity.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(OPTIONALPARENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                          OPTIONALPARENT_CONNECTION_ID)] as? XParentEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(OPTIONALPARENT_CONNECTION_ID, this) as? XParentEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, OPTIONALPARENT_CONNECTION_ID)] as? XParentEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, OPTIONALPARENT_CONNECTION_ID)] as? XParentEntity
+          this.entityLinks[EntityLink(false, OPTIONALPARENT_CONNECTION_ID)] as? XParentEntity.Builder
         }
       }
       set(value) {
@@ -206,9 +209,9 @@ class XChildWithOptionalParentEntityData : WorkspaceEntityData<XChildWithOptiona
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return XChildWithOptionalParentEntity(childProperty, entitySource) {
-      this.optionalParent = parents.filterIsInstance<XParentEntity>().singleOrNull()
+      this.optionalParent = parents.filterIsInstance<XParentEntity.Builder>().singleOrNull()
     }
   }
 

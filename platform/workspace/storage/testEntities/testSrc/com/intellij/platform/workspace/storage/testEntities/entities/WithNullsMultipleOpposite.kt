@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -15,9 +10,9 @@ interface ParentWithNullsOppositeMultiple : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ParentWithNullsOppositeMultiple, WorkspaceEntity.Builder<ParentWithNullsOppositeMultiple> {
+  interface Builder : WorkspaceEntity.Builder<ParentWithNullsOppositeMultiple> {
     override var entitySource: EntitySource
-    override var parentData: String
+    var parentData: String
   }
 
   companion object : EntityType<ParentWithNullsOppositeMultiple, Builder>() {
@@ -28,7 +23,7 @@ interface ParentWithNullsOppositeMultiple : WorkspaceEntity {
       parentData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ParentWithNullsOppositeMultiple {
+    ): Builder {
       val builder = builder()
       builder.parentData = parentData
       builder.entitySource = entitySource
@@ -48,8 +43,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ParentWithNullsOppositeMultiple.Builder::class.java, entity, modification)
 }
 
-var ParentWithNullsOppositeMultiple.Builder.children: @Child List<ChildWithNullsOppositeMultiple>
-  by WorkspaceEntity.extension()
+var ParentWithNullsOppositeMultiple.Builder.children: @Child List<ChildWithNullsOppositeMultiple.Builder>
+  by WorkspaceEntity.extensionBuilder(ChildWithNullsOppositeMultiple::class.java)
 //endregion
 
 
@@ -60,10 +55,10 @@ interface ChildWithNullsOppositeMultiple : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChildWithNullsOppositeMultiple, WorkspaceEntity.Builder<ChildWithNullsOppositeMultiple> {
+  interface Builder : WorkspaceEntity.Builder<ChildWithNullsOppositeMultiple> {
     override var entitySource: EntitySource
-    override var childData: String
-    override var parentEntity: ParentWithNullsOppositeMultiple?
+    var childData: String
+    var parentEntity: ParentWithNullsOppositeMultiple.Builder?
   }
 
   companion object : EntityType<ChildWithNullsOppositeMultiple, Builder>() {
@@ -74,7 +69,7 @@ interface ChildWithNullsOppositeMultiple : WorkspaceEntity {
       childData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChildWithNullsOppositeMultiple {
+    ): Builder {
       val builder = builder()
       builder.childData = childData
       builder.entitySource = entitySource

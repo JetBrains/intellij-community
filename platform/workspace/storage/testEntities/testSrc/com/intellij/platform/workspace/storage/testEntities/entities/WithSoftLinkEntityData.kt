@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
@@ -40,11 +45,11 @@ interface NamedEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : NamedEntity, WorkspaceEntity.Builder<NamedEntity> {
+  interface Builder : WorkspaceEntity.Builder<NamedEntity> {
     override var entitySource: EntitySource
-    override var myName: String
-    override var additionalProperty: String?
-    override var children: List<NamedChildEntity>
+    var myName: String
+    var additionalProperty: String?
+    var children: List<NamedChildEntity.Builder>
   }
 
   companion object : EntityType<NamedEntity, Builder>() {
@@ -55,7 +60,7 @@ interface NamedEntity : WorkspaceEntityWithSymbolicId {
       myName: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): NamedEntity {
+    ): Builder {
       val builder = builder()
       builder.myName = myName
       builder.entitySource = entitySource
@@ -90,10 +95,10 @@ interface NamedChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : NamedChildEntity, WorkspaceEntity.Builder<NamedChildEntity> {
+  interface Builder : WorkspaceEntity.Builder<NamedChildEntity> {
     override var entitySource: EntitySource
-    override var childProperty: String
-    override var parentEntity: NamedEntity
+    var childProperty: String
+    var parentEntity: NamedEntity.Builder
   }
 
   companion object : EntityType<NamedChildEntity, Builder>() {
@@ -104,7 +109,7 @@ interface NamedChildEntity : WorkspaceEntity {
       childProperty: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): NamedChildEntity {
+    ): Builder {
       val builder = builder()
       builder.childProperty = childProperty
       builder.entitySource = entitySource
@@ -133,9 +138,9 @@ interface WithSoftLinkEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : WithSoftLinkEntity, WorkspaceEntity.Builder<WithSoftLinkEntity> {
+  interface Builder : WorkspaceEntity.Builder<WithSoftLinkEntity> {
     override var entitySource: EntitySource
-    override var link: NameId
+    var link: NameId
   }
 
   companion object : EntityType<WithSoftLinkEntity, Builder>() {
@@ -146,7 +151,7 @@ interface WithSoftLinkEntity : WorkspaceEntity {
       link: NameId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): WithSoftLinkEntity {
+    ): Builder {
       val builder = builder()
       builder.link = link
       builder.entitySource = entitySource
@@ -172,9 +177,9 @@ interface ComposedLinkEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ComposedLinkEntity, WorkspaceEntity.Builder<ComposedLinkEntity> {
+  interface Builder : WorkspaceEntity.Builder<ComposedLinkEntity> {
     override var entitySource: EntitySource
-    override var link: ComposedId
+    var link: ComposedId
   }
 
   companion object : EntityType<ComposedLinkEntity, Builder>() {
@@ -185,7 +190,7 @@ interface ComposedLinkEntity : WorkspaceEntity {
       link: ComposedId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ComposedLinkEntity {
+    ): Builder {
       val builder = builder()
       builder.link = link
       builder.entitySource = entitySource
@@ -216,10 +221,10 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : WithListSoftLinksEntity, WorkspaceEntity.Builder<WithListSoftLinksEntity> {
+  interface Builder : WorkspaceEntity.Builder<WithListSoftLinksEntity> {
     override var entitySource: EntitySource
-    override var myName: String
-    override var links: MutableList<NameId>
+    var myName: String
+    var links: MutableList<NameId>
   }
 
   companion object : EntityType<WithListSoftLinksEntity, Builder>() {
@@ -231,7 +236,7 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithSymbolicId {
       links: List<NameId>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): WithListSoftLinksEntity {
+    ): Builder {
       val builder = builder()
       builder.myName = myName
       builder.links = links.toMutableWorkspaceList()
@@ -264,10 +269,10 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ComposedIdSoftRefEntity, WorkspaceEntity.Builder<ComposedIdSoftRefEntity> {
+  interface Builder : WorkspaceEntity.Builder<ComposedIdSoftRefEntity> {
     override var entitySource: EntitySource
-    override var myName: String
-    override var link: NameId
+    var myName: String
+    var link: NameId
   }
 
   companion object : EntityType<ComposedIdSoftRefEntity, Builder>() {
@@ -279,7 +284,7 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithSymbolicId {
       link: NameId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ComposedIdSoftRefEntity {
+    ): Builder {
       val builder = builder()
       builder.myName = myName
       builder.link = link

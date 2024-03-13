@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities.currentVer
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -18,6 +19,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -148,15 +150,16 @@ open class AnotherOneToOneRefEntityImpl(private val dataSource: AnotherOneToOneR
         changedProperty.add("boolean")
       }
 
-    override var parentEntity: OneToOneRefEntity
+    override var parentEntity: OneToOneRefEntity.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                        PARENTENTITY_CONNECTION_ID)]!! as OneToOneRefEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? OneToOneRefEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OneToOneRefEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OneToOneRefEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OneToOneRefEntity.Builder
         }
       }
       set(value) {
@@ -232,9 +235,9 @@ class AnotherOneToOneRefEntityData : WorkspaceEntityData<AnotherOneToOneRefEntit
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return AnotherOneToOneRefEntity(someString, boolean, entitySource) {
-      parents.filterIsInstance<OneToOneRefEntity>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<OneToOneRefEntity.Builder>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -19,6 +20,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -124,15 +126,17 @@ open class SpecificParentImpl(private val dataSource: SpecificParentData) : Spec
         changedProperty.add("data")
       }
 
-    override var child: ChildWithExtensionParent?
+    override var child: ChildWithExtensionParent.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                               CHILD_CONNECTION_ID)] as? ChildWithExtensionParent
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID,
+                                                                             this) as? ChildWithExtensionParent.Builder)
+          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildWithExtensionParent.Builder)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildWithExtensionParent
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildWithExtensionParent.Builder
         }
       }
       set(value) {
@@ -202,7 +206,7 @@ class SpecificParentData : WorkspaceEntityData<SpecificParent>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return SpecificParent(data, entitySource) {
     }
   }

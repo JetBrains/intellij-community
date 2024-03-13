@@ -19,12 +19,12 @@ interface XParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : XParentEntity, WorkspaceEntity.Builder<XParentEntity> {
+  interface Builder : WorkspaceEntity.Builder<XParentEntity> {
     override var entitySource: EntitySource
-    override var parentProperty: String
-    override var children: List<XChildEntity>
-    override var optionalChildren: List<XChildWithOptionalParentEntity>
-    override var childChild: List<XChildChildEntity>
+    var parentProperty: String
+    var children: List<XChildEntity.Builder>
+    var optionalChildren: List<XChildWithOptionalParentEntity.Builder>
+    var childChild: List<XChildChildEntity.Builder>
   }
 
   companion object : EntityType<XParentEntity, Builder>() {
@@ -35,7 +35,7 @@ interface XParentEntity : WorkspaceEntity {
       parentProperty: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): XParentEntity {
+    ): Builder {
       val builder = builder()
       builder.parentProperty = parentProperty
       builder.entitySource = entitySource
@@ -68,12 +68,12 @@ interface XChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : XChildEntity, WorkspaceEntity.Builder<XChildEntity> {
+  interface Builder : WorkspaceEntity.Builder<XChildEntity> {
     override var entitySource: EntitySource
-    override var childProperty: String
-    override var dataClass: DataClassX?
-    override var parentEntity: XParentEntity
-    override var childChild: List<XChildChildEntity>
+    var childProperty: String
+    var dataClass: DataClassX?
+    var parentEntity: XParentEntity.Builder
+    var childChild: List<XChildChildEntity.Builder>
   }
 
   companion object : EntityType<XChildEntity, Builder>() {
@@ -84,7 +84,7 @@ interface XChildEntity : WorkspaceEntity {
       childProperty: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): XChildEntity {
+    ): Builder {
       val builder = builder()
       builder.childProperty = childProperty
       builder.entitySource = entitySource
@@ -111,10 +111,10 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : XChildWithOptionalParentEntity, WorkspaceEntity.Builder<XChildWithOptionalParentEntity> {
+  interface Builder : WorkspaceEntity.Builder<XChildWithOptionalParentEntity> {
     override var entitySource: EntitySource
-    override var childProperty: String
-    override var optionalParent: XParentEntity?
+    var childProperty: String
+    var optionalParent: XParentEntity.Builder?
   }
 
   companion object : EntityType<XChildWithOptionalParentEntity, Builder>() {
@@ -125,7 +125,7 @@ interface XChildWithOptionalParentEntity : WorkspaceEntity {
       childProperty: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): XChildWithOptionalParentEntity {
+    ): Builder {
       val builder = builder()
       builder.childProperty = childProperty
       builder.entitySource = entitySource
@@ -152,10 +152,10 @@ interface XChildChildEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : XChildChildEntity, WorkspaceEntity.Builder<XChildChildEntity> {
+  interface Builder : WorkspaceEntity.Builder<XChildChildEntity> {
     override var entitySource: EntitySource
-    override var parent1: XParentEntity
-    override var parent2: XChildEntity
+    var parent1: XParentEntity.Builder
+    var parent2: XChildEntity.Builder
   }
 
   companion object : EntityType<XChildChildEntity, Builder>() {
@@ -165,7 +165,7 @@ interface XChildChildEntity : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): XChildChildEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)

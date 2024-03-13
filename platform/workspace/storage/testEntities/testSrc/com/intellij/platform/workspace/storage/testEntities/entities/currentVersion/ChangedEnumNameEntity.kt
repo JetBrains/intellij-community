@@ -13,9 +13,9 @@ interface ChangedEnumNameEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChangedEnumNameEntity, WorkspaceEntity.Builder<ChangedEnumNameEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChangedEnumNameEntity> {
     override var entitySource: EntitySource
-    override var someEnum: ChangedEnumNameEnum
+    var someEnum: ChangedEnumNameEnum
   }
 
   companion object : EntityType<ChangedEnumNameEntity, Builder>() {
@@ -26,7 +26,7 @@ interface ChangedEnumNameEntity: WorkspaceEntity {
       someEnum: ChangedEnumNameEnum,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChangedEnumNameEntity {
+    ): Builder {
       val builder = builder()
       builder.someEnum = someEnum
       builder.entitySource = entitySource

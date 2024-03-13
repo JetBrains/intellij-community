@@ -15,9 +15,9 @@ interface ChainedParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChainedParentEntity, WorkspaceEntity.Builder<ChainedParentEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChainedParentEntity> {
     override var entitySource: EntitySource
-    override var child: List<ChainedEntity>
+    var child: List<ChainedEntity.Builder>
   }
 
   companion object : EntityType<ChainedParentEntity, Builder>() {
@@ -27,7 +27,7 @@ interface ChainedParentEntity : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChainedParentEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -54,12 +54,12 @@ interface ChainedEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChainedEntity, WorkspaceEntity.Builder<ChainedEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChainedEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var parent: ChainedEntity?
-    override var child: ChainedEntity?
-    override var generalParent: ChainedParentEntity?
+    var data: String
+    var parent: ChainedEntity.Builder?
+    var child: ChainedEntity.Builder?
+    var generalParent: ChainedParentEntity.Builder?
   }
 
   companion object : EntityType<ChainedEntity, Builder>() {
@@ -70,7 +70,7 @@ interface ChainedEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChainedEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

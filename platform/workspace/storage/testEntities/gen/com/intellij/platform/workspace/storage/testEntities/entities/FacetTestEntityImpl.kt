@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -19,6 +20,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -151,15 +153,16 @@ open class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) : Fa
         changedProperty.add("moreData")
       }
 
-    override var module: ModuleTestEntity
+    override var module: ModuleTestEntity.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                  MODULE_CONNECTION_ID)]!! as ModuleTestEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleTestEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntity
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntity.Builder
         }
       }
       set(value) {
@@ -239,9 +242,9 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetTe
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return FacetTestEntity(data, moreData, entitySource) {
-      parents.filterIsInstance<ModuleTestEntity>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModuleTestEntity.Builder>().singleOrNull()?.let { this.module = it }
     }
   }
 

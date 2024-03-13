@@ -20,11 +20,11 @@ interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ModuleTestEntity, WorkspaceEntity.Builder<ModuleTestEntity> {
+  interface Builder : WorkspaceEntity.Builder<ModuleTestEntity> {
     override var entitySource: EntitySource
-    override var name: String
-    override var contentRoots: List<ContentRootTestEntity>
-    override var facets: List<FacetTestEntity>
+    var name: String
+    var contentRoots: List<ContentRootTestEntity.Builder>
+    var facets: List<FacetTestEntity.Builder>
   }
 
   companion object : EntityType<ModuleTestEntity, Builder>() {
@@ -35,7 +35,7 @@ interface ModuleTestEntity : WorkspaceEntityWithSymbolicId {
       name: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ModuleTestEntity {
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.entitySource = entitySource
@@ -62,11 +62,11 @@ interface ContentRootTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ContentRootTestEntity, WorkspaceEntity.Builder<ContentRootTestEntity> {
+  interface Builder : WorkspaceEntity.Builder<ContentRootTestEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleTestEntity
-    override var sourceRootOrder: SourceRootTestOrderEntity?
-    override var sourceRoots: List<SourceRootTestEntity>
+    var module: ModuleTestEntity.Builder
+    var sourceRootOrder: SourceRootTestOrderEntity.Builder?
+    var sourceRoots: List<SourceRootTestEntity.Builder>
   }
 
   companion object : EntityType<ContentRootTestEntity, Builder>() {
@@ -76,7 +76,7 @@ interface ContentRootTestEntity : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ContentRootTestEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -94,8 +94,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ContentRootTestEntity.Builder::class.java, entity, modification)
 }
 
-var ContentRootTestEntity.Builder.projectModelTestEntity: ProjectModelTestEntity?
-  by WorkspaceEntity.extension()
+var ContentRootTestEntity.Builder.projectModelTestEntity: ProjectModelTestEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(ProjectModelTestEntity::class.java)
 //endregion
 
 interface SourceRootTestOrderEntity : WorkspaceEntity {
@@ -104,10 +104,10 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SourceRootTestOrderEntity, WorkspaceEntity.Builder<SourceRootTestOrderEntity> {
+  interface Builder : WorkspaceEntity.Builder<SourceRootTestOrderEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var contentRoot: ContentRootTestEntity
+    var data: String
+    var contentRoot: ContentRootTestEntity.Builder
   }
 
   companion object : EntityType<SourceRootTestOrderEntity, Builder>() {
@@ -118,7 +118,7 @@ interface SourceRootTestOrderEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SourceRootTestOrderEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -144,10 +144,10 @@ interface SourceRootTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SourceRootTestEntity, WorkspaceEntity.Builder<SourceRootTestEntity> {
+  interface Builder : WorkspaceEntity.Builder<SourceRootTestEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var contentRoot: ContentRootTestEntity
+    var data: String
+    var contentRoot: ContentRootTestEntity.Builder
   }
 
   companion object : EntityType<SourceRootTestEntity, Builder>() {
@@ -158,7 +158,7 @@ interface SourceRootTestEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SourceRootTestEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -198,11 +198,11 @@ interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : FacetTestEntity, WorkspaceEntity.Builder<FacetTestEntity> {
+  interface Builder : WorkspaceEntity.Builder<FacetTestEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var moreData: String
-    override var module: ModuleTestEntity
+    var data: String
+    var moreData: String
+    var module: ModuleTestEntity.Builder
   }
 
   companion object : EntityType<FacetTestEntity, Builder>() {
@@ -214,7 +214,7 @@ interface FacetTestEntity : WorkspaceEntityWithSymbolicId {
       moreData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): FacetTestEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.moreData = moreData

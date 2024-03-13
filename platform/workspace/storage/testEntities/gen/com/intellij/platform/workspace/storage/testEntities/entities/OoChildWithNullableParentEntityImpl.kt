@@ -18,6 +18,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -106,15 +107,16 @@ open class OoChildWithNullableParentEntityImpl(private val dataSource: OoChildWi
 
       }
 
-    override var parentEntity: OoParentEntity?
+    override var parentEntity: OoParentEntity.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                       PARENTENTITY_CONNECTION_ID)] as? OoParentEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? OoParentEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? OoParentEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? OoParentEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? OoParentEntity.Builder
         }
       }
       set(value) {
@@ -182,9 +184,9 @@ class OoChildWithNullableParentEntityData : WorkspaceEntityData<OoChildWithNulla
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return OoChildWithNullableParentEntity(entitySource) {
-      this.parentEntity = parents.filterIsInstance<OoParentEntity>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<OoParentEntity.Builder>().singleOrNull()
     }
   }
 

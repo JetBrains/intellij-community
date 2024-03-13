@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -20,6 +21,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -118,15 +120,17 @@ open class SoftLinkReferencedChildImpl(private val dataSource: SoftLinkReference
 
       }
 
-    override var parentEntity: EntityWithSoftLinks
+    override var parentEntity: EntityWithSoftLinks.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                        PARENTENTITY_CONNECTION_ID)]!! as EntityWithSoftLinks
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? EntityWithSoftLinks.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as EntityWithSoftLinks.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as EntityWithSoftLinks
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as EntityWithSoftLinks.Builder
         }
       }
       set(value) {
@@ -198,9 +202,9 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return SoftLinkReferencedChild(entitySource) {
-      parents.filterIsInstance<EntityWithSoftLinks>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<EntityWithSoftLinks.Builder>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

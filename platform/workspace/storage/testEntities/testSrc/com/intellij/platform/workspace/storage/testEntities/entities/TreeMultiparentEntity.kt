@@ -19,10 +19,10 @@ interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : TreeMultiparentRootEntity, WorkspaceEntity.Builder<TreeMultiparentRootEntity> {
+  interface Builder : WorkspaceEntity.Builder<TreeMultiparentRootEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var children: List<TreeMultiparentLeafEntity>
+    var data: String
+    var children: List<TreeMultiparentLeafEntity.Builder>
   }
 
   companion object : EntityType<TreeMultiparentRootEntity, Builder>() {
@@ -33,7 +33,7 @@ interface TreeMultiparentRootEntity : WorkspaceEntityWithSymbolicId {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): TreeMultiparentRootEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -62,12 +62,12 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : TreeMultiparentLeafEntity, WorkspaceEntity.Builder<TreeMultiparentLeafEntity> {
+  interface Builder : WorkspaceEntity.Builder<TreeMultiparentLeafEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var mainParent: TreeMultiparentRootEntity?
-    override var leafParent: TreeMultiparentLeafEntity?
-    override var children: List<TreeMultiparentLeafEntity>
+    var data: String
+    var mainParent: TreeMultiparentRootEntity.Builder?
+    var leafParent: TreeMultiparentLeafEntity.Builder?
+    var children: List<TreeMultiparentLeafEntity.Builder>
   }
 
   companion object : EntityType<TreeMultiparentLeafEntity, Builder>() {
@@ -78,7 +78,7 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): TreeMultiparentLeafEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

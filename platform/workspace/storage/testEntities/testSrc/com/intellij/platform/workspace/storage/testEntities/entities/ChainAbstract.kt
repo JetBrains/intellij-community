@@ -16,9 +16,9 @@ interface ParentChainEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ParentChainEntity, WorkspaceEntity.Builder<ParentChainEntity> {
+  interface Builder : WorkspaceEntity.Builder<ParentChainEntity> {
     override var entitySource: EntitySource
-    override var root: CompositeAbstractEntity?
+    var root: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
   }
 
   companion object : EntityType<ParentChainEntity, Builder>() {
@@ -28,7 +28,7 @@ interface ParentChainEntity : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ParentChainEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -55,9 +55,9 @@ interface SimpleAbstractEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder<T : SimpleAbstractEntity> : SimpleAbstractEntity, WorkspaceEntity.Builder<T> {
+  interface Builder<T : SimpleAbstractEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity?
+    var parentInList: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
   }
 
   companion object : EntityType<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>() {
@@ -67,7 +67,7 @@ interface SimpleAbstractEntity : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder<SimpleAbstractEntity>.() -> Unit)? = null,
-    ): SimpleAbstractEntity {
+    ): Builder<SimpleAbstractEntity> {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -86,11 +86,11 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder<T : CompositeAbstractEntity> : CompositeAbstractEntity, SimpleAbstractEntity.Builder<T>, WorkspaceEntity.Builder<T> {
+  interface Builder<T : CompositeAbstractEntity> : WorkspaceEntity.Builder<T>, SimpleAbstractEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity?
-    override var children: List<SimpleAbstractEntity>
-    override var parentEntity: ParentChainEntity?
+    override var parentInList: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
+    var children: List<SimpleAbstractEntity.Builder<out SimpleAbstractEntity>>
+    var parentEntity: ParentChainEntity.Builder?
   }
 
   companion object : EntityType<CompositeAbstractEntity, Builder<CompositeAbstractEntity>>(SimpleAbstractEntity) {
@@ -100,7 +100,7 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder<CompositeAbstractEntity>.() -> Unit)? = null,
-    ): CompositeAbstractEntity {
+    ): Builder<CompositeAbstractEntity> {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -114,11 +114,11 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
 interface CompositeChildAbstractEntity : CompositeAbstractEntity {
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : CompositeChildAbstractEntity, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity>, WorkspaceEntity.Builder<CompositeChildAbstractEntity> {
+  interface Builder : WorkspaceEntity.Builder<CompositeChildAbstractEntity>, CompositeAbstractEntity.Builder<CompositeChildAbstractEntity> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity?
-    override var children: List<SimpleAbstractEntity>
-    override var parentEntity: ParentChainEntity?
+    override var parentInList: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
+    override var children: List<SimpleAbstractEntity.Builder<out SimpleAbstractEntity>>
+    override var parentEntity: ParentChainEntity.Builder?
   }
 
   companion object : EntityType<CompositeChildAbstractEntity, Builder>(CompositeAbstractEntity) {
@@ -128,7 +128,7 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): CompositeChildAbstractEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -151,9 +151,9 @@ fun MutableEntityStorage.modifyEntity(
 interface SimpleChildAbstractEntity : SimpleAbstractEntity {
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SimpleChildAbstractEntity, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity>, WorkspaceEntity.Builder<SimpleChildAbstractEntity> {
+  interface Builder : WorkspaceEntity.Builder<SimpleChildAbstractEntity>, SimpleAbstractEntity.Builder<SimpleChildAbstractEntity> {
     override var entitySource: EntitySource
-    override var parentInList: CompositeAbstractEntity?
+    override var parentInList: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
   }
 
   companion object : EntityType<SimpleChildAbstractEntity, Builder>(SimpleAbstractEntity) {
@@ -163,7 +163,7 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SimpleChildAbstractEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)

@@ -17,11 +17,11 @@ interface NotNullToNullEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : NotNullToNullEntity, WorkspaceEntity.Builder<NotNullToNullEntity> {
+  interface Builder : WorkspaceEntity.Builder<NotNullToNullEntity> {
     override var entitySource: EntitySource
-    override var nullInt: Int?
-    override var notNullString: String
-    override var notNullList: MutableList<Int>
+    var nullInt: Int?
+    var notNullString: String
+    var notNullList: MutableList<Int>
   }
 
   companion object : EntityType<NotNullToNullEntity, Builder>() {
@@ -33,7 +33,7 @@ interface NotNullToNullEntity: WorkspaceEntity {
       notNullList: List<Int>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): NotNullToNullEntity {
+    ): Builder {
       val builder = builder()
       builder.notNullString = notNullString
       builder.notNullList = notNullList.toMutableWorkspaceList()

@@ -14,9 +14,9 @@ interface EnumPropsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : EnumPropsEntity, WorkspaceEntity.Builder<EnumPropsEntity> {
+  interface Builder : WorkspaceEntity.Builder<EnumPropsEntity> {
     override var entitySource: EntitySource
-    override var someEnum: EnumPropsEnum
+    var someEnum: EnumPropsEnum
   }
 
   companion object : EntityType<EnumPropsEntity, Builder>() {
@@ -27,7 +27,7 @@ interface EnumPropsEntity: WorkspaceEntity {
       someEnum: EnumPropsEnum,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): EnumPropsEntity {
+    ): Builder {
       val builder = builder()
       builder.someEnum = someEnum
       builder.entitySource = entitySource

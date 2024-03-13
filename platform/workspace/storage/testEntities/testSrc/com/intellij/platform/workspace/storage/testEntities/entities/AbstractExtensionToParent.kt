@@ -11,10 +11,10 @@ interface ParentWithLinkToAbstractChild : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ParentWithLinkToAbstractChild, WorkspaceEntity.Builder<ParentWithLinkToAbstractChild> {
+  interface Builder : WorkspaceEntity.Builder<ParentWithLinkToAbstractChild> {
     override var entitySource: EntitySource
-    override var data: String
-    override var child: AbstractChildWithLinkToParentEntity?
+    var data: String
+    var child: AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParentEntity>?
   }
 
   companion object : EntityType<ParentWithLinkToAbstractChild, Builder>() {
@@ -25,7 +25,7 @@ interface ParentWithLinkToAbstractChild : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ParentWithLinkToAbstractChild {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -51,9 +51,9 @@ interface AbstractChildWithLinkToParentEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder<T : AbstractChildWithLinkToParentEntity> : AbstractChildWithLinkToParentEntity, WorkspaceEntity.Builder<T> {
+  interface Builder<T : AbstractChildWithLinkToParentEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<AbstractChildWithLinkToParentEntity, Builder<AbstractChildWithLinkToParentEntity>>() {
@@ -64,7 +64,7 @@ interface AbstractChildWithLinkToParentEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder<AbstractChildWithLinkToParentEntity>.() -> Unit)? = null,
-    ): AbstractChildWithLinkToParentEntity {
+    ): Builder<AbstractChildWithLinkToParentEntity> {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -76,14 +76,14 @@ interface AbstractChildWithLinkToParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-var AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParentEntity>.parent: ParentWithLinkToAbstractChild?
-  by WorkspaceEntity.extension()
+var AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParentEntity>.parent: ParentWithLinkToAbstractChild.Builder?
+  by WorkspaceEntity.extensionBuilder(ParentWithLinkToAbstractChild::class.java)
 //endregion
 
 interface SpecificChildWithLinkToParentEntity : AbstractChildWithLinkToParentEntity {
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SpecificChildWithLinkToParentEntity, AbstractChildWithLinkToParentEntity.Builder<SpecificChildWithLinkToParentEntity>, WorkspaceEntity.Builder<SpecificChildWithLinkToParentEntity> {
+  interface Builder : WorkspaceEntity.Builder<SpecificChildWithLinkToParentEntity>, AbstractChildWithLinkToParentEntity.Builder<SpecificChildWithLinkToParentEntity> {
     override var entitySource: EntitySource
     override var data: String
   }
@@ -96,7 +96,7 @@ interface SpecificChildWithLinkToParentEntity : AbstractChildWithLinkToParentEnt
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SpecificChildWithLinkToParentEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

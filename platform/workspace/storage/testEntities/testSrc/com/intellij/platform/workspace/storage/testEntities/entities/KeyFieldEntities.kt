@@ -18,11 +18,11 @@ interface KeyParent : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : KeyParent, WorkspaceEntity.Builder<KeyParent> {
+  interface Builder : WorkspaceEntity.Builder<KeyParent> {
     override var entitySource: EntitySource
-    override var keyField: String
-    override var notKeyField: String
-    override var children: List<KeyChild>
+    var keyField: String
+    var notKeyField: String
+    var children: List<KeyChild.Builder>
   }
 
   companion object : EntityType<KeyParent, Builder>() {
@@ -34,7 +34,7 @@ interface KeyParent : WorkspaceEntity {
       notKeyField: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): KeyParent {
+    ): Builder {
       val builder = builder()
       builder.keyField = keyField
       builder.notKeyField = notKeyField
@@ -63,10 +63,10 @@ interface KeyChild : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : KeyChild, WorkspaceEntity.Builder<KeyChild> {
+  interface Builder : WorkspaceEntity.Builder<KeyChild> {
     override var entitySource: EntitySource
-    override var data: String
-    override var parentEntity: KeyParent
+    var data: String
+    var parentEntity: KeyParent.Builder
   }
 
   companion object : EntityType<KeyChild, Builder>() {
@@ -77,7 +77,7 @@ interface KeyChild : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): KeyChild {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

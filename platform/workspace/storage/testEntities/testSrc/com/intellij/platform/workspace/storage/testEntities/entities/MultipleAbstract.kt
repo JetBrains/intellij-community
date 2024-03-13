@@ -16,9 +16,9 @@ interface ParentAbEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ParentAbEntity, WorkspaceEntity.Builder<ParentAbEntity> {
+  interface Builder : WorkspaceEntity.Builder<ParentAbEntity> {
     override var entitySource: EntitySource
-    override var children: List<ChildAbstractBaseEntity>
+    var children: List<ChildAbstractBaseEntity.Builder<out ChildAbstractBaseEntity>>
   }
 
   companion object : EntityType<ParentAbEntity, Builder>() {
@@ -28,7 +28,7 @@ interface ParentAbEntity : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ParentAbEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -56,10 +56,10 @@ interface ChildAbstractBaseEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder<T : ChildAbstractBaseEntity> : ChildAbstractBaseEntity, WorkspaceEntity.Builder<T> {
+  interface Builder<T : ChildAbstractBaseEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var commonData: String
-    override var parentEntity: ParentAbEntity
+    var commonData: String
+    var parentEntity: ParentAbEntity.Builder
   }
 
   companion object : EntityType<ChildAbstractBaseEntity, Builder<ChildAbstractBaseEntity>>() {
@@ -70,7 +70,7 @@ interface ChildAbstractBaseEntity : WorkspaceEntity {
       commonData: String,
       entitySource: EntitySource,
       init: (Builder<ChildAbstractBaseEntity>.() -> Unit)? = null,
-    ): ChildAbstractBaseEntity {
+    ): Builder<ChildAbstractBaseEntity> {
       val builder = builder()
       builder.commonData = commonData
       builder.entitySource = entitySource
@@ -87,11 +87,11 @@ interface ChildFirstEntity : ChildAbstractBaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChildFirstEntity, ChildAbstractBaseEntity.Builder<ChildFirstEntity>, WorkspaceEntity.Builder<ChildFirstEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChildFirstEntity>, ChildAbstractBaseEntity.Builder<ChildFirstEntity> {
     override var entitySource: EntitySource
     override var commonData: String
-    override var parentEntity: ParentAbEntity
-    override var firstData: String
+    override var parentEntity: ParentAbEntity.Builder
+    var firstData: String
   }
 
   companion object : EntityType<ChildFirstEntity, Builder>(ChildAbstractBaseEntity) {
@@ -103,7 +103,7 @@ interface ChildFirstEntity : ChildAbstractBaseEntity {
       firstData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChildFirstEntity {
+    ): Builder {
       val builder = builder()
       builder.commonData = commonData
       builder.firstData = firstData
@@ -134,11 +134,11 @@ interface ChildSecondEntity : ChildAbstractBaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChildSecondEntity, ChildAbstractBaseEntity.Builder<ChildSecondEntity>, WorkspaceEntity.Builder<ChildSecondEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChildSecondEntity>, ChildAbstractBaseEntity.Builder<ChildSecondEntity> {
     override var entitySource: EntitySource
     override var commonData: String
-    override var parentEntity: ParentAbEntity
-    override var secondData: String
+    override var parentEntity: ParentAbEntity.Builder
+    var secondData: String
   }
 
   companion object : EntityType<ChildSecondEntity, Builder>(ChildAbstractBaseEntity) {
@@ -150,7 +150,7 @@ interface ChildSecondEntity : ChildAbstractBaseEntity {
       secondData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChildSecondEntity {
+    ): Builder {
       val builder = builder()
       builder.commonData = commonData
       builder.secondData = secondData

@@ -19,13 +19,13 @@ interface SimplePropsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SimplePropsEntity, WorkspaceEntity.Builder<SimplePropsEntity> {
+  interface Builder : WorkspaceEntity.Builder<SimplePropsEntity> {
     override var entitySource: EntitySource
-    override var text: String
-    override var list: MutableList<Int>
-    override var set: MutableSet<List<String>>
-    override var map: Map<Set<String>, List<String>>
-    override var bool: Boolean
+    var text: String
+    var list: MutableList<Int>
+    var set: MutableSet<List<String>>
+    var map: Map<Set<String>, List<String>>
+    var bool: Boolean
   }
 
   companion object : EntityType<SimplePropsEntity, Builder>() {
@@ -40,7 +40,7 @@ interface SimplePropsEntity: WorkspaceEntity {
       bool: Boolean,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SimplePropsEntity {
+    ): Builder {
       val builder = builder()
       builder.text = text
       builder.list = list.toMutableWorkspaceList()

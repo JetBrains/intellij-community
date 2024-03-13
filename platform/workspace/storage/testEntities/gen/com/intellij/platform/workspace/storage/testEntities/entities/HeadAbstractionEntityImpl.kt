@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToAbstractOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneChildOfParent
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -125,15 +126,17 @@ open class HeadAbstractionEntityImpl(private val dataSource: HeadAbstractionEnti
         changedProperty.add("data")
       }
 
-    override var child: CompositeBaseEntity?
+    override var child: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                       CHILD_CONNECTION_ID)] as? CompositeBaseEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID,
+                                                                             this) as? CompositeBaseEntity.Builder<out CompositeBaseEntity>)
+          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? CompositeBaseEntity.Builder<out CompositeBaseEntity>)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? CompositeBaseEntity
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? CompositeBaseEntity.Builder<out CompositeBaseEntity>
         }
       }
       set(value) {
@@ -207,7 +210,7 @@ class HeadAbstractionEntityData : WorkspaceEntityData.WithCalculableSymbolicId<H
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return HeadAbstractionEntity(data, entitySource) {
     }
   }

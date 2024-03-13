@@ -18,6 +18,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -132,15 +133,16 @@ open class OoChildEntityImpl(private val dataSource: OoChildEntityData) : OoChil
         changedProperty.add("childProperty")
       }
 
-    override var parentEntity: OoParentEntity
+    override var parentEntity: OoParentEntity.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                       PARENTENTITY_CONNECTION_ID)]!! as OoParentEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? OoParentEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentEntity.Builder
         }
       }
       set(value) {
@@ -210,9 +212,9 @@ class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return OoChildEntity(childProperty, entitySource) {
-      parents.filterIsInstance<OoParentEntity>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<OoParentEntity.Builder>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

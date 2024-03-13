@@ -26,15 +26,15 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SampleWithSymbolicIdEntity, WorkspaceEntity.Builder<SampleWithSymbolicIdEntity> {
+  interface Builder : WorkspaceEntity.Builder<SampleWithSymbolicIdEntity> {
     override var entitySource: EntitySource
-    override var booleanProperty: Boolean
-    override var stringProperty: String
-    override var stringListProperty: MutableList<String>
-    override var stringMapProperty: Map<String, String>
-    override var fileProperty: VirtualFileUrl
-    override var children: List<ChildWpidSampleEntity>
-    override var nullableData: String?
+    var booleanProperty: Boolean
+    var stringProperty: String
+    var stringListProperty: MutableList<String>
+    var stringMapProperty: Map<String, String>
+    var fileProperty: VirtualFileUrl
+    var children: List<ChildWpidSampleEntity.Builder>
+    var nullableData: String?
   }
 
   companion object : EntityType<SampleWithSymbolicIdEntity, Builder>() {
@@ -49,7 +49,7 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
       fileProperty: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SampleWithSymbolicIdEntity {
+    ): Builder {
       val builder = builder()
       builder.booleanProperty = booleanProperty
       builder.stringProperty = stringProperty
@@ -85,10 +85,10 @@ interface ChildWpidSampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChildWpidSampleEntity, WorkspaceEntity.Builder<ChildWpidSampleEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChildWpidSampleEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var parentEntity: SampleWithSymbolicIdEntity?
+    var data: String
+    var parentEntity: SampleWithSymbolicIdEntity.Builder?
   }
 
   companion object : EntityType<ChildWpidSampleEntity, Builder>() {
@@ -99,7 +99,7 @@ interface ChildWpidSampleEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChildWpidSampleEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

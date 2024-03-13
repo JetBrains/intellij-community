@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -18,6 +19,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -114,14 +116,16 @@ open class AttachedEntityListImpl(private val dataSource: AttachedEntityListData
 
       }
 
-    override var ref: MainEntityList?
+    override var ref: MainEntityList.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(REF_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false, REF_CONNECTION_ID)] as? MainEntityList
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(REF_CONNECTION_ID, this) as? MainEntityList.Builder)
+          ?: (this.entityLinks[EntityLink(false, REF_CONNECTION_ID)] as? MainEntityList.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, REF_CONNECTION_ID)] as? MainEntityList
+          this.entityLinks[EntityLink(false, REF_CONNECTION_ID)] as? MainEntityList.Builder
         }
       }
       set(value) {
@@ -203,9 +207,9 @@ class AttachedEntityListData : WorkspaceEntityData<AttachedEntityList>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return AttachedEntityList(data, entitySource) {
-      this.ref = parents.filterIsInstance<MainEntityList>().singleOrNull()
+      this.ref = parents.filterIsInstance<MainEntityList.Builder>().singleOrNull()
     }
   }
 

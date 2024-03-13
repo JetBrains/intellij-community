@@ -18,11 +18,11 @@ interface SampleEntity2 : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SampleEntity2, WorkspaceEntity.Builder<SampleEntity2> {
+  interface Builder : WorkspaceEntity.Builder<SampleEntity2> {
     override var entitySource: EntitySource
-    override var data: String
-    override var boolData: Boolean
-    override var optionalData: String?
+    var data: String
+    var boolData: Boolean
+    var optionalData: String?
   }
 
   companion object : EntityType<SampleEntity2, Builder>() {
@@ -34,7 +34,7 @@ interface SampleEntity2 : WorkspaceEntity {
       boolData: Boolean,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SampleEntity2 {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.boolData = boolData
@@ -64,12 +64,12 @@ interface VFUEntity2 : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : VFUEntity2, WorkspaceEntity.Builder<VFUEntity2> {
+  interface Builder : WorkspaceEntity.Builder<VFUEntity2> {
     override var entitySource: EntitySource
-    override var data: String
-    override var filePath: VirtualFileUrl?
-    override var directoryPath: VirtualFileUrl
-    override var notNullRoots: MutableList<VirtualFileUrl>
+    var data: String
+    var filePath: VirtualFileUrl?
+    var directoryPath: VirtualFileUrl
+    var notNullRoots: MutableList<VirtualFileUrl>
   }
 
   companion object : EntityType<VFUEntity2, Builder>() {
@@ -82,7 +82,7 @@ interface VFUEntity2 : WorkspaceEntity {
       notNullRoots: List<VirtualFileUrl>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): VFUEntity2 {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.directoryPath = directoryPath

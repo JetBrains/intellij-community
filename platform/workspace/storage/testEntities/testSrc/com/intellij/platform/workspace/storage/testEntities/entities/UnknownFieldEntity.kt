@@ -16,9 +16,9 @@ interface UnknownFieldEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : UnknownFieldEntity, WorkspaceEntity.Builder<UnknownFieldEntity> {
+  interface Builder : WorkspaceEntity.Builder<UnknownFieldEntity> {
     override var entitySource: EntitySource
-    override var data: Date
+    var data: Date
   }
 
   companion object : EntityType<UnknownFieldEntity, Builder>() {
@@ -29,7 +29,7 @@ interface UnknownFieldEntity : WorkspaceEntity {
       data: Date,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): UnknownFieldEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

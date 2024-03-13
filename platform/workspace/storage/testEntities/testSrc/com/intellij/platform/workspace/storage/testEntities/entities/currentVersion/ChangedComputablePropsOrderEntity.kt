@@ -24,11 +24,11 @@ interface ChangedComputablePropsOrderEntity: WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChangedComputablePropsOrderEntity, WorkspaceEntity.Builder<ChangedComputablePropsOrderEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChangedComputablePropsOrderEntity> {
     override var entitySource: EntitySource
-    override var someKey: Int
-    override var names: MutableList<String>
-    override var value: Int
+    var someKey: Int
+    var names: MutableList<String>
+    var value: Int
   }
 
   companion object : EntityType<ChangedComputablePropsOrderEntity, Builder>() {
@@ -41,7 +41,7 @@ interface ChangedComputablePropsOrderEntity: WorkspaceEntityWithSymbolicId {
       value: Int,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChangedComputablePropsOrderEntity {
+    ): Builder {
       val builder = builder()
       builder.someKey = someKey
       builder.names = names.toMutableWorkspaceList()

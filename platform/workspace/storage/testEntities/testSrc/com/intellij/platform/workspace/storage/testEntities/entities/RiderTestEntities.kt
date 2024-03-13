@@ -22,13 +22,13 @@ interface ProjectModelTestEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ProjectModelTestEntity, WorkspaceEntity.Builder<ProjectModelTestEntity> {
+  interface Builder : WorkspaceEntity.Builder<ProjectModelTestEntity> {
     override var entitySource: EntitySource
-    override var info: String
-    override var descriptor: Descriptor
-    override var parentEntity: ProjectModelTestEntity?
-    override var childrenEntities: List<ProjectModelTestEntity>
-    override var contentRoot: ContentRootTestEntity?
+    var info: String
+    var descriptor: Descriptor
+    var parentEntity: ProjectModelTestEntity.Builder?
+    var childrenEntities: List<ProjectModelTestEntity.Builder>
+    var contentRoot: ContentRootTestEntity.Builder?
   }
 
   companion object : EntityType<ProjectModelTestEntity, Builder>() {
@@ -40,7 +40,7 @@ interface ProjectModelTestEntity : WorkspaceEntity {
       descriptor: Descriptor,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ProjectModelTestEntity {
+    ): Builder {
       val builder = builder()
       builder.info = info
       builder.descriptor = descriptor

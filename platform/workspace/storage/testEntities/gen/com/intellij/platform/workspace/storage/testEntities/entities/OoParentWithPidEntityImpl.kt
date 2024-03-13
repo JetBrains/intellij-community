@@ -19,6 +19,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -132,15 +133,17 @@ open class OoParentWithPidEntityImpl(private val dataSource: OoParentWithPidEnti
         changedProperty.add("parentProperty")
       }
 
-    override var childOne: OoChildForParentWithPidEntity?
+    override var childOne: OoChildForParentWithPidEntity.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(CHILDONE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                  CHILDONE_CONNECTION_ID)] as? OoChildForParentWithPidEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILDONE_CONNECTION_ID,
+                                                                             this) as? OoChildForParentWithPidEntity.Builder)
+          ?: (this.entityLinks[EntityLink(true, CHILDONE_CONNECTION_ID)] as? OoChildForParentWithPidEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDONE_CONNECTION_ID)] as? OoChildForParentWithPidEntity
+          this.entityLinks[EntityLink(true, CHILDONE_CONNECTION_ID)] as? OoChildForParentWithPidEntity.Builder
         }
       }
       set(value) {
@@ -167,15 +170,17 @@ open class OoParentWithPidEntityImpl(private val dataSource: OoParentWithPidEnti
         changedProperty.add("childOne")
       }
 
-    override var childThree: OoChildAlsoWithPidEntity?
+    override var childThree: OoChildAlsoWithPidEntity.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(CHILDTHREE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                    CHILDTHREE_CONNECTION_ID)] as? OoChildAlsoWithPidEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILDTHREE_CONNECTION_ID,
+                                                                             this) as? OoChildAlsoWithPidEntity.Builder)
+          ?: (this.entityLinks[EntityLink(true, CHILDTHREE_CONNECTION_ID)] as? OoChildAlsoWithPidEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDTHREE_CONNECTION_ID)] as? OoChildAlsoWithPidEntity
+          this.entityLinks[EntityLink(true, CHILDTHREE_CONNECTION_ID)] as? OoChildAlsoWithPidEntity.Builder
         }
       }
       set(value) {
@@ -249,7 +254,7 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<O
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return OoParentWithPidEntity(parentProperty, entitySource) {
     }
   }

@@ -17,10 +17,10 @@ interface CollectionFieldEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : CollectionFieldEntity, WorkspaceEntity.Builder<CollectionFieldEntity> {
+  interface Builder : WorkspaceEntity.Builder<CollectionFieldEntity> {
     override var entitySource: EntitySource
-    override var versions: MutableSet<Int>
-    override var names: MutableList<String>
+    var versions: MutableSet<Int>
+    var names: MutableList<String>
   }
 
   companion object : EntityType<CollectionFieldEntity, Builder>() {
@@ -32,7 +32,7 @@ interface CollectionFieldEntity : WorkspaceEntity {
       names: List<String>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): CollectionFieldEntity {
+    ): Builder {
       val builder = builder()
       builder.versions = versions.toMutableWorkspaceSet()
       builder.names = names.toMutableWorkspaceList()

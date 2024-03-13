@@ -55,9 +55,9 @@ interface OneEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : OneEntityWithSymbolicId, WorkspaceEntity.Builder<OneEntityWithSymbolicId> {
+  interface Builder : WorkspaceEntity.Builder<OneEntityWithSymbolicId> {
     override var entitySource: EntitySource
-    override var myName: String
+    var myName: String
   }
 
   companion object : EntityType<OneEntityWithSymbolicId, Builder>() {
@@ -68,7 +68,7 @@ interface OneEntityWithSymbolicId : WorkspaceEntityWithSymbolicId {
       myName: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): OneEntityWithSymbolicId {
+    ): Builder {
       val builder = builder()
       builder.myName = myName
       builder.entitySource = entitySource
@@ -111,22 +111,22 @@ interface EntityWithSoftLinks : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : EntityWithSoftLinks, WorkspaceEntity.Builder<EntityWithSoftLinks> {
+  interface Builder : WorkspaceEntity.Builder<EntityWithSoftLinks> {
     override var entitySource: EntitySource
-    override var link: OneSymbolicId
-    override var manyLinks: MutableList<OneSymbolicId>
-    override var optionalLink: OneSymbolicId?
-    override var inContainer: Container
-    override var inOptionalContainer: Container?
-    override var inContainerList: MutableList<Container>
-    override var deepContainer: MutableList<TooDeepContainer>
-    override var sealedContainer: SealedContainer
-    override var listSealedContainer: MutableList<SealedContainer>
-    override var justProperty: String
-    override var justNullableProperty: String?
-    override var justListProperty: MutableList<String>
-    override var deepSealedClass: DeepSealedOne
-    override var children: List<SoftLinkReferencedChild>
+    var link: OneSymbolicId
+    var manyLinks: MutableList<OneSymbolicId>
+    var optionalLink: OneSymbolicId?
+    var inContainer: Container
+    var inOptionalContainer: Container?
+    var inContainerList: MutableList<Container>
+    var deepContainer: MutableList<TooDeepContainer>
+    var sealedContainer: SealedContainer
+    var listSealedContainer: MutableList<SealedContainer>
+    var justProperty: String
+    var justNullableProperty: String?
+    var justListProperty: MutableList<String>
+    var deepSealedClass: DeepSealedOne
+    var children: List<SoftLinkReferencedChild.Builder>
   }
 
   companion object : EntityType<EntityWithSoftLinks, Builder>() {
@@ -146,7 +146,7 @@ interface EntityWithSoftLinks : WorkspaceEntity {
       deepSealedClass: DeepSealedOne,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): EntityWithSoftLinks {
+    ): Builder {
       val builder = builder()
       builder.link = link
       builder.manyLinks = manyLinks.toMutableWorkspaceList()
@@ -181,9 +181,9 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SoftLinkReferencedChild, WorkspaceEntity.Builder<SoftLinkReferencedChild> {
+  interface Builder : WorkspaceEntity.Builder<SoftLinkReferencedChild> {
     override var entitySource: EntitySource
-    override var parentEntity: EntityWithSoftLinks
+    var parentEntity: EntityWithSoftLinks.Builder
   }
 
   companion object : EntityType<SoftLinkReferencedChild, Builder>() {
@@ -193,7 +193,7 @@ interface SoftLinkReferencedChild : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SoftLinkReferencedChild {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)

@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 
 data class LinkedListEntityId(val name: String) : SymbolicEntityId<LinkedListEntity> {
@@ -18,10 +23,10 @@ interface LinkedListEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : LinkedListEntity, WorkspaceEntity.Builder<LinkedListEntity> {
+  interface Builder : WorkspaceEntity.Builder<LinkedListEntity> {
     override var entitySource: EntitySource
-    override var myName: String
-    override var next: LinkedListEntityId
+    var myName: String
+    var next: LinkedListEntityId
   }
 
   companion object : EntityType<LinkedListEntity, Builder>() {
@@ -33,7 +38,7 @@ interface LinkedListEntity : WorkspaceEntityWithSymbolicId {
       next: LinkedListEntityId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): LinkedListEntity {
+    ): Builder {
       val builder = builder()
       builder.myName = myName
       builder.next = next
@@ -54,3 +59,4 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(LinkedListEntity.Builder::class.java, entity, modification)
 }
 //endregion
+

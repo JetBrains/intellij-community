@@ -18,9 +18,9 @@ interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : FirstEntityWithPId, WorkspaceEntity.Builder<FirstEntityWithPId> {
+  interface Builder : WorkspaceEntity.Builder<FirstEntityWithPId> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<FirstEntityWithPId, Builder>() {
@@ -31,7 +31,7 @@ interface FirstEntityWithPId : WorkspaceEntityWithSymbolicId {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): FirstEntityWithPId {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -61,9 +61,9 @@ interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SecondEntityWithPId, WorkspaceEntity.Builder<SecondEntityWithPId> {
+  interface Builder : WorkspaceEntity.Builder<SecondEntityWithPId> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<SecondEntityWithPId, Builder>() {
@@ -74,7 +74,7 @@ interface SecondEntityWithPId : WorkspaceEntityWithSymbolicId {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SecondEntityWithPId {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

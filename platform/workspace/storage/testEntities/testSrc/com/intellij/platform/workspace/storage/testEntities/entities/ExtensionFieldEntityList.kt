@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -15,9 +10,9 @@ interface MainEntityList : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : MainEntityList, WorkspaceEntity.Builder<MainEntityList> {
+  interface Builder : WorkspaceEntity.Builder<MainEntityList> {
     override var entitySource: EntitySource
-    override var x: String
+    var x: String
   }
 
   companion object : EntityType<MainEntityList, Builder>() {
@@ -28,7 +23,7 @@ interface MainEntityList : WorkspaceEntity {
       x: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): MainEntityList {
+    ): Builder {
       val builder = builder()
       builder.x = x
       builder.entitySource = entitySource
@@ -47,8 +42,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(MainEntityList.Builder::class.java, entity, modification)
 }
 
-var MainEntityList.Builder.child: @Child List<AttachedEntityList>
-  by WorkspaceEntity.extension()
+var MainEntityList.Builder.child: @Child List<AttachedEntityList.Builder>
+  by WorkspaceEntity.extensionBuilder(AttachedEntityList::class.java)
 //endregion
 
 interface AttachedEntityList : WorkspaceEntity {
@@ -57,10 +52,10 @@ interface AttachedEntityList : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : AttachedEntityList, WorkspaceEntity.Builder<AttachedEntityList> {
+  interface Builder : WorkspaceEntity.Builder<AttachedEntityList> {
     override var entitySource: EntitySource
-    override var ref: MainEntityList?
-    override var data: String
+    var ref: MainEntityList.Builder?
+    var data: String
   }
 
   companion object : EntityType<AttachedEntityList, Builder>() {
@@ -71,7 +66,7 @@ interface AttachedEntityList : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): AttachedEntityList {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

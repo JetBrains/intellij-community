@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -17,11 +12,11 @@ interface MainEntityToParent : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : MainEntityToParent, WorkspaceEntity.Builder<MainEntityToParent> {
+  interface Builder : WorkspaceEntity.Builder<MainEntityToParent> {
     override var entitySource: EntitySource
-    override var x: String
-    override var child: AttachedEntityToParent?
-    override var childNullableParent: AttachedEntityToNullableParent?
+    var x: String
+    var child: AttachedEntityToParent.Builder?
+    var childNullableParent: AttachedEntityToNullableParent.Builder?
   }
 
   companion object : EntityType<MainEntityToParent, Builder>() {
@@ -32,7 +27,7 @@ interface MainEntityToParent : WorkspaceEntity {
       x: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): MainEntityToParent {
+    ): Builder {
       val builder = builder()
       builder.x = x
       builder.entitySource = entitySource
@@ -58,9 +53,9 @@ interface AttachedEntityToParent : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : AttachedEntityToParent, WorkspaceEntity.Builder<AttachedEntityToParent> {
+  interface Builder : WorkspaceEntity.Builder<AttachedEntityToParent> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<AttachedEntityToParent, Builder>() {
@@ -71,7 +66,7 @@ interface AttachedEntityToParent : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): AttachedEntityToParent {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -91,8 +86,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(AttachedEntityToParent.Builder::class.java, entity, modification)
 }
 
-var AttachedEntityToParent.Builder.ref: MainEntityToParent
-  by WorkspaceEntity.extension()
+var AttachedEntityToParent.Builder.ref: MainEntityToParent.Builder
+  by WorkspaceEntity.extensionBuilder(MainEntityToParent::class.java)
 //endregion
 
 val AttachedEntityToParent.ref: MainEntityToParent
@@ -104,9 +99,9 @@ interface AttachedEntityToNullableParent: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : AttachedEntityToNullableParent, WorkspaceEntity.Builder<AttachedEntityToNullableParent> {
+  interface Builder : WorkspaceEntity.Builder<AttachedEntityToNullableParent> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<AttachedEntityToNullableParent, Builder>() {
@@ -117,7 +112,7 @@ interface AttachedEntityToNullableParent: WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): AttachedEntityToNullableParent {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -136,8 +131,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(AttachedEntityToNullableParent.Builder::class.java, entity, modification)
 }
 
-var AttachedEntityToNullableParent.Builder.nullableRef: MainEntityToParent?
-  by WorkspaceEntity.extension()
+var AttachedEntityToNullableParent.Builder.nullableRef: MainEntityToParent.Builder?
+  by WorkspaceEntity.extensionBuilder(MainEntityToParent::class.java)
 //endregion
 
 val AttachedEntityToNullableParent.nullableRef: MainEntityToParent?

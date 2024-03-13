@@ -16,11 +16,11 @@ interface ComputablePropEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ComputablePropEntity, WorkspaceEntity.Builder<ComputablePropEntity> {
+  interface Builder : WorkspaceEntity.Builder<ComputablePropEntity> {
     override var entitySource: EntitySource
-    override var list: MutableList<Map<List<Int?>, String>>
-    override var value: Int
-    override var computableText: String
+    var list: MutableList<Map<List<Int?>, String>>
+    var value: Int
+    var computableText: String
   }
 
   companion object : EntityType<ComputablePropEntity, Builder>() {
@@ -33,7 +33,7 @@ interface ComputablePropEntity: WorkspaceEntity {
       computableText: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ComputablePropEntity {
+    ): Builder {
       val builder = builder()
       builder.list = list.toMutableWorkspaceList()
       builder.value = value

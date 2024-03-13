@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -19,6 +20,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToAbstractManyPare
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -107,15 +109,18 @@ open class SimpleChildAbstractEntityImpl(private val dataSource: SimpleChildAbst
 
       }
 
-    override var parentInList: CompositeAbstractEntity?
+    override var parentInList: CompositeAbstractEntity.Builder<out CompositeAbstractEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyParent(PARENTINLIST_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                                PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTINLIST_CONNECTION_ID,
+                                                                           this) as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
+          ?: (this.entityLinks[EntityLink(false,
+                                          PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntity
+          this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] as? CompositeAbstractEntity.Builder<out CompositeAbstractEntity>
         }
       }
       set(value) {
@@ -187,9 +192,9 @@ class SimpleChildAbstractEntityData : WorkspaceEntityData<SimpleChildAbstractEnt
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return SimpleChildAbstractEntity(entitySource) {
-      this.parentInList = parents.filterIsInstance<CompositeAbstractEntity>().singleOrNull()
+      this.parentInList = parents.filterIsInstance<CompositeAbstractEntity.Builder<out CompositeAbstractEntity>>().singleOrNull()
     }
   }
 

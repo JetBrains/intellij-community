@@ -19,6 +19,7 @@ import com.intellij.platform.workspace.storage.impl.extractOneToOneParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -135,15 +136,17 @@ open class OoChildWithPidEntityImpl(private val dataSource: OoChildWithPidEntity
         changedProperty.add("childProperty")
       }
 
-    override var parentEntity: OoParentWithoutPidEntity
+    override var parentEntity: OoParentWithoutPidEntity.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                       PARENTENTITY_CONNECTION_ID)]!! as OoParentWithoutPidEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? OoParentWithoutPidEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentWithoutPidEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentWithoutPidEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentWithoutPidEntity.Builder
         }
       }
       set(value) {
@@ -217,9 +220,9 @@ class OoChildWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Oo
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return OoChildWithPidEntity(childProperty, entitySource) {
-      parents.filterIsInstance<OoParentWithoutPidEntity>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<OoParentWithoutPidEntity.Builder>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

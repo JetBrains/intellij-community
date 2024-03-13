@@ -16,11 +16,11 @@ interface OneToOneRefEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : OneToOneRefEntity, WorkspaceEntity.Builder<OneToOneRefEntity> {
+  interface Builder : WorkspaceEntity.Builder<OneToOneRefEntity> {
     override var entitySource: EntitySource
-    override var version: Int
-    override var text: String
-    override var anotherEntity: AnotherOneToOneRefEntity?
+    var version: Int
+    var text: String
+    var anotherEntity: AnotherOneToOneRefEntity.Builder?
   }
 
   companion object : EntityType<OneToOneRefEntity, Builder>() {
@@ -32,7 +32,7 @@ interface OneToOneRefEntity: WorkspaceEntity {
       text: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): OneToOneRefEntity {
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.text = text
@@ -60,11 +60,11 @@ interface AnotherOneToOneRefEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : AnotherOneToOneRefEntity, WorkspaceEntity.Builder<AnotherOneToOneRefEntity> {
+  interface Builder : WorkspaceEntity.Builder<AnotherOneToOneRefEntity> {
     override var entitySource: EntitySource
-    override var someString: String
-    override var boolean: Boolean
-    override var parentEntity: OneToOneRefEntity
+    var someString: String
+    var boolean: Boolean
+    var parentEntity: OneToOneRefEntity.Builder
   }
 
   companion object : EntityType<AnotherOneToOneRefEntity, Builder>() {
@@ -76,7 +76,7 @@ interface AnotherOneToOneRefEntity: WorkspaceEntity {
       boolean: Boolean,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): AnotherOneToOneRefEntity {
+    ): Builder {
       val builder = builder()
       builder.someString = someString
       builder.boolean = boolean

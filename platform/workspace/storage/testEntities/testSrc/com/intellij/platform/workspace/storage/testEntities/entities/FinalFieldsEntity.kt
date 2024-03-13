@@ -31,11 +31,11 @@ interface FinalFieldsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : FinalFieldsEntity, WorkspaceEntity.Builder<FinalFieldsEntity> {
+  interface Builder : WorkspaceEntity.Builder<FinalFieldsEntity> {
     override var entitySource: EntitySource
-    override var descriptor: AnotherDataClass
-    override var description: String
-    override var anotherVersion: Int
+    var descriptor: AnotherDataClass
+    var description: String
+    var anotherVersion: Int
   }
 
   companion object : EntityType<FinalFieldsEntity, Builder>() {
@@ -46,7 +46,7 @@ interface FinalFieldsEntity: WorkspaceEntity {
       descriptor: AnotherDataClass,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): FinalFieldsEntity {
+    ): Builder {
       val builder = builder()
       builder.descriptor = descriptor
       builder.entitySource = entitySource

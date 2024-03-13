@@ -169,7 +169,7 @@ class SymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Symbol
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return SymbolicIdEntity(data, entitySource) {
     }
   }

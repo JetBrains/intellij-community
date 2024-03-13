@@ -14,9 +14,9 @@ interface SubsetSealedClassEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SubsetSealedClassEntity, WorkspaceEntity.Builder<SubsetSealedClassEntity> {
+  interface Builder : WorkspaceEntity.Builder<SubsetSealedClassEntity> {
     override var entitySource: EntitySource
-    override var someData: SubsetSealedClass
+    var someData: SubsetSealedClass
   }
 
   companion object : EntityType<SubsetSealedClassEntity, Builder>() {
@@ -27,7 +27,7 @@ interface SubsetSealedClassEntity: WorkspaceEntity {
       someData: SubsetSealedClass,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SubsetSealedClassEntity {
+    ): Builder {
       val builder = builder()
       builder.someData = someData
       builder.entitySource = entitySource

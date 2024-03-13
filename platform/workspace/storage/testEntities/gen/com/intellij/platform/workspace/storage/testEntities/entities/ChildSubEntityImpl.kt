@@ -20,6 +20,7 @@ import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToOneParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import kotlin.jvm.JvmName
 import kotlin.jvm.JvmOverloads
@@ -125,15 +126,16 @@ open class ChildSubEntityImpl(private val dataSource: ChildSubEntityData) : Chil
 
       }
 
-    override var parentEntity: ParentSubEntity
+    override var parentEntity: ParentSubEntity.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                       PARENTENTITY_CONNECTION_ID)]!! as ParentSubEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ParentSubEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSubEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSubEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSubEntity.Builder
         }
       }
       set(value) {
@@ -160,15 +162,16 @@ open class ChildSubEntityImpl(private val dataSource: ChildSubEntityData) : Chil
         changedProperty.add("parentEntity")
       }
 
-    override var child: ChildSubSubEntity?
+    override var child: ChildSubSubEntity.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                               CHILD_CONNECTION_ID)] as? ChildSubSubEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID, this) as? ChildSubSubEntity.Builder)
+          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildSubSubEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildSubSubEntity
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildSubSubEntity.Builder
         }
       }
       set(value) {
@@ -236,9 +239,9 @@ class ChildSubEntityData : WorkspaceEntityData<ChildSubEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ChildSubEntity(entitySource) {
-      parents.filterIsInstance<ParentSubEntity>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<ParentSubEntity.Builder>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

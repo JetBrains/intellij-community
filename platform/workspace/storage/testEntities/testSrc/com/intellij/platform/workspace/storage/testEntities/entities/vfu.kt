@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -13,10 +18,10 @@ interface VFUEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : VFUEntity, WorkspaceEntity.Builder<VFUEntity> {
+  interface Builder : WorkspaceEntity.Builder<VFUEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var fileProperty: VirtualFileUrl
+    var data: String
+    var fileProperty: VirtualFileUrl
   }
 
   companion object : EntityType<VFUEntity, Builder>() {
@@ -28,7 +33,7 @@ interface VFUEntity : WorkspaceEntity {
       fileProperty: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): VFUEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.fileProperty = fileProperty
@@ -57,11 +62,11 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : VFUWithTwoPropertiesEntity, WorkspaceEntity.Builder<VFUWithTwoPropertiesEntity> {
+  interface Builder : WorkspaceEntity.Builder<VFUWithTwoPropertiesEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var fileProperty: VirtualFileUrl
-    override var secondFileProperty: VirtualFileUrl
+    var data: String
+    var fileProperty: VirtualFileUrl
+    var secondFileProperty: VirtualFileUrl
   }
 
   companion object : EntityType<VFUWithTwoPropertiesEntity, Builder>() {
@@ -74,7 +79,7 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
       secondFileProperty: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): VFUWithTwoPropertiesEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.fileProperty = fileProperty
@@ -103,10 +108,10 @@ interface NullableVFUEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : NullableVFUEntity, WorkspaceEntity.Builder<NullableVFUEntity> {
+  interface Builder : WorkspaceEntity.Builder<NullableVFUEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var fileProperty: VirtualFileUrl?
+    var data: String
+    var fileProperty: VirtualFileUrl?
   }
 
   companion object : EntityType<NullableVFUEntity, Builder>() {
@@ -117,7 +122,7 @@ interface NullableVFUEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): NullableVFUEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -144,10 +149,10 @@ interface ListVFUEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ListVFUEntity, WorkspaceEntity.Builder<ListVFUEntity> {
+  interface Builder : WorkspaceEntity.Builder<ListVFUEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var fileProperty: MutableList<VirtualFileUrl>
+    var data: String
+    var fileProperty: MutableList<VirtualFileUrl>
   }
 
   companion object : EntityType<ListVFUEntity, Builder>() {
@@ -159,7 +164,7 @@ interface ListVFUEntity : WorkspaceEntity {
       fileProperty: List<VirtualFileUrl>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ListVFUEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.fileProperty = fileProperty.toMutableWorkspaceList()
@@ -187,10 +192,10 @@ interface SetVFUEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SetVFUEntity, WorkspaceEntity.Builder<SetVFUEntity> {
+  interface Builder : WorkspaceEntity.Builder<SetVFUEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var fileProperty: MutableSet<VirtualFileUrl>
+    var data: String
+    var fileProperty: MutableSet<VirtualFileUrl>
   }
 
   companion object : EntityType<SetVFUEntity, Builder>() {
@@ -202,7 +207,7 @@ interface SetVFUEntity : WorkspaceEntity {
       fileProperty: Set<VirtualFileUrl>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SetVFUEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.fileProperty = fileProperty.toMutableWorkspaceSet()

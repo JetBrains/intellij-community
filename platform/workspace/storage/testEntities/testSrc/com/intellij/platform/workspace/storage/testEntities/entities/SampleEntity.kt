@@ -29,16 +29,16 @@ interface SampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SampleEntity, WorkspaceEntity.Builder<SampleEntity> {
+  interface Builder : WorkspaceEntity.Builder<SampleEntity> {
     override var entitySource: EntitySource
-    override var booleanProperty: Boolean
-    override var stringProperty: String
-    override var stringListProperty: MutableList<String>
-    override var stringMapProperty: Map<String, String>
-    override var fileProperty: VirtualFileUrl
-    override var children: List<ChildSampleEntity>
-    override var nullableData: String?
-    override var randomUUID: UUID?
+    var booleanProperty: Boolean
+    var stringProperty: String
+    var stringListProperty: MutableList<String>
+    var stringMapProperty: Map<String, String>
+    var fileProperty: VirtualFileUrl
+    var children: List<ChildSampleEntity.Builder>
+    var nullableData: String?
+    var randomUUID: UUID?
   }
 
   companion object : EntityType<SampleEntity, Builder>() {
@@ -53,7 +53,7 @@ interface SampleEntity : WorkspaceEntity {
       fileProperty: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SampleEntity {
+    ): Builder {
       val builder = builder()
       builder.booleanProperty = booleanProperty
       builder.stringProperty = stringProperty
@@ -84,10 +84,10 @@ interface ChildSampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChildSampleEntity, WorkspaceEntity.Builder<ChildSampleEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChildSampleEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var parentEntity: SampleEntity?
+    var data: String
+    var parentEntity: SampleEntity.Builder?
   }
 
   companion object : EntityType<ChildSampleEntity, Builder>() {
@@ -98,7 +98,7 @@ interface ChildSampleEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChildSampleEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -140,9 +140,9 @@ interface SecondSampleEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SecondSampleEntity, WorkspaceEntity.Builder<SecondSampleEntity> {
+  interface Builder : WorkspaceEntity.Builder<SecondSampleEntity> {
     override var entitySource: EntitySource
-    override var intProperty: Int
+    var intProperty: Int
   }
 
   companion object : EntityType<SecondSampleEntity, Builder>() {
@@ -153,7 +153,7 @@ interface SecondSampleEntity : WorkspaceEntity {
       intProperty: Int,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SecondSampleEntity {
+    ): Builder {
       val builder = builder()
       builder.intProperty = intProperty
       builder.entitySource = entitySource
@@ -180,10 +180,10 @@ interface SourceEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SourceEntity, WorkspaceEntity.Builder<SourceEntity> {
+  interface Builder : WorkspaceEntity.Builder<SourceEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var children: List<ChildSourceEntity>
+    var data: String
+    var children: List<ChildSourceEntity.Builder>
   }
 
   companion object : EntityType<SourceEntity, Builder>() {
@@ -194,7 +194,7 @@ interface SourceEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SourceEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -221,10 +221,10 @@ interface ChildSourceEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChildSourceEntity, WorkspaceEntity.Builder<ChildSourceEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChildSourceEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var parentEntity: SourceEntity
+    var data: String
+    var parentEntity: SourceEntity.Builder
   }
 
   companion object : EntityType<ChildSourceEntity, Builder>() {
@@ -235,7 +235,7 @@ interface ChildSourceEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChildSourceEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -265,9 +265,9 @@ interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SymbolicIdEntity, WorkspaceEntity.Builder<SymbolicIdEntity> {
+  interface Builder : WorkspaceEntity.Builder<SymbolicIdEntity> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<SymbolicIdEntity, Builder>() {
@@ -278,7 +278,7 @@ interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SymbolicIdEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

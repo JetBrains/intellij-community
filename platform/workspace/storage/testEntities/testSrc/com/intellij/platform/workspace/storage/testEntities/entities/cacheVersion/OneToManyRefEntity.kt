@@ -15,10 +15,10 @@ interface OneToManyRefEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : OneToManyRefEntity, WorkspaceEntity.Builder<OneToManyRefEntity> {
+  interface Builder : WorkspaceEntity.Builder<OneToManyRefEntity> {
     override var entitySource: EntitySource
-    override var someData: OneToManyRefDataClass
-    override var anotherEntity: List<AnotherOneToManyRefEntity>
+    var someData: OneToManyRefDataClass
+    var anotherEntity: List<AnotherOneToManyRefEntity.Builder>
   }
 
   companion object : EntityType<OneToManyRefEntity, Builder>() {
@@ -29,7 +29,7 @@ interface OneToManyRefEntity: WorkspaceEntity {
       someData: OneToManyRefDataClass,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): OneToManyRefEntity {
+    ): Builder {
       val builder = builder()
       builder.someData = someData
       builder.entitySource = entitySource
@@ -56,11 +56,11 @@ interface AnotherOneToManyRefEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : AnotherOneToManyRefEntity, WorkspaceEntity.Builder<AnotherOneToManyRefEntity> {
+  interface Builder : WorkspaceEntity.Builder<AnotherOneToManyRefEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: OneToManyRefEntity
-    override var version: Int
-    override var someData: OneToManyRefDataClass
+    var parentEntity: OneToManyRefEntity.Builder
+    var version: Int
+    var someData: OneToManyRefDataClass
   }
 
   companion object : EntityType<AnotherOneToManyRefEntity, Builder>() {
@@ -72,7 +72,7 @@ interface AnotherOneToManyRefEntity: WorkspaceEntity {
       someData: OneToManyRefDataClass,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): AnotherOneToManyRefEntity {
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.someData = someData

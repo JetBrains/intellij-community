@@ -2,11 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -15,9 +10,9 @@ interface MainEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : MainEntity, WorkspaceEntity.Builder<MainEntity> {
+  interface Builder : WorkspaceEntity.Builder<MainEntity> {
     override var entitySource: EntitySource
-    override var x: String
+    var x: String
   }
 
   companion object : EntityType<MainEntity, Builder>() {
@@ -28,7 +23,7 @@ interface MainEntity : WorkspaceEntity {
       x: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): MainEntity {
+    ): Builder {
       val builder = builder()
       builder.x = x
       builder.entitySource = entitySource
@@ -48,8 +43,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(MainEntity.Builder::class.java, entity, modification)
 }
 
-var MainEntity.Builder.child: @Child AttachedEntity?
-  by WorkspaceEntity.extension()
+var MainEntity.Builder.child: @Child AttachedEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(AttachedEntity::class.java)
 //endregion
 
 interface AttachedEntity : WorkspaceEntity {
@@ -58,10 +53,10 @@ interface AttachedEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : AttachedEntity, WorkspaceEntity.Builder<AttachedEntity> {
+  interface Builder : WorkspaceEntity.Builder<AttachedEntity> {
     override var entitySource: EntitySource
-    override var ref: MainEntity
-    override var data: String
+    var ref: MainEntity.Builder
+    var data: String
   }
 
   companion object : EntityType<AttachedEntity, Builder>() {
@@ -72,7 +67,7 @@ interface AttachedEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): AttachedEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

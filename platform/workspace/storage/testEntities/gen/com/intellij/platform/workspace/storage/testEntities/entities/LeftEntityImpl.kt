@@ -24,6 +24,7 @@ import com.intellij.platform.workspace.storage.impl.updateOneToAbstractManyParen
 import com.intellij.platform.workspace.storage.impl.updateOneToAbstractOneParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -133,15 +134,17 @@ open class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEntity, 
 
       }
 
-    override var parentEntity: CompositeBaseEntity?
+    override var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                                PARENTENTITY_CONNECTION_ID)] as? CompositeBaseEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
+                                                                           this) as? CompositeBaseEntity.Builder<out CompositeBaseEntity>)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositeBaseEntity.Builder<out CompositeBaseEntity>)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositeBaseEntity
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositeBaseEntity.Builder<out CompositeBaseEntity>
         }
       }
       set(value) {
@@ -172,16 +175,17 @@ open class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEntity, 
         changedProperty.add("parentEntity")
       }
 
-    override var children: List<BaseEntity>
+    override var children: List<BaseEntity.Builder<out BaseEntity>>
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractManyChildren<BaseEntity>(CHILDREN_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                                     CHILDREN_CONNECTION_ID)] as? List<BaseEntity>
-                                                                                                         ?: emptyList())
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<BaseEntity.Builder<out BaseEntity>>) +
+          (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<BaseEntity.Builder<out BaseEntity>> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<BaseEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as List<BaseEntity.Builder<out BaseEntity>> ?: emptyList()
         }
       }
       set(value) {
@@ -214,15 +218,16 @@ open class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEntity, 
         changedProperty.add("children")
       }
 
-    override var parent: HeadAbstractionEntity?
+    override var parent: HeadAbstractionEntity.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToAbstractOneParent(PARENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                         PARENT_CONNECTION_ID)] as? HeadAbstractionEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID, this) as? HeadAbstractionEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? HeadAbstractionEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? HeadAbstractionEntity
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? HeadAbstractionEntity.Builder
         }
       }
       set(value) {
@@ -290,10 +295,10 @@ class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return LeftEntity(entitySource) {
-      this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
-      this.parent = parents.filterIsInstance<HeadAbstractionEntity>().singleOrNull()
+      this.parentEntity = parents.filterIsInstance<CompositeBaseEntity.Builder<out CompositeBaseEntity>>().singleOrNull()
+      this.parent = parents.filterIsInstance<HeadAbstractionEntity.Builder>().singleOrNull()
     }
   }
 

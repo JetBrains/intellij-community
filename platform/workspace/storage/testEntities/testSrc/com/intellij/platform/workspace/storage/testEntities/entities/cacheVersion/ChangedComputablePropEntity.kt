@@ -15,9 +15,9 @@ interface ChangedComputablePropEntity: WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChangedComputablePropEntity, WorkspaceEntity.Builder<ChangedComputablePropEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChangedComputablePropEntity> {
     override var entitySource: EntitySource
-    override var text: String
+    var text: String
   }
 
   companion object : EntityType<ChangedComputablePropEntity, Builder>() {
@@ -28,7 +28,7 @@ interface ChangedComputablePropEntity: WorkspaceEntityWithSymbolicId {
       text: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChangedComputablePropEntity {
+    ): Builder {
       val builder = builder()
       builder.text = text
       builder.entitySource = entitySource

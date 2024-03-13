@@ -18,12 +18,12 @@ interface ChangedPropsOrderEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ChangedPropsOrderEntity, WorkspaceEntity.Builder<ChangedPropsOrderEntity> {
+  interface Builder : WorkspaceEntity.Builder<ChangedPropsOrderEntity> {
     override var entitySource: EntitySource
-    override var version: Int
-    override var string: String
-    override var data: ChangedPropsOrderDataClass
-    override var list: MutableList<Set<Int>>
+    var version: Int
+    var string: String
+    var data: ChangedPropsOrderDataClass
+    var list: MutableList<Set<Int>>
   }
 
   companion object : EntityType<ChangedPropsOrderEntity, Builder>() {
@@ -37,7 +37,7 @@ interface ChangedPropsOrderEntity: WorkspaceEntity {
       list: List<Set<Int>>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ChangedPropsOrderEntity {
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.string = string

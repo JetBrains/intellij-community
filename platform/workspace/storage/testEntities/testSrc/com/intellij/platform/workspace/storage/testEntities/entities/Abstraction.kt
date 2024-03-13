@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 
@@ -15,10 +20,10 @@ interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : HeadAbstractionEntity, WorkspaceEntity.Builder<HeadAbstractionEntity> {
+  interface Builder : WorkspaceEntity.Builder<HeadAbstractionEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var child: CompositeBaseEntity?
+    var data: String
+    var child: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
   }
 
   companion object : EntityType<HeadAbstractionEntity, Builder>() {
@@ -29,7 +34,7 @@ interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): HeadAbstractionEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -58,9 +63,9 @@ interface BaseEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder<T : BaseEntity> : BaseEntity, WorkspaceEntity.Builder<T> {
+  interface Builder<T : BaseEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositeBaseEntity?
+    var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
   }
 
   companion object : EntityType<BaseEntity, Builder<BaseEntity>>() {
@@ -70,7 +75,7 @@ interface BaseEntity : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder<BaseEntity>.() -> Unit)? = null,
-    ): BaseEntity {
+    ): Builder<BaseEntity> {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -89,11 +94,11 @@ interface CompositeBaseEntity : BaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder<T : CompositeBaseEntity> : CompositeBaseEntity, BaseEntity.Builder<T>, WorkspaceEntity.Builder<T> {
+  interface Builder<T : CompositeBaseEntity> : WorkspaceEntity.Builder<T>, BaseEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositeBaseEntity?
-    override var children: List<BaseEntity>
-    override var parent: HeadAbstractionEntity?
+    override var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
+    var children: List<BaseEntity.Builder<out BaseEntity>>
+    var parent: HeadAbstractionEntity.Builder?
   }
 
   companion object : EntityType<CompositeBaseEntity, Builder<CompositeBaseEntity>>(BaseEntity) {
@@ -103,7 +108,7 @@ interface CompositeBaseEntity : BaseEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder<CompositeBaseEntity>.() -> Unit)? = null,
-    ): CompositeBaseEntity {
+    ): Builder<CompositeBaseEntity> {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -119,10 +124,10 @@ interface MiddleEntity : BaseEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : MiddleEntity, BaseEntity.Builder<MiddleEntity>, WorkspaceEntity.Builder<MiddleEntity> {
+  interface Builder : WorkspaceEntity.Builder<MiddleEntity>, BaseEntity.Builder<MiddleEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositeBaseEntity?
-    override var property: String
+    override var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
+    var property: String
   }
 
   companion object : EntityType<MiddleEntity, Builder>(BaseEntity) {
@@ -133,7 +138,7 @@ interface MiddleEntity : BaseEntity {
       property: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): MiddleEntity {
+    ): Builder {
       val builder = builder()
       builder.property = property
       builder.entitySource = entitySource
@@ -159,11 +164,11 @@ fun MutableEntityStorage.modifyEntity(
 interface LeftEntity : CompositeBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : LeftEntity, CompositeBaseEntity.Builder<LeftEntity>, WorkspaceEntity.Builder<LeftEntity> {
+  interface Builder : WorkspaceEntity.Builder<LeftEntity>, CompositeBaseEntity.Builder<LeftEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositeBaseEntity?
-    override var children: List<BaseEntity>
-    override var parent: HeadAbstractionEntity?
+    override var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
+    override var children: List<BaseEntity.Builder<out BaseEntity>>
+    override var parent: HeadAbstractionEntity.Builder?
   }
 
   companion object : EntityType<LeftEntity, Builder>(CompositeBaseEntity) {
@@ -173,7 +178,7 @@ interface LeftEntity : CompositeBaseEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): LeftEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -198,11 +203,11 @@ fun MutableEntityStorage.modifyEntity(
 interface RightEntity : CompositeBaseEntity {
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : RightEntity, CompositeBaseEntity.Builder<RightEntity>, WorkspaceEntity.Builder<RightEntity> {
+  interface Builder : WorkspaceEntity.Builder<RightEntity>, CompositeBaseEntity.Builder<RightEntity> {
     override var entitySource: EntitySource
-    override var parentEntity: CompositeBaseEntity?
-    override var children: List<BaseEntity>
-    override var parent: HeadAbstractionEntity?
+    override var parentEntity: CompositeBaseEntity.Builder<out CompositeBaseEntity>?
+    override var children: List<BaseEntity.Builder<out BaseEntity>>
+    override var parent: HeadAbstractionEntity.Builder?
   }
 
   companion object : EntityType<RightEntity, Builder>(CompositeBaseEntity) {
@@ -212,7 +217,7 @@ interface RightEntity : CompositeBaseEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): RightEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)

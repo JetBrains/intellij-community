@@ -18,11 +18,11 @@ interface TreeEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : TreeEntity, WorkspaceEntity.Builder<TreeEntity> {
+  interface Builder : WorkspaceEntity.Builder<TreeEntity> {
     override var entitySource: EntitySource
-    override var data: String
-    override var children: List<TreeEntity>
-    override var parentEntity: TreeEntity?
+    var data: String
+    var children: List<TreeEntity.Builder>
+    var parentEntity: TreeEntity.Builder?
   }
 
   companion object : EntityType<TreeEntity, Builder>() {
@@ -33,7 +33,7 @@ interface TreeEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): TreeEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource

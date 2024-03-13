@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -22,6 +23,7 @@ import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.impl.updateOneToOneChildOfParent
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(2)
@@ -144,15 +146,16 @@ open class ContentRootTestEntityImpl(private val dataSource: ContentRootTestEnti
 
       }
 
-    override var module: ModuleTestEntity
+    override var module: ModuleTestEntity.Builder
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
-                                                                                                  MODULE_CONNECTION_ID)]!! as ModuleTestEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleTestEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntity
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntity.Builder
         }
       }
       set(value) {
@@ -183,15 +186,17 @@ open class ContentRootTestEntityImpl(private val dataSource: ContentRootTestEnti
         changedProperty.add("module")
       }
 
-    override var sourceRootOrder: SourceRootTestOrderEntity?
+    override var sourceRootOrder: SourceRootTestOrderEntity.Builder?
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneChild(SOURCEROOTORDER_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                         SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootTestOrderEntity
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(SOURCEROOTORDER_CONNECTION_ID,
+                                                                             this) as? SourceRootTestOrderEntity.Builder)
+          ?: (this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootTestOrderEntity.Builder)
         }
         else {
-          this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootTestOrderEntity
+          this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootTestOrderEntity.Builder
         }
       }
       set(value) {
@@ -220,16 +225,18 @@ open class ContentRootTestEntityImpl(private val dataSource: ContentRootTestEnti
 
     // List of non-abstract referenced types
     var _sourceRoots: List<SourceRootTestEntity>? = emptyList()
-    override var sourceRoots: List<SourceRootTestEntity>
+    override var sourceRoots: List<SourceRootTestEntity.Builder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<SourceRootTestEntity>(SOURCEROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(
-            true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootTestEntity> ?: emptyList())
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<SourceRootTestEntity.Builder>) +
+          (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootTestEntity.Builder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootTestEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootTestEntity.Builder> ?: emptyList()
         }
       }
       set(value) {
@@ -304,9 +311,9 @@ class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ContentRootTestEntity(entitySource) {
-      parents.filterIsInstance<ModuleTestEntity>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModuleTestEntity.Builder>().singleOrNull()?.let { this.module = it }
     }
   }
 

@@ -15,9 +15,9 @@ interface BooleanEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : BooleanEntity, WorkspaceEntity.Builder<BooleanEntity> {
+  interface Builder : WorkspaceEntity.Builder<BooleanEntity> {
     override var entitySource: EntitySource
-    override var data: Boolean
+    var data: Boolean
   }
 
   companion object : EntityType<BooleanEntity, Builder>() {
@@ -28,7 +28,7 @@ interface BooleanEntity : WorkspaceEntity {
       data: Boolean,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): BooleanEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -54,9 +54,9 @@ interface IntEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : IntEntity, WorkspaceEntity.Builder<IntEntity> {
+  interface Builder : WorkspaceEntity.Builder<IntEntity> {
     override var entitySource: EntitySource
-    override var data: Int
+    var data: Int
   }
 
   companion object : EntityType<IntEntity, Builder>() {
@@ -67,7 +67,7 @@ interface IntEntity : WorkspaceEntity {
       data: Int,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): IntEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -93,9 +93,9 @@ interface StringEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : StringEntity, WorkspaceEntity.Builder<StringEntity> {
+  interface Builder : WorkspaceEntity.Builder<StringEntity> {
     override var entitySource: EntitySource
-    override var data: String
+    var data: String
   }
 
   companion object : EntityType<StringEntity, Builder>() {
@@ -106,7 +106,7 @@ interface StringEntity : WorkspaceEntity {
       data: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): StringEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -132,9 +132,9 @@ interface ListEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ListEntity, WorkspaceEntity.Builder<ListEntity> {
+  interface Builder : WorkspaceEntity.Builder<ListEntity> {
     override var entitySource: EntitySource
-    override var data: MutableList<String>
+    var data: MutableList<String>
   }
 
   companion object : EntityType<ListEntity, Builder>() {
@@ -145,7 +145,7 @@ interface ListEntity : WorkspaceEntity {
       data: List<String>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ListEntity {
+    ): Builder {
       val builder = builder()
       builder.data = data.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -172,9 +172,9 @@ interface OptionalIntEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : OptionalIntEntity, WorkspaceEntity.Builder<OptionalIntEntity> {
+  interface Builder : WorkspaceEntity.Builder<OptionalIntEntity> {
     override var entitySource: EntitySource
-    override var data: Int?
+    var data: Int?
   }
 
   companion object : EntityType<OptionalIntEntity, Builder>() {
@@ -184,7 +184,7 @@ interface OptionalIntEntity : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): OptionalIntEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -210,9 +210,9 @@ interface OptionalStringEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : OptionalStringEntity, WorkspaceEntity.Builder<OptionalStringEntity> {
+  interface Builder : WorkspaceEntity.Builder<OptionalStringEntity> {
     override var entitySource: EntitySource
-    override var data: String?
+    var data: String?
   }
 
   companion object : EntityType<OptionalStringEntity, Builder>() {
@@ -222,7 +222,7 @@ interface OptionalStringEntity : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): OptionalStringEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
