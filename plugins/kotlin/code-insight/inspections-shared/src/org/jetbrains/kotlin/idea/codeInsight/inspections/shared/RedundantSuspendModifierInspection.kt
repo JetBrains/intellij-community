@@ -5,36 +5,31 @@ import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.KtCallInfo
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.codeInsight.CallTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
-import org.jetbrains.kotlin.idea.base.codeInsight.process
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallTargetProcessor
+import org.jetbrains.kotlin.idea.base.codeInsight.processExpressionsRecursively
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.namedFunctionVisitor
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 
 internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return namedFunctionVisitor(fun(function) {
-            if (!function.languageVersionSettings.supportsFeature(LanguageFeature.Coroutines)) return
-
             val suspendModifier = function.modifierList?.getModifier(KtTokens.SUSPEND_KEYWORD) ?: return
             if (!function.hasBody()) return
             if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD) || function.hasModifier(KtTokens.ACTUAL_KEYWORD)) return
@@ -43,7 +38,6 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 val functionSymbol = function.getFunctionLikeSymbol() as? KtFunctionSymbol ?: return
                 if (functionSymbol.modality == Modality.OPEN) return
 
-                if (function.hasUnresolvedCalls()) return
                 if (function.hasSuspendOrUnresolvedCall(functionSymbol)) return
 
                 holder.registerProblem(
@@ -67,23 +61,30 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
     }
 
     context(KtAnalysisSession)
-    private fun KtNamedFunction.hasUnresolvedCalls(): Boolean {
-        return anyDescendantOfType<KtExpression> { expression ->
-            val resolvedCall = expression.resolveCall() ?: return@anyDescendantOfType false
-            resolvedCall.successfulCallOrNull<KtCallableMemberCall<*, *>>() == null
-        }
-    }
-
-    context(KtAnalysisSession)
     private fun KtNamedFunction.hasSuspendOrUnresolvedCall(functionSymbol: KtFunctionSymbol): Boolean {
-        val allExpressions = descendantsOfType<KtExpression>().toList()
-        var hasSuspendCall = false
+        var hasSuspendOrUnresolvedCall = false
         val selfCallableId = functionSymbol.callableIdIfNonLocal
-        KotlinCallProcessor.process(allExpressions) { target ->
-            if (target.symbol.isSuspendSymbol() && target.symbol.callableIdIfNonLocal != selfCallableId) {
-                hasSuspendCall = true
+
+        KotlinCallProcessor.processExpressionsRecursively(this, object : KotlinCallTargetProcessor {
+            override fun KtAnalysisSession.processCallTarget(target: CallTarget): Boolean {
+                if (target.symbol.isSuspendSymbol() && target.symbol.callableIdIfNonLocal != selfCallableId) {
+                    hasSuspendOrUnresolvedCall = true
+                    return false
+                }
+                return true
             }
-        }
-        return hasSuspendCall
+
+            override fun KtAnalysisSession.processUnresolvedCall(element: KtElement, callInfo: KtCallInfo?): Boolean {
+                if (callInfo != null) {
+                    // A callInfo of null means that the element could not be resolved at all, so it is not even unresolved.
+                    // For example, if the element is not an expression, so we ignore those cases.
+                    hasSuspendOrUnresolvedCall = true
+                    return false
+                }
+                return true
+            }
+        })
+
+        return hasSuspendOrUnresolvedCall
     }
 }
