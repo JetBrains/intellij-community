@@ -34,8 +34,6 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   @RequiresEdt
   fun createBlock(command: String?, prompt: PromptRenderingInfo?): CommandBlock {
-    closeActiveBlock()
-
     if (document.textLength > 0) {
       document.insertString(document.textLength, "\n")
     }
@@ -51,13 +49,10 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun closeActiveBlock() {
-    val activeBlock = getActiveBlock()
+  internal fun finalizeBlock(activeBlock: CommandBlock) {
     // restrict block expansion
-    if (activeBlock != null) {
-      activeBlock.range.isGreedyToRight = false
-      listeners.forEach { it.blockFinalized(activeBlock) }
-    }
+    activeBlock.range.isGreedyToRight = false
+    listeners.forEach { it.blockFinalized(activeBlock) }
   }
 
   @RequiresEdt
