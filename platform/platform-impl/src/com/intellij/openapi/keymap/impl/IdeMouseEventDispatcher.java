@@ -218,7 +218,7 @@ public final class IdeMouseEventDispatcher {
     if (c == null) {
       throw new IllegalStateException("component cannot be null");
     }
-    c = SwingUtilities.getDeepestComponentAt(c, e.getX(), e.getY());
+    c = UIUtil.getDeepestComponentAt(c, e.getX(), e.getY());
 
     if (c instanceof IdeGlassPaneImpl) {
       c = ((IdeGlassPaneImpl)c).getTargetComponentFor(e);
