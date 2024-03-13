@@ -293,6 +293,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     if (handler == null) return null;
     //noinspection deprecation
     FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
+    if (options instanceof PersistentFindUsagesOptions) {
+      ((PersistentFindUsagesOptions)options).setDefaults(project);
+    }
     if (scope != null) options.searchScope = scope;
     return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition), 
                                        createActionHandler(handler, options, title));
