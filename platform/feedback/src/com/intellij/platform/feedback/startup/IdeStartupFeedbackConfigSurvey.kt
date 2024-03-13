@@ -2,6 +2,7 @@
 package com.intellij.platform.feedback.startup
 
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ConfigImportHelper.hasPreviousVersionConfigDirs
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
@@ -24,7 +25,7 @@ class IdeStartupFeedbackConfigSurvey : InIdeFeedbackSurveyConfig {
   }
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
-    return true
+    return hasPreviousVersionConfigDirs()
   }
 
   override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
