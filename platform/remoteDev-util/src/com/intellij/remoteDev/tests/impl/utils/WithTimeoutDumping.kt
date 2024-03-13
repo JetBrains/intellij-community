@@ -13,9 +13,6 @@ import kotlin.time.Duration
 val coroutineDumpPrefix = "CoroutineDump:"
 
 @ApiStatus.Internal
-val threadsDumpPrefix = "ThreadsDump:"
-
-@ApiStatus.Internal
 suspend fun <T> withTimeoutDumping(title: String,
                                    timeout: Duration,
                                    failMessageProducer: (() -> String)? = null,
@@ -38,7 +35,6 @@ suspend fun <T> withTimeoutDumping(title: String,
       })
 
       val coroutinesDump = dumpCoroutines(outerScope)
-      val threadsDump = ThreadDumper.dumpThreadsToString()
       throw TimeoutException(buildString {
         appendLine(message)
         val failMessage = failMessageProducer?.invoke()
@@ -48,8 +44,6 @@ suspend fun <T> withTimeoutDumping(title: String,
         appendLine("------------")
         appendLine(coroutineDumpPrefix)
         appendLine(coroutinesDump)
-        appendLine(threadsDumpPrefix)
-        appendLine(threadsDump)
         append("------------")
       })
     }
