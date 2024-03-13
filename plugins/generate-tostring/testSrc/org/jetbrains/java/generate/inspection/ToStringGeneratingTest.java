@@ -3,10 +3,9 @@ package org.jetbrains.java.generate.inspection;
 
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMember;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -263,31 +262,38 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
             }
             """,
            """
-           public class Test {
-               @Override
-               public String toString() {
-                   return "Test{}";
-               }
-          
-               public static void main(String[] args) {
-                   new Runnable() {
-                      \s
-                       @Override
-                       public void run() {
-                       }
-                   };
-               }
-           }
-           """, ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"));
+              public class Test {
+                  public static void main(String[] args) {
+                      new Runnable() {
+                          @Override
+                          public String toString() {
+                              return "anonymous Runnable{}";
+                          }
+              
+                          @Override
+                          public void run() {
+                          }
+                      };
+                  }
+              }
+              """, ReplacePolicy.getInstance(), findTemplate("String concat (+) and super.toString()"), true);
   }
 
   private void doTest(@NotNull String before,
                       @NotNull String after,
                       @NotNull ConflictResolutionPolicy policy,
-                      @NotNull TemplateResource template) {
+                      @NotNull TemplateResource template){
+    doTest(before, after, policy, template, false);
+  }
+
+  private void doTest(@NotNull String before,
+                      @NotNull String after,
+                      @NotNull ConflictResolutionPolicy policy,
+                      @NotNull TemplateResource template,
+                      boolean fromCaret) {
     myFixture.configureByText("a.java", before);
 
-    PsiClass clazz = findClass();
+    PsiClass clazz = findClass(fromCaret);
     Collection<PsiMember> members = collectMembers(clazz);
     GenerateToStringWorker worker = buildWorker(clazz, policy);
 
@@ -341,8 +347,16 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   @NotNull
-  private PsiClass findClass() {
+  private PsiClass findClass(boolean fromCaret) {
     PsiFile file = myFixture.getFile();
+    if (fromCaret) {
+      Editor editor = getEditor();
+      int offset = editor.getCaretModel().getOffset();
+      PsiElement element = file.findElementAt(offset);
+      PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      assertNotNull(psiClass);
+      return psiClass;
+    }
     assertInstanceOf(file, PsiJavaFile.class);
     PsiClass[] classes = ((PsiJavaFile)file).getClasses();
     assertTrue(classes.length > 0);
