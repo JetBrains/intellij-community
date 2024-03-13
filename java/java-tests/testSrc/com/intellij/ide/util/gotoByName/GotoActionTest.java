@@ -434,7 +434,7 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private static boolean optionMatches(String pattern, OptionDescription optionDescription) {
-    return OptionsTopHitProvider.buildMatcher(pattern).matches(optionDescription.getOption());
+    return OptionsTopHitProvider.Companion.buildMatcher(pattern).matches(optionDescription.getOption());
   }
 
   private static MatchedValue matchedOption(String text, String pattern) {
