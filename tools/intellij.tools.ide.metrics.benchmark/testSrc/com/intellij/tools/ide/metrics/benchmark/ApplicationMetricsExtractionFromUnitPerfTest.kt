@@ -10,6 +10,7 @@ import com.intellij.platform.testFramework.diagnostic.MetricsAggregation
 import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
@@ -34,13 +35,33 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
   @Test
   fun reportingAnyCustomMetricsFromPerfTest(testInfo: TestInfo) {
     val counter: AtomicLong = AtomicLong()
-    val counterMeter = TelemetryManager.getMeter(ExtractionMetricsScope)
-      .counterBuilder("custom.counter")
+    val meter = TelemetryManager.getMeter(ExtractionMetricsScope)
+
+    meter.counterBuilder("custom.long.counter")
+      .setDescription("Long counter example")
       .buildWithCallback { it.record(counter.get()) }
 
-    val meterCollector = TelemetryMeterCollector(MetricsAggregation.SUM) { it.key.contains("custom") }
+    meter.counterBuilder("custom.double.counter")
+      .ofDoubles().setDescription("Double counter example")
+      .buildWithCallback { it.record(counter.get().toDouble()) }
+
+    meter.gaugeBuilder("custom.long.gauge")
+      .ofLongs().setDescription("Long gauge example")
+      .buildWithCallback { it.record(counter.get()) }
+
+    meter.gaugeBuilder("custom.double.gauge")
+      .setDescription("Double gauge example")
+      .buildWithCallback { it.record(234.567) }
+
+    val meterCollector = TelemetryMeterCollector(MetricsAggregation.SUM) { it.contains("custom") }
     val testName = testInfo.testMethod.get().name
     val customSpanName = "custom span"
+
+    val histogram = meter.histogramBuilder("custom.histogram")
+      .setDescription("Histogram example")
+      .setUnit("someUnit")
+      .ofLongs()
+      .build()
 
     PlatformTestUtil.newPerformanceTest(testName) {
       runWithSpan(tracer, customSpanName) {
@@ -48,16 +69,37 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       }
 
       counter.incrementAndGet()
+      (1L..10L).forEach { histogram.record(it) }
 
       runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
     }
+      .attempts(5)
       .withTelemetryMeters(meterCollector)
       .start()
 
     SpanExtractionFromUnitPerfTest.checkMetricsAreFlushedToTelemetryFile(getFullTestName(testInfo, testName), withWarmup = true, customSpanName)
     val meters = meterCollector.convertToCompleteMetricsCollector().collect(PathManager.getLogDir())
 
-    Assertions.assertTrue(meters.count { it.id.name == "custom.counter" } == 1, "Counter meter should be present in .csv metrics file")
+    meters.assertMeterIsExported("custom.long.counter", 6)
+    meters.assertMeterIsExported("custom.double.counter", 6)
+
+    meters.assertMeterIsExported("custom.long.gauge", 6)
+    meters.assertMeterIsExported("custom.double.gauge", 234)
+
+    meters.assertMeterIsExported("custom.histogram.min.someUnit", 1)
+    meters.assertMeterIsExported("custom.histogram.max.someUnit", 10)
+    meters.assertMeterIsExported("custom.histogram.measurements.count", 60)
+    meters.assertMeterIsExported("custom.histogram.median.someUnit", 7)
+    meters.assertMeterIsExported("custom.histogram.standard.deviation.someUnit", 2)
+    meters.assertMeterIsExported("custom.histogram.95.percentile.someUnit", 10)
+    meters.assertMeterIsExported("custom.histogram.99.percentile.someUnit", 10)
+    meters.assertMeterIsExported("custom.histogram.mad.someUnit", 2)
+    meters.assertMeterIsExported("custom.histogram.range.someUnit", 10000)
+  }
+
+  private fun List<PerformanceMetrics.Metric>.assertMeterIsExported(meterName: String, expectedValue: Long) {
+    Assertions.assertEquals(this.single { it.id.name == meterName }.value, expectedValue,
+                            "$meterName meter should be present in .json meters file")
   }
 
   @Test

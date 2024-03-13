@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.NamedMethodFilter
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.application.ReadAction
+import com.intellij.psi.PsiElement
 import com.intellij.util.Range
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
@@ -25,11 +26,11 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 
 open class KotlinMethodFilter(
-    declaration: KtDeclaration?,
+    element: PsiElement?,
     private val lines: Range<Int>?,
     private val methodInfo: CallableMemberInfo
 ) : NamedMethodFilter {
-    private val declarationPtr = declaration?.createSmartPointer()
+    private val elementPtr = element?.createSmartPointer()
 
     // TODO(KTIJ-23034): make Location non-null (because actually it's always non null) in next PR.
     //  This wasn't done in current PR because this it going to be cherry-picked to kt- branches, and we can't modify java debugger part.
@@ -66,17 +67,17 @@ open class KotlinMethodFilter(
         }
 
         // Element is lost. But we know that name matches, so stop.
-        val declaration = declarationPtr?.element ?: return true
+        val element = elementPtr?.element ?: return true
 
         val psiManager = currentDeclaration.manager
-        if (psiManager.areElementsEquivalent(currentDeclaration, declaration)) {
+        if (psiManager.areElementsEquivalent(currentDeclaration, element)) {
             return true
         }
 
         if (currentSymbol !is KtCallableSymbol) return false
         for (overriddenSymbol in currentSymbol.getAllOverriddenSymbols()) {
             val overriddenDeclaration = overriddenSymbol.psi ?: continue
-            if (psiManager.areElementsEquivalent(declaration, overriddenDeclaration)) return true
+            if (psiManager.areElementsEquivalent(element, overriddenDeclaration)) return true
         }
 
         return false

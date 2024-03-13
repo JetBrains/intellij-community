@@ -29,7 +29,12 @@ interface DefaultFieldEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(version: Int, data: TestData, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): DefaultFieldEntity {
+    operator fun invoke(
+      version: Int,
+      data: TestData,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): DefaultFieldEntity {
       val builder = builder()
       builder.version = version
       builder.data = data
@@ -42,8 +47,12 @@ interface DefaultFieldEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: DefaultFieldEntity, modification: DefaultFieldEntity.Builder.() -> Unit): DefaultFieldEntity =
-  modifyEntity(DefaultFieldEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: DefaultFieldEntity,
+  modification: DefaultFieldEntity.Builder.() -> Unit,
+): DefaultFieldEntity {
+  return modifyEntity(DefaultFieldEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class TestData(val name: String, val description: String)

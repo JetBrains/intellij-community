@@ -36,5 +36,6 @@
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.diff" />
+    <orderEntry type="library" name="jsoup" level="project" />
   </component>
 </module>

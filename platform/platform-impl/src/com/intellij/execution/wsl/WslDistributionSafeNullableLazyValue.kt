@@ -89,8 +89,16 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
         }
         canWait || oldDeferred.isCompleted -> {
           try {
-            runBlockingCancellable {
-              oldDeferred.await()
+            if (canWait) {
+              runBlockingCancellable {
+                oldDeferred.await()
+              }
+            }
+            else {
+              @Suppress("RAW_RUN_BLOCKING")  // The operation must return immediately.
+              runBlocking {
+                oldDeferred.await()
+              }
             }
           }
           catch (ignored: Exception) {

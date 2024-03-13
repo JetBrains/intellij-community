@@ -58,6 +58,11 @@ public class K2GotoTestOrCodeActionTestGenerated extends AbstractK2GotoTestOrCod
         runTest("../../../idea/tests/testData/navigation/gotoTestOrCode/fromKotlinFileToTest.main.kt");
     }
 
+    @TestMetadata("fromKotlinJvmFileToJavaFacadeTest.main.kt")
+    public void testFromKotlinJvmFileToJavaFacadeTest() throws Exception {
+        runTest("../../../idea/tests/testData/navigation/gotoTestOrCode/fromKotlinJvmFileToJavaFacadeTest.main.kt");
+    }
+
     @TestMetadata("fromKotlinTestToJavaClass.main.kt")
     public void testFromKotlinTestToJavaClass() throws Exception {
         runTest("../../../idea/tests/testData/navigation/gotoTestOrCode/fromKotlinTestToJavaClass.main.kt");

@@ -10,4 +10,4 @@ fun test() {
     foo(a = <caret>foo.bar.A())
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory$applicator$1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory$SurroundWithArrayModCommandAction

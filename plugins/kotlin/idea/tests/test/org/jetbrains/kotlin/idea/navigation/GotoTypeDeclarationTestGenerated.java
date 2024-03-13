@@ -38,6 +38,11 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
         runTest("testData/navigation/gotoTypeDeclaration/explicitParameterInLambda.test");
     }
 
+    @TestMetadata("flexibleType.test")
+    public void testFlexibleType() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/flexibleType.test");
+    }
+
     @TestMetadata("fromFunctionDeclarationName.test")
     public void testFromFunctionDeclarationName() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/fromFunctionDeclarationName.test");
@@ -68,14 +73,14 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
         runTest("testData/navigation/gotoTypeDeclaration/itParameterInLambda.test");
     }
 
+    @TestMetadata("listFlexibleType.test")
+    public void testListFlexibleType() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/listFlexibleType.test");
+    }
+
     @TestMetadata("noParametersLambda.test")
     public void testNoParametersLambda() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/noParametersLambda.test");
-    }
-
-    @TestMetadata("platformType.test")
-    public void testPlatformType() throws Exception {
-        runTest("testData/navigation/gotoTypeDeclaration/platformType.test");
     }
 
     @TestMetadata("thisExtensionFunction.test")

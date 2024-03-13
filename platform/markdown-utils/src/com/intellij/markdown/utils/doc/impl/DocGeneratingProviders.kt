@@ -70,7 +70,7 @@ internal class DocCodeSpanGeneratingProvider(private val project: Project, priva
     val nodes = node.children.subList(1, node.children.size - 1)
     val output = nodes
       .filter { it.type != MarkdownTokenTypes.BLOCK_QUOTE }
-      .joinToString(separator = "") { it.getTextInNode(text) }.trim()
+      .joinToString(separator = "") { it.getTextInNode(text) }
     visitor.consumeHtml(QuickDocHighlightingHelper.getStyledInlineCode(project, defaultLanguage, output))
   }
 }

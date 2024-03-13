@@ -16,13 +16,29 @@ import java.util.concurrent.atomic.AtomicReference
 @ApiStatus.Internal
 class GradleBuildActionResultHandler(
   private val resolverCtx: DefaultProjectResolverContext,
-  private val listeners: List<GradleBuildActionListener>
+  private val buildActionMulticaster: GradleBuildActionListener
 ) {
 
   private val buildFinishWaiter = CountDownLatch(1)
 
   private val isBuildActionInterrupted = AtomicBoolean(true)
   private val buildFailure = AtomicReference<Throwable>(null)
+
+  private fun onProjectLoaded(state: GradleModelHolderState) {
+    resolverCtx.models.addState(state)
+    buildActionMulticaster.onProjectLoaded()
+  }
+
+  private fun onBuildCompleted(state: GradleModelHolderState) {
+    resolverCtx.models.addState(state)
+    isBuildActionInterrupted.set(false)
+    buildActionMulticaster.onBuildCompleted()
+  }
+
+  private fun onBuildFailed(failure: GradleConnectionException) {
+    buildFailure.set(failure)
+    buildActionMulticaster.onBuildFailed(failure)
+  }
 
   fun waitForBuildFinish() {
     // Wait for the last event during the Gradle build action execution
@@ -43,8 +59,7 @@ class GradleBuildActionResultHandler(
   fun createProjectLoadedHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
       try {
-        resolverCtx.models.addState(state)
-        listeners.forEach { it.onProjectLoaded() }
+        onProjectLoaded(state)
       }
       catch (e: ProcessCanceledException) {
         resolverCtx.cancellationTokenSource.cancel()
@@ -54,9 +69,7 @@ class GradleBuildActionResultHandler(
 
   fun createBuildFinishedHandler(): IntermediateResultHandler<GradleModelHolderState> {
     return IntermediateResultHandler { state ->
-      resolverCtx.models.addState(state)
-      isBuildActionInterrupted.set(false)
-      listeners.forEach { it.onBuildCompleted() }
+      onBuildCompleted(state)
     }
   }
 
@@ -71,9 +84,7 @@ class GradleBuildActionResultHandler(
       override fun onComplete(result: Any?) {
         try {
           if (result is GradleModelHolderState) {
-            resolverCtx.models.addState(result)
-            isBuildActionInterrupted.set(false)
-            listeners.forEach { it.onBuildCompleted() }
+            onBuildCompleted(result)
           }
         }
         finally {
@@ -83,8 +94,7 @@ class GradleBuildActionResultHandler(
 
       override fun onFailure(failure: GradleConnectionException) {
         try {
-          buildFailure.set(failure)
-          listeners.forEach { it.onBuildFailed(failure) }
+          onBuildFailed(failure)
         }
         finally {
           buildFinishWaiter.countDown()

@@ -279,6 +279,9 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             if (element.nameIdentifier != null) {
                 element.setName(changeInfo.newName)
             }
+            else if (isReturnTypeRequired(element)) {
+                element.add(psiFactory.createIdentifier(changeInfo.newName))
+            }
         }
 
         changeReturnTypeIfNeeded(changeInfo, element)
@@ -294,14 +297,19 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 for ((paramIndex, parameter) in parameterList.parameters.withIndex()) {
                     val parameterInfo = changeInfo.newParameters[paramIndex + offset]
                     parameter.setValOrVar(parameterInfo.valOrVar)
-                    if (parameter.typeReference != null) {
+                    if (parameter.typeReference != null || isReturnTypeRequired(element)) {
                         parameterTypes[parameter] =
                             psiFactory.createType(parameterInfo.typeText, element, changeInfo.method, Variance.IN_VARIANCE)
                     }
                     val inheritedName = parameterInfo.getInheritedName(element.takeIf { isInherited })
                     if (Name.isValidIdentifier(inheritedName)) {
                         val newIdentifier = psiFactory.createIdentifier(inheritedName)
-                        parameter.nameIdentifier?.replace(newIdentifier)
+                        val nameIdentifier = parameter.nameIdentifier
+                        if (nameIdentifier != null) {
+                            nameIdentifier.replace(newIdentifier)
+                        } else if (parameter.getDestructuringDeclaration() == null) {
+                            parameter.add(newIdentifier)
+                        }
                     }
                 }
                 //update all types together not to break inference during `createType` for dependent type changes
@@ -441,11 +449,15 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         shortenReferences(newParameterList)
     }
 
-    private fun changeReturnTypeIfNeeded(changeInfo: KotlinChangeInfoBase, element: PsiElement) {
+    private fun isReturnTypeRequired(element: KtNamedDeclaration): Boolean {
+        return (element is KtFunction && element !is KtFunctionLiteral) || element is KtProperty || element is KtParameter
+    }
+
+    private fun changeReturnTypeIfNeeded(changeInfo: KotlinChangeInfoBase, element: KtNamedDeclaration) {
         if (element !is KtCallableDeclaration) return
         if (element is KtConstructor<*>) return
 
-        val returnTypeIsNeeded = (element is KtFunction && element !is KtFunctionLiteral) || element is KtProperty || element is KtParameter
+        val returnTypeIsNeeded = isReturnTypeRequired(element)
 
         if (changeInfo.isReturnTypeChanged && returnTypeIsNeeded) {
             element.typeReference = null

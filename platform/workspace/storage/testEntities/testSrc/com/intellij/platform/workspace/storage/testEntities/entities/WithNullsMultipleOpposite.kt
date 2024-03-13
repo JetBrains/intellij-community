@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -19,9 +24,11 @@ interface ParentWithNullsOppositeMultiple : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(parentData: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ParentWithNullsOppositeMultiple {
+    operator fun invoke(
+      parentData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ParentWithNullsOppositeMultiple {
       val builder = builder()
       builder.parentData = parentData
       builder.entitySource = entitySource
@@ -34,9 +41,12 @@ interface ParentWithNullsOppositeMultiple : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentWithNullsOppositeMultiple,
-                                      modification: ParentWithNullsOppositeMultiple.Builder.() -> Unit): ParentWithNullsOppositeMultiple = modifyEntity(
-  ParentWithNullsOppositeMultiple.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ParentWithNullsOppositeMultiple,
+  modification: ParentWithNullsOppositeMultiple.Builder.() -> Unit,
+): ParentWithNullsOppositeMultiple {
+  return modifyEntity(ParentWithNullsOppositeMultiple.Builder::class.java, entity, modification)
+}
 
 var ParentWithNullsOppositeMultiple.Builder.children: @Child List<ChildWithNullsOppositeMultiple>
   by WorkspaceEntity.extension()
@@ -60,7 +70,11 @@ interface ChildWithNullsOppositeMultiple : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildWithNullsOppositeMultiple {
+    operator fun invoke(
+      childData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChildWithNullsOppositeMultiple {
       val builder = builder()
       builder.childData = childData
       builder.entitySource = entitySource
@@ -73,9 +87,12 @@ interface ChildWithNullsOppositeMultiple : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildWithNullsOppositeMultiple,
-                                      modification: ChildWithNullsOppositeMultiple.Builder.() -> Unit): ChildWithNullsOppositeMultiple = modifyEntity(
-  ChildWithNullsOppositeMultiple.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChildWithNullsOppositeMultiple,
+  modification: ChildWithNullsOppositeMultiple.Builder.() -> Unit,
+): ChildWithNullsOppositeMultiple {
+  return modifyEntity(ChildWithNullsOppositeMultiple.Builder::class.java, entity, modification)
+}
 //endregion
 
 

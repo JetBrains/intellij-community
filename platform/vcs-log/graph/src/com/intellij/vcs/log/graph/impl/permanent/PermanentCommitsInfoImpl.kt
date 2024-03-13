@@ -73,7 +73,7 @@ class PermanentCommitsInfoImpl<CommitId : Any> private constructor(val timestamp
     @JvmStatic
     fun <CommitId : Any> newInstance(graphCommits: List<GraphCommit<CommitId>>,
                                      notLoadedCommits: Int2ObjectMap<CommitId>): PermanentCommitsInfoImpl<CommitId> {
-      val isIntegerCase = !graphCommits.isEmpty() && graphCommits[0].id.javaClass == Int::class.java
+      val isIntegerCase = !graphCommits.isEmpty() && graphCommits[0].id is Int
 
       val commitIdIndex = if (isIntegerCase) createCompressedIntList(graphCommits as List<GraphCommit<Int>>) as List<CommitId>
       else graphCommits.map { it.id }

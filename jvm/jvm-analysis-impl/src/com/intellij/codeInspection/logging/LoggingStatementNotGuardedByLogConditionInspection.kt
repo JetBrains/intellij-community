@@ -7,7 +7,7 @@ import com.intellij.codeInsight.options.JavaIdentifierValidator
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.logging.LoggingUtil.LimitLevelType
+import com.intellij.util.logging.LoggingUtil.LimitLevelType
 import com.intellij.codeInspection.options.OptDescribedComponent
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptRegularComponent
@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastHintedVisitorAdapter
+import com.intellij.util.logging.LoggingUtil
 import com.siyeh.ig.psiutils.CommentTracker
 import com.siyeh.ig.psiutils.JavaLoggingUtils
 import org.jetbrains.uast.*

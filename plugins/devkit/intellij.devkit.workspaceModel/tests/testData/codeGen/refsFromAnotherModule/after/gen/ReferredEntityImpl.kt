@@ -155,7 +155,7 @@ open class ReferredEntityImpl(private val dataSource: ReferredEntityData) : Refe
             value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneChildOfParent(CONTENTROOT_CONNECTION_ID, this, value)

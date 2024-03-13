@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecu
 import com.intellij.openapi.util.registry.Registry
 import org.gradle.tooling.BuildActionExecuter
 import org.gradle.tooling.GradleConnectionException
+import org.gradle.tooling.LongRunningOperation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
@@ -35,16 +36,11 @@ class GradleBuildActionRunner(
   private val buildAction: GradleModelFetchAction,
   private val settings: GradleExecutionSettings,
   private val helper: GradleExecutionHelper,
-  private val listeners: List<GradleBuildActionListener>
+  private val buildActionMulticaster: GradleBuildActionListener
 ) {
 
   /**
    * Fetches the Gradle models that have been populated as a result of running the [GradleModelFetchAction] against the Gradle tooling API.
-   *
-   * This method returns as soon as all models have been obtained.
-   *
-   * The [GradleBuildActionListener.onProjectLoaded] will be run as soon as the models available when Gradle loaded projects before the build has finished.
-   * The [GradleBuildActionListener.onBuildCompleted] will be run when the complete Gradle operation has finished (including any tasks that need to be run).
    */
   fun runBuildAction() {
     // Optionally tell Gradle daemon there were recent file changes
@@ -77,28 +73,29 @@ class GradleBuildActionRunner(
    * Creates the [BuildActionExecuter] to be used to run the [GradleModelFetchAction].
    */
   private fun runPhasedBuildAction() {
-    buildAction.prepareForPhasedExecuter()
-    val resultHandler = GradleBuildActionResultHandler(resolverCtx, listeners)
+    buildAction.setUseProjectsLoadedPhase(true)
+    val resultHandler = GradleBuildActionResultHandler(resolverCtx, buildActionMulticaster)
     resolverCtx.connection.action()
       .projectsLoaded(buildAction, resultHandler.createProjectLoadedHandler())
       .buildFinished(buildAction, resultHandler.createBuildFinishedHandler())
       .build()
-      .prepareBuildActionExecuter()
+      .prepareOperationForSync()
+      .withCancellationToken(resolverCtx.cancellationTokenSource.token())
       .forTasks(emptyList()) // this will allow setting up Gradle StartParameter#taskNames using model builders
       .run(resultHandler.createResultHandler())
     resultHandler.waitForBuildFinish()
   }
 
   private fun runDefaultBuildAction() {
-    buildAction.prepareForNonPhasedExecuter()
-    val resultHandler = GradleBuildActionResultHandler(resolverCtx, listeners)
+    val resultHandler = GradleBuildActionResultHandler(resolverCtx, buildActionMulticaster)
     resolverCtx.connection.action(buildAction)
-      .prepareBuildActionExecuter()
+      .prepareOperationForSync()
+      .withCancellationToken(resolverCtx.cancellationTokenSource.token())
       .run(resultHandler.createResultHandler())
     resultHandler.waitForBuildFinish()
   }
 
-  private fun <T : BuildActionExecuter<*>> T.prepareBuildActionExecuter(): T {
+  private fun <T : LongRunningOperation> T.prepareOperationForSync(): T {
     GradleExecutionHelper.prepare(
       resolverCtx.connection,
       this,
@@ -109,7 +106,6 @@ class GradleBuildActionRunner(
     GradleOperationHelperExtension.EP_NAME.forEachExtensionSafe {
       it.prepareForSync(this, resolverCtx)
     }
-    withCancellationToken(resolverCtx.cancellationTokenSource.token())
     return this
   }
 }

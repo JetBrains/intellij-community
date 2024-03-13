@@ -159,6 +159,7 @@ object KotlinPluginBuilder {
     "kotlin.code-insight.inspections.shared",
     "kotlin.code-insight.impl-base",
     "kotlin.code-insight.descriptions",
+    "kotlin.code-insight.fixes.k2",
     "kotlin.code-insight.intentions.k1",
     "kotlin.code-insight.intentions.k2",
     "kotlin.code-insight.inspections.k1",

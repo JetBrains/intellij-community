@@ -1590,6 +1590,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoInterfaceImpl.kt");
         }
 
+        @TestMetadata("smartStepIntoJavaLambda.kt")
+        public void testSmartStepIntoJavaLambda() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoJavaLambda.kt");
+        }
+
         @TestMetadata("smartStepIntoJavaSyntheticPropertySetter.kt")
         public void testSmartStepIntoJavaSyntheticPropertySetter() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoJavaSyntheticPropertySetter.kt");

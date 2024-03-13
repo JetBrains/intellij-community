@@ -38,7 +38,7 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
       related: SimpleId,
       sealedClassWithLinks: SealedClassWithLinks,
       entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null
+      init: (Builder.() -> Unit)? = null,
     ): SimpleSymbolicIdEntity {
       val builder = builder()
       builder.version = version
@@ -56,8 +56,10 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 //region generated code
 fun MutableEntityStorage.modifyEntity(
   entity: SimpleSymbolicIdEntity,
-  modification: SimpleSymbolicIdEntity.Builder.() -> Unit
-): SimpleSymbolicIdEntity = modifyEntity(SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
+  modification: SimpleSymbolicIdEntity.Builder.() -> Unit,
+): SimpleSymbolicIdEntity {
+  return modifyEntity(SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class SimpleId(val name: String) : SymbolicEntityId<SimpleSymbolicIdEntity> {

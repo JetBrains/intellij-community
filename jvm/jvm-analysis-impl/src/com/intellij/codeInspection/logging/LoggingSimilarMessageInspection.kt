@@ -18,6 +18,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastHintedVisitorAdapter
+import com.intellij.util.logging.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -111,8 +112,9 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
               val parts = it.parts ?: return@groupBy ""
               if (parts.isEmpty()) return@groupBy ""
               val part0 = if (firstIsTaken) parts[0] else parts.last()
-              if (!part0.isConstant || part0.text == null || part0.text.length < minLength) return@groupBy ""
-              part0.text.substring(0, minLength)
+              val text = part0.text
+              if (!part0.isConstant || text == null || text.length < minLength) return@groupBy ""
+              text.substring(0, minLength)
             }
             .values
             .toSet()
@@ -253,8 +255,9 @@ private fun List<LoggingStringPartEvaluator.PartHolder>?.splitWithPlaceholders()
   if (this == null) return null
   val result = mutableListOf<LoggingStringPartEvaluator.PartHolder>()
   for (partHolder in this) {
-    if (partHolder.isConstant && partHolder.text != null) {
-      val withoutPlaceholders = partHolder.text.split("{}")
+    val text = partHolder.text
+    if (partHolder.isConstant && text != null) {
+      val withoutPlaceholders = text.split("{}")
       for ((index, clearPart) in withoutPlaceholders.withIndex()) {
         result.add(LoggingStringPartEvaluator.PartHolder(clearPart, true))
         if (index != withoutPlaceholders.lastIndex) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
@@ -28,7 +28,7 @@ class MutableEntityCollectionTest {
   fun `check vfu list basic operations`() {
     val fileUrlList = listOf("/user/a.txt", "/user/opt/app/a.txt", "/user/opt/app/b.txt")
     val builder = createEmptyBuilder()
-    builder.addListVFUEntity("hello", fileUrlList, virtualFileManager)
+    builder addEntity ListVFUEntity("hello", fileUrlList.map { virtualFileManager.getOrCreateFromUrl(it) }, SampleEntitySource("test"))
 
     makeOperationOnListAndCheck(builder, "/user/b.txt") { entity, vfu ->
       entity.fileProperty.add(vfu.single())
@@ -117,7 +117,9 @@ class MutableEntityCollectionTest {
 
   @Test
   fun `check vfu set basic operations`() {
-    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.getOrCreateFromUrl(it) }.toSet()
+    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map {
+      virtualFileManager.getOrCreateFromUrl(it)
+    }.toSet()
     val builder = createEmptyBuilder()
     builder.addEntity(SetVFUEntity("hello", vfuSet, SampleEntitySource("test")))
 
@@ -193,7 +195,9 @@ class MutableEntityCollectionTest {
 
   @Test
   fun `collection modification allowed only in modifyEntity block`() {
-    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.getOrCreateFromUrl(it) }.toSet()
+    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map {
+      virtualFileManager.getOrCreateFromUrl(it)
+    }.toSet()
     val builder = createEmptyBuilder()
     builder.addEntity(SetVFUEntity("hello", vfuSet, SampleEntitySource("test")))
     val entity = builder.entities(SetVFUEntity::class.java).first()
@@ -205,7 +209,9 @@ class MutableEntityCollectionTest {
 
   @Test
   fun `check lambda is available only in certain places`() {
-    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map { virtualFileManager.getOrCreateFromUrl(it) }.toSet()
+    val vfuSet = listOf("/user/a.txt", "/user/b.txt", "/user/c.txt", "/user/opt/app/a.txt").map {
+      virtualFileManager.getOrCreateFromUrl(it)
+    }.toSet()
     val builder = createEmptyBuilder()
     val entity = SetVFUEntity("hello", vfuSet, SampleEntitySource("test"))
     assertNotNull((entity.fileProperty as MutableWorkspaceSet).getModificationUpdateAction())

@@ -251,12 +251,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val group = DefaultActionGroup(actionsToShow)
 
-    val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
-    if (gutterRenderer != null) {
-      return
-    }
-
-    if (needShowOnGutter && editorGutterComponentEx.findFoldingAnchorAt(editorGutterComponentEx.foldingAreaOffset + 1, lineY + 1) != null) {
+    if (needShowOnGutter && isGutterComponentOverlapped(editor, editorGutterComponentEx, xPosition, lineY, lineNumber, actionsToShow.size)) {
       return
     }
 
@@ -306,6 +301,26 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val hintInfo = HintManagerImpl.createHintHint(editor, position, hint, HintManager.RIGHT)
     clientHintManager.showEditorHint(hint, editor, hintInfo, position, flags, 0, true) { }
+  }
+
+  private fun isGutterComponentOverlapped(editor: Editor, editorGutterComponentEx: EditorGutterComponentEx, xPosition: Int, lineY: Int, lineNumber: Int, actionsToShowNumber: Int): Boolean {
+    val visualLine = editor.logicalToVisualPosition(LogicalPosition(lineNumber, 0)).line
+    val renderersAndRectangles = editorGutterComponentEx.getGutterRenderersAndRectangles(visualLine)
+
+    val xStart = editorGutterComponentEx.width + xPosition
+    val toolbarWidth = JBUI.scale(ACTION_BUTTON_SIZE) * actionsToShowNumber
+    val toolbarRectangle = Rectangle(xStart, lineY, toolbarWidth, JBUI.scale(ACTION_BUTTON_SIZE))
+    for (rectangle: Rectangle in renderersAndRectangles.map { it.second }) {
+      if (rectangle.intersects(toolbarRectangle)) {
+        return true
+      }
+    }
+
+    val foldingAnchor = editorGutterComponentEx.findFoldingAnchorAt(editorGutterComponentEx.foldingAreaOffset + 1, lineY + 1)
+    if (foldingAnchor != null && foldingAnchor.document.getLineNumber(foldingAnchor.startOffset) == lineNumber) {
+      return true
+    }
+    return false
   }
 
   private fun calculateEffectiveHoverColorAndStroke(needShowOnGutter: Boolean, editor: Editor, lineNumber: Int): Pair<Color, Color?> {

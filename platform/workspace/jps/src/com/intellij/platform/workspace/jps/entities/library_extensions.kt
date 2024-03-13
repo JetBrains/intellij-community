@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -33,7 +33,11 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(libraryType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryPropertiesEntity {
+    operator fun invoke(
+      libraryType: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): LibraryPropertiesEntity {
       val builder = builder()
       builder.libraryType = libraryType
       builder.entitySource = entitySource
@@ -46,7 +50,12 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: LibraryPropertiesEntity, modification: LibraryPropertiesEntity.Builder.() -> Unit): LibraryPropertiesEntity = modifyEntity(LibraryPropertiesEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: LibraryPropertiesEntity,
+  modification: LibraryPropertiesEntity.Builder.() -> Unit,
+): LibraryPropertiesEntity {
+  return modifyEntity(LibraryPropertiesEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @get:ApiStatus.Internal

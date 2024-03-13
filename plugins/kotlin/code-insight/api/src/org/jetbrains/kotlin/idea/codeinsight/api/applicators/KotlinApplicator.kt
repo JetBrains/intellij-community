@@ -1,16 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators
 
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
 /**
  * Applies a fix to the PSI, used as intention/inspection/quickfix action
@@ -59,24 +56,5 @@ sealed interface KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicat
         )
 
         fun startInWriteAction(): Boolean = true
-    }
-
-    interface ModCommandBased<in PSI : PsiElement, in INPUT : KotlinApplicatorInput> : KotlinApplicator<PSI, INPUT> {
-
-        /**
-         * Applies some fix to given [psi], cannot use resolve, so all needed data should be precalculated and stored in [input]
-         *
-         * To be invoked on a background thread only.
-         *
-         * @param psi a non-physical [PsiElement] to apply fix to
-         * @param input additional data needed to apply the fix
-         */
-        @RequiresBackgroundThread
-        fun applyTo(
-            psi: PSI,
-            input: INPUT,
-            context: ActionContext,
-            updater: ModPsiUpdater,
-        )
     }
 }

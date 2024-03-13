@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -39,20 +38,6 @@ public final class ResourceUtil {
 
     try (stream) {
       return stream.readAllBytes();
-    }
-  }
-
-  /**
-   * catches IOException and logs the reason
-   * @return byte array if resource exists, null otherwise
-   */
-  public static byte @Nullable [] getResourceAsBytesSafely(@NotNull String path, @NotNull ClassLoader classLoader) {
-    try {
-      return getResourceAsBytes(path, classLoader);
-    }
-    catch (IOException e) {
-      Logger.getInstance(ResourceUtil.class).info("Failed to load resource as bytes: " + path, e);
-      return null;
     }
   }
 

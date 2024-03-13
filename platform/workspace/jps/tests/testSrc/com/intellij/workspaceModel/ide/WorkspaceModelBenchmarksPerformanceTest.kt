@@ -189,8 +189,8 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val size = 3_000_000
 
     repeat(size) {
-      val namedEntity = builder.addNamedEntity("$it")
-      builder.addComposedIdSoftRefEntity("-$it", namedEntity.symbolicId)
+      val namedEntity = builder addEntity NamedEntity("$it", MySource)
+      builder addEntity ComposedIdSoftRefEntity("-$it", namedEntity.symbolicId, MySource)
     }
 
     val storage = builder.toSnapshot()

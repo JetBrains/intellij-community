@@ -258,7 +258,6 @@ private fun createOpenTelemetryConfigurator(serviceName: String,
     serviceName = serviceName,
     serviceVersion = serviceVersion,
     serviceNamespace = serviceNamespace,
-    enableMetricsByDefault = true,
     customResourceBuilder = {
       // don't write username to file - it maybe private information
       if (getOtlpEndPoint() != null) {

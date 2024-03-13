@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -21,7 +26,11 @@ interface ParentMultipleEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(parentData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentMultipleEntity {
+    operator fun invoke(
+      parentData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ParentMultipleEntity {
       val builder = builder()
       builder.parentData = parentData
       builder.entitySource = entitySource
@@ -34,9 +43,12 @@ interface ParentMultipleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentMultipleEntity,
-                                      modification: ParentMultipleEntity.Builder.() -> Unit): ParentMultipleEntity = modifyEntity(
-  ParentMultipleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ParentMultipleEntity,
+  modification: ParentMultipleEntity.Builder.() -> Unit,
+): ParentMultipleEntity {
+  return modifyEntity(ParentMultipleEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ChildMultipleEntity : WorkspaceEntity {
@@ -56,7 +68,11 @@ interface ChildMultipleEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(childData: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildMultipleEntity {
+    operator fun invoke(
+      childData: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChildMultipleEntity {
       val builder = builder()
       builder.childData = childData
       builder.entitySource = entitySource
@@ -69,7 +85,10 @@ interface ChildMultipleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildMultipleEntity,
-                                      modification: ChildMultipleEntity.Builder.() -> Unit): ChildMultipleEntity = modifyEntity(
-  ChildMultipleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChildMultipleEntity,
+  modification: ChildMultipleEntity.Builder.() -> Unit,
+): ChildMultipleEntity {
+  return modifyEntity(ChildMultipleEntity.Builder::class.java, entity, modification)
+}
 //endregion

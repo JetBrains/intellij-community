@@ -67,7 +67,11 @@ Similar to `AbstractKotlinApplicableInspection` plus an Analysis API context:
     - if `context` keeps some physical PSI, you need to convert it with `ModPsiUpdater#getWritable` before a non-physical file is changed.
 
 ## Quick Fixes
+
 Quick fixes are actions on errors and warnings provided by the compiler - they are registered in `KotlinK2QuickFixRegistrar`.
+
+### Location
+- `kotlin.code-insight.fixes.k2`
 
 There are several ways how to create `QuickFixFactory`:
 - `quickFixesPsiBasedFactory`

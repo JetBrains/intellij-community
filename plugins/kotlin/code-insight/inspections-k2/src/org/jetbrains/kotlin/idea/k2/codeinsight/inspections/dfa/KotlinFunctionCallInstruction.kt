@@ -41,8 +41,10 @@ class KotlinFunctionCallInstruction(
 
     override fun bindToFactory(factory: DfaValueFactory): Instruction =
         if (exceptionTransfer == null) this
-        else KotlinFunctionCallInstruction((dfaAnchor as KotlinExpressionAnchor).expression, argCount,
-                                           qualifierOnStack, exceptionTransfer.bindToFactory(factory))
+        else KotlinFunctionCallInstruction(
+            (dfaAnchor as KotlinExpressionAnchor).expression, argCount,
+            qualifierOnStack, exceptionTransfer.bindToFactory(factory)
+        )
 
     override fun accept(interpreter: DataFlowInterpreter, stateBefore: DfaMemoryState): Array<DfaInstructionState> {
         val arguments = popArguments(stateBefore, interpreter)
@@ -84,27 +86,26 @@ class KotlinFunctionCallInstruction(
         val functionSymbol = functionCall.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return resultValue
         val callEffects = functionSymbol.contractEffects
         for (effect in callEffects) {
-            if (effect is KtContractConditionalContractEffectDeclaration) {
-                val crv = effect.effect.toContractReturnValue() ?: continue
-                val condition = effect.condition.toCondition(factory, functionCall, arguments) ?: continue
-                val notCondition = condition.negate()
-                if (notCondition == DfaCondition.getFalse()) continue
-                val returnValue = crv.getDfaValue(factory, DfaCallState(stateBefore, arguments, factory.unknown))
-                val negated = returnValue.dfType.tryNegate() ?: continue
-                val negatedResult = factory.fromDfType(resultValue.dfType.meet(negated))
-                if (notCondition == DfaCondition.getTrue()) {
-                    return negatedResult
+            if (effect !is KtContractConditionalContractEffectDeclaration) continue
+            val crv = effect.effect.toContractReturnValue() ?: continue
+            val condition = effect.condition.toCondition(factory, functionCall, arguments) ?: continue
+            val notCondition = condition.negate()
+            if (notCondition == DfaCondition.getFalse()) continue
+            val returnValue = crv.getDfaValue(factory, DfaCallState(stateBefore, arguments, factory.unknown))
+            val negated = returnValue.dfType.tryNegate() ?: continue
+            val negatedResult = factory.fromDfType(resultValue.dfType.meet(negated))
+            if (notCondition == DfaCondition.getTrue()) {
+                return negatedResult
+            }
+            if (negatedResult.dfType != DfType.BOTTOM) {
+                val notSatisfiedState = stateBefore.createCopy()
+                if (notSatisfiedState.applyCondition(notCondition)) {
+                    pushResult(interpreter, notSatisfiedState, negatedResult)
+                    result += nextState(interpreter, notSatisfiedState)
                 }
-                if (negatedResult.dfType != DfType.BOTTOM) {
-                    val notSatisfiedState = stateBefore.createCopy()
-                    if (notSatisfiedState.applyCondition(notCondition)) {
-                        pushResult(interpreter, notSatisfiedState, negatedResult)
-                        result += nextState(interpreter, notSatisfiedState)
-                    }
-                }
-                if (!stateBefore.applyCondition(condition)) {
-                    return factory.fromDfType(DfType.BOTTOM)
-                }
+            }
+            if (!stateBefore.applyCondition(condition)) {
+                return factory.fromDfType(DfType.BOTTOM)
             }
         }
         return resultValue
@@ -116,16 +117,19 @@ class KotlinFunctionCallInstruction(
         callDescriptor: KtFunctionCall<*>,
         arguments: DfaCallArguments
     ): DfaCondition? {
-        return when(this) {
+        return when (this) {
             is KtContractBooleanConstantExpression -> if (booleanConstant) DfaCondition.getTrue() else DfaCondition.getFalse()
             is KtContractBooleanValueParameterExpression -> {
                 parameterSymbol.findDfaValue(callDescriptor, arguments)?.cond(RelationType.EQ, factory.fromDfType(DfTypes.TRUE))
             }
+
             is KtContractLogicalNotExpression -> argument.toCondition(factory, callDescriptor, arguments)?.negate()
             is KtContractIsNullPredicateExpression -> argument.parameterSymbol.findDfaValue(callDescriptor, arguments)
                 ?.cond(RelationType.equivalence(!isNegated), factory.fromDfType(DfTypes.NULL))
+
             is KtContractIsInstancePredicateExpression -> argument.parameterSymbol.findDfaValue(callDescriptor, arguments)
                 ?.cond(if (isNegated) RelationType.IS_NOT else RelationType.IS, factory.fromDfType(type.toDfType()))
+
             else -> null
         }
     }
@@ -145,15 +149,16 @@ class KotlinFunctionCallInstruction(
         }
     }
 
-    private fun KtContractEffectDeclaration.toContractReturnValue():ContractReturnValue? {
+    private fun KtContractEffectDeclaration.toContractReturnValue(): ContractReturnValue? {
         return when (this) {
             is KtContractReturnsNotNullEffectDeclaration -> ContractReturnValue.returnNotNull()
             is KtContractReturnsSuccessfullyEffectDeclaration -> ContractReturnValue.returnAny()
-            is KtContractReturnsSpecificValueEffectDeclaration -> when(value.constantType) {
+            is KtContractReturnsSpecificValueEffectDeclaration -> when (value.constantType) {
                 KtContractConstantValue.KtContractConstantType.FALSE -> ContractReturnValue.returnFalse()
                 KtContractConstantValue.KtContractConstantType.TRUE -> ContractReturnValue.returnTrue()
                 KtContractConstantValue.KtContractConstantType.NULL -> ContractReturnValue.returnNull()
             }
+
             else -> null
         }
     }
@@ -210,25 +215,32 @@ class KotlinFunctionCallInstruction(
                 "arrayOf", "booleanArrayOf", "byteArrayOf", "shortArrayOf", "charArrayOf",
                 "floatArrayOf", "intArrayOf", "doubleArrayOf", "longArrayOf" ->
                     SpecialField.ARRAY_LENGTH.asDfType(size)
+
                 "emptyList", "emptySet", "emptyMap" ->
                     SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0))
                         .meet(Mutability.UNMODIFIABLE.asDfType())
+
                 "listOf" ->
                     SpecialField.COLLECTION_SIZE.asDfType(size)
                         .meet(Mutability.UNMODIFIABLE.asDfType())
+
                 "listOfNotNull", "setOfNotNull", "mapOfNotNull" ->
                     SpecialField.COLLECTION_SIZE.asDfType(
                         size.fromRelation(RelationType.LE).meet(DfTypes.intValue(0).fromRelation(RelationType.GE))
                     )
                         .meet(Mutability.UNMODIFIABLE.asDfType())
+
                 "setOf", "mapOf" ->
                     SpecialField.COLLECTION_SIZE.asDfType(size.toSetSize())
                         .meet(Mutability.UNMODIFIABLE.asDfType())
+
                 "mutableListOf", "arrayListOf" ->
                     SpecialField.COLLECTION_SIZE.asDfType(size)
                         .meet(DfTypes.LOCAL_OBJECT)
+
                 "mutableSetOf", "linkedSetOf", "hashSetOf", "hashMapOf", "linkedMapOf" ->
                     SpecialField.COLLECTION_SIZE.asDfType(size.toSetSize()).meet(DfTypes.LOCAL_OBJECT)
+
                 else -> null
             }
         }

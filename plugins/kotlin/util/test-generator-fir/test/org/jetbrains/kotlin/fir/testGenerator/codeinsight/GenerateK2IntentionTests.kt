@@ -154,7 +154,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/indentRawString", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceAddWithPlusAssign", pattern = pattern, isIgnored = true)
             model("${idea}intentions/reconstructTypeInCastOrIs", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/removeLabeledReturnInLambda", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertParameterToReceiver", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertCollectionConstructorToFunction", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceMapGetOrDefault", pattern = pattern, isIgnored = true)

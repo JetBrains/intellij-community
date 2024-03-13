@@ -127,6 +127,8 @@ fun reinitBreadcrumbComponent(fileEditor: TextEditor, fileEditorManager: FileEdi
       isSuitable(project, file, forcedShown, editorIsValid)
     }
     withContext(Dispatchers.EDT) {
+      if (editor.isDisposed) return@withContext
+
       if (isSuitable) {
         var wrapper = BreadcrumbsXmlWrapper.getBreadcrumbWrapper(editor)
         if (wrapper == null) {

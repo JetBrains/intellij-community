@@ -137,11 +137,11 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.renderSymbol(classAccessExpression.identifier, classAccessExpression)
         }
 
-        override fun visitMethodAccessExpression(methodAccessExpression: JKMethodAccessExpression) {
+        override fun visitMethodAccessExpressionRaw(methodAccessExpression: JKMethodAccessExpression) {
             printer.renderSymbol(methodAccessExpression.identifier, methodAccessExpression)
         }
 
-        override fun visitTypeQualifierExpression(typeQualifierExpression: JKTypeQualifierExpression) {
+        override fun visitTypeQualifierExpressionRaw(typeQualifierExpression: JKTypeQualifierExpression) {
             printer.renderType(typeQualifierExpression.type, typeQualifierExpression)
         }
 
@@ -835,11 +835,11 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        override fun visitKtWhenExpression(ktWhenExpression: JKKtWhenExpression) {
+        override fun visitKtWhenExpressionRaw(ktWhenExpression: JKKtWhenExpression) {
             visitKtWhenBlockRaw(ktWhenExpression)
         }
 
-        override fun visitKtWhenStatement(ktWhenStatement: JKKtWhenStatement) {
+        override fun visitKtWhenStatementRaw(ktWhenStatement: JKKtWhenStatement) {
             visitKtWhenBlockRaw(ktWhenStatement)
         }
 

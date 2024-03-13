@@ -3,6 +3,7 @@
 
 package com.intellij.ide.gdpr
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.SystemLanguage
@@ -54,7 +55,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
       }
     )
 
-    if (ApplicationInfoImpl.getShadowInstance().isEAP && !ApplicationInfoImpl.getShadowInstanceImpl().isEapLikeRelease) {
+    if (ApplicationInfoImpl.getShadowInstance().isEAP && isReleaseAgreementsEnabled()) {
       acceptButton(
         text = bundle.getString("userAgreement.dialog.continue"),
         isEnabled = false,
@@ -128,4 +129,10 @@ private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlC
     .append(allProductChunk)
     .append(preferenceChunk)
     .wrapWithHtmlBody()
+}
+
+//test.release.agreements property is only for test purposes. To get release dialogs on EAP versions
+@VisibleForTesting
+internal fun isReleaseAgreementsEnabled(): Boolean {
+  return java.lang.Boolean.getBoolean("test.release.agreements")
 }

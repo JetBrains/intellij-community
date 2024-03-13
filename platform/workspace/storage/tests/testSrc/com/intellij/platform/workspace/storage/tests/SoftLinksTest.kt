@@ -87,8 +87,11 @@ class SoftLinksTest {
   @Test
   fun `change symbolic id part`() {
     val builder = createEmptyBuilder()
-    val entity = builder.addNamedEntity("Name")
-    builder.addWithSoftLinkEntity(entity.symbolicId)
+    val entity = builder addEntity NamedEntity("Name", MySource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
+    builder addEntity WithSoftLinkEntity(entity.symbolicId, MySource)
 
     builder.modifyEntity(entity) {
       this.myName = "newName"
@@ -102,8 +105,11 @@ class SoftLinksTest {
   @Test
   fun `change symbolic id part of composed id entity`() {
     val builder = createEmptyBuilder()
-    val entity = builder.addNamedEntity("Name")
-    builder.addComposedIdSoftRefEntity("AnotherName", entity.symbolicId)
+    val entity = builder addEntity NamedEntity("Name", MySource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
+    builder addEntity ComposedIdSoftRefEntity("AnotherName", entity.symbolicId, MySource)
 
     builder.modifyEntity(entity) {
       this.myName = "newName"
@@ -118,7 +124,10 @@ class SoftLinksTest {
   @Test
   fun `change symbolic id in list`() {
     val builder = createEmptyBuilder()
-    val entity = builder.addNamedEntity("Name")
+    val entity = builder addEntity NamedEntity("Name", MySource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
     builder.addEntity(WithListSoftLinksEntity("xyz", listOf(NameId("Name")), MySource))
 
     builder.modifyEntity(entity) {
@@ -134,9 +143,9 @@ class SoftLinksTest {
   @Test
   fun `change symbolic id part of composed id entity and with linked entity`() {
     val builder = createEmptyBuilder()
-    val entity = builder.addNamedEntity("Name")
-    val composedIdEntity = builder.addComposedIdSoftRefEntity("AnotherName", entity.symbolicId)
-    builder.addComposedLinkEntity(composedIdEntity.symbolicId)
+    val entity = builder addEntity NamedEntity("Name", MySource)
+    val composedIdEntity = builder addEntity ComposedIdSoftRefEntity("AnotherName", entity.symbolicId, MySource)
+    builder addEntity ComposedLinkEntity(composedIdEntity.symbolicId, MySource)
 
     builder.modifyEntity(entity) {
       this.myName = "newName"
@@ -191,6 +200,6 @@ class SoftLinksTest {
     assertEquals("AnotherData", (updatedEntity.sealedContainer as SealedContainer.BigContainer).id.name)
     assertEquals("AnotherData", (updatedEntity.listSealedContainer.single() as SealedContainer.SmallContainer).notId.name)
     assertEquals("AnotherData",
-                            (updatedEntity.deepSealedClass as DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour).id.name)
+                 (updatedEntity.deepSealedClass as DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour).id.name)
   }
 }

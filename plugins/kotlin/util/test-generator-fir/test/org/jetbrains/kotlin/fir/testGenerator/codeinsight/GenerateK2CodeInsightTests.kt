@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 
 internal fun MutableTWorkspace.generateK2CodeInsightTests() {
     generateK2InspectionTests()
+    generateK2FixTests()
     generateK2IntentionTests()
     generateK2StructureViewTests()
     generateK2PostfixTemplateTests()

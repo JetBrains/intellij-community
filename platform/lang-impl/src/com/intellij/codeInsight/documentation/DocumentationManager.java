@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
@@ -84,9 +83,7 @@ import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Comment;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
 import javax.swing.*;
@@ -107,7 +104,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Pattern;
 
 import static com.intellij.lang.documentation.DocumentationMarkup.*;
 
@@ -471,34 +467,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     showJavaDocInfo(element, original, null);
   }
 
-  /**
-   * Asks to show quick doc for the target element.
-   *
-   * @param editor             editor with an element for which quick do should be shown
-   * @param element            target element which documentation should be shown
-   * @param original           element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
-   *                           A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
-   *                           declaration but {@code 'element'} argument is a {@code Runnable} descriptor
-   * @param closeCallback      callback to be notified on target hint close (if any)
-   * @param documentation      precalculated documentation
-   * @param closeOnSneeze      flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
-   *                           two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
-   *                           on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
-   *                           at the first situation but don't want to do that at the second
-   * @param useStoredPopupSize whether popup size previously set by user (via mouse-dragging) should be used, or default one should be used
-   */
-  public void showJavaDocInfo(@NotNull Editor editor,
-                              @NotNull PsiElement element,
-                              @NotNull PsiElement original,
-                              @Nullable Runnable closeCallback,
-                              @Nullable @Nls String documentation,
-                              boolean closeOnSneeze,
-                              boolean useStoredPopupSize) {
-    myEditor = editor;
-    myCloseOnSneeze = closeOnSneeze;
-    showJavaDocInfo(element, original, false, closeCallback, documentation, useStoredPopupSize);
-  }
-
   public void showJavaDocInfo(@NotNull PsiElement element,
                               PsiElement original,
                               @Nullable Runnable closeCallback) {
@@ -516,15 +484,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                               PsiElement original,
                               boolean requestFocus,
                               @Nullable Runnable closeCallback) {
-    showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
-  }
-
-  public void showJavaDocInfo(@NotNull Editor editor,
-                              @NotNull PsiElement element,
-                              PsiElement original,
-                              boolean requestFocus,
-                              @Nullable Runnable closeCallback) {
-    myEditor = editor;
     showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
   }
 
@@ -1910,8 +1869,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                      @Nullable String downloadDocumentationActionLink) {
     text = StringUtil.replaceIgnoreCase(text, "</html>", "");
     text = StringUtil.replaceIgnoreCase(text, "</body>", "");
-    text = replaceIgnoreQuotesType(text, SECTIONS_START + SECTIONS_END, "");
-    text = replaceIgnoreQuotesType(text, SECTIONS_START + "<p>" + SECTIONS_END, ""); //NON-NLS
 
     var document = Jsoup.parse(text);
     if (document.select("." + CLASS_DEFINITION + ", ." + CLASS_CONTENT + ", ." + CLASS_SECTIONS).isEmpty()) {
@@ -1929,17 +1886,18 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       document = Jsoup.parse(text);
     }
 
+    DocumentationHtmlUtil.removeEmptySections$intellij_platform_lang_impl(document);
+
     if (downloadDocumentationActionLink != null) {
-      document.body().append(
-        HtmlChunk.div()
-          .children(
-            HtmlChunk.icon("AllIcons.Plugins.Downloads", AllIcons.Plugins.Downloads),
-            HtmlChunk.nbsp(),
-            HtmlChunk.link(downloadDocumentationActionLink, CodeInsightBundle.message("documentation.download.button.label"))
-          )
-          .setClass(CLASS_DOWNLOAD_DOCUMENTATION)
-          .toString()
-      );
+      document.body().appendChild(
+        new Element("div")
+          .addClass(CLASS_DOWNLOAD_DOCUMENTATION)
+          .appendChildren(Arrays.asList(
+            new Element("icon").attr("src", "AllIcons.Plugins.Downloads"),
+            new TextNode("&nbsp;"),
+            new Element("a").attr("href", downloadDocumentationActionLink)
+              .text(CodeInsightBundle.message("documentation.download.button.label"))
+          )));
     }
     if (location != null) {
       document.body().append(getBottom().child(location).toString());
@@ -1948,14 +1906,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       document.body().append(getBottom().child(links).toString());
     }
 
-    document.select("." + CLASS_DEFINITION + ", ." + CLASS_CONTENT).forEach(
+    document.select("." + CLASS_DEFINITION + ", ." + CLASS_CONTENT + ", ." + CLASS_SECTIONS).forEach(
       div -> {
         var nextSibling = div.nextElementSibling();
         if (nextSibling == null) {
           return;
         }
         if (nextSibling.hasClass(CLASS_DEFINITION)
-            || nextSibling.hasClass(CLASS_CONTENT)
+            || (nextSibling.hasClass(CLASS_CONTENT) && !div.hasClass(CLASS_SECTIONS))
             || (div.hasClass(CLASS_DEFINITION)
                 && (
                   nextSibling.hasClass(CLASS_SECTIONS)
@@ -1966,62 +1924,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
     );
-    document.select("." + CLASS_CONTENT).forEach(
-      div -> {
-        var child = div.firstChild();
-        var toWrap = new SmartList<Node>();
-        while (child != null && !isBlockElement(child)) {
-          if (!(child instanceof Comment)) {
-            toWrap.add(child);
-          }
-          child = child.nextSibling();
-        }
-        if (!toWrap.isEmpty()
-            && !ContainerUtil.all(toWrap, n -> n instanceof TextNode textNode && textNode.isBlank())
-        ) {
-          var para = new Element("p");
-          para.insertChildren(0, toWrap);
-          div.insertChildren(0, para);
-        }
-      }
-    );
-
+    DocumentationHtmlUtil.addParagraphsIfNeeded$intellij_platform_lang_impl(
+      document, "." + CLASS_CONTENT + ", table." + CLASS_SECTIONS + " td[valign=top]");
+    DocumentationHtmlUtil.addExternalLinkIcons$intellij_platform_lang_impl(document);
     document.outputSettings().prettyPrint(false);
-    return addExternalLinksIcon(document.html());
-  }
-
-  private static boolean isBlockElement(Node node) {
-    if (node instanceof Element element) {
-      var tagName = element.tagName();
-      return tagName.equals("p")
-             || tagName.equals("div")
-             || tagName.equals("pre")
-             || tagName.equals("table")
-             || tagName.equals("blockquote")
-             || tagName.equals("ol")
-             || tagName.equals("ul")
-             || tagName.equals("dl")
-             || (tagName.startsWith("h") && tagName.length() == 2 && Character.isDigit(tagName.charAt(1)));
-    }
-    return false;
-  }
-
-  private static @NlsSafe @NotNull String replaceIgnoreQuotesType(@NotNull String text,
-                                                                  @NotNull String oldString,
-                                                                  @NotNull String newString) {
-    String replaced;
-    if (!text.contains(oldString)) {
-      if (oldString.contains("\"")) {
-        replaced = oldString.replace("\"", "'");
-      }
-      else {
-        replaced = oldString.replace("'", "\"");
-      }
-    }
-    else {
-      replaced = oldString;
-    }
-    return StringUtil.replaceIgnoreCase(text, replaced, newString);
+    return document.html();
   }
 
   @RequiresReadLock
@@ -2134,13 +2041,5 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private static @NotNull HtmlChunk.Element getBottom() {
     return HtmlChunk.div().setClass(CLASS_BOTTOM);
-  }
-
-  private static final Pattern EXTERNAL_LINK_PATTERN = Pattern.compile("(<a\\s*href=[\"']http[^>]*>)([^>]*)(</a>)");
-  private static final @NlsSafe String EXTERNAL_LINK_REPLACEMENT = "$1$2<icon src='AllIcons.Ide.External_link_arrow'>$3";
-
-  @Contract(pure = true)
-  public static String addExternalLinksIcon(String text) {
-    return EXTERNAL_LINK_PATTERN.matcher(text).replaceAll(EXTERNAL_LINK_REPLACEMENT);
   }
 }

@@ -258,6 +258,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/NamedArguments.kt");
         }
 
+        @TestMetadata("NonExistingKotlinMethodFromJava.kt")
+        public void testNonExistingKotlinMethodFromJava() throws Exception {
+            runTest("testData/highlighterMetaInfo/NonExistingKotlinMethodFromJava.kt");
+        }
+
         @TestMetadata("NonNullAssertion.kt")
         public void testNonNullAssertion() throws Exception {
             runTest("testData/highlighterMetaInfo/NonNullAssertion.kt");

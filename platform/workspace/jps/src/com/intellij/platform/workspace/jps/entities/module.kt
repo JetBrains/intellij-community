@@ -45,7 +45,12 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String, dependencies: List<ModuleDependencyItem>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleEntity {
+    operator fun invoke(
+      name: String,
+      dependencies: List<ModuleDependencyItem>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ModuleEntity {
       val builder = builder()
       builder.name = name
       builder.dependencies = dependencies.toMutableWorkspaceList()
@@ -59,7 +64,13 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ModuleEntity, modification: ModuleEntity.Builder.() -> Unit): ModuleEntity = modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ModuleEntity,
+  modification: ModuleEntity.Builder.() -> Unit,
+): ModuleEntity {
+  return modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
+}
+
 var ModuleEntity.Builder.customImlData: @Child ModuleCustomImlDataEntity?
   by WorkspaceEntity.extension()
 var ModuleEntity.Builder.exModuleOptions: @Child ExternalSystemModuleOptionsEntity?

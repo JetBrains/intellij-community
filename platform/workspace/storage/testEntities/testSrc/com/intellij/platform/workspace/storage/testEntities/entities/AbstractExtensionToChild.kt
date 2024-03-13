@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 
@@ -19,7 +24,11 @@ interface ParentWithExtensionEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentWithExtensionEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ParentWithExtensionEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -31,9 +40,12 @@ interface ParentWithExtensionEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentWithExtensionEntity,
-                                      modification: ParentWithExtensionEntity.Builder.() -> Unit): ParentWithExtensionEntity = modifyEntity(
-  ParentWithExtensionEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ParentWithExtensionEntity,
+  modification: ParentWithExtensionEntity.Builder.() -> Unit,
+): ParentWithExtensionEntity {
+  return modifyEntity(ParentWithExtensionEntity.Builder::class.java, entity, modification)
+}
 
 var ParentWithExtensionEntity.Builder.child: @Child AbstractChildEntity?
   by WorkspaceEntity.extension()
@@ -56,9 +68,11 @@ interface AbstractChildEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String,
-                        entitySource: EntitySource,
-                        init: (Builder<AbstractChildEntity>.() -> Unit)? = null): AbstractChildEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder<AbstractChildEntity>.() -> Unit)? = null,
+    ): AbstractChildEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -82,7 +96,11 @@ interface SpecificChildEntity : AbstractChildEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SpecificChildEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SpecificChildEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -94,9 +112,12 @@ interface SpecificChildEntity : AbstractChildEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SpecificChildEntity,
-                                      modification: SpecificChildEntity.Builder.() -> Unit): SpecificChildEntity = modifyEntity(
-  SpecificChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SpecificChildEntity,
+  modification: SpecificChildEntity.Builder.() -> Unit,
+): SpecificChildEntity {
+  return modifyEntity(SpecificChildEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 val ParentWithExtensionEntity.child: @Child AbstractChildEntity? by WorkspaceEntity.extension()

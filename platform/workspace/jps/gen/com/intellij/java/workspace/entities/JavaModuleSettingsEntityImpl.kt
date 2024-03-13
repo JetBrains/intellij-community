@@ -26,10 +26,12 @@ import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(2)
 @GeneratedCodeImplVersion(3)
-open class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettingsEntityData) : JavaModuleSettingsEntity, WorkspaceEntityBase(dataSource) {
+open class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettingsEntityData) : JavaModuleSettingsEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, JavaModuleSettingsEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, JavaModuleSettingsEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -81,7 +83,8 @@ open class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettin
   }
 
 
-  class Builder(result: JavaModuleSettingsEntityData?) : ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity, JavaModuleSettingsEntityData>(result), JavaModuleSettingsEntity.Builder {
+  class Builder(result: JavaModuleSettingsEntityData?) : ModifiableWorkspaceEntityBase<JavaModuleSettingsEntity, JavaModuleSettingsEntityData>(
+    result), JavaModuleSettingsEntity.Builder {
     constructor() : this(JavaModuleSettingsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -158,8 +161,8 @@ open class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettin
       get() {
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this)
-          ?: this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
+          _diff.extractOneToOneParent(MODULE_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                 MODULE_CONNECTION_ID)]!! as ModuleEntity
         }
         else {
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity
@@ -173,7 +176,7 @@ open class JavaModuleSettingsEntityImpl(private val dataSource: JavaModuleSettin
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)

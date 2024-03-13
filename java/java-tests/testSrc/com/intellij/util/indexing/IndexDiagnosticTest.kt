@@ -5,10 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.idea.TestFor
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.getProjectCachePath
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
 import com.intellij.util.indexing.diagnostic.IndexStatisticGroup
@@ -26,10 +25,10 @@ import kotlin.io.path.createTempDirectory
  * Tests for [IndexDiagnosticDumper].
  */
 class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
-  private var previousLogDir: String? = null
 
   override fun setUp() {
-    previousLogDir = System.setProperty(PathManager.PROPERTY_LOG_PATH, createTempDirectory().toString())
+    val tempDirectory = createTempDirectory()
+    TestModeFlags.set(IndexDiagnosticDumperUtils.testDiagnosticPathFlag, tempDirectory, testRootDisposable)
     IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
     super.setUp()
   }
@@ -37,7 +36,6 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
   override fun tearDown() {
     try {
       IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
-      SystemProperties.setProperty(PathManager.PROPERTY_LOG_PATH, previousLogDir)
     }
     catch (e: Throwable) {
       addSuppressedException(e)

@@ -62,7 +62,7 @@ public class PerformanceTestInfo {
   }
 
   private static void initOpenTelemetry() {
-    // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside with open-telemetry-metrics.*.csv)
+    // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside with open-telemetry-metrics.* files)
     System.setProperty("idea.diagnostic.opentelemetry.file",
                        PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString());
 
@@ -102,14 +102,16 @@ public class PerformanceTestInfo {
       // remove content of the previous tests from the idea.log
       MetricsPublisher.Companion.truncateTestLog();
 
-      var csvFilesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) -> it.toString().endsWith(".csv")).toList();
-      for (Path file : csvFilesWithMetrics) {
+      var filesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) ->
+                                                                          it.toString().contains("-metrics") ||
+                                                                          it.toString().contains("-meters")).toList();
+      for (Path file : filesWithMetrics) {
         Files.deleteIfExists(file);
       }
     }
     catch (Exception e) {
       System.err.println(
-        "Error during removing Telemetry .csv files with meters before start of perf test. This might affect metrics value");
+        "Error during removing Telemetry files with meters before start of perf test. This might affect collected metrics value.");
       e.printStackTrace();
     }
   }

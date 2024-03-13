@@ -85,7 +85,7 @@ internal class KotlinChangeSignatureDialog(
             val psiFactory = KtPsiFactory(myDefaultValueContext.project)
 
             val contentElement = psiFactory.createTypeCodeFragment(resultParameterInfo.typeText, typeContext).getContentElement()
-            val presentableText = if (contentElement != null) {
+            val presentableText = if (resultParameterInfo.typeText.isNotEmpty() && contentElement != null) {
                 analyzeInModalWindow(contentElement, KotlinBundle.message("fix.change.signature.prepare")) {
                     contentElement.getKtType().getPresentableText()
                 }
@@ -177,7 +177,7 @@ internal class KotlinChangeSignatureDialog(
             parameterInfos = parametersWithReceiverInFirstPosition,
             receiver = receiverInfo,
             aNewVisibility = myVisibilityPanel.visibility ?: methodDescriptor.visibility,
-            newReturnTypeInfo = KotlinTypeInfo((myReturnTypeCodeFragment as KtTypeCodeFragment).getCanonicalText(forPreview), callable)
+            newReturnTypeInfo = KotlinTypeInfo((myReturnTypeCodeFragment as? KtTypeCodeFragment)?.getCanonicalText(forPreview), callable)
         )
     }
 

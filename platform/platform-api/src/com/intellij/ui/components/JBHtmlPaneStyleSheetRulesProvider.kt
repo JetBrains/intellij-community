@@ -19,6 +19,8 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.StyleSheetUtil
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
+import org.jsoup.nodes.Element
+import org.jsoup.nodes.Node
 import java.awt.Color
 import java.lang.Integer.toHexString
 import javax.swing.UIManager
@@ -34,8 +36,14 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
   fun getStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
     styleSheetCache.get(Pair(paneBackgroundColor.rgb and 0xffffff, configuration))
 
-  internal const val CODE_BLOCK_PREFIX: String = "<div class='code-block'><pre style=\"padding: 0px; margin: 0px\">"
-  internal const val CODE_BLOCK_SUFFIX: String = "</pre></div>"
+  private const val CODE_BLOCK_CLASS = "code-block"
+
+  internal fun buildCodeBlock(childNodes: List<Node>) =
+    Element("div").addClass(CODE_BLOCK_CLASS).appendChild(
+      Element("pre")
+        .attr("style", "padding: 0px; margin: 0px")
+        .insertChildren(0, childNodes)
+    )
 
   private val inlineCodeStyling = ControlColorStyleBuilder(
     ControlKind.CodeInline,

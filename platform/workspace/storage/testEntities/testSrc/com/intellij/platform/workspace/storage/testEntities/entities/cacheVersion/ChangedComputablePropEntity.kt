@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 interface ChangedComputablePropEntity: WorkspaceEntityWithSymbolicId {
   val text: String
@@ -19,7 +24,11 @@ interface ChangedComputablePropEntity: WorkspaceEntityWithSymbolicId {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(text: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChangedComputablePropEntity {
+    operator fun invoke(
+      text: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChangedComputablePropEntity {
       val builder = builder()
       builder.text = text
       builder.entitySource = entitySource
@@ -31,9 +40,12 @@ interface ChangedComputablePropEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChangedComputablePropEntity,
-                                      modification: ChangedComputablePropEntity.Builder.() -> Unit): ChangedComputablePropEntity = modifyEntity(
-  ChangedComputablePropEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChangedComputablePropEntity,
+  modification: ChangedComputablePropEntity.Builder.() -> Unit,
+): ChangedComputablePropEntity {
+  return modifyEntity(ChangedComputablePropEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class ChangedComputablePropEntityId(val text: String): SymbolicEntityId<ChangedComputablePropEntity> {

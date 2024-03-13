@@ -1,5 +1,5 @@
 fun foo(a: Int): Int {
-    return when (a) {
+    return  /* comment 1 */when (a) {
         1 -> {
             val x = 1
             println(x)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
 import com.intellij.devkit.workspaceModel.CodegenJarLoader
@@ -12,16 +12,13 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -29,6 +26,7 @@ import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.engine.*
+import kotlinx.coroutines.delay
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -39,6 +37,7 @@ import java.io.IOException
 import java.net.URL
 import java.util.*
 import java.util.jar.Manifest
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<CodeWriter>()
 
@@ -69,6 +68,7 @@ object CodeWriter {
     }
     if (ktClasses.isEmpty()) return
 
+    waitSmartMode(project)
     val classLoader = CodegenJarLoader.getInstance(project).getClassLoader()
     val serviceLoader = ServiceLoader.load(CodeGenerator::class.java, classLoader).findFirst()
     if (serviceLoader.isEmpty) error("Can't load generator")
@@ -162,6 +162,19 @@ object CodeWriter {
         }
       }
     }, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name), null)
+  }
+
+  // Documentation for IndexNotReadyException says that it's enough to run completeJustSubmittedTasks only once
+  //  however, in practive this is not enough
+  private suspend fun waitSmartMode(project: Project) {
+    for (i in 1..100) {
+      if (i == 99) error("99 updates")
+      if (DumbService.isDumb(project)) {
+        DumbService.getInstance(project).completeJustSubmittedTasks()
+        delay(1.seconds)
+      }
+      else break
+    }
   }
 
   private fun codegenApiVersionsAreCompatible(project: Project, codeGeneratorFromDownloadedJar: CodeGenerator): Boolean {

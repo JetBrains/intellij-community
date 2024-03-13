@@ -80,10 +80,10 @@ public class GitMerge extends GitMergeAction {
     super.update(e);
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
-    if (project != null && !GitUtil.getRepositoriesInState(project, Repository.State.MERGING).isEmpty()) {
+    if (project != null && !GitUtil.getRepositoriesInStates(project, Repository.State.MERGING).isEmpty()) {
       presentation.setEnabledAndVisible(false);
     }
-    else if (project != null && GitUtil.getRepositoriesInState(project, Repository.State.NORMAL).isEmpty()) {
+    else if (project != null && GitUtil.getRepositoriesInStates(project, Repository.State.NORMAL, Repository.State.DETACHED).isEmpty()) {
       presentation.setEnabled(false);
       presentation.setVisible(true);
     }

@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.Executor.touch
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.LineSeparator
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitBranch
@@ -280,6 +281,10 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   fun `test local changelists are restored after successful abort`() {
+    TestLoggerFactory.enableDebugLogging(testRootDisposable,
+                                         com.intellij.openapi.vcs.impl.LineStatusTrackerManager::class.java,
+                                         com.intellij.openapi.vcs.changes.ChangeListWorker::class.java)
+
     touch("file.txt", "1\n2\n3\n4\n5\n")
     touch("file1.txt", "content")
     touch("file2.txt", "content")
@@ -309,7 +314,10 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     changeListManager.moveChangesTo(testChangelist2, changeListManager.getChange(VcsUtil.getFilePath(repo.root, "file3.txt"))!!)
 
     `do nothing on merge`()
-    dialogManager.onMessage { Messages.YES }
+    dialogManager.onMessage { message ->
+      TestCase.assertTrue(message.contains("Abort rebase in"))
+      Messages.YES
+    }
 
     ensureUpToDateAndRebaseOnMaster()
 
@@ -319,11 +327,14 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
+    assertSuccessfulNotification("Abort rebase succeeded")
 
     val changelists = changeListManager.changeLists
     assertEquals(3, changelists.size)
+
+    val errorMessage = changelists.joinToString(separator = "\n") { "${it.name} - ${it.changes}" }
     for (changeList in changelists) {
-      assertTrue("${changeList.name} - ${changeList.changes}", changeList.changes.size == 2)
+      assertTrue(errorMessage, changeList.changes.size == 2)
     }
   }
 

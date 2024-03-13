@@ -28,7 +28,11 @@ interface ExcludeUrlEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(url: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ExcludeUrlEntity {
+    operator fun invoke(
+      url: VirtualFileUrl,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ExcludeUrlEntity {
       val builder = builder()
       builder.url = url
       builder.entitySource = entitySource
@@ -40,7 +44,13 @@ interface ExcludeUrlEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ExcludeUrlEntity, modification: ExcludeUrlEntity.Builder.() -> Unit): ExcludeUrlEntity = modifyEntity(ExcludeUrlEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ExcludeUrlEntity,
+  modification: ExcludeUrlEntity.Builder.() -> Unit,
+): ExcludeUrlEntity {
+  return modifyEntity(ExcludeUrlEntity.Builder::class.java, entity, modification)
+}
+
 var ExcludeUrlEntity.Builder.contentRoot: ContentRootEntity?
   by WorkspaceEntity.extension()
 var ExcludeUrlEntity.Builder.library: LibraryEntity?

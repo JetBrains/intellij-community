@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 
+@Deprecated("To be totally replaced with actual Intentions/ModCommandActions")
 class KotlinApplicatorTargetWithInput<PSI : PsiElement, INPUT : KotlinApplicatorInput>(
     val target: PSI,
     val input: INPUT,

@@ -28,7 +28,7 @@ interface CollectionFieldEntity : WorkspaceEntity {
       versions: Set<Int>,
       names: List<String>,
       entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null
+      init: (Builder.() -> Unit)? = null,
     ): CollectionFieldEntity {
       val builder = builder()
       builder.versions = versions.toMutableWorkspaceSet()
@@ -44,6 +44,8 @@ interface CollectionFieldEntity : WorkspaceEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(
   entity: CollectionFieldEntity,
-  modification: CollectionFieldEntity.Builder.() -> Unit
-): CollectionFieldEntity = modifyEntity(CollectionFieldEntity.Builder::class.java, entity, modification)
+  modification: CollectionFieldEntity.Builder.() -> Unit,
+): CollectionFieldEntity {
+  return modifyEntity(CollectionFieldEntity.Builder::class.java, entity, modification)
+}
 //endregion

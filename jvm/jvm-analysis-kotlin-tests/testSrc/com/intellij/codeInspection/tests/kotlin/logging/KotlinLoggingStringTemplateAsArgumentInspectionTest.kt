@@ -2,10 +2,10 @@ package com.intellij.codeInspection.tests.kotlin.logging
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.logging.LoggingStringTemplateAsArgumentInspection
-import com.intellij.codeInspection.logging.LoggingUtil
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingStringTemplateAsArgumentInspectionTestBase
 import com.intellij.testFramework.TestDataPath
+import com.intellij.util.logging.LoggingUtil
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
 

@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
 
@@ -19,7 +24,11 @@ interface BooleanEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): BooleanEntity {
+    operator fun invoke(
+      data: Boolean,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): BooleanEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -32,8 +41,12 @@ interface BooleanEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: BooleanEntity, modification: BooleanEntity.Builder.() -> Unit): BooleanEntity = modifyEntity(
-  BooleanEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: BooleanEntity,
+  modification: BooleanEntity.Builder.() -> Unit,
+): BooleanEntity {
+  return modifyEntity(BooleanEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface IntEntity : WorkspaceEntity {
@@ -50,7 +63,11 @@ interface IntEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: Int, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): IntEntity {
+    operator fun invoke(
+      data: Int,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): IntEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -63,8 +80,12 @@ interface IntEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: IntEntity, modification: IntEntity.Builder.() -> Unit): IntEntity = modifyEntity(
-  IntEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: IntEntity,
+  modification: IntEntity.Builder.() -> Unit,
+): IntEntity {
+  return modifyEntity(IntEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface StringEntity : WorkspaceEntity {
@@ -81,7 +102,11 @@ interface StringEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): StringEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): StringEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -94,8 +119,12 @@ interface StringEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: StringEntity, modification: StringEntity.Builder.() -> Unit): StringEntity = modifyEntity(
-  StringEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: StringEntity,
+  modification: StringEntity.Builder.() -> Unit,
+): StringEntity {
+  return modifyEntity(StringEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ListEntity : WorkspaceEntity {
@@ -112,7 +141,11 @@ interface ListEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ListEntity {
+    operator fun invoke(
+      data: List<String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ListEntity {
       val builder = builder()
       builder.data = data.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -125,8 +158,12 @@ interface ListEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ListEntity, modification: ListEntity.Builder.() -> Unit): ListEntity = modifyEntity(
-  ListEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ListEntity,
+  modification: ListEntity.Builder.() -> Unit,
+): ListEntity {
+  return modifyEntity(ListEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 
@@ -144,7 +181,10 @@ interface OptionalIntEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OptionalIntEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OptionalIntEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -156,9 +196,12 @@ interface OptionalIntEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OptionalIntEntity,
-                                      modification: OptionalIntEntity.Builder.() -> Unit): OptionalIntEntity = modifyEntity(
-  OptionalIntEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OptionalIntEntity,
+  modification: OptionalIntEntity.Builder.() -> Unit,
+): OptionalIntEntity {
+  return modifyEntity(OptionalIntEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 
@@ -176,7 +219,10 @@ interface OptionalStringEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OptionalStringEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OptionalStringEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -188,9 +234,12 @@ interface OptionalStringEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OptionalStringEntity,
-                                      modification: OptionalStringEntity.Builder.() -> Unit): OptionalStringEntity = modifyEntity(
-  OptionalStringEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OptionalStringEntity,
+  modification: OptionalStringEntity.Builder.() -> Unit,
+): OptionalStringEntity {
+  return modifyEntity(OptionalStringEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 // Not supported at the moment

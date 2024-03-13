@@ -58,11 +58,13 @@ private fun KtType.toDfTypeNotNullable(): DfType {
     return when (this) {
         is KtNonErrorClassType -> {
             // TODO: anonymous objects
-            when(classId) {
+            when (classId) {
                 DefaultTypeClassIds.BOOLEAN -> DfTypes.BOOLEAN
                 DefaultTypeClassIds.BYTE -> DfTypes.intRange(LongRangeSet.range(Byte.MIN_VALUE.toLong(), Byte.MAX_VALUE.toLong()))
                 DefaultTypeClassIds.CHAR -> DfTypes.intRange(
-                    LongRangeSet.range(Character.MIN_VALUE.code.toLong(), Character.MAX_VALUE.code.toLong()))
+                    LongRangeSet.range(Character.MIN_VALUE.code.toLong(), Character.MAX_VALUE.code.toLong())
+                )
+
                 DefaultTypeClassIds.SHORT -> DfTypes.intRange(LongRangeSet.range(Short.MIN_VALUE.toLong(), Short.MAX_VALUE.toLong()))
                 DefaultTypeClassIds.INT -> DfTypes.INT
                 DefaultTypeClassIds.LONG -> DfTypes.LONG
@@ -74,6 +76,7 @@ private fun KtType.toDfTypeNotNullable(): DfType {
                     val elementConstraint = elementDfType?.constraint ?: TypeConstraints.TOP
                     elementConstraint.arrayOf().asDfType().meet(DfTypes.NOT_NULL_OBJECT)
                 }
+
                 else -> {
                     val primitiveArrayElementType = StandardClassIds.elementTypeByPrimitiveArrayType[classId]
                     when (primitiveArrayElementType) {
@@ -99,6 +102,7 @@ private fun KtType.toDfTypeNotNullable(): DfType {
                 }
             }
         }
+
         is KtTypeParameterType -> symbol.upperBounds.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
         is KtIntersectionType -> conjuncts.map { type -> type.toDfType() }.fold(DfType.TOP, DfType::meet)
         else -> DfType.TOP
@@ -172,7 +176,7 @@ internal fun mathOpFromToken(ref: KtOperationReferenceExpression): LongRangeBinO
         else -> null
     }
 
-internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = when(token) {
+internal fun mathOpFromAssignmentToken(token: IElementType): LongRangeBinOp? = when (token) {
     KtTokens.PLUSEQ -> LongRangeBinOp.PLUS
     KtTokens.MINUSEQ -> LongRangeBinOp.MINUS
     KtTokens.MULTEQ -> LongRangeBinOp.MUL

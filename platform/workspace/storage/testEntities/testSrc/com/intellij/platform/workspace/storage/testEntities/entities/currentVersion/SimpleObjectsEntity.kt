@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Open
 
 interface SimpleObjectsEntity: WorkspaceEntity {
@@ -18,9 +23,11 @@ interface SimpleObjectsEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(someData: SimpleObjectsSealedClass,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SimpleObjectsEntity {
+    operator fun invoke(
+      someData: SimpleObjectsSealedClass,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SimpleObjectsEntity {
       val builder = builder()
       builder.someData = someData
       builder.entitySource = entitySource
@@ -32,9 +39,12 @@ interface SimpleObjectsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleObjectsEntity,
-                                      modification: SimpleObjectsEntity.Builder.() -> Unit): SimpleObjectsEntity = modifyEntity(
-  SimpleObjectsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SimpleObjectsEntity,
+  modification: SimpleObjectsEntity.Builder.() -> Unit,
+): SimpleObjectsEntity {
+  return modifyEntity(SimpleObjectsEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Open

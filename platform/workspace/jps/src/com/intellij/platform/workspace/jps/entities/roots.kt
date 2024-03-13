@@ -42,7 +42,12 @@ interface ContentRootEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(url: VirtualFileUrl, excludedPatterns: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ContentRootEntity {
+    operator fun invoke(
+      url: VirtualFileUrl,
+      excludedPatterns: List<String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ContentRootEntity {
       val builder = builder()
       builder.url = url
       builder.excludedPatterns = excludedPatterns.toMutableWorkspaceList()
@@ -56,7 +61,13 @@ interface ContentRootEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ContentRootEntity, modification: ContentRootEntity.Builder.() -> Unit): ContentRootEntity = modifyEntity(ContentRootEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ContentRootEntity,
+  modification: ContentRootEntity.Builder.() -> Unit,
+): ContentRootEntity {
+  return modifyEntity(ContentRootEntity.Builder::class.java, entity, modification)
+}
+
 var ContentRootEntity.Builder.excludeUrlOrder: @Child ExcludeUrlOrderEntity?
   by WorkspaceEntity.extension()
 var ContentRootEntity.Builder.sourceRootOrder: @Child SourceRootOrderEntity?
@@ -88,7 +99,12 @@ interface SourceRootEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(url: VirtualFileUrl, rootType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceRootEntity {
+    operator fun invoke(
+      url: VirtualFileUrl,
+      rootType: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SourceRootEntity {
       val builder = builder()
       builder.url = url
       builder.rootType = rootType
@@ -102,7 +118,13 @@ interface SourceRootEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SourceRootEntity, modification: SourceRootEntity.Builder.() -> Unit): SourceRootEntity = modifyEntity(SourceRootEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SourceRootEntity,
+  modification: SourceRootEntity.Builder.() -> Unit,
+): SourceRootEntity {
+  return modifyEntity(SourceRootEntity.Builder::class.java, entity, modification)
+}
+
 var SourceRootEntity.Builder.customSourceRootProperties: @Child CustomSourceRootPropertiesEntity?
   by WorkspaceEntity.extension()
 //endregion

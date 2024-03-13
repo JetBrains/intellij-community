@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
@@ -54,15 +54,17 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(variablePaths: Map<String, String>,
-                        eclipseUrls: List<VirtualFileUrl>,
-                        unknownCons: List<String>,
-                        knownCons: List<String>,
-                        forceConfigureJdk: Boolean,
-                        expectedModuleSourcePlace: Int,
-                        srcPlace: Map<String, Int>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): EclipseProjectPropertiesEntity {
+    operator fun invoke(
+      variablePaths: Map<String, String>,
+      eclipseUrls: List<VirtualFileUrl>,
+      unknownCons: List<String>,
+      knownCons: List<String>,
+      forceConfigureJdk: Boolean,
+      expectedModuleSourcePlace: Int,
+      srcPlace: Map<String, Int>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): EclipseProjectPropertiesEntity {
       val builder = builder()
       builder.variablePaths = variablePaths
       builder.eclipseUrls = eclipseUrls.toMutableWorkspaceList()
@@ -81,9 +83,12 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: EclipseProjectPropertiesEntity,
-                                      modification: EclipseProjectPropertiesEntity.Builder.() -> Unit): EclipseProjectPropertiesEntity = modifyEntity(
-  EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: EclipseProjectPropertiesEntity,
+  modification: EclipseProjectPropertiesEntity.Builder.() -> Unit,
+): EclipseProjectPropertiesEntity {
+  return modifyEntity(EclipseProjectPropertiesEntity.Builder::class.java, entity, modification)
+}
 
 var ModuleEntity.Builder.eclipseProperties: @Child EclipseProjectPropertiesEntity?
   by WorkspaceEntity.extension()

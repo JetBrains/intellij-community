@@ -799,6 +799,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
+  public @NotNull ModCommandAction createDeletePrivateMethodFix(@NotNull PsiMethod method) {
+    return new DeletePrivateMethodFix(method);
+  }
+
+  @Override
   public @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
     return OrderEntryFix.registerFixes(reference, registrar);
   }

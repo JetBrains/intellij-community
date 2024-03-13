@@ -464,12 +464,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return myEAP;
   }
 
-  public Boolean isEapLikeRelease() {
-    //eap.as.release is only for test purposes. To get release dialogs on EAP versions
-    String property = System.getProperty("eap.as.release");
-    return "true".equalsIgnoreCase(property);
-  }
-
   @Override
   public boolean isMajorEAP() {
     return myEAP && (myMinorVersion == null || myMinorVersion.indexOf('.') < 0);

@@ -4,6 +4,7 @@ package com.intellij.usages.impl;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,25 +78,15 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   UsageNode getFirstUsageNode() {
-    return getFirstChildOfType(myRootNode, UsageNode.class);
+    return getFirstUsageNode(myRootNode);
   }
 
-  @Nullable GroupNode getFirstGroupNode() {
-    return getFirstChildOfType(myRootNode, GroupNode.class);
-  }
-
-  private static <T> T getFirstChildOfType(@NotNull GroupNode parent, @NotNull Class<T> type) {
-    for (Node child : parent.getChildren()) {
-      if (type.isInstance(child)) {
-        //noinspection unchecked
-        return (T)child;
-      }
-      else if (child instanceof GroupNode groupNode) {
-        T result = getFirstChildOfType(groupNode, type);
-        if (result != null) return result;
-      }
+  private static UsageNode getFirstUsageNode(@NotNull GroupNode parent) {
+    Node found;
+    synchronized (parent) {
+      found = ContainerUtil.find(parent.getChildren(), c -> c instanceof UsageNode || c instanceof GroupNode);
     }
-    return null;
+    return (found instanceof GroupNode groupNode) ? getFirstUsageNode(groupNode) : (UsageNode)found;
   }
 
   boolean areTargetsValid() {

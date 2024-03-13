@@ -15,7 +15,7 @@ data class MetricWithAttributes(
   @JvmField val attributes: MutableList<Metric> = mutableListOf(),
 )
 
-private val logger = logger<OpentelemetryJsonParser>()
+private val logger = logger<OpentelemetrySpanJsonParser>()
 
 /**
  * Reports duration of `nameSpan` and all its children spans.
@@ -31,7 +31,7 @@ fun getMetricsFromSpanAndChildren(file: Path,
                                   filter: SpanFilter,
                                   metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor(),
                                   aliases: Map<String, String> = mapOf()): List<Metric> {
-  val spanElements = OpentelemetryJsonParser(filter).getSpanElements(file).map {
+  val spanElements = OpentelemetrySpanJsonParser(filter).getSpanElements(file).map {
     val name = aliases.getOrDefault(it.name, it.name)
     if (name != it.name) {
       return@map it.copy(name = name)
@@ -57,7 +57,7 @@ fun getMetricsFromSpanAndChildren(file: Path,
  */
 fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: String, toSpanName: String): List<Metric> {
   val betweenSpanProcessor = SpanInfoProcessor()
-  val spanElements = OpentelemetryJsonParser(SpanFilter.containsNameIn(listOf(fromSpanName, toSpanName))).getSpanElements(file)
+  val spanElements = OpentelemetrySpanJsonParser(SpanFilter.containsNameIn(listOf(fromSpanName, toSpanName))).getSpanElements(file)
   val spanToMetricMap = spanElements
     .mapNotNull { betweenSpanProcessor.process(it) }
     .groupBy { it.name }
@@ -85,7 +85,7 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: St
 }
 
 fun getSpansMetricsMap(file: Path, spanFilter: SpanFilter = SpanFilter.any()): Map<String, List<MetricWithAttributes>> {
-  val spanElements = OpentelemetryJsonParser(spanFilter).getSpanElements(file)
+  val spanElements = OpentelemetrySpanJsonParser(spanFilter).getSpanElements(file)
   val metricSpanProcessor = MetricSpanProcessor()
   val spanToMetricMap = spanElements
     .mapNotNull { metricSpanProcessor.process(it) }
@@ -97,7 +97,7 @@ fun getSpansMetricsMap(file: Path, spanFilter: SpanFilter = SpanFilter.any()): M
  * Returns timestamp of event defined as com.intellij.diagnostic.StartUpMeasurer.getCurrentTime
  */
 fun getStartupTimestampMs(file: Path): Long {
-  val spanElements = OpentelemetryJsonParserWithChildrenFiltering(SpanFilter.nameEquals("bootstrap"), SpanFilter.none())
+  val spanElements = OpentelemetrySpanJsonParserWithChildrenFiltering(SpanFilter.nameEquals("bootstrap"), SpanFilter.none())
     .getSpanElements(file).filter { it.name == "bootstrap" }.toList()
   if (spanElements.size != 1) throw IllegalStateException("Unexpected number of \"bootstrap\" spans: ${spanElements.size}")
   return spanElements[0].startTimestamp
@@ -112,7 +112,7 @@ fun getMetricsForStartup(file: Path): List<Metric> {
     rawFilter = { span -> spansSuffixesToIgnore.none { span.operationName.endsWith(it) } },
   )
 
-  val spanElements = OpentelemetryJsonParserWithChildrenFiltering(filter, childFilter).getSpanElements(file)
+  val spanElements = OpentelemetrySpanJsonParserWithChildrenFiltering(filter, childFilter).getSpanElements(file)
   val startTime = spanElements.first { it.name == "bootstrap" }.startTimestamp
   val spansWithoutDuplicatedNames = spanElements.groupBy { it.name }.filter { it.value.size == 1 }.flatMap { it.value }
 
