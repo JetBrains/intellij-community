@@ -14,6 +14,8 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.exp.TerminalUsageLocalStorage
+import org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackMoment.AFTER_USAGE
+import org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackMoment.ON_DISABLING
 
 internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) : BlockBasedFeedbackDialog<BlockTerminalUsageData>(project, forTest) {
   override val myFeedbackReportId: String = "new_terminal"
@@ -22,13 +24,16 @@ internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) :
 
   override val mySystemInfoData: BlockTerminalUsageData by lazy {
     val usageStorage = TerminalUsageLocalStorage.getInstance()
+
     BlockTerminalUsageData(
       mostUsedShell = usageStorage.mostUsedShell,
       executedCommandsNumber = usageStorage.executedCommandsNumber,
+      feedbackMoment = if (myProject!!.getUserData(BLOCK_TERMINAL_DISABLING) == true) ON_DISABLING else AFTER_USAGE,
       systemInfo = CommonFeedbackSystemData.getCurrentData()
     )
   }
 
+  @Suppress("HardCodedStringLiteral")
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {
     showFeedbackSystemInfoDialog(myProject, mySystemInfoData.systemInfo) {
       row(TerminalBundle.message("feedback.system.info.shell")) {
@@ -36,6 +41,9 @@ internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) :
       }
       row(TerminalBundle.message("feedback.system.info.commands.number")) {
         label(mySystemInfoData.executedCommandsNumber.toString())
+      }
+      row(TerminalBundle.message("feedback.system.info.moment")) {
+        label(mySystemInfoData.feedbackMoment.toString())
       }
     }
   }
@@ -65,6 +73,7 @@ internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) :
 internal data class BlockTerminalUsageData(
   @NlsSafe val mostUsedShell: String,
   val executedCommandsNumber: Int,
+  val feedbackMoment: BlockTerminalFeedbackMoment,
   val systemInfo: CommonFeedbackSystemData
 ) : SystemDataJsonSerializable {
   override fun serializeToJson(json: Json): JsonElement {
@@ -76,6 +85,12 @@ internal data class BlockTerminalUsageData(
     appendLine(mostUsedShell)
     appendLine(TerminalBundle.message("feedback.system.info.commands.number"))
     appendLine(executedCommandsNumber)
+    appendLine(TerminalBundle.message("feedback.system.info.moment"))
+    appendLine(feedbackMoment.toString())
     append(systemInfo.toString())
   }
+}
+
+internal enum class BlockTerminalFeedbackMoment {
+  ON_DISABLING, AFTER_USAGE
 }

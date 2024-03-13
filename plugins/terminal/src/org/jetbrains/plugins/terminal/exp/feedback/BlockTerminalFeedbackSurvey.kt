@@ -2,17 +2,30 @@
 package org.jetbrains.plugins.terminal.exp.feedback
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.platform.feedback.FeedbackSurvey
 import com.intellij.platform.feedback.FeedbackSurveyType
 import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 import com.intellij.platform.feedback.InIdeFeedbackSurveyType
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
+import com.intellij.platform.feedback.impl.OnDemandFeedbackResolver
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.exp.TerminalUsageLocalStorage
+
+/** Used to indicate that we are trying to show the feedback notification after block terminal is disabled */
+internal val BLOCK_TERMINAL_DISABLING: Key<Boolean> = Key.create("BlockTerminalDisabling")
+
+internal fun showBlockTerminalFeedbackNotification(project: Project) {
+  project.putUserData(BLOCK_TERMINAL_DISABLING, true)
+  val shown = OnDemandFeedbackResolver.getInstance().showFeedbackNotification(BlockTerminalFeedbackSurvey::class, project)
+  if (!shown) {
+    project.putUserData(BLOCK_TERMINAL_DISABLING, null)
+  }
+}
 
 internal class BlockTerminalFeedbackSurvey : FeedbackSurvey() {
   override val feedbackSurveyType: FeedbackSurveyType<*> = InIdeFeedbackSurveyType(BlockTerminalSurveyConfig())
@@ -38,7 +51,9 @@ internal class BlockTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
 
   override fun checkExtraConditionSatisfied(project: Project): Boolean {
     val usageStorage = TerminalUsageLocalStorage.getInstance()
-    return !usageStorage.state.feedbackNotificationShown && usageStorage.executedCommandsNumber >= 15
+    return !usageStorage.state.feedbackNotificationShown &&
+           // show notification if user executed enough commands or if block terminal is being disabled
+           (usageStorage.executedCommandsNumber >= 15 || usageStorage.executedCommandsNumber > 0 && project.getUserData(BLOCK_TERMINAL_DISABLING) == true)
   }
 
   override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
