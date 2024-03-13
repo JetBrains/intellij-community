@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtilRt;
@@ -480,32 +480,12 @@ public abstract class Logger {
 
   /** @deprecated IntelliJ Platform no longer uses Log4j as the logging framework; please use {@link #setLevel(LogLevel)} instead */
   @Deprecated
-  public abstract void setLevel(@NotNull Level level);
+  public void setLevel(@SuppressWarnings("unused") @NotNull Level level) {
+    error("Do not use, call '#setLevel(LogLevel)' instead");
+  }
 
   public void setLevel(@NotNull LogLevel level) {
-    switch (level) {
-      case OFF:
-        setLevel(Level.OFF);
-        break;
-      case ERROR:
-        setLevel(Level.ERROR);
-        break;
-      case WARNING:
-        setLevel(Level.WARN);
-        break;
-      case INFO:
-        setLevel(Level.INFO);
-        break;
-      case DEBUG:
-        setLevel(Level.DEBUG);
-        break;
-      case TRACE:
-        setLevel(Level.TRACE);
-        break;
-      case ALL:
-        setLevel(Level.ALL);
-        break;
-    }
+    error(getClass() + " should override '#setLevel(LogLevel)'");
   }
 
   protected static @Nullable Throwable ensureNotControlFlow(@Nullable Throwable t) {
