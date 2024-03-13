@@ -11,7 +11,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
-private const val PLUGIN_ID = "com.intellij.ml.llm"
+internal const val AI_PLUGIN_ID = "com.intellij.ml.llm"
 
 internal class AIAssistant241 : PluginMigration() {
   private val PRODUCT_IDS = setOf("IU", "PY", "WS", "DG", "RM", "PS", "GO", "CL", "RD", "RR", "QA")
@@ -32,12 +32,12 @@ internal class AIAssistant241 : PluginMigration() {
       emptySet()
     }
 
-    if (!disabledIds.contains(PluginId.getId(PLUGIN_ID))) {
-      descriptor.addPluginIfNeeded(PLUGIN_ID)
+    if (!disabledIds.contains(PluginId.getId(AI_PLUGIN_ID))) {
+      descriptor.addPluginIfNeeded(AI_PLUGIN_ID)
     }
     else {
-      descriptor.removePlugin(PLUGIN_ID)
-      descriptor.removePluginToDownload(PLUGIN_ID)
+      descriptor.removePlugin(AI_PLUGIN_ID)
+      descriptor.removePluginToDownload(AI_PLUGIN_ID)
 
       createNotMigratedFile(descriptor.options.newConfigDir)
       excludeFromDisabled(descriptor.options.newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME))
@@ -60,7 +60,7 @@ private fun excludeFromDisabled(disabledPluginsConfig: Path) {
   try {
     val ids = mutableListOf<String>()
     ids.addAll(Files.readAllLines(disabledPluginsConfig))
-    ids.remove(PLUGIN_ID)
+    ids.remove(AI_PLUGIN_ID)
     Files.writeString(disabledPluginsConfig, ids.joinToString("\n"))
   }
   catch (_: Throwable) {
@@ -88,7 +88,7 @@ internal fun migrateAiForToolbox(newPluginsDir: Path,
       emptySet()
     }
 
-    if (disabledIds.any { it.idString == PLUGIN_ID }) {
+    if (disabledIds.any { it.idString == AI_PLUGIN_ID }) {
       createNotMigratedFile(newConfigDir)
       excludeFromDisabled(newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME))
 
@@ -103,7 +103,7 @@ internal fun migrateAiForToolbox(newPluginsDir: Path,
       }
     }
     else {
-      pluginsToDownload.add(PluginNode(PluginId.getId(PLUGIN_ID)))
+      pluginsToDownload.add(PluginNode(PluginId.getId(AI_PLUGIN_ID)))
     }
   }
 }
