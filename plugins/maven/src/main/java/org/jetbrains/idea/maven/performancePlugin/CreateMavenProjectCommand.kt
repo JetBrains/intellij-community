@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ProjectRootManager
@@ -48,6 +49,35 @@ class CreateMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
   companion object {
     const val NAME = "createMavenProject"
     const val PREFIX = "$CMD_PREFIX$NAME"
+
+    suspend fun getNewProject(builder: ModuleBuilder, projectName: String, projectPath: Path, wizardContext: WizardContext): Project {
+      return builder.createProject(projectName, projectPath.toString())!!.apply {
+        save()
+        NewProjectUtil.setCompilerOutputPath(this, projectPath.resolve("out").toString())
+        wizardContext.projectJdk?.also { jdk ->
+          blockingContext {
+            ApplicationManager.getApplication().runWriteAction {
+              JavaSdkUtil.applyJdkToProject(this, jdk)
+            }
+          }
+        }
+      }
+    }
+
+    suspend fun runNewProject(projectPath: Path, newProject: Project, oldProject: Project, context: PlaybackContext) {
+      ProjectUtil.updateLastProjectLocation(projectPath)
+      val fileName = projectPath.fileName
+      val options = OpenProjectTask
+        .build()
+        .withProject(newProject)
+        .withProjectName(fileName.toString())
+        .withProjectToClose(oldProject)
+      TrustedPaths.getInstance().setProjectPathTrusted(projectPath, true)
+      GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
+
+      ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir = projectPath, options = options)
+      context.setProject(newProject)
+    }
   }
 
 
@@ -80,22 +110,8 @@ class CreateMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
           TemplatesGroup(object : GeneratorNewProjectWizardBuilderAdapter(adapter) {}).moduleBuilder
         }
       withContext(Dispatchers.EDT) {
-        val newProject = if (newMavenProjectDto.asModule) {
-          project
-        }
-        else {
-          moduleBuilder!!.createProject(newMavenProjectDto.projectName, projectPath.toString())!!.apply {
-            save()
-            NewProjectUtil.setCompilerOutputPath(this, projectPath.resolve("out").toString())
-            wizardContext.projectJdk?.also { jdk ->
-              blockingContext {
-                ApplicationManager.getApplication().runWriteAction {
-                  JavaSdkUtil.applyJdkToProject(this, jdk)
-                }
-              }
-            }
-          }
-        }
+        val newProject = if (newMavenProjectDto.asModule) project
+        else getNewProject(moduleBuilder!!, newMavenProjectDto.projectName, projectPath, wizardContext)
 
         val bridgeStep = moduleBuilder!!.getCustomOptionsStep(wizardContext, disposable)
         // Call setupUI method for init lateinit vars
@@ -119,20 +135,7 @@ class CreateMavenProjectCommand(text: String, line: Int) : PerformanceCommandCor
 
         moduleBuilder.commit(newProject, modulesConfigurator?.moduleModel, modulesConfigurator ?: ModulesProvider.EMPTY_MODULES_PROVIDER)
 
-        if (!newMavenProjectDto.asModule) {
-          ProjectUtil.updateLastProjectLocation(projectPath)
-          val fileName = projectPath.fileName
-          val options = OpenProjectTask
-            .build()
-            .withProject(newProject)
-            .withProjectName(fileName.toString())
-            .withProjectToClose(project)
-          TrustedPaths.getInstance().setProjectPathTrusted(projectPath, true)
-          GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
-
-          ProjectManagerEx.getInstanceEx().openProjectAsync(projectStoreBaseDir = projectPath, options = options)
-          context.setProject(newProject)
-        }
+        if (!newMavenProjectDto.asModule) runNewProject(projectPath, newProject, project, context)
       }
     }
     finally {
