@@ -264,6 +264,7 @@
     <module name="kotlin.code-insight.intentions.shared"/>
     <module name="kotlin.code-insight.inspections.shared"/>
     <module name="kotlin.code-insight.live-templates.shared"/>
+    <module name="kotlin.code-insight.fixes.k2"/>
     <module name="kotlin.code-insight.intentions.k2"/>
     <module name="kotlin.code-insight.inspections.k2"/>
     <module name="kotlin.code-insight.k2"/>
