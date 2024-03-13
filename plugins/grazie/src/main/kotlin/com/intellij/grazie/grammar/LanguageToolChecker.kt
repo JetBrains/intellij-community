@@ -119,7 +119,10 @@ open class LanguageToolChecker : TextChecker() {
     }
   }
 
-  private fun possiblyMarkupDependent(match: RuleMatch) = match.message.lowercase().contains("capitalize")
+  private fun possiblyMarkupDependent(match: RuleMatch): Boolean {
+    return match.message.lowercase().contains("capitalize") ||
+           match.rule.id == "POSSESSIVE_APOSTROPHE"
+  }
 
   private fun runLT(tool: JLanguageTool, str: String): List<RuleMatch> =
     tool.check(AnnotatedTextBuilder().addText(str).build(), true, JLanguageTool.ParagraphHandling.NORMAL,
