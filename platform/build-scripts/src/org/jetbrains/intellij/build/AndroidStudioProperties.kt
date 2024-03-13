@@ -198,20 +198,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       },
     ))
 
-    // IntelliJ Community is missing a PluginLayout for 'intellij.performanceTesting' despite it having
-    // multiple modules. So, we define our own layout for now (b/314149266).
-    // This plugin will only be used for integration testing. We will store it in the `/prebuilts` directory but will
-    // later exclude from the Studio installer.
-    // TODO(b/329416516): Rework "excluding" performanceTesting plugin
-    if (productLayout.pluginLayouts.any { it.mainModule == "intellij.performanceTesting" }) {
-      error("It appears the following workaround for 'intellij.performanceTesting' can be removed")
-    }
-    productLayout.pluginLayouts = productLayout.pluginLayouts.add(
-      plugin("intellij.performanceTesting") { spec ->
-        spec.withModule("intellij.performanceTesting.remoteDriver")
-      }
-    )
-
     // IntelliJ normally excludes the DevKit plugin from public builds, but we need it for ASwB development purposes (b/308477340).
     val devkitPluginLayout = productLayout.pluginLayouts.first { it.mainModule == "intellij.devkit" }
     devkitPluginLayout.bundlingRestrictions.includeInDistribution = PluginDistribution.ALL
