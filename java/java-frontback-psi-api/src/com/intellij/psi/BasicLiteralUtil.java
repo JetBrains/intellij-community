@@ -8,8 +8,12 @@ public final class BasicLiteralUtil {
   private BasicLiteralUtil() {
   }
 
+  /**
+   * @param expression text block expression to calculate indent for
+   * @return the indent of text block lines; may return -1 if text block is heavily malformed
+   */
   public static int getTextBlockIndent(@NotNull PsiElement expression) {
-    String[] lines = getTextBlockLines(expression);
+    String[] lines = getTextBlockLines(expression.getText(), true);
     if (lines == null) return -1;
     return getTextBlockIndent(lines);
   }
@@ -27,14 +31,26 @@ public final class BasicLiteralUtil {
     return getTextBlockLines(rawText);
   }
 
-
+  /**
+   * @param rawText text block text, including triple quotes at the start and at the end
+   * @return array of textblock content lines, including indent; null if text block is malformed
+   */
   public static String @Nullable [] getTextBlockLines(String rawText) {
-    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
+    return getTextBlockLines(rawText, false);
+  }
+
+  /**
+   * @param rawText text block text, including triple quotes at the start and at the end
+   * @param skipFirstLine if true, skip invalid content in the first line after triple quotes
+   * @return array of textblock content lines, including indent; null if text block is malformed
+   */
+  private static String @Nullable [] getTextBlockLines(String rawText, boolean skipFirstLine) {
+    if (rawText.length() < 7 || !rawText.startsWith("\"\"\"") || !rawText.endsWith("\"\"\"")) return null;
     int start = 3;
     while (true) {
       char c = rawText.charAt(start++);
       if (c == '\n') break;
-      if (!isTextBlockWhiteSpace(c) || start == rawText.length()) return null;
+      if (!skipFirstLine && !isTextBlockWhiteSpace(c) || start == rawText.length()) return null;
     }
     return rawText.substring(start, rawText.length() - 3).split("\n", -1);
   }
