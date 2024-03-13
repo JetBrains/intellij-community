@@ -36,7 +36,7 @@ internal class MultiFileActivityDiffPreview(private val scope: ActivityScope, tr
   }
 }
 
-private class ActivityDiffPreviewHandler : ChangesTreeDiffPreviewHandlerBase() {
+internal class ActivityDiffPreviewHandler : ChangesTreeDiffPreviewHandlerBase() {
   override fun collectWrappers(treeModelData: VcsTreeModelData): JBIterable<Wrapper> {
     return treeModelData.iterateUserObjects(ActivityDiffObject::class.java).map { DiffObjectWrapper(it) }
   }

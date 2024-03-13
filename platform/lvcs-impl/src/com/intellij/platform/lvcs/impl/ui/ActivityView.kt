@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
+import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.find.SearchTextArea
 import com.intellij.find.editorHeaderActions.Utils
 import com.intellij.history.integration.IdeaGateway
@@ -27,11 +28,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
+import com.intellij.platform.lvcs.impl.ui.SingleFileActivityDiffPreview.Companion.DIFF_PLACE
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBPanel
@@ -56,7 +59,8 @@ import javax.swing.JLabel
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.DocumentEvent
 
-class ActivityView(private val project: Project, gateway: IdeaGateway, val activityScope: ActivityScope) :
+class ActivityView(private val project: Project, gateway: IdeaGateway, val activityScope: ActivityScope,
+                   private val isFrameDiffPreview: Boolean = false) :
   JBPanel<ActivityView>(BorderLayout()), DataProvider, Disposable {
 
   private val coroutineScope = project.service<ActivityService>().coroutineScope.childScope()
@@ -67,7 +71,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     updateEmptyText(true)
   }
   private val changesBrowser = createChangesBrowser()
-  private val editorDiffPreview = createDiffPreview(changesBrowser)
+  private val editorDiffPreview = if (!isFrameDiffPreview) createEditorDiffPreview(changesBrowser) else null
 
   private val changesSplitter: TwoKeySplitter
 
@@ -111,20 +115,18 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     changesSplitter.firstComponent = mainComponent
     changesSplitter.secondComponent = changesBrowser
 
-    add(changesSplitter, BorderLayout.CENTER)
+    val diffSplitter = OnePixelSplitter(false, "lvcs.diff.splitter.horizontal", 0.2f)
+    diffSplitter.firstComponent = changesSplitter
+    diffSplitter.secondComponent = if (editorDiffPreview == null) createFrameDiffPreview(changesBrowser).component else null
+
+    add(diffSplitter, BorderLayout.CENTER)
 
     activityList.addListener(object : ActivityList.Listener {
       override fun onSelectionChanged(selection: ActivitySelection) {
         model.setSelection(selection)
       }
-      override fun onEnter(): Boolean {
-        showDiff()
-        return true
-      }
-      override fun onDoubleClick(): Boolean {
-        showDiff()
-        return true
-      }
+      override fun onEnter(): Boolean = showDiff()
+      override fun onDoubleClick(): Boolean = showDiff()
     }, this)
     model.addListener(object : ActivityModelListener {
       override fun onItemsLoadingStarted() {
@@ -175,7 +177,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     return changesBrowser
   }
 
-  private fun createDiffPreview(changesBrowser: ActivityChangesBrowser?): DiffPreview {
+  private fun createEditorDiffPreview(changesBrowser: ActivityChangesBrowser?): DiffPreview {
     if (changesBrowser != null) {
       val diffPreview = MultiFileActivityDiffPreview(activityScope, changesBrowser.viewer, this@ActivityView)
       changesBrowser.setShowDiffActionPreview(diffPreview)
@@ -183,6 +185,17 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }
 
     return SingleFileActivityDiffPreview(project, model, this@ActivityView)
+  }
+
+  private fun createFrameDiffPreview(changesBrowser: ActivityChangesBrowser?): DiffEditorViewer {
+    val diffViewer = if (changesBrowser != null) {
+      TreeHandlerEditorDiffPreview.createDefaultViewer(changesBrowser.viewer, ActivityDiffPreviewHandler(), DIFF_PLACE)
+    }
+    else {
+      SingleFileActivityDiffPreview.createViewer(project, model)
+    }
+    Disposer.register(this, diffViewer.disposable)
+    return diffViewer
   }
 
   private fun createSearchField(): SearchTextArea {
@@ -271,7 +284,10 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     return LocalHistoryBundle.message("activity.browser.empty.text")
   }
 
-  internal fun showDiff() = editorDiffPreview.performDiffAction()
+  internal fun showDiff(): Boolean {
+    if (editorDiffPreview == null) return false
+    return editorDiffPreview.performDiffAction()
+  }
 
   internal fun setVertical(isVertical: Boolean) {
     changesSplitter.orientation = isVertical
@@ -312,7 +328,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }
 
     private fun ActivityView.openDiffWhenLoaded() {
-      if (changesBrowser != null) return
+      if (changesBrowser != null || isFrameDiffPreview) return
 
       val disposable = Disposer.newDisposable()
       Disposer.register(this, disposable)

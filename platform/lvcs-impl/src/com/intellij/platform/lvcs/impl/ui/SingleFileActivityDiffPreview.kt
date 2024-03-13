@@ -27,16 +27,7 @@ internal class SingleFileActivityDiffPreview(project: Project, private val model
 
   override fun hasContent() = model.selection != null
 
-  override fun createViewer(): DiffEditorViewer {
-    val processor = SingleFileActivityDiffRequestProcessor(project, model)
-    model.addListener(object : ActivityModelListener {
-      override fun onSelectionChanged(selection: ActivitySelection?) = processor.updatePreview()
-    }, processor)
-    UiNotifyConnector.installOn(processor.component, object : Activatable {
-      override fun showNotify() = processor.updatePreview()
-    })
-    return processor
-  }
+  override fun createViewer() = createViewer(project, model)
 
   override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<DiffRequestProducer>? {
     val diffRequestProducer = model.getSingleDiffRequestProducer() ?: return null
@@ -58,6 +49,17 @@ internal class SingleFileActivityDiffPreview(project: Project, private val model
       if (filePath != null) return LocalHistoryBundle.message("activity.diff.tab.title.file", filePath.name)
       if (activityScope == ActivityScope.Recent) return LocalHistoryBundle.message("activity.diff.tab.title.recent")
       return LocalHistoryBundle.message("activity.diff.tab.title")
+    }
+
+    internal fun createViewer(project: Project, model: ActivityViewModel): DiffEditorViewer {
+      val processor = SingleFileActivityDiffRequestProcessor(project, model)
+      model.addListener(object : ActivityModelListener {
+        override fun onSelectionChanged(selection: ActivitySelection?) = processor.updatePreview()
+      }, processor)
+      UiNotifyConnector.installOn(processor.component, object : Activatable {
+        override fun showNotify() = processor.updatePreview()
+      })
+      return processor
     }
   }
 }

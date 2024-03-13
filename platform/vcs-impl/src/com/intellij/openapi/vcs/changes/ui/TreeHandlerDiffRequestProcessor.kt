@@ -182,16 +182,7 @@ abstract class TreeHandlerEditorDiffPreview(
     return createDefaultViewer("ChangesTreeDiffPreview")
   }
 
-  protected fun createDefaultViewer(place: String): DiffEditorViewer {
-    val processor = if (CombinedDiffRegistry.isEnabled()) {
-      CombinedDiffManager.getInstance(tree.project).createProcessor(place)
-    }
-    else {
-      TreeHandlerDiffRequestProcessor(place, tree, handler)
-    }
-    TreeHandlerChangesTreeTracker(tree, processor, handler).track()
-    return processor
-  }
+  protected fun createDefaultViewer(place: String) = createDefaultViewer(tree, handler, place)
 
   final override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<out DiffRequestProducer> {
     return handler.collectDiffProducers(tree, selectedOnly)
@@ -207,6 +198,19 @@ abstract class TreeHandlerEditorDiffPreview(
   }
 
   abstract fun getEditorTabName(wrapper: Wrapper?): String?
+
+  companion object {
+    fun createDefaultViewer(changesTree: ChangesTree, previewHandler: ChangesTreeDiffPreviewHandler, place: String): DiffEditorViewer {
+      val processor = if (CombinedDiffRegistry.isEnabled()) {
+        CombinedDiffManager.getInstance(changesTree.project).createProcessor(place)
+      }
+      else {
+        TreeHandlerDiffRequestProcessor(place, changesTree, previewHandler)
+      }
+      TreeHandlerChangesTreeTracker(changesTree, processor, previewHandler).track()
+      return processor
+    }
+  }
 }
 
 
