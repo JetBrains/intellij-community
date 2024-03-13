@@ -1410,8 +1410,6 @@
     <codeInsight.codeVisionProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.refactoring.rename.RenameCodeVisionSettingProvider"/>
 
-    <applicationInitializedListener implementation="com.intellij.openapi.application.impl.JitSuppressor"/>
-
     <applicationService serviceImplementation="com.intellij.internal.DebugAttachDetector" headlessImplementation="" preload="true"/>
 
     <projectService serviceInterface="com.intellij.ui.EditorNotifications" serviceImplementation="com.intellij.ui.EditorNotificationsImpl"
