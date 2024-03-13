@@ -175,14 +175,10 @@ data class IfThenToSelectData(
     val context: BindingContext,
     val condition: KtOperationExpression,
     val receiverExpression: KtExpression,
-    val baseClause: KtExpression?,
+    val baseClause: KtExpression,
     val negatedClause: KtExpression?
 ) {
-    internal fun baseClauseEvaluatesToReceiver() =
-        baseClause?.evaluatesTo(receiverExpression) == true
-
     internal fun replacedBaseClause(factory: KtPsiFactory): KtExpression {
-        baseClause ?: error("Base clause must be not-null here")
         val newReceiver = (condition as? KtIsExpression)?.let {
             factory.createExpressionByPattern(
                 "$0 as? $1",
@@ -191,7 +187,7 @@ data class IfThenToSelectData(
             )
         }
 
-        return if (baseClauseEvaluatesToReceiver()) {
+        return if (baseClause.evaluatesTo(receiverExpression)) {
             if (condition is KtIsExpression) newReceiver!! else baseClause
         } else {
             when {
@@ -200,6 +196,7 @@ data class IfThenToSelectData(
                         baseClause is KtDotQualifiedExpression -> baseClause.replaceFirstReceiver(
                             factory, newReceiver!!, safeAccess = true
                         )
+
                         hasImplicitReceiverReplaceableBySafeCall() -> factory.createExpressionByPattern(
                             "$0?.$1",
                             newReceiver!!,
@@ -207,15 +204,18 @@ data class IfThenToSelectData(
                         ).insertSafeCalls(
                             factory
                         )
+
                         baseClause is KtCallExpression -> baseClause.replaceCallWithLet(newReceiver!!, factory)
                         else -> error("Illegal state")
                     }
                 }
+
                 hasImplicitReceiverReplaceableBySafeCall() -> factory.createExpressionByPattern(
                     "$0?.$1",
                     receiverExpression,
                     baseClause
                 ).insertSafeCalls(factory)
+
                 baseClause is KtCallExpression -> {
                     val callee = baseClause.calleeExpression
                     if (callee != null && baseClause.isCallingInvokeFunction(context)) {
@@ -224,6 +224,7 @@ data class IfThenToSelectData(
                         baseClause.replaceCallWithLet(receiverExpression, factory)
                     }
                 }
+
                 else -> {
                     var replaced = baseClause.insertSafeCalls(factory)
                     if (replaced is KtQualifiedExpression) {
@@ -312,6 +313,9 @@ internal fun KtIfExpression.buildSelectTransformationData(): IfThenToSelectData?
         }
         else -> return null
     }
+
+    if (baseClause == null) return null
+
     return IfThenToSelectData(context, condition, receiverExpression, baseClause, negatedClause)
 }
 

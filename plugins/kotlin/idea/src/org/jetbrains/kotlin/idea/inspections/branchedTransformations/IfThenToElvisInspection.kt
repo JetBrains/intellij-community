@@ -101,7 +101,7 @@ class IfThenToElvisInspection @JvmOverloads constructor(
 
         private fun IfThenToSelectData.clausesReplaceableByElvis(): Boolean =
             when {
-                baseClause == null || negatedClause == null || negatedClause.isNullOrBlockExpression() ->
+                negatedClause == null || negatedClause.isNullOrBlockExpression() ->
                     false
                 negatedClause is KtThrowExpression && negatedClause.throwsNullPointerExceptionWithNoArguments() ->
                     false

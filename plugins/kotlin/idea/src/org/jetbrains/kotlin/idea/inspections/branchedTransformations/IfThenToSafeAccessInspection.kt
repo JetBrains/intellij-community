@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.*
+import org.jetbrains.kotlin.idea.intentions.branchedTransformations.evaluatesTo
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.name.FqName
@@ -49,7 +50,7 @@ class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineW
         @Nls
         fun fixTextFor(element: KtIfExpression): String {
             val ifThenToSelectData = element.buildSelectTransformationData()
-            return if (ifThenToSelectData?.baseClauseEvaluatesToReceiver() == true) {
+            return if (ifThenToSelectData?.let { it.baseClause.evaluatesTo(it.receiverExpression) } == true) {
                 if (ifThenToSelectData.condition is KtIsExpression) {
                     KotlinBundle.message("replace.if.expression.with.safe.cast.expression")
                 } else {
@@ -97,7 +98,6 @@ class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineW
 }
 
 private fun IfThenToSelectData.clausesReplaceableBySafeCall(): Boolean = when {
-    baseClause == null -> false
     conditionHasIncompatibleTypes() -> false
     negatedClause == null && baseClause.isUsedAsExpression(context) -> false
     negatedClause != null && !negatedClause.isNullExpression() -> false
