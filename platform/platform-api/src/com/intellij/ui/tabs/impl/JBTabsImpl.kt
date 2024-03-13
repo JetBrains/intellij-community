@@ -1616,15 +1616,15 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   private fun updateSideComponent(tabInfo: TabInfo) {
-    updateToolbar(tabInfo, tabInfo.foreSideComponent, infoToForeToolbar, false)
-    updateToolbar(tabInfo, tabInfo.sideComponent, infoToToolbar, true)
+    updateToolbar(tabInfo, tabInfo.foreSideComponent, infoToForeToolbar, null)
+    updateToolbar(tabInfo, tabInfo.sideComponent, infoToToolbar, tabInfo.group)
   }
 
-  private fun updateToolbar(tabInfo: TabInfo, side: JComponent?, toolbars: MutableMap<TabInfo, Toolbar>, addGroup: Boolean) {
+  private fun updateToolbar(tabInfo: TabInfo, side: JComponent?, toolbars: MutableMap<TabInfo, Toolbar>, group: ActionGroup?) {
     val old = toolbars.get(tabInfo)
     old?.let { remove(it) }
-    if (addGroup || side != null) {
-      val toolbar = Toolbar(this, tabInfo, side)
+    if (side != null || group != null) {
+      val toolbar = Toolbar(this, tabInfo, side, group)
       toolbars.put(tabInfo, toolbar)
       add(toolbar)
     }
@@ -1773,10 +1773,9 @@ open class JBTabsImpl(private var project: Project?,
 
   override fun getJBTabs(): JBTabs = this
 
-  class Toolbar(private val tabs: JBTabsImpl, private val info: TabInfo, side: Component?) : JPanel(BorderLayout()) {
+  class Toolbar(private val tabs: JBTabsImpl, private val info: TabInfo, side: Component?, group: ActionGroup?) : JPanel(BorderLayout()) {
     init {
       isOpaque = false
-      val group = info.group
       if (group != null) {
         val place = info.place
         val toolbar = ActionManager.getInstance()
