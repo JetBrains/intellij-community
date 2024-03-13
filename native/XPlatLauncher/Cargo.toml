@@ -1,4 +1,5 @@
 [package]
+build = "build.rs"
 name = "xplat-launcher"
 version = "0.9.0"
 edition = "2021"

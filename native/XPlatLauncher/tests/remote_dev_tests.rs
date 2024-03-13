@@ -5,10 +5,14 @@ pub mod utils;
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::fs;
-    use std::fs::File;
-    use std::path::PathBuf;
     use crate::utils::*;
+
+    #[cfg(not(target_os = "windows"))]
+    use {
+        std::path::PathBuf,
+        std::fs,
+        std::fs::File
+    };
 
     #[test]
     fn remote_dev_args_test() {
@@ -100,6 +104,8 @@ mod tests {
         assert!(output.contains("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable"));
     }
 
+    #[test]
+    #[cfg(not(target_os = "windows"))]
     fn prepare_font_config_dir(dist_root: &PathBuf) {
         let font_config_root = dist_root.join("plugins/remote-dev-server/selfcontained/fontconfig");
         fs::create_dir_all(&font_config_root).unwrap();
