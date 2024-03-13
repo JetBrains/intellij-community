@@ -157,12 +157,15 @@ object PartialChangesUtil {
     val changeListManager = ChangeListManagerEx.getInstanceEx(project)
     val oldDefaultList = changeListManager.defaultChangeList
     if (targetChangeList == null ||
+        targetChangeList == oldDefaultList ||
         !changeListManager.areChangeListsEnabled()) {
       if (targetChangeList != null) {
         LOG.debug("Active changelist unchanged: ${targetChangeList.name}")
       }
       return task.compute()
     }
+
+    waitForChangeListManagerUpdate(project)
 
     switchChangeList(changeListManager, targetChangeList, oldDefaultList)
     val clmConflictTracker = ChangelistConflictTracker.getInstance(project)
@@ -172,13 +175,17 @@ object PartialChangesUtil {
     }
     finally {
       clmConflictTracker.setIgnoreModifications(false)
-      if (ApplicationManager.getApplication().isReadAccessAllowed) {
-        LOG.warn("Can't wait till changes are applied while holding read lock", Throwable())
-      }
-      else {
-        ChangeListManagerEx.getInstanceEx(project).waitForUpdate()
-      }
+      waitForChangeListManagerUpdate(project)
       restoreChangeList(changeListManager, targetChangeList, oldDefaultList)
+    }
+  }
+
+  private fun waitForChangeListManagerUpdate(project: Project) {
+    if (ApplicationManager.getApplication().isReadAccessAllowed) {
+      LOG.warn("Can't wait till changes are applied while holding read lock", Throwable())
+    }
+    else {
+      ChangeListManagerEx.getInstanceEx(project).waitForUpdate()
     }
   }
 
