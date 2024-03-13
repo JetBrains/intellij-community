@@ -44,7 +44,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
-import java.lang.StackWalker.StackFrame
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -53,7 +52,6 @@ import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
-import java.util.stream.Stream
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.coroutines.CoroutineContext
@@ -1557,8 +1555,7 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
  * @return `true` if called outside a class initializer, `false` if called inside a class initializer
  */
 private fun checkOutsideClassInitializer(debugString: String): Boolean {
-  val className = isInsideClassInitializer()
-                  ?: return true
+  val className = isInsideClassInitializer() ?: return true
   // TODO make this an error
   LOG.warn(
     "$className <clinit> requests $debugString instance. " +
@@ -1568,13 +1565,15 @@ private fun checkOutsideClassInitializer(debugString: String): Boolean {
   return false
 }
 
-private fun isInsideClassInitializer(): String? = StackWalker.getInstance().walk { frames: Stream<StackFrame> ->
-  frames.asSequence().firstNotNullOfOrNull { frame ->
-    if (frame.methodName == "<clinit>") {
-      frame.className
-    }
-    else {
-      null
+private fun isInsideClassInitializer(): String? {
+  return StackWalker.getInstance().walk { frames ->
+    frames.asSequence().firstNotNullOfOrNull { frame ->
+      if (frame.methodName == "<clinit>") {
+        frame.className
+      }
+      else {
+        null
+      }
     }
   }
 }
