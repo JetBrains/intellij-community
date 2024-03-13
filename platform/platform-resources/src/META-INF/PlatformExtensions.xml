@@ -881,6 +881,7 @@
       implementation="com.intellij.internal.statistic.collectors.fus.os.LinuxWindowManagerUsageCollector" allowOnStartup="true"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.SystemRuntimeCollector"
                                            allowOnStartup="true"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.diagnostic.JVMResponsivenessCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.UpdateManagerUsagesCollector"
                                            allowOnStartup="true"/>
