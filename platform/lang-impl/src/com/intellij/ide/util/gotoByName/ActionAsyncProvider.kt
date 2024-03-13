@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.SearchTopHitProvider
@@ -219,6 +219,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
         }
       }
       for (provider in SearchTopHitProvider.EP_NAME.extensionList) {
+        @Suppress("DEPRECATION")
         if (provider is CoveredByToggleActions) {
           continue
         }
@@ -228,12 +229,12 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
           provider.consumeTopHits(prefix + pattern, collector, project)
         }
         else if (project != null && provider is ProjectLevelProvidersAdapter) {
-          provider.consumeAllTopHits(pattern, collector, project)
+          provider.consumeAllTopHits(pattern = pattern, collector = collector, project = project)
         }
         provider.consumeTopHits(pattern, collector, project)
       }
     }
-      .map { matchItem(it, matcher, pattern, MatchedValueType.TOP_HIT) }
+      .map { matchItem(item = it, matcher = matcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT) }
   }
 
   private fun intentionsFlow(pattern: String,

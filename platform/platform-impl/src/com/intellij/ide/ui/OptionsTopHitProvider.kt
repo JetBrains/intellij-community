@@ -81,7 +81,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
     fun consumeAllTopHits(pattern: String, collector: Consumer<Any>, project: Project?) {
       val matcher = buildMatcher(pattern)
       for (provider in PROJECT_LEVEL_EP.extensionList) {
-        consumeTopHitsForApplicableProvider(provider, matcher, collector, project)
+        consumeTopHitsForApplicableProvider(provider = provider, matcher = matcher, collector = collector, project = project)
       }
     }
   }

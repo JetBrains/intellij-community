@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 public enum ActivityCategory {
   DEFAULT("item"),
   MAIN("item"),
-  APP_OPTIONS_TOP_HIT_PROVIDER("appOptionsTopHitProvider"), PROJECT_OPTIONS_TOP_HIT_PROVIDER("projectOptionsTopHitProvider"),
 
   APP_COMPONENT("appComponents"),
   PROJECT_COMPONENT("projectComponents"),

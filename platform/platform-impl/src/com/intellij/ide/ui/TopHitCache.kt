@@ -24,6 +24,8 @@ sealed class TopHitCache : Disposable {
   companion object {
     fun getInstance(): TopHitCache = service<AppTopHitCache>()
 
+    suspend fun getInstanceAsync(): TopHitCache = serviceAsync<AppTopHitCache>()
+
     fun getInstance(project: Project): TopHitCache = project.service<ProjectTopHitCache>()
 
     suspend fun getInstanceAsync(project: Project): TopHitCache = project.serviceAsync<ProjectTopHitCache>()
@@ -65,8 +67,6 @@ sealed class TopHitCache : Disposable {
         else -> return@computeIfAbsent emptyList()
       }
 
-      val category = if (project == null) ActivityCategory.APP_OPTIONS_TOP_HIT_PROVIDER else ActivityCategory.PROJECT_OPTIONS_TOP_HIT_PROVIDER
-      StartUpMeasurer.addCompletedActivity(startTime, aClass, category, pluginDescriptor?.pluginId?.idString)
       result
     }
   }

@@ -26,11 +26,6 @@ final class CodeFoldingOptionsTopHitProvider implements OptionsSearchTopHitProvi
   }
 
   @Override
-  public boolean preloadNeeded() {
-    return false; // seems rarely needed, can load on-demand
-  }
-
-  @Override
   public @NotNull Collection<OptionDescription> getOptions() {
     List<OptionDescription> result = new ArrayList<>();
 
