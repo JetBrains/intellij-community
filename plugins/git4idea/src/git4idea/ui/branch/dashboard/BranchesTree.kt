@@ -25,7 +25,6 @@ import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
-import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
 import com.intellij.util.ui.UIUtil
@@ -45,7 +44,6 @@ import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
-import java.awt.event.MouseEvent
 import java.util.*
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -58,7 +56,6 @@ import javax.swing.tree.TreePath
 
 internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
-  var doubleClickHandler: (BranchTreeNode) -> Unit = {}
   var searchField: SearchTextField? = null
 
   init {
@@ -68,7 +65,6 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     setShowsRootHandles(true)
     isOpaque = false
     isHorizontalAutoScrollingEnabled = false
-    installDoubleClickHandler()
     SmartExpander.installOn(this)
     TreeHoverListener.DEFAULT.addTo(this)
     initDnD()
@@ -145,21 +141,6 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   private data class NodeIcon(val icon: Icon, val locationX: Int)
 
   override fun hasFocus() = super.hasFocus() || searchField?.textEditor?.hasFocus() ?: false
-
-  private fun installDoubleClickHandler() {
-    object : DoubleClickListener() {
-      override fun onDoubleClick(e: MouseEvent): Boolean {
-        val clickPath = getClosestPathForLocation(e.x, e.y) ?: return false
-        val selectionPath = selectionPath
-        if (selectionPath == null || clickPath != selectionPath) return false
-        val node = (selectionPath.lastPathComponent as? BranchTreeNode) ?: return false
-        if (isToggleEvent(this@BranchesTreeComponent, e)) return false
-
-        doubleClickHandler(node)
-        return true
-      }
-    }.installOn(this)
-  }
 
   private fun initDnD() {
     if (!GraphicsEnvironment.isHeadless()) {
