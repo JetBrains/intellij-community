@@ -10,6 +10,7 @@ import com.intellij.util.io.computeDetached
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.fileSize
@@ -38,9 +39,24 @@ interface IjentSessionProvider {
   }
 }
 
+sealed class IjentStartupError : RuntimeException {
+  constructor(message: String) : super(message)
+  constructor(message: String, cause: Throwable) : super(message, cause)
+
+  class MissingImplPlugin : IjentStartupError("The plugin `intellij.platform.ijent.impl` is not installed")
+
+  sealed class BootstrapOverShell : IjentStartupError {
+    constructor(message: String) : super(message)
+    constructor(message: String, cause: Throwable) : super(message, cause)
+  }
+
+  class IncompatibleTarget(message: String) : BootstrapOverShell(message)
+  class CommunicationError(cause: Throwable) : BootstrapOverShell(cause.message.orEmpty(), cause)
+}
+
 internal class DefaultIjentSessionProvider : IjentSessionProvider {
   override suspend fun connect(ijentId: IjentId, platform: IjentExecFileProvider.SupportedPlatform, mediator: IjentSessionMediator): IjentApi {
-    throw UnsupportedOperationException()
+    throw IjentStartupError.MissingImplPlugin()
   }
 }
 
@@ -99,6 +115,7 @@ suspend fun connectToRunningIjent(ijentName: String, platform: IjentExecFileProv
  */
 // TODO Change string paths to IjentPath.Absolute.
 @ApiStatus.Experimental
+@Throws(IjentStartupError::class)
 suspend fun bootstrapOverShellSession(
   ijentName: String,
   shellProcess: Process,
@@ -147,21 +164,29 @@ private suspend fun doBootstrapOverShellSession(
   shellProcess: Process,
   pathMapper: suspend (Path) -> String?,
 ): Pair<String, IjentExecFileProvider.SupportedPlatform> = computeDetached {
-  @Suppress("NAME_SHADOWING") val shellProcess = ShellProcess(shellProcess)
+  try {
+    @Suppress("NAME_SHADOWING") val shellProcess = ShellProcess(shellProcess)
 
-  // The timeout is taken at random.
-  withTimeout(10.seconds) {
-    shellProcess.write("set -ex")
-    ensureActive()
+    // The timeout is taken at random.
+    withTimeout(10.seconds) {
+      shellProcess.write("set -ex")
+      ensureActive()
 
-    filterOutBanners(shellProcess)
-    val commands = getCommandPaths(shellProcess)
+      filterOutBanners(shellProcess)
+      val commands = getCommandPaths(shellProcess)
 
-    with(commands) {
-      val targetPlatform = getTargetPlatform(shellProcess)
-      val remotePathToIjent = uploadIjentBinary(shellProcess, targetPlatform, pathMapper)
-      execIjent(shellProcess, remotePathToIjent)
-      remotePathToIjent to targetPlatform
+      with(commands) {
+        val targetPlatform = getTargetPlatform(shellProcess)
+        val remotePathToIjent = uploadIjentBinary(shellProcess, targetPlatform, pathMapper)
+        execIjent(shellProcess, remotePathToIjent)
+        remotePathToIjent to targetPlatform
+      }
+    }
+  }
+  catch (err: Throwable) {
+    throw when (err) {
+      is TimeoutCancellationException, is IOException -> IjentStartupError.CommunicationError(err)
+      else -> err
     }
   }
 }
@@ -215,7 +240,7 @@ private suspend fun getCommandPaths(shellProcess: ShellProcess): Commands {
     assert(name in commands)
     return outputOfWhich.firstOrNull { it.endsWith("/$name") }
            ?: busybox?.let { "$it $name" }
-           ?: error(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: ")) // TODO It's time to introduce a specific error class.
+           ?: throw IjentStartupError.IncompatibleTarget(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: "))
   }
 
   val done = "done"
@@ -255,10 +280,10 @@ private suspend fun Commands.getTargetPlatform(shellProcess: ShellProcess): Ijen
   val arch = shellProcess.readLineWithoutBuffering().split(" ").filterTo(linkedSetOf(), String::isNotEmpty)
 
   val targetPlatform = when {
-    arch.isEmpty() -> error("Empty output of `uname`")  // TODO It's time to introduce a specific error class.
+    arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
     "x86_64" in arch -> IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
     "aarch64" in arch -> IjentExecFileProvider.SupportedPlatform.AARCH64__LINUX
-    else -> error("No binary for architecture $arch")  // TODO It's time to introduce a specific error class.
+    else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
   }
   return targetPlatform
 }
