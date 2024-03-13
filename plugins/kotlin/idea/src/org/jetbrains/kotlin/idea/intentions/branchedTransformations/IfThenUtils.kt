@@ -305,12 +305,6 @@ internal fun KtIfExpression.buildSelectTransformationData(): IfThenToSelectData?
             else -> return null
         }
         is KtIsExpression -> {
-            val targetType = context[BindingContext.TYPE, condition.typeReference] ?: return null
-            if (TypeUtils.isNullableType(targetType)) return null
-            // TODO: the following check can be removed after fix of KT-14576
-            val originalType = receiverExpression.getType(context) ?: return null
-            if (!targetType.isSubtypeOf(originalType)) return null
-
             when (condition.isNegated) {
                 true -> elseClause to thenClause
                 false -> thenClause to elseClause
@@ -319,6 +313,17 @@ internal fun KtIfExpression.buildSelectTransformationData(): IfThenToSelectData?
         else -> return null
     }
     return IfThenToSelectData(context, condition, receiverExpression, baseClause, negatedClause)
+}
+
+internal fun IfThenToSelectData.conditionHasIncompatibleTypes(): Boolean {
+    if (condition !is KtIsExpression) return false
+
+    val targetType = context[BindingContext.TYPE, condition.typeReference] ?: return true
+    if (TypeUtils.isNullableType(targetType)) return true
+    // TODO: the following check can be removed after fix of KT-14576
+    val originalType = receiverExpression.getType(context) ?: return true
+
+    return !targetType.isSubtypeOf(originalType)
 }
 
 internal fun KtExpression?.isClauseTransformableToLetOnly(receiver: KtExpression?) =

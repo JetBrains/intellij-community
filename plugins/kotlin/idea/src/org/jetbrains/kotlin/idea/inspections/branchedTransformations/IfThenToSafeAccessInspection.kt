@@ -98,6 +98,7 @@ class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineW
 
 private fun IfThenToSelectData.clausesReplaceableBySafeCall(): Boolean = when {
     baseClause == null -> false
+    conditionHasIncompatibleTypes() -> false
     negatedClause == null && baseClause.isUsedAsExpression(context) -> false
     negatedClause != null && !negatedClause.isNullExpression() -> false
     context.diagnostics.forElement(condition)

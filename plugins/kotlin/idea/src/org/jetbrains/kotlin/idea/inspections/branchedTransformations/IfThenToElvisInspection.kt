@@ -105,6 +105,8 @@ class IfThenToElvisInspection @JvmOverloads constructor(
                     false
                 negatedClause is KtThrowExpression && negatedClause.throwsNullPointerExceptionWithNoArguments() ->
                     false
+                conditionHasIncompatibleTypes() ->
+                    false
                 baseClause.evaluatesTo(receiverExpression) ->
                     true
                 baseClause.anyArgumentEvaluatesTo(receiverExpression) ->
