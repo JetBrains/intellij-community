@@ -78,6 +78,7 @@ import java.util.zip.ZipFile;
 import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FILENAME;
 import static com.intellij.openapi.application.ImportOldConfigsState.InitialImportScenario.*;
+import static com.intellij.openapi.application.migrations.AIAssistant241Kt.migrateAiForToolbox;
 import static com.intellij.openapi.application.migrations.PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT;
 import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
@@ -898,6 +899,14 @@ public final class ConfigImportHelper {
     // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
     if (!isEmptyDirectory(newPluginsDir)) {
       log.info("non-empty plugins directory: " + newPluginsDir);
+
+      // ad-hoc migration for AI Assistant in Toolbox
+      var pluginsToDownload = new ArrayList<IdeaPluginDescriptor>();
+      var previousVersion = parseVersionFromConfig(oldConfigDir);
+      migrateAiForToolbox(newPluginsDir, newConfigDir, previousVersion, log, pluginsToDownload);
+      if (!pluginsToDownload.isEmpty()) {
+        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload);
+      }
     }
     else {
       Predicate<IdeaPluginDescriptor> hasPendingUpdate =
