@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.tests.impl
+package com.intellij.remoteDev.tests.impl.utils
 
 import org.jetbrains.annotations.ApiStatus
 import java.time.LocalTime

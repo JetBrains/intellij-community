@@ -1,4 +1,4 @@
-package com.intellij.remoteDev.tests.impl
+package com.intellij.remoteDev.tests.impl.utils
 
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.diagnostic.dumpCoroutines
