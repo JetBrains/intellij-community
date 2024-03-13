@@ -17,7 +17,7 @@ public final class RecentChangesAction extends LocalHistoryAction {
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
     if (ActivityView.isViewEnabled()) {
-      ActivityView.show(p, gw, ActivityScope.Recent.INSTANCE);
+      ActivityView.showInToolWindow(p, gw, ActivityScope.Recent.INSTANCE);
     }
     else {
       LocalHistoryCounter.INSTANCE.logLocalHistoryOpened(LocalHistoryCounter.Kind.Recent);

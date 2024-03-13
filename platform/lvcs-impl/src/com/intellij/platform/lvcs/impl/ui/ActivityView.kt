@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
@@ -302,7 +303,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     private const val URL_PREFIX = "https://youtrack.jetbrains.com/newIssue?project=IDEA&c=Subsystem+Version+Control.+Local+History&c=Type+Support+Request&description="
 
     @JvmStatic
-    fun show(project: Project, gateway: IdeaGateway, activityScope: ActivityScope) {
+    fun showInToolWindow(project: Project, gateway: IdeaGateway, activityScope: ActivityScope) {
       LocalHistoryCounter.logLocalHistoryOpened(activityScope)
 
       if (ActivityToolWindow.showTab(project) { content -> (content.component as? ActivityView)?.activityScope == activityScope }) {
@@ -338,6 +339,21 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
           else showDiff()
         }
       }, disposable)
+    }
+
+    @JvmStatic
+    fun showInDialog(project: Project, gateway: IdeaGateway, activityScope: ActivityScope) {
+      LocalHistoryCounter.logLocalHistoryOpened(activityScope)
+
+      val activityView = ActivityView(project, gateway, activityScope, isFrameDiffPreview = true)
+
+      val dialog = FrameWrapper(project,
+                                title = LocalHistoryBundle.message("activity.dialog.title", activityScope.presentableName),
+                                component = activityView,
+                                dimensionKey = "lvcs.dialog.size")
+      dialog.closeOnEsc()
+      Disposer.register(dialog, activityView)
+      dialog.show()
     }
 
     @JvmStatic
