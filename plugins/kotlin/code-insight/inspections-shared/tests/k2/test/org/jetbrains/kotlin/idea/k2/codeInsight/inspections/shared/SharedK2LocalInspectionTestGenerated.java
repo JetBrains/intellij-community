@@ -1113,6 +1113,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         public void testSuspendingLoopLocalExtensionProperty() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSuspend/suspendingLoopLocalExtensionProperty.kt");
         }
+
+        @TestMetadata("unresolvedFunction.kt")
+        public void testUnresolvedFunction() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/unresolvedFunction.kt");
+        }
+
+        @TestMetadata("unresolvedProperty.kt")
+        public void testUnresolvedProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/unresolvedProperty.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
