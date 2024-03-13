@@ -3,9 +3,11 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.Graphics
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -105,9 +107,15 @@ object OnboardingDialogButtons {
   }
 
   fun createButton(isDefault: Boolean): JButton {
-    val btn = JButton()
+    val btn = object: JButton() {
+      override fun getComponentGraphics(g: Graphics?): Graphics {
+        return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
+      }
+    }
     btn.putClientProperty("ActionToolbar.smallVariant", true)
     btn.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, isDefault)
+    btn.putClientProperty(DarculaButtonUI.AVOID_EXTENDING_BORDER_GRAPHICS, true)
+    btn.putClientProperty(DarculaButtonUI.AVOID_EXTENDING_DECORATIONS_GRAPHICS, isDefault)
     val listener: MouseAdapter = object : MouseAdapter() {
       override fun mouseEntered(e: MouseEvent) {
         btn.putClientProperty("JButton.borderColor",

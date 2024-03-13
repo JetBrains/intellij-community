@@ -12,12 +12,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.ExtendedGraphics;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +55,11 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
 
   public static final Key<Boolean> DEFAULT_STYLE_KEY = Key.create("JButton.styleDefault");
+
+  @ApiStatus.Internal
+  public static final Key<Boolean> AVOID_EXTENDING_DECORATIONS_GRAPHICS = Key.create("JButton.avoidExtendingDecorationsGraphics");
+  @ApiStatus.Internal
+  public static final Key<Boolean> AVOID_EXTENDING_BORDER_GRAPHICS = Key.create("JButton.avoidExtendingBorderGraphics");
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
@@ -135,6 +143,13 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
 
     JBInsets.removeFrom(r, isSmallVariant(c) || isGotItButton(c) ? c.getInsets() : JBUI.insets(1));
+
+    if (g instanceof ExtendedGraphics) {
+      Object avoidExtendingObject = ClientProperty.get(c, AVOID_EXTENDING_DECORATIONS_GRAPHICS);
+      if (avoidExtendingObject != null && avoidExtendingObject.equals(Boolean.TRUE)) {
+        ((ExtendedGraphics)g).setAvoidExtending(true);
+      }
+    }
 
     if (UIUtil.isHelpButton(c)) {
       g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));
