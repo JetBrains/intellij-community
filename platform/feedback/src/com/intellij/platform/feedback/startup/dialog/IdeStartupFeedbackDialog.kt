@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData
-import com.intellij.platform.feedback.dialog.uiBlocks.ComboBoxBlock
-import com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
-import com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
+import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import com.intellij.platform.feedback.startup.IdeStartupFeedbackCountCollector.logFeedbackFirstQuestionAnswer
 import com.intellij.platform.feedback.startup.IdeStartupFeedbackCountCollector.logFeedbackForthQuestionAnswer
@@ -17,7 +14,10 @@ import com.intellij.platform.feedback.startup.IdeStartupFeedbackCountCollector.l
 import com.intellij.platform.feedback.startup.IdeStartupFeedbackCountCollector.logFeedbackThirdQuestionAnswer
 import com.intellij.platform.feedback.startup.bundle.IdeStartupFeedbackMessagesBundle
 import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -31,19 +31,14 @@ class IdeStartupFeedbackDialog(
       IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.1.option.${it + 1}")
     }
 
-    internal val SECOND_QUESTION_OPTIONS = List(5) {
-      IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.2.option.${it + 1}")
-    }
-
-    internal val THIRD_QUESTION_OPTIONS = List(4) {
+    internal val THIRD_QUESTION_OPTIONS = List(3) {
       IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.3.option.${it + 1}")
     }
 
     internal val COLLECTOR_THIRD_QUESTION_OPTIONS = listOf(
-      "actively_wait_ide_load_and_try_to_interact_until_ready",
-      "check_screen_while_IDE_loads_but_would_have_something_useful_to_do",
-      "go_afk_while_ide_loads_but_would_rather_stay_and_have_something_useful_to_do",
-      "go_afk_while_ide_loads_and_okay_with_not_looking_at_the_screen"
+      "left_computer",
+      "stayed_at_computer_watching_ide_screen",
+      "stayed_at_computer_switched_away_from_the_ide"
     )
 
     private val FORTH_QUESTION_OPTIONS = listOf(
@@ -58,7 +53,7 @@ class IdeStartupFeedbackDialog(
   }
 
   /** Increase the additional number when feedback format is changed */
-  override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 2
+  override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 3
 
   override val zendeskTicketTitle: String = "${ApplicationNamesInfo.getInstance().fullProductName} Startup Feedback"
   override val zendeskFeedbackType: String = "Startup Feedback"
@@ -80,13 +75,19 @@ class IdeStartupFeedbackDialog(
     ).setBottomGap(BottomGap.MEDIUM),
     ComboBoxBlock(IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.1.label"),
                   FIRST_QUESTION_OPTIONS,
-                  myFirstQuestionJsonElementName).randomizeOptionOrder(),
-    ComboBoxBlock(IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.2.label"),
-                  SECOND_QUESTION_OPTIONS,
-                  mySecondQuestionJsonElementName),
+                  myFirstQuestionJsonElementName).randomizeOptionOrder().setColumnSize(COLUMNS_MEDIUM),
+    SegmentedButtonBlock(
+      IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.2.label"),
+      List(5) { (it + 1).toString() },
+      mySecondQuestionJsonElementName
+    ).addLeftBottomLabel(
+      IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.2.tooltip.left")
+    ).addRightBottomLabel(
+      IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.2.tooltip.right")
+    ),
     ComboBoxBlock(IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.3.label"),
                   THIRD_QUESTION_OPTIONS,
-                  myThirdQuestionJsonElementName).setColumnSize(52),
+                  myThirdQuestionJsonElementName).setColumnSize(COLUMNS_LARGE),
     CustomCheckBoxGroupBlock(
       IdeStartupFeedbackMessagesBundle.message("ide.startup.dialog.question.4.label"),
       List(myOptionCountInColumn) {
@@ -122,7 +123,7 @@ class IdeStartupFeedbackDialog(
     if (emailBlockWithAgreement.getEmailAddressIfSpecified().isEmpty()) {
       val collectedData = collectDataToJsonObject()
       logFeedbackFirstQuestionAnswer(collectedData[myFirstQuestionJsonElementName]!!.jsonPrimitive.content)
-      logFeedbackSecondQuestionAnswer(collectedData[mySecondQuestionJsonElementName]!!.jsonPrimitive.content)
+      logFeedbackSecondQuestionAnswer(collectedData[mySecondQuestionJsonElementName]!!.jsonPrimitive.int)
 
       val thirdQuestionAnswer = collectedData[myThirdQuestionJsonElementName]!!.jsonPrimitive.content
       logFeedbackThirdQuestionAnswer(COLLECTOR_THIRD_QUESTION_OPTIONS[THIRD_QUESTION_OPTIONS.indexOf(thirdQuestionAnswer)])
