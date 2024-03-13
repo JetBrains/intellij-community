@@ -20,13 +20,13 @@ import org.jetbrains.kotlin.psi.returnExpressionVisitor
 
 /**
  * Tests:
- * - [org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SharedK1LocalInspectionTestGenerated.LabeledReturnAsLastExpressionInLambda]
- * - [org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.SharedK2LocalInspectionTestGenerated.LabeledReturnAsLastExpressionInLambda]
+ * - [org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SharedK1LocalInspectionTestGenerated.RedundantLabeledReturnOnLastExpressionInLambda]
+ * - [org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.SharedK2LocalInspectionTestGenerated.RedundantLabeledReturnOnLastExpressionInLambda]
  */
-internal class LabeledReturnAsLastExpressionInLambdaInspection : AbstractKotlinApplicableInspection<KtReturnExpression>() {
+internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection : AbstractKotlinApplicableInspection<KtReturnExpression>() {
 
     override fun getProblemDescription(element: KtReturnExpression): @InspectionMessage String =
-        KotlinBundle.message("inspection.labeled.return.on.last.expression.in.lambda.display.name")
+        KotlinBundle.message("inspection.redundant.labeled.return.on.last.expression.in.lambda.display.name")
 
     override fun getActionFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("remove.labeled.return.from.last.expression.in.a.lambda")
