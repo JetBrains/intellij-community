@@ -4866,7 +4866,48 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/simplifyComparison")
+    public static class SimplifyComparison extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("doubleNull.kt")
+        public void testDoubleNull() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyComparison/doubleNull.kt");
+        }
+
+        @TestMetadata("notNull.kt")
+        public void testNotNull() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyComparison/notNull.kt");
+        }
+
+        @TestMetadata("nullOrNotNull.kt")
+        public void testNullOrNotNull() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyComparison/nullOrNotNull.kt");
+        }
+
+        @TestMetadata("somethingAndNotNull.kt")
+        public void testSomethingAndNotNull() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyComparison/somethingAndNotNull.kt");
+        }
+
+        @TestMetadata("withAssertion.kt")
+        public void testWithAssertion() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyComparison/withAssertion.kt");
+        }
+
+        @TestMetadata("withAssertion2.kt")
+        public void testWithAssertion2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyComparison/withAssertion2.kt");
+        }
+
+        @TestMetadata("withAssertion3.kt")
+        public void testWithAssertion3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/simplifyComparison/withAssertion3.kt");
+        }
+    }
 
 
 

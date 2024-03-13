@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixTest
-import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.MutableTWorkspace
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 
@@ -178,7 +178,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/reorderParameters", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/replaceJvmFieldWithConst", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/restrictedRetentionForExpressionAnnotation", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/simplifyComparison", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/simplifyComparison", pattern = pattern)
             model("$idea/quickfix/smartCastImpossibleInIfThen", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/specifyOverrideExplicitly", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/specifySuperExplicitly", pattern = pattern, isIgnored = true)

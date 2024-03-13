@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuic
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix
 import org.jetbrains.kotlin.idea.quickfix.*
+import org.jetbrains.kotlin.idea.quickfix.fixes.SimplifyComparisonFixFactory
 
 class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val keywords = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -197,6 +198,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         )
 
         registerFactory(ConvertToBlockBodyFixFactory.convertToBlockBodyFixFactory)
+        registerFactory(SimplifyComparisonFixFactory.simplifyComparisonFixFactory)
     }
 
     private val whenStatements = KtQuickFixesListBuilder.registerPsiQuickFix {
