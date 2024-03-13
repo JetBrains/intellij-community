@@ -67,7 +67,6 @@ class TerminalOutputController(
 
   @RequiresEdt
   fun startCommandBlock(command: String?, prompt: PromptRenderingInfo?) {
-    outputModel.closeActiveBlock()
     scrollToBottom()
     installRunningCommandListeners()
     runningCommandContext = RunningCommandContext(command, prompt)
@@ -130,6 +129,7 @@ class TerminalOutputController(
       }
       else {
         outputModel.setBlockInfo(block, CommandBlockInfo(exitCode))
+        outputModel.finalizeBlock(block)
       }
       runningCommandContext = null
     }
@@ -137,7 +137,6 @@ class TerminalOutputController(
 
   @RequiresEdt
   fun insertEmptyLine() {
-    outputModel.closeActiveBlock()
     editor.document.insertString(editor.document.textLength, "\n")
     scrollToBottom()
   }
