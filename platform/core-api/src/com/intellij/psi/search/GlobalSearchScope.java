@@ -363,6 +363,15 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     };
   }
 
+  public static @NotNull GlobalSearchScope filterScope(@NotNull VirtualFileFilter filter) {
+    return new EverythingGlobalScope() {
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        return filter.accept(file);
+      }
+    };
+  }
+
   private static final class IntersectionScope extends GlobalSearchScope implements VirtualFileEnumerationAware {
     private final GlobalSearchScope myScope1;
     private final GlobalSearchScope myScope2;
