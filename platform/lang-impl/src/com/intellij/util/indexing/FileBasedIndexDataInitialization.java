@@ -201,7 +201,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       //CorruptionMarker.markIndexesAsDirty();
       FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCounting();
       myFileBasedIndex.addStaleIds(myStaleIds);
-      myFileBasedIndex.addStaleIds(myDirtyFileIds);
+      myFileBasedIndex.addDirtyFileIds(myDirtyFileIds);
       myFileBasedIndex.setUpFlusher();
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads

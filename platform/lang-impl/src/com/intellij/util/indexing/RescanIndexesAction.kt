@@ -45,7 +45,7 @@ class RescanIndexesAction : RecoveryAction {
     application.service<AppIndexingDependenciesService>().invalidateAllStamps("Rescanning indexes recovery action")
     object : UnindexedFilesScanner(project, false, false, false,
                                    predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
-                                   if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED) {
+                                   if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED, null) {
       private val stubIndex =
         runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
         .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()

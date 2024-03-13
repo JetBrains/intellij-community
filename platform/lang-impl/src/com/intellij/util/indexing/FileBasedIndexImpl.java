@@ -31,6 +31,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.GentleFlusherBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
@@ -59,6 +60,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.FileIndexesValuesApplier.ApplicationMode;
@@ -155,6 +157,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final IntSet myStaleIds = new IntOpenHashSet();
+  private final IntSet myDirtyFilesIds = new IntOpenHashSet();
 
   final Lock myReadLock;
   public final Lock myWriteLock;
@@ -333,6 +336,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   void addStaleIds(@NotNull IntSet staleIds) {
     synchronized (myStaleIds) {
       myStaleIds.addAll(staleIds);
+    }
+  }
+
+  void addDirtyFileIds(@NotNull IntSet dirtyFileIds) {
+    synchronized (myDirtyFilesIds) {
+      myDirtyFilesIds.addAll(dirtyFileIds);
     }
   }
 
@@ -615,15 +624,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         PersistentIndicesConfiguration.saveConfiguration();
 
-        IntSet staleIds = new IntOpenHashSet();
-        synchronized (myStaleIds) {
-          staleIds.addAll(myStaleIds);
-          myStaleIds.clear();
+        IntSet unprocessedDirtyFiles = new IntOpenHashSet();
+        synchronized (myDirtyFilesIds) {
+          unprocessedDirtyFiles.addAll(myDirtyFilesIds);
+          myDirtyFilesIds.clear();
         }
 
         if (myIsUnitTestMode) {
           IntSet allStaleIdsToCheck = new IntOpenHashSet();
-          allStaleIdsToCheck.addAll(staleIds);
+          allStaleIdsToCheck.addAll(unprocessedDirtyFiles);
+          synchronized (myStaleIds) {
+            allStaleIdsToCheck.addAll(myStaleIds);
+            myStaleIds.clear();
+          }
           // project dirty files are still in ChangedFilesCollector in case FileBasedIndex is restarted using Tumbler (projects are not closed)
           // we need to persist queues, so we can properly re-read them here and in FileBasedIndexDataInitialization
           persistProjectsDirtyFiles();
@@ -640,8 +653,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         IntSet dirtyFilesWithoutProject = getAllDirtyFiles(null);
-        // we need to persist myStaleIds to disk otherwise we lose them if FileBasedIndexTumbler shutdown is performed twice in a row
-        dirtyFilesWithoutProject.addAll(staleIds);
+        // we need to persist unprocessed dirty files to disk otherwise we lose them if
+        // FileBasedIndexTumbler shutdown is performed twice in a row, or IDE is quickly closed
+        dirtyFilesWithoutProject.addAll(unprocessedDirtyFiles);
         PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(),
                                                      dirtyFilesWithoutProject, vfsCreationStamp);
         // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
@@ -869,6 +883,43 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
       finally {
         myStaleIds.clear();
+      }
+    }
+  }
+
+  void ensureDirtyFileIndexesDeleted(@NotNull Project project) {
+    synchronized (myDirtyFilesIds) {
+      if (myDirtyFilesIds.isEmpty()) return;
+      try {
+        ProgressManager.getInstance().executeNonCancelableSection(() -> {
+          Collection<ID<?, ?>> indexIDs = myRegisteredIndexes.getState().getIndexIDs();
+          for (int fileId : myDirtyFilesIds) {
+            removeFileDataFromIndices(indexIDs, fileId, null);
+          }
+        });
+
+        ReadAction.run(() -> {
+          ManagingFS fs = ManagingFS.getInstance();
+          // add dirty files to myFilesToUpdateCollector, so they are visible for callers while scanning is still in smart mode
+          // but we should keep number of files under threshold to not trigger dumb mode (it'll be triggered by scanning)
+          int dumbModeThreshold = Registry.intValue("scanning.dumb.mode.threshold", 20);
+          JBIterable.from(myDirtyFilesIds)
+            .map(fileId -> {
+              VirtualFile file = fs.findFileById(fileId);
+              if (file != null && getContainingProjects(file).contains(project)) {
+                return file;
+              }
+              return null;
+            })
+            .filterNotNull()
+            .take(dumbModeThreshold - 1)
+            .forEach(file -> {
+              myFilesToUpdateCollector.scheduleForUpdate(FileIndexingRequest.updateRequest(file), Collections.emptyList());
+            });
+        });
+      }
+      finally {
+        myDirtyFilesIds.clear();
       }
     }
   }
