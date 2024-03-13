@@ -13,13 +13,13 @@ import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.RefactoringCodeVisionCollector
 import com.intellij.refactoring.suggested.REFACTORING_DATA_KEY
 import com.intellij.refactoring.suggested.SuggestedRenameData
 import com.intellij.refactoring.suggested.performSuggestedRefactoring
@@ -40,6 +40,7 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
     providerId: String,
   ) : TextCodeVisionEntry(text, providerId, AllIcons.Actions.SuggestedRefactoringBulb, tooltip, tooltip, listOf()), CodeVisionPredefinedActionEntry {
     override fun onClick(editor: Editor) {
+      RefactoringCodeVisionCollector.refactoringPerformed(RefactoringCodeVisionCollector.Refactorings.Rename)
       val mouseEvent = this.getUserData(codeVisionEntryMouseEventKey)
       CommandProcessor.getInstance().executeCommand(project, {
         performSuggestedRefactoring(project,
@@ -97,11 +98,6 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
     }
     file.accept(visitor)
     visitor.renamedElement?.let { editor.putUserData(REFACTORING_DATA_KEY, SuggestedRenameData(it, "foo")) }
-  }
-
-  override fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry) {
-    RenameCodeVisionCollector.inlayHintClicked()
-    super.handleClick(editor, textRange, entry)
   }
 
   override val name: String
