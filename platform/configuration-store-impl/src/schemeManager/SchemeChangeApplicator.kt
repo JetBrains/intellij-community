@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.configurationStore.schemeManager
@@ -14,7 +14,7 @@ internal sealed interface SchemeChangeEvent<T : Scheme, M : T> {
   fun execute(schemaLoader: Lazy<SchemeLoader<T, M>>, schemeManager: SchemeManagerImpl<T, M>)
 }
 
-internal interface SchemeAddOrUpdateEvent {
+internal sealed interface SchemeAddOrUpdateEvent {
   val file: VirtualFile
 }
 
