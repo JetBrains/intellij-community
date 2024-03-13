@@ -75,6 +75,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             KtFirDiagnostic.NonDataClassJvmRecord::class,
             AddModifierFix.addDataModifier
         )
+        registerFactory(AddDataModifierFixFactory.addDataModifierFixFactory)
         registerPsiQuickFixes(
             KtFirDiagnostic.AbstractPropertyInPrimaryConstructorParameters::class,
             RemoveModifierFixBase.removeAbstractModifier

@@ -4480,7 +4480,93 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addDataModifier")
+    public static class AddDataModifier extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("abstract.kt")
+        public void testAbstract() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/abstract.kt");
+        }
+
+        @TestMetadata("inner.kt")
+        public void testInner() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/inner.kt");
+        }
+
+        @TestMetadata("invisibleParameter.kt")
+        public void testInvisibleParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/invisibleParameter.kt");
+        }
+
+        @TestMetadata("invisibleParameter2.kt")
+        public void testInvisibleParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/invisibleParameter2.kt");
+        }
+
+        @TestMetadata("noParameter.kt")
+        public void testNoParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/noParameter.kt");
+        }
+
+        @TestMetadata("notVarVal.kt")
+        public void testNotVarVal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/notVarVal.kt");
+        }
+
+        @TestMetadata("open.kt")
+        public void testOpen() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/open.kt");
+        }
+
+        @TestMetadata("sealed.kt")
+        public void testSealed() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/sealed.kt");
+        }
+
+        @TestMetadata("test1.kt")
+        public void testTest1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/test1.kt");
+        }
+
+        @TestMetadata("test2.kt")
+        public void testTest2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/test2.kt");
+        }
+
+        @TestMetadata("test3.kt")
+        public void testTest3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/test3.kt");
+        }
+
+        @TestMetadata("test4.kt")
+        public void testTest4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/test4.kt");
+        }
+
+        @TestMetadata("test5.kt")
+        public void testTest5() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/test5.kt");
+        }
+
+        @TestMetadata("test6.kt")
+        public void testTest6() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/test6.kt");
+        }
+
+        @TestMetadata("test7.kt")
+        public void testTest7() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/test7.kt");
+        }
+
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDataModifier/vararg.kt");
+        }
+    }
 
 
 
