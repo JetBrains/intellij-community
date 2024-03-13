@@ -1272,6 +1272,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
+        testClass<AbstractNewJavaToKotlinConverterSingleFileFullJDKTest> {
+            model("fullJDK", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
         testClass<AbstractNewJavaToKotlinConverterPartialTest> {
             model("partialConverter", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }

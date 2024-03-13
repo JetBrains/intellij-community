@@ -1148,39 +1148,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../shared/tests/testData/newJ2k/collections")
-    public static class Collections extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("Arrays.java")
-        public void testArrays() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/collections/Arrays.java");
-        }
-
-        @TestMetadata("common.java")
-        public void testCommon() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/collections/common.java");
-        }
-
-        @TestMetadata("listRestriction.java")
-        public void testListRestriction() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/collections/listRestriction.java");
-        }
-
-        @TestMetadata("literalRestriction.java")
-        public void testLiteralRestriction() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/collections/literalRestriction.java");
-        }
-
-        @TestMetadata("setRestriction.java")
-        public void testSetRestriction() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/collections/setRestriction.java");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/comments")
     public static class Comments extends AbstractK2JavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -2134,11 +2101,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("enumValueOf.java")
         public void testEnumValueOf() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/enum/enumValueOf.java");
-        }
-
-        @TestMetadata("enumValues.java")
-        public void testEnumValues() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/enum/enumValues.java");
         }
 
         @TestMetadata("enumValuesOldVersion.java")
@@ -3540,16 +3502,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("kt-19636.java")
         public void testKt_19636() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/issues/kt-19636.java");
-        }
-
-        @TestMetadata("kt-19639.java")
-        public void testKt_19639() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/issues/kt-19639.java");
-        }
-
-        @TestMetadata("kt-19652.java")
-        public void testKt_19652() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/issues/kt-19652.java");
         }
 
         @TestMetadata("kt-19943.java")

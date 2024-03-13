@@ -1,4 +1,3 @@
-// RUNTIME_WITH_FULL_JDK
 public class J {
     public void foo(boolean bool, char c, byte b, short s, int i, long l, float f, double d) {
         Boolean.toString(bool);

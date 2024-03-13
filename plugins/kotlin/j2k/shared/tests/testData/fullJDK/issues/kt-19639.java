@@ -1,5 +1,5 @@
 // IGNORE_K2
-// RUNTIME_WITH_FULL_JDK
+
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Enumeration;
 

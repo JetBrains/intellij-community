@@ -2,17 +2,16 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.pom.java.LanguageLevel.HIGHEST
-import com.intellij.pom.java.LanguageLevel.JDK_1_8
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.regex.Pattern
@@ -20,12 +19,6 @@ import java.util.regex.Pattern
 private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method|class)\n")
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        val languageLevel = if (testDataDirectory.toString().contains("newJavaFeatures")) HIGHEST else JDK_1_8
-        val testDataFile = File(testDataDirectory, fileName())
-        return descriptorByFileDirective(testDataFile, languageLevel)
-    }
-
     override fun setUp() {
         super.setUp()
         JavaCodeStyleSettings.getInstance(project).USE_EXTERNAL_ANNOTATIONS = true
@@ -117,7 +110,14 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             )
         }
 
-    abstract fun fileToKotlin(text: String, settings: ConverterSettings): String
+    open fun fileToKotlin(text: String, settings: ConverterSettings): String {
+        val file = createJavaFile(text)
+        val j2kKind = if (isFirPlugin) K2 else K1_NEW
+        val extension = J2kConverterExtension.extension(j2kKind)
+        val converter = extension.createJavaToKotlinConverter(project, module, settings)
+        val postProcessor = extension.createPostProcessor()
+        return converter.filesToKotlin(listOf(file), postProcessor).results.single()
+    }
 
     private fun methodToKotlin(text: String, settings: ConverterSettings): String {
         val result = fileToKotlin("final class C {$text}", settings)

@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractK2InplaceRenameTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterMultiFileTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterPartialTest
+import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileFullJDKTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
@@ -431,6 +432,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("j2k/k2/tests", testDataPath = "../../shared/tests/testData") {
         testClass<AbstractK2JavaToKotlinConverterSingleFileTest> {
             model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
+        testClass<AbstractK2JavaToKotlinConverterSingleFileFullJDKTest> {
+            model("fullJDK", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
         testClass<AbstractK2JavaToKotlinConverterPartialTest> {

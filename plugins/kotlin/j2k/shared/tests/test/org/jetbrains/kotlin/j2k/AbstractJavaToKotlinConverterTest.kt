@@ -2,49 +2,29 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 private val ignoreDirectives: Set<String> = setOf(IGNORE_K1, IGNORE_K2)
 
 abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixtureTestCase() {
-    private var vfsDisposable: Ref<Disposable>? = null
+    override fun getProjectDescriptor(): LightProjectDescriptor = J2K_PROJECT_DESCRIPTOR
 
     override fun setUp() {
         super.setUp()
-        project.DEBUG_LOG_ENABLE_PerModulePackageCache = true
-
-        val testName = getTestName(false)
-        if (testName.contains("Java17") || testName.contains("java17")) {
-            IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_17)
-        }
-        vfsDisposable = KotlinTestUtils.allowProjectRootAccess(this)
-        invalidateLibraryCache(project)
         addFile("KotlinApi.kt", "kotlinApi")
         addFile("JavaApi.java", "javaApi")
         addJavaLangRecordClass()
         addJpaColumnAnnotations()
-    }
-
-    override fun tearDown() {
-        runAll(
-            ThrowableRunnable { KotlinTestUtils.disposeVfsRootAccess(vfsDisposable) },
-            ThrowableRunnable { project.DEBUG_LOG_ENABLE_PerModulePackageCache = false },
-            ThrowableRunnable { super.tearDown() },
-        )
     }
 
     private fun addFile(fileName: String, dirName: String? = null) {

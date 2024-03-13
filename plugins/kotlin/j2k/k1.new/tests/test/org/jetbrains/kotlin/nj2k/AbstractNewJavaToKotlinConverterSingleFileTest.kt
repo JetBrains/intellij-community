@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k
 
-import org.jetbrains.kotlin.idea.j2k.post.processing.NewJ2kPostProcessor
 import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileTest
-import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.types.FlexibleTypeImpl
 
 abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterSingleFileTest() {
@@ -13,11 +11,5 @@ abstract class AbstractNewJavaToKotlinConverterSingleFileTest : AbstractJavaToKo
         FlexibleTypeImpl.RUN_SLOW_ASSERTIONS = !javaPath.endsWith("typeParameters/rawTypeCast.java")
 
         super.doTest(javaPath)
-    }
-
-    override fun fileToKotlin(text: String, settings: ConverterSettings): String {
-        val file = createJavaFile(text)
-        return NewJavaToKotlinConverter(project, module, settings)
-            .filesToKotlin(listOf(file), NewJ2kPostProcessor()).results.single()
     }
 }

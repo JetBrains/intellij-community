@@ -1,7 +1,10 @@
-import javax.swing.SwingUtilities
-
 class A {
     fun foo() {
-        SwingUtilities.invokeLater { println("a") }
+        invokeLater { println("a") }
+    }
+
+    companion object {
+        fun invokeLater(doRun: Runnable?) {
+        }
     }
 }

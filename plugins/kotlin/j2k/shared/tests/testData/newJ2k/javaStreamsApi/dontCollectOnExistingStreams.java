@@ -1,5 +1,4 @@
 // IGNORE_K2
-// RUNTIME_WITH_FULL_JDK
 
 import java.util.List;
 import java.util.stream.Collectors;

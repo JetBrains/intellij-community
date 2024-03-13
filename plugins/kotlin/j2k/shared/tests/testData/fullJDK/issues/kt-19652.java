@@ -1,4 +1,3 @@
-// RUNTIME_WITH_FULL_JDK
 import java.awt.image.AreaAveragingScaleFilter;
 
 public class TestInterfaceStaticFieldReference extends AreaAveragingScaleFilter {
