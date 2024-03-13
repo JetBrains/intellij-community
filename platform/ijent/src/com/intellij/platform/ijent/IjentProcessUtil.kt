@@ -14,6 +14,7 @@ fun getIjentGrpcArgv(
   remotePathToIjent: String,
   additionalEnv: Map<String, String> = mapOf(),
   selfDeleteOnExit: Boolean = false,
+  usrBinEnv: String = "/usr/bin/env",
 ): List<String> {
   val (debuggingLogLevel, backtrace) = when {
     ApplicationManager.getApplication()?.isUnitTestMode == true -> "trace" to true
@@ -23,7 +24,7 @@ fun getIjentGrpcArgv(
   }
 
   return listOfNotNull(
-    "/usr/bin/env",
+    usrBinEnv,
     "RUST_LOG=$debuggingLogLevel,server_handshake=info,h2=info,hyper=info,reserve_capacity=info,tokio_util=info",
     if (backtrace) "RUST_BACKTRACE=1" else null,
     *additionalEnv.entries.map2Array { (k, v) -> "$k=$v" },
