@@ -204,6 +204,9 @@ public abstract class DialogWrapper {
   protected JCheckBox myCheckBoxDoNotShowDialog;
   protected JComponent myPreferredFocusedComponent;
 
+  private @Nullable Image myBackgroundImage;
+  private @Nullable Disposable myBackgroundImageDisposable;
+
   /**
    * Creates modal {@code DialogWrapper}. The currently active window will be the dialog's parent.
    *
@@ -2047,6 +2050,21 @@ public abstract class DialogWrapper {
     updateComponentErrors(info);
 
     myInfo = info;
+  }
+
+  @ApiStatus.Internal
+  public void setBackgroundImage(@Nullable Image backgroundImage) {
+    myBackgroundImage = backgroundImage;
+
+    if (myBackgroundImageDisposable != null) {
+      Disposer.dispose(myBackgroundImageDisposable);
+      myBackgroundImageDisposable = null;
+    }
+
+    if (myBackgroundImage != null) {
+      myBackgroundImageDisposable = Disposer.newDisposable(myDisposable);
+      OnboardingBackgroundImageProvider.getInstance().installBackgroundImageToDialog(this, myBackgroundImage, myBackgroundImageDisposable);
+    }
   }
 
   private void updateComponentErrors(@NotNull List<ValidationInfo> info) {
