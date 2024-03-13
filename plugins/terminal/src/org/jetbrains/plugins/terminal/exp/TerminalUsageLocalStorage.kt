@@ -15,6 +15,9 @@ internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsag
   val executedCommandsNumber: Int
     get() = state.shellToExecutedCommandsNumber.values.sum()
 
+  val mostUsedShell: String
+    get() = state.shellToExecutedCommandsNumber.keys.maxBy { state.shellToExecutedCommandsNumber[it]!! }
+
   fun recordCommandExecuted(shellName: String) {
     state.shellToExecutedCommandsNumber.merge(shellName.lowercase(), 1, Int::plus)
   }

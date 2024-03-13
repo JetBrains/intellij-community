@@ -2,23 +2,42 @@
 package org.jetbrains.plugins.terminal.exp.feedback
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.plugins.terminal.TerminalBundle
+import org.jetbrains.plugins.terminal.exp.TerminalUsageLocalStorage
 
-internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) : BlockBasedFeedbackDialog<CommonFeedbackSystemData>(project, forTest) {
+internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) : BlockBasedFeedbackDialog<BlockTerminalUsageData>(project, forTest) {
   override val myFeedbackReportId: String = "new_terminal"
 
   override val myTitle: String = TerminalBundle.message("feedback.dialog.title")
 
-  override val mySystemInfoData: CommonFeedbackSystemData by lazy {
-    CommonFeedbackSystemData.getCurrentData()
+  override val mySystemInfoData: BlockTerminalUsageData by lazy {
+    val usageStorage = TerminalUsageLocalStorage.getInstance()
+    BlockTerminalUsageData(
+      mostUsedShell = usageStorage.mostUsedShell,
+      executedCommandsNumber = usageStorage.executedCommandsNumber,
+      systemInfo = CommonFeedbackSystemData.getCurrentData()
+    )
   }
 
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {
-    showFeedbackSystemInfoDialog(myProject, mySystemInfoData)
+    showFeedbackSystemInfoDialog(myProject, mySystemInfoData.systemInfo) {
+      row(TerminalBundle.message("feedback.system.info.shell")) {
+        label(mySystemInfoData.mostUsedShell)
+      }
+      row(TerminalBundle.message("feedback.system.info.commands.number")) {
+        label(mySystemInfoData.executedCommandsNumber.toString())
+      }
+    }
   }
 
   override val myBlocks: List<FeedbackBlock> = listOf(
@@ -39,5 +58,24 @@ internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) :
 
   init {
     init()
+  }
+}
+
+@Serializable
+internal data class BlockTerminalUsageData(
+  @NlsSafe val mostUsedShell: String,
+  val executedCommandsNumber: Int,
+  val systemInfo: CommonFeedbackSystemData
+) : SystemDataJsonSerializable {
+  override fun serializeToJson(json: Json): JsonElement {
+    return json.encodeToJsonElement(this)
+  }
+
+  override fun toString(): String = buildString {
+    appendLine(TerminalBundle.message("feedback.system.info.shell"))
+    appendLine(mostUsedShell)
+    appendLine(TerminalBundle.message("feedback.system.info.commands.number"))
+    appendLine(executedCommandsNumber)
+    append(systemInfo.toString())
   }
 }
