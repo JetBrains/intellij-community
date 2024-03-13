@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
+import com.intellij.ide.plugins.saveBundledPluginsState
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.NotRoamableUiSettings
@@ -31,6 +32,7 @@ import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -69,6 +71,7 @@ import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.function.BiFunction
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.minutes
 
 @Suppress("SSBasedInspection")
 private val LOG: Logger
@@ -197,12 +200,12 @@ internal suspend fun loadApp(app: ApplicationImpl,
       getAppInitializedListeners(app)
     }
 
+    appRegisteredJob.join()
+    initConfigurationStoreJob.join()
+
     asyncScope.launch {
       enableCoroutineDumpAndJstack()
     }
-
-    appRegisteredJob.join()
-    initConfigurationStoreJob.join()
 
     val appInitializedListenerJob = launch {
       val appInitializedListeners = appInitListeners.await()
@@ -219,12 +222,22 @@ internal suspend fun loadApp(app: ApplicationImpl,
         checkThirdPartyPluginsAllowed()
       }
 
+      addActivateAndWindowsCliListeners()
+
       // doesn't block app start-up
       span("post app init tasks") {
         runPostAppInitTasks()
       }
 
-      addActivateAndWindowsCliListeners()
+      app.getCoroutineScope().launch {
+        // postpone avoiding getting PropertiesComponent and writing to disk too early
+        delay(1.minutes)
+        if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
+          span("save bundled plugin state") {
+            saveBundledPluginsState()
+          }
+        }
+      }
     }
 
     appInitializedListenerJob.join()

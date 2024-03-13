@@ -715,7 +715,6 @@
                         headlessImplementation="com.intellij.ide.plugins.DisabledPluginsState"
                         testServiceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
                         preload="true"/>
-    <applicationInitializedListener implementation="com.intellij.ide.plugins.BundledPluginsState"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.ExpiredPluginsState" preload="true"/>
 
     <requiredForSmartModeStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
