@@ -324,12 +324,12 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   }
 
   private fun calculateEffectiveHoverColorAndStroke(needShowOnGutter: Boolean, editor: Editor, lineNumber: Int): Pair<Color, Color?> {
+    val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
+                            ?: JBColor.PanelBackground
     return if (needShowOnGutter) {
-      JBColor.PanelBackground to null
+      hoverColor to null
     }
     else {
-      val hoverColor: Color = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT).backgroundColor
-                              ?: JBColor.PanelBackground
       val textAttributesForLineStart = getEditorTextAttributesForTheLineStart(editor, lineNumber)
       val backgroundColor = textAttributesForLineStart?.backgroundColor
       if (backgroundColor != null) {
