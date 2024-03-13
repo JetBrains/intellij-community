@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
@@ -18,7 +18,7 @@ object EditorTabPresentationUtil {
 
   @JvmStatic
   fun getCustomEditorTabTitle(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? {
-    for (provider in EditorTabTitleProvider.EP_NAME.lazyDumbAwareExtensions(project)) {
+    for (provider in EditorTabTitleProvider.EP_NAME.lazySequence()) {
       val result = provider.getEditorTabTitle(project, file)
       if (!result.isNullOrEmpty()) {
         return result

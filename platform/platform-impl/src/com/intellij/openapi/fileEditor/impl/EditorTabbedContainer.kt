@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
@@ -281,7 +281,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     tab.setTestableUi { it.put("editorTab", tab.text) }
 
     coroutineScope.launch {
-      val title = readAction { EditorTabPresentationUtil.getEditorTabTitle(project, file) }
+      val title = EditorTabPresentationUtil.getEditorTabTitle(project, file)
       withContext(Dispatchers.EDT) {
         tab.text = title
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
@@ -430,9 +430,7 @@ open class EditorsSplitters internal constructor(
         window.getComposites().filter { updatedFile == null || it.file.nameSequence.contentEquals(updatedFile.nameSequence) }.toList()
       }
       for (composite in composites) {
-        val title = readAction {
-          EditorTabPresentationUtil.getEditorTabTitle(manager.project, composite.file)
-        }
+        val title = EditorTabPresentationUtil.getEditorTabTitle(manager.project, composite.file)
         withContext(Dispatchers.EDT) {
           val index = window.findCompositeIndex(composite)
           if (index != -1) {
