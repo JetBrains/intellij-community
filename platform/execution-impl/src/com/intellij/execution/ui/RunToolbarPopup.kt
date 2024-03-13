@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.DumbService
@@ -267,7 +266,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
 
   private data class DraggedIndex(val from: Int)
 
-  private fun<E> offsetFromElementTopForDnD(list: JList<E>, dropTargetIndex: Int): Int {
+  private fun <E> offsetFromElementTopForDnD(list: JList<E>, dropTargetIndex: Int): Int {
     if (dropTargetIndex == pinnedSize) {
       return 0
     }
@@ -376,30 +375,30 @@ private fun createRunConfigurationWithInlines(project: Project,
   val activeExecutor = getActiveExecutor(project, conf)
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
   val inlineActions =
-  if (showRerunAndStopButtons) {
-    val secondVersionAction = if (RunWidgetResumeManager.getInstance(project).isSecondVersionAvailable())
-      InlineResumeCreator.getInstance(project).getInlineResumeCreator(conf, false)
-    else null
-    if (secondVersionAction != null) {
-      listOf(
-        secondVersionAction,
-        ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
-        StopConfigurationInlineAction(activeExecutor, conf)
-      )
+    if (showRerunAndStopButtons) {
+      val secondVersionAction = if (RunWidgetResumeManager.getInstance(project).isSecondVersionAvailable())
+        InlineResumeCreator.getInstance(project).getInlineResumeCreator(conf, false)
+      else null
+      if (secondVersionAction != null) {
+        listOf(
+          secondVersionAction,
+          ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
+          StopConfigurationInlineAction(activeExecutor, conf)
+        )
+      }
+      else {
+        listOf(
+          ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
+          StopConfigurationInlineAction(activeExecutor, conf)
+        )
+      }
     }
     else {
       listOf(
-        ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
-        StopConfigurationInlineAction(activeExecutor, conf)
+        ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
+        ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(debugExecutor, conf, false)
       )
     }
-  }
-  else {
-    listOf(
-      ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
-      ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(debugExecutor, conf, false)
-    )
-  }
   val extraGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(conf, false)
   val result = object : SelectConfigAction(project, conf) {
     override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
@@ -431,7 +430,8 @@ private fun createCurrentFileWithInlineActions(project: Project,
   if (DumbService.isDumb(project)) {
     return RunConfigurationsComboBoxAction.RunCurrentFileAction()
   }
-  val configs = selectedFile?.findPsiFile(project)?.let { ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(it, false) } ?: emptyList()
+  val configs = selectedFile?.findPsiFile(project)?.let { ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(it, false) }
+                ?: emptyList()
   val runRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, runExecutor, project) }
   val debugRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, debugExecutor, project) }
   val activeConfig = runRunningConfig ?: debugRunningConfig
@@ -661,7 +661,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
   }
 
   fun register(setting: RunnerAndConfigurationSettings) {
-    _state = State(_state.history.take(max(5, _state.pinned.size + recentLimit*2)).toMutableList().apply {
+    _state = State(_state.history.take(max(5, _state.pinned.size + recentLimit * 2)).toMutableList().apply {
       add(0, Element(setting.uniqueID))
     }.toMutableSet(), _state.pinned, _state.allConfigurationsExpanded)
     project.messageBus.syncPublisher(TOPIC).register(setting)
@@ -694,8 +694,8 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
 }
 
 private class ExecutionReasonableHistoryManager : ProjectActivity {
-  override suspend fun execute(project: Project) : Unit = blockingContext {
-    project.messageBus.connect(project).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
+  override suspend fun execute(project: Project) {
+    project.messageBus.simpleConnect().subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processStartScheduled(executorId: String, env: ExecutionEnvironment) {
         onAnyChange(executorId, env, RunState.SCHEDULED)
       }
