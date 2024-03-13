@@ -266,7 +266,7 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   @SinceGitLab("13.8")
   override fun setMyselfAsReviewer() = runAction {
     val allowsMultipleReviewers = allowsMultipleReviewers.first()
-    if (allowsMultipleReviewers == true) {
+    if (allowsMultipleReviewers) {
       mergeRequest.setReviewers(listOf(currentUser) + reviewers.value)
     }
     else {
