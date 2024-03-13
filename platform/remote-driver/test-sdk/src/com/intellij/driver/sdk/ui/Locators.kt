@@ -9,6 +9,7 @@ object Locators {
   const val ATTR_VISIBLE_TEXT = "@visible_text"
 
   fun byAccessibleName(name: String): String = byAttribute(ATTR_ACCESSIBLE_NAME, name)
+  fun byAccessibleNameContains(name: String): String = byAttributeContains(ATTR_ACCESSIBLE_NAME, name)
   fun byVisibleText(text: String): String = byAttribute(ATTR_VISIBLE_TEXT, text)
   fun byVisibleTextContains(text: String): String = byAttributeContains(ATTR_VISIBLE_TEXT, text)
   fun byTitle(title: String): String = byAttribute(ATTR_TITLE, title)
