@@ -421,4 +421,13 @@ class IndexDiagnosticDumper : Disposable {
     // The synchronized block allows waiting for unfinished background dumpers.
     isDisposed = true
   }
+
+  @TestOnly
+  @Synchronized
+  fun waitAllActivitiesAreDumped() {
+    if (unsavedIndexingActivityHistories.isEmpty()) return
+    for (unsavedIndexingActivityHistory in unsavedIndexingActivityHistories) {
+      dumpProjectIndexingActivityHistoryToLogSubdirectory(unsavedIndexingActivityHistory)
+    }
+  }
 }

@@ -6,6 +6,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.idea.TestFor
 import com.intellij.openapi.project.getProjectCachePath
+import com.intellij.psi.PsiManager
+import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
@@ -20,48 +23,49 @@ import java.io.StringReader
 import java.nio.file.Files
 import java.time.ZonedDateTime
 import kotlin.io.path.createTempDirectory
+import kotlin.io.path.extension
+import kotlin.io.path.name
+import kotlin.io.path.nameWithoutExtension
 
 /**
  * Tests for [IndexDiagnosticDumper].
  */
 class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
 
-  override fun setUp() {
-    val tempDirectory = createTempDirectory()
-    TestModeFlags.set(IndexDiagnosticDumperUtils.testDiagnosticPathFlag, tempDirectory, testRootDisposable)
-    IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
-    super.setUp()
-  }
-
-  override fun tearDown() {
-    try {
-      IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
-
   @TestFor(issues = ["IDEA-252012"])
   fun `test index diagnostics are laid out per project`() {
-    myFixture.addFileToProject("A.java", "class A { void m() { } }")
-    val indexingDiagnosticDir = IndexDiagnosticDumperUtils.indexingDiagnosticDir
-    val allDirs = Files.list(indexingDiagnosticDir).use { it.toList() }
-    val projectDir = myFixture.project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir)
-    assertEquals(listOf(projectDir), allDirs)
-/*
-    for (dir in allDirs) {
-      val files = Files.list(dir).use { it.toList() }
-      val jsonFiles = files.filter { it.extension == "json" }
-      val htmlFiles = files.filter { it.extension == "html" }
-      assertTrue(files.isNotEmpty())
-      assertEquals(files.joinToString { it.toString() }, files.size, jsonFiles.size + htmlFiles.size)
-      assertEquals(files.joinToString { it.toString() }, jsonFiles.map { it.nameWithoutExtension }.toSet(), htmlFiles.map { it.nameWithoutExtension }.toSet())
+    try {
+      val tempDirectory = createTempDirectory()
+      TestModeFlags.set(IndexDiagnosticDumperUtils.testDiagnosticPathFlag, tempDirectory, testRootDisposable)
+      IndexDiagnosticDumper.shouldDumpInUnitTestMode = true
+
+      val externalDir = myFixture.tempDirFixture.createFile("dir/A.java", "class A { void m() { } }").parent
+      PsiTestUtil.addContentRoot(myFixture.module, externalDir)
+      PsiManager.getInstance(project).dropPsiCaches()
+      waitUntilIndexesAreReady(project)
+      IndexDiagnosticDumper.getInstance().waitAllActivitiesAreDumped()
+
+      val allDirs = Files.list(IndexDiagnosticDumperUtils.indexingDiagnosticDir).use { it.toList() }
+      val projectDir = myFixture.project.getProjectCachePath(IndexDiagnosticDumperUtils.indexingDiagnosticDir)
+      assertEquals(listOf(projectDir), allDirs)
+
+      for (dir in allDirs) {
+        val files = Files.list(dir).use { it.toList() }.filter {
+          it.fileName.name != "changed-files-pushing-events.json" &&
+          it.fileName.name != "report.html"
+        }
+        val jsonFiles = files.filter { it.extension == "json" }
+        val htmlFiles = files.filter { it.extension == "html" }
+        assertTrue(files.isNotEmpty())
+        assertEquals(files.joinToString(prefix = "Actual files: ") { it.toString() }, files.size, jsonFiles.size + htmlFiles.size)
+        assertEquals(files.joinToString(prefix = "Actual files: ") { it.toString() },
+                     jsonFiles.map { it.nameWithoutExtension }.toSet(),
+                     htmlFiles.map { it.nameWithoutExtension }.toSet())
+      }
     }
-*/
+    finally {
+      IndexDiagnosticDumper.shouldDumpInUnitTestMode = false
+    }
   }
 
   fun `test empty index diagnostic with default fields can be deserialized`() {
