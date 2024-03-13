@@ -185,6 +185,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     }
     if (session == null) {
       session = EditorSearchSession.start(editor, myProject);
+      editor.getCaretModel().moveToOffset(0);
       session.searchForward();
     }
     session.setTextInField(filter);
