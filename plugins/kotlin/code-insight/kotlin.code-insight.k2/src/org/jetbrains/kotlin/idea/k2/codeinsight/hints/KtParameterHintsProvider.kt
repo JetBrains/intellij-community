@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
@@ -96,14 +97,17 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         for ((index, symbol) in valueParameters.withIndex()) {
             if (index >= arguments.size) break
             val argument = arguments[index]
-            if (argument.isNamed()) break
-
             val symbolName = symbol.name
-            if (!symbolName.isSpecial) {
-                val name = symbolName.asString()
+            val name: Name = symbolName
+            if (argument.isNamed()) {
+                if (argument.getArgumentName()?.asName != name) break
+                continue
+            }
+
+            name.takeUnless(Name::isSpecial)?.asString()?.let { stringName ->
                 sink.addPresentation(InlineInlayPosition(argument.startOffset, true), hasBackground = true) {
                     if (symbol.isVararg) text(Typography.ellipsis.toString())
-                    text(name,
+                    text(stringName,
                          symbol.psi?.createSmartPointer()?.let {
                              InlayActionData(
                                  PsiPointerInlayActionPayload(it),
