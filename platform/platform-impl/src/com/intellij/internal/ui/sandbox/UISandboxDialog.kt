@@ -46,7 +46,8 @@ internal class UISandboxDialog(project: Project?) : DialogWrapper(project, null,
       JSpinnerPanel(),
       JTextFieldPanel(),
       SearchTextFieldPanel(),
-      ThreeStateCheckBoxPanel())),
+      ThreeStateCheckBoxPanel(),
+      JBTabsPanel())),
 
     Group("Kotlin UI DSL", children = listOf(
       CellsWithSubPanelsPanel(),
