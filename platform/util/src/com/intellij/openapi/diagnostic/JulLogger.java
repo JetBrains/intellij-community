@@ -95,33 +95,12 @@ public class JulLogger extends Logger {
   public static void configureLogFileAndConsole(
     @NotNull Path logFilePath,
     boolean appendToFile,
-    boolean showDateInConsole,
     boolean enableConsoleLogger,
+    boolean showDateInConsole,
     @Nullable Runnable onRotate
   ) {
-    long limit = 10_000_000;
-    String limitProp = System.getProperty("idea.log.limit");
-    if (limitProp != null) {
-      try {
-        limit = Long.parseLong(limitProp);
-      }
-      catch (NumberFormatException e) {
-        // ignore
-      }
-    }
-
-    int count = 12;
-    String countProp = System.getProperty("idea.log.count");
-    if (countProp != null) {
-      try {
-        count = Integer.parseInt(countProp);
-      }
-      catch (NumberFormatException e) {
-        // ignore
-      }
-    }
-
-    boolean logConsole = Boolean.parseBoolean(System.getProperty("idea.log.console", "true"));
+    long limit = Long.getLong("idea.log.limit", 10_000_000);
+    int count = Integer.getInteger("idea.log.count", 12);
 
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
@@ -131,7 +110,7 @@ public class JulLogger extends Logger {
     fileHandler.setLevel(Level.FINEST);
     rootLogger.addHandler(fileHandler);
 
-    if (enableConsoleLogger && logConsole) {
+    if (enableConsoleLogger) {
       Handler consoleHandler = new OptimizedConsoleHandler();
       consoleHandler.setFormatter(new IdeaLogRecordFormatter(showDateInConsole, layout));
       consoleHandler.setLevel(Level.WARNING);
