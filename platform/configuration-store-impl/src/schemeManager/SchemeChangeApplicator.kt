@@ -28,9 +28,7 @@ internal fun <T : Scheme, M : T> getSchemeFileName(schemeManager: SchemeManagerI
   return "${schemeManager.getFileName(scheme)}${schemeManager.schemeExtension}"
 }
 
-internal fun <T : Scheme, M : T> readSchemeFromFile(file: VirtualFile,
-                                                    schemeLoader: SchemeLoader<T, M>,
-                                                    schemeManager: SchemeManagerImpl<T, M>): T? {
+internal fun <T : Scheme, M : T> readSchemeFromFile(file: VirtualFile, schemeLoader: SchemeLoader<T, M>, schemeManager: SchemeManagerImpl<T, M>): T? {
   val fileName = file.name
   if (file.isDirectory || !schemeManager.canRead(fileName)) {
     return null
@@ -91,7 +89,7 @@ internal class SchemeChangeApplicator<T : Scheme, M : T>(private val schemeManag
           return newScheme != null && schemeManager.currentPendingSchemeName == processor.getSchemeKey(newScheme)
         }
         else {
-          // do not set active scheme if currently no active scheme
+          // do not set an active scheme if currently no active scheme
           // must be equals by reference
           return changedScheme === oldActiveScheme
         }

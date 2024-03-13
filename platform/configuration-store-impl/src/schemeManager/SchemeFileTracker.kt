@@ -23,7 +23,7 @@ internal class SchemeFileTracker<T : Scheme, M : T>(
   private val applicator = SchemeChangeApplicator(schemeManager)
 
   override fun after(events: List<VFileEvent>) {
-    val list = ArrayList<SchemeChangeEvent<T,M>>()
+    val list = ArrayList<SchemeChangeEvent<T, M>>()
     for (event in events) {
       if (event.requestor is SchemeManagerImpl<*, *>) {
         continue
