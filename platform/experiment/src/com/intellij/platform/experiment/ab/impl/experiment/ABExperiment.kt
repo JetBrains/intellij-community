@@ -1,17 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.experiment.ab.impl.experiment
 
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration
-import com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration.Companion.TOTAL_NUMBER_OF_BUCKETS
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOption
+import com.intellij.util.MathUtil
 import com.intellij.util.PlatformUtils
 
 fun getABExperimentInstance(): ABExperiment {
@@ -24,6 +25,10 @@ class ABExperiment {
   companion object {
     private val AB_EXPERIMENTAL_OPTION_EP = ExtensionPointName<ABExperimentOption>("com.intellij.experiment.abExperimentOption")
     private val LOG = logger<ABExperiment>()
+
+    private const val DEVICE_ID_PURPOSE = "A/B Experiment"
+    private const val DEVICE_ID_SALT = "ab experiment salt"
+    private const val TOTAL_NUMBER_OF_BUCKETS = 1024
 
     internal fun getJbABExperimentOptionList(): List<ABExperimentOption> {
       return AB_EXPERIMENTAL_OPTION_EP.extensionList.filter {
@@ -78,7 +83,11 @@ class ABExperiment {
   }
 
   internal fun getUserBucket(): Int {
-    return EventLogConfiguration.getInstance().bucket
+    val deviceId = LOG.runAndLogException {
+      MachineIdManager.getAnonymizedMachineId(DEVICE_ID_PURPOSE, DEVICE_ID_SALT)
+    }
+
+    return MathUtil.nonNegativeAbs(deviceId.hashCode()) % TOTAL_NUMBER_OF_BUCKETS
   }
 
   private fun computeUserABOptionByGroupCounts(groupCountToOption: List<Pair<Int, ABExperimentOption>>): ABExperimentOption {
