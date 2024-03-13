@@ -360,12 +360,11 @@ public final class InstanceOfUtils {
         PsiType type = typeElement.getType();
         PsiType castType = Objects.requireNonNull(cast.getCastType()).getType();
         PsiExpression castOperand = Objects.requireNonNull(cast.getOperand());
-        if (typeCompatible(type, castType, castOperand) &&
-            PsiEquivalenceUtil.areElementsEquivalent(instanceOf.getOperand(), castOperand)) {
-          return instanceOf;
-        }
-        if (PsiUtil.isJvmLocalVariable(variable) && isSafeToNarrowType(variable, cast, type)) {
-          return instanceOf;
+        if (PsiEquivalenceUtil.areElementsEquivalent(instanceOf.getOperand(), castOperand)) {
+          if (typeCompatible(type, castType, castOperand) ||
+              PsiUtil.isJvmLocalVariable(variable) && isSafeToNarrowType(variable, cast, type)) {
+            return instanceOf;
+          }
         }
       }
     }
