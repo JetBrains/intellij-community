@@ -39,6 +39,7 @@ native-dialog = "0.6.3"
 [build-dependencies]
 cargo-deny = "0.14.2" # checks licenses / vulns
 cargo-about = "0.5.7" # generates license report
+winresource = "0.1.17"
 
 [dev-dependencies]
 tempfile = "3"
