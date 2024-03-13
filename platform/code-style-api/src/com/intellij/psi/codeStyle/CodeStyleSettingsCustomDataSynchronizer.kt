@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileCustomDataConsumer
 import com.intellij.openapi.vfs.VirtualFileCustomDataProvider
-import com.intellij.psi.PsiManager
 import com.intellij.util.LineSeparator
 import com.intellij.util.messages.impl.subscribeAsFlow
 import kotlinx.coroutines.CancellationException
@@ -124,8 +123,8 @@ abstract class CodeStyleSettingsCustomDataSynchronizer<T : CustomCodeStyleSettin
   private suspend fun getActiveCodeStyleSettings(project: Project,
                                                  virtualFile: VirtualFile): Pair<CommonCodeStyleSettings, T>? {
     return readAction {
-      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: run {
-        LOG.trace { "Cannot find PSI file for ${virtualFile.path}. provider.id=$id" }
+      val psiFile = VirtualFileCustomDataProvider.getPsiFileSafe(virtualFile, project) ?: run {
+        LOG.trace { "Cannot get PSI file for ${virtualFile.path}. provider.id=$id" }
         return@readAction null
       }
       val common = CodeStyle.getSettings(psiFile).getCommonSettings(language)
