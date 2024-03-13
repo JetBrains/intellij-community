@@ -43,6 +43,8 @@ public class UnreachableCodeInspectionTest extends LightJavaCodeInsightFixtureTe
   public void testFailingCast() { doTest(); }
   
   public void testUnresolvedCast() { doTest(); }
+  
+  public void testUnresolvedCall() { doTest(); }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");
