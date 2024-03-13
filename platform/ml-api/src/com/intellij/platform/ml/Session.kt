@@ -52,13 +52,6 @@ sealed interface Session<P : Any> {
         return exception
       }
     }
-
-    companion object {
-      fun <P : Any> StartOutcome<P>.requireSuccess(): Session<P> = when (this) {
-        is Failure -> throw this.asThrowable()
-        is Success -> this.session
-      }
-    }
   }
 }
 

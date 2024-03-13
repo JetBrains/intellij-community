@@ -26,10 +26,10 @@ class MLLogsToJsonSaver(private val path: Path) {
       else -> value.toString()
     }
 
-  fun save(list: MutableList<Pair<String, Map<String, Any>>>) {
+  fun save(list: MutableList<Pair<String, Map<String, Any>>>, name: String) {
     val logs = list.joinToString(",\n") { mapToJson(mapOf("eventId" to it.first, "data" to it.second)) }
     val content = "let logs = [\n$logs\n];"
-    val filePath = path / "ml_logs.js"
+    val filePath = path / "$name.js"
     BufferedWriter(FileWriter(filePath.toFile())).use { it.write(content) }
   }
 }

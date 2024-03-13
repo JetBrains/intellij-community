@@ -4,13 +4,24 @@ package com.intellij.platform.ml.impl.session
 import com.intellij.platform.ml.Environment
 import com.intellij.platform.ml.NestableMLSession
 import com.intellij.platform.ml.Session
+import com.intellij.platform.ml.Session.StartOutcome
+import com.intellij.platform.ml.Session.StartOutcome.Failure
+import com.intellij.platform.ml.Session.StartOutcome.Success
 import com.intellij.platform.ml.SinglePrediction
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+fun <P : Any> StartOutcome<P>.requireSuccess(): Session<P> = when (this) {
+  is Failure -> throw this.asThrowable()
+  is Success -> this.session
+}
 
 /**
  * A wrapper for convenient usage of a [NestableMLSession].
  *
  * This function assumes that this session is nestable.
  */
+@ApiStatus.Internal
 suspend fun <P : Any> Session<P>.withNestedSessions(useCreator: suspend (NestableSessionWrapper<P>) -> Unit) {
   val nestableMLSession = requireNotNull(this as? NestableMLSession<P>)
 
@@ -34,6 +45,7 @@ suspend fun <P : Any> Session<P>.withNestedSessions(useCreator: suspend (Nestabl
  * This function assumes that this session is [NestableMLSession], and the nested
  * sessions' types are [SinglePrediction].
  */
+@ApiStatus.Internal
 suspend fun <T, P : Any> Session<P>.withPredictions(useModelWrapper: suspend (ModelWrapper<P>) -> T): T {
   val nestableMLSession = requireNotNull(this as? NestableMLSession<P>)
   val predictor = object : ModelWrapper<P> {
@@ -57,10 +69,12 @@ suspend fun <T, P : Any> Session<P>.withPredictions(useModelWrapper: suspend (Mo
   }
 }
 
+@ApiStatus.Internal
 interface NestableSessionWrapper<P : Any> {
   suspend fun nestConsidering(callParameters: Environment, levelEnvironment: Environment): Session<P>
 }
 
+@ApiStatus.Internal
 interface ModelWrapper<P : Any> {
   suspend fun predictConsidering(callParameters: Environment, predictionEnvironment: Environment): P
 

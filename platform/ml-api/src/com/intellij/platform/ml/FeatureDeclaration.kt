@@ -58,5 +58,7 @@ data class FeatureDeclaration<T>(
     fun categorical(name: String, possibleValues: Set<String>) = FeatureDeclaration(name, FeatureValueType.Categorical(possibleValues))
 
     fun version(name: String) = FeatureDeclaration(name, FeatureValueType.Version)
+
+    fun language(name: String) = FeatureDeclaration(name, FeatureValueType.Language)
   }
 }

@@ -79,5 +79,11 @@ sealed class FeatureValueType<T> {
     }
   }
 
+  object Language : FeatureValueType<com.intellij.lang.Language>() {
+    override fun instantiate(name: String, value: com.intellij.lang.Language): Feature {
+      return Feature.Language(name, value)
+    }
+  }
+
   override fun toString(): String = this.javaClass.simpleName
 }
