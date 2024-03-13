@@ -162,8 +162,7 @@ class SoftLinksTest {
   fun `links change`() {
     val builder = MutableEntityStorage.create()
 
-    val entity = OneEntityWithSymbolicId("Data", MySource)
-    builder.addEntity(entity)
+    val entity = builder addEntity OneEntityWithSymbolicId("Data", MySource)
     val symbolicId = entity.symbolicId
     val softLinkEntity = EntityWithSoftLinks(symbolicId,
                                              listOf(symbolicId),

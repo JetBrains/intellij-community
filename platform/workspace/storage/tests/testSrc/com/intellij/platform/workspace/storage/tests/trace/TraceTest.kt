@@ -9,6 +9,7 @@ import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.ImmutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.tests.builderFrom
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.trace.ReadTrace
@@ -153,7 +154,7 @@ class TraceTest {
     val newSnapshot = snapshot.toBuilder().also { builder ->
       val parent = builder.entities(NamedEntity::class.java).single()
       builder addEntity NamedChildEntity("Property", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(builder)
       }
     }.toSnapshot()
 

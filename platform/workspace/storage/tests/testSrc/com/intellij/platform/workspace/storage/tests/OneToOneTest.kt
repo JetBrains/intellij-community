@@ -16,8 +16,10 @@ class OneToOneTest {
     }
 
     val newBuilder = builder.toSnapshot().toBuilder()
-    newBuilder addEntity OoParentEntity("newData", MySource) {
-      this.child = parent.from(newBuilder).child
+    newBuilder addEntity OoParentEntity("newData", MySource) parent@{
+      newBuilder.modifyEntity(parent.from(newBuilder).child!!) child@{
+        this@parent.child = this@child
+      }
     }
 
     assertEquals("newData", newBuilder.entities(OoChildEntity::class.java).single().parentEntity.parentProperty)
@@ -36,8 +38,10 @@ class OneToOneTest {
     }
 
     val newBuilder = builder.toSnapshot().toBuilder()
-    newBuilder.modifyEntity(parent.from(newBuilder)) {
-      this.child = parentForChildSource.from(newBuilder).child
+    newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+      newBuilder.modifyEntity(parentForChildSource.from(newBuilder).child!!) child@{
+        this@parent.child = this@child
+      }
     }
 
     assertEquals(2, newBuilder.entities(OoChildEntity::class.java).toList().size)
@@ -49,14 +53,18 @@ class OneToOneTest {
     val parent = builder addEntity OoParentEntity("data", MySource)
 
     val newBuilder = builder.toSnapshot().toBuilder()
-    newBuilder addEntity OoChildWithNullableParentEntity(MySource) {
-      this.parentEntity = parent.from(newBuilder)
+    newBuilder addEntity OoChildWithNullableParentEntity(MySource) child@{
+      newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+        this@child.parentEntity = this@parent
+      }
     }
     newBuilder.modifyEntity(parent.from(newBuilder)) {
       this.entitySource = AnotherSource
     }
-    newBuilder addEntity OoChildWithNullableParentEntity(AnotherSource) {
-      this.parentEntity = parent.from(newBuilder)
+    newBuilder addEntity OoChildWithNullableParentEntity(AnotherSource) child@{
+      newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+        this@child.parentEntity = this@parent
+      }
     }
 
     val targetBuilder = builder.toSnapshot().toBuilder()

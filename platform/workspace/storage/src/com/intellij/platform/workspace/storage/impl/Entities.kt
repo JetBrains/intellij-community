@@ -306,6 +306,62 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
            it.childClass.findWorkspaceEntity().isAssignableFrom(childClass)
   }
 
+  public fun <R : WorkspaceEntity, M: WorkspaceEntity.Builder<R>> referrersBuilders(entityClass: Class<R>, checkReversedConnection: Boolean): Sequence<M> {
+    val myDiff = diff
+    val entitiesFromDiff: Sequence<M> = if (myDiff != null) {
+      getBuilderReferences(myDiff as MutableEntityStorageImpl, entityClass, checkReversedConnection)
+    } else emptySequence()
+
+    val entityClassId = entityClass.toClassId()
+    val thisClassId = getEntityClass().toClassId()
+    val res: Any? = entityLinks.entries.singleOrNull {
+      it.key.connectionId.parentClass == entityClassId && it.key.connectionId.childClass == thisClassId
+        || it.key.connectionId.parentClass == thisClassId && it.key.connectionId.childClass == entityClassId
+    }?.value
+    val refsFromLinks: Sequence<M> = if (res == null) {
+      emptySequence()
+    }
+    else {
+      if (res is List<*>) {
+        @Suppress("UNCHECKED_CAST")
+        res.asSequence() as Sequence<M>
+      }
+      else {
+        @Suppress("UNCHECKED_CAST")
+        sequenceOf(res as M)
+      }
+    }
+    return entitiesFromDiff + refsFromLinks
+  }
+
+  private fun <R : WorkspaceEntity, M : WorkspaceEntity.Builder<R>> getBuilderReferences(
+    mySnapshot: MutableEntityStorageImpl,
+    entityClass: Class<R>,
+    checkReversedConnection: Boolean = false
+  ): Sequence<M> {
+    var connectionId = mySnapshot.refs.findConnectionId(getEntityInterface(), entityClass)
+    if (connectionId != null) {
+      val entitiesSequence = when (connectionId.connectionType) {
+        ConnectionId.ConnectionType.ONE_TO_MANY, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> mySnapshot.getManyChildrenBuilders(connectionId, this)
+        ConnectionId.ConnectionType.ONE_TO_ONE, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> mySnapshot.getOneChildBuilder(connectionId, this)
+          ?.let { sequenceOf(it) }
+          ?: emptySequence()
+      } as Sequence<M>
+      // If the resulting sequence is empty, and its connection between two entities of the same type, we should continue search
+      if (!checkReversedConnection || entitiesSequence.any() || getEntityInterface() != entityClass) {
+        return entitiesSequence
+      }
+    }
+    connectionId = mySnapshot.refs.findConnectionId(entityClass, getEntityInterface())
+    if (connectionId != null) {
+      return mySnapshot
+        .getParentBuilder(connectionId, this)
+        ?.let { sequenceOf(it as M) }
+        ?: emptySequence()
+    }
+    return emptySequence()
+  }
+
   override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>): Sequence<R> {
     return referrers(entityClass, false)
   }

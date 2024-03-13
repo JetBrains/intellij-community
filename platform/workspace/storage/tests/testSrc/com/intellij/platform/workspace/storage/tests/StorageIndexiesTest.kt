@@ -52,10 +52,8 @@ class StorageIndexesTest {
     val firstRoot = virtualFileUrlManager.getOrCreateFromUrl("/m2/root/one".toPathWithScheme())
     val secondRoot = virtualFileUrlManager.getOrCreateFromUrl("/m2/root/second".toPathWithScheme())
 
-    val entity = VFUEntity2("VFUEntityData", directory, listOf(firstRoot, secondRoot), VFUEntitySource(sourceUrl))
-
     val builder = MutableEntityStorage.create()
-    builder.addEntity(entity)
+    val entity = builder addEntity VFUEntity2("VFUEntityData", directory, listOf(firstRoot, secondRoot), VFUEntitySource(sourceUrl))
 
     compareEntityByProperty(builder, entity, "entitySource", sourceUrl) { it.entitySource.virtualFileUrl!! }
     compareEntityByProperty(builder, entity, "directoryPath", directory) { it.directoryPath }
@@ -65,11 +63,10 @@ class StorageIndexesTest {
 
   @Test
   fun `check persistent id index`() {
-    val entity = FirstEntityWithPId("FirstEntityData", MySource)
-
     val builder = MutableEntityStorage.create()
     builder as MutableEntityStorageImpl
-    builder.addEntity(entity)
+    val entity = builder addEntity FirstEntityWithPId("FirstEntityData", MySource)
+
     val entityIds = builder.indexes.symbolicIdIndex.getIdsByEntry(entity.symbolicId)
     assertNotNull(entityIds)
   }

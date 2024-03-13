@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.platform.workspace.storage.testEntities.entities.NamedChildEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.NamedEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
+import com.intellij.platform.workspace.storage.tests.builderFrom
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.platform.workspace.storage.tests.makeBuilder
 import org.junit.jupiter.api.Test
@@ -198,7 +199,7 @@ class ApplyChangesFromOrderingTest {
     val source = makeBuilder(target) {
       val parent = this.entities<NamedEntity>().single()
       this addEntity NamedChildEntity("Four", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@makeBuilder)
       }
     }
 

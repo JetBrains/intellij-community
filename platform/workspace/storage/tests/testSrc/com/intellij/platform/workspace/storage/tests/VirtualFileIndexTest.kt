@@ -191,8 +191,8 @@ class VirtualFileIndexTest {
     val entityB = builder addEntity VFUEntity("foo", virtualFileManager.getOrCreateFromUrl(fileUrlB), SampleEntitySource("test"))
     builder addEntity VFUEntity("baz", virtualFileManager.getOrCreateFromUrl(fileUrlC), SampleEntitySource("test"))
     builder.assertConsistency()
-    assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityA as VFUEntityImpl.Builder).id).first())
-    assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityB as VFUEntityImpl.Builder).id).first())
+    assertEquals(entityA.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityA as VFUEntityImpl).id).first())
+    assertEquals(entityB.fileProperty, builder.indexes.virtualFileIndex.getVirtualFiles((entityB as VFUEntityImpl).id).first())
     assertSame(entityA.fileProperty, entityB.fileProperty)
 
     assertEquals(fileUrlA, entityA.fileProperty.url)

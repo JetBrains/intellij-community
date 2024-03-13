@@ -384,8 +384,10 @@ class WorkspaceModelReactiveTest {
     writeAction {
       wm.updateProjectModel {
         val entity = it.entities(ChildSubEntity::class.java).single()
-        it addEntity ParentSubEntity("ParentData2", MySource) {
-          this.child = entity
+        it addEntity ParentSubEntity("ParentData2", MySource) parent@{
+          it.modifyEntity(entity) entity@{
+            this@parent.child = this@entity
+          }
         }
       }
     }

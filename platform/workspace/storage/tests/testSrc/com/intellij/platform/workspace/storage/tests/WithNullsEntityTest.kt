@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -9,13 +9,11 @@ import kotlin.test.assertEquals
 class WithNullsEntityTest {
   @Test
   fun `add parent and then child nullable`() {
-    val parent = ParentWithNulls("Parent", MySource) {
-    }
     val builder = MutableEntityStorage.create()
-    builder.addEntity(parent)
+    val parent = builder addEntity ParentWithNulls("Parent", MySource)
 
     val child = ChildWithNulls("data", MySource) {
-      this.parentEntity = parent
+      this.parentEntity = parent.builderFrom(builder)
     }
 
     assertEquals("Parent", child.parentEntity!!.child!!.parentEntity!!.parentData)
@@ -23,14 +21,11 @@ class WithNullsEntityTest {
 
   @Test
   fun `add parent and then child nullable 1`() {
-    val child = ChildWithNulls("data", MySource) {
-    }
     val builder = MutableEntityStorage.create()
-    builder.addEntity(child)
+    val child = builder addEntity ChildWithNulls("data", MySource)
 
     builder.modifyEntity(child) {
-      this.parentEntity = ParentWithNulls("Parent", MySource) {
-      }
+      this.parentEntity = ParentWithNulls("Parent", MySource)
     }
 
     assertEquals("Parent", child.parentEntity!!.child!!.parentEntity!!.parentData)

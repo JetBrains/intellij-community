@@ -201,9 +201,9 @@ class MutableEntityCollectionTest {
     val builder = createEmptyBuilder()
     builder.addEntity(SetVFUEntity("hello", vfuSet, SampleEntitySource("test")))
     val entity = builder.entities(SetVFUEntity::class.java).first()
-    entity as SetVFUEntityImpl.Builder
+    val entityBuilder = entity.builderFrom(builder) as SetVFUEntityImpl.Builder
     assertThrows<IllegalStateException> {
-      entity.fileProperty.remove(entity.fileProperty.first())
+      entityBuilder.fileProperty.remove(entity.fileProperty.first())
     }
   }
 

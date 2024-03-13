@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
 import com.intellij.platform.workspace.storage.query.*
 import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.tests.builderFrom
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
 import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Disabled
@@ -263,10 +264,10 @@ class CacheApiTest {
     val snapshot = createNamedEntity {
       val parent = this.resolve(NameId("MyName"))!!
       this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
       this addEntity NamedChildEntity("prop2", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
     }
     val query = entities<NamedEntity>()
@@ -284,7 +285,7 @@ class CacheApiTest {
         this.myName = "AnotherName"
       }
       it addEntity NamedChildEntity("prop3", AnotherSource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(it)
       }
     }
 
@@ -319,10 +320,10 @@ class CacheApiTest {
       val parent = this.resolve(NameId("MyName"))!!
       this.getMutableExternalMapping(externalMappingKey).addMapping(parent, "externalInfo")
       this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
       this addEntity NamedChildEntity("prop2", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
     }
     val query = entitiesByExternalMapping("test", "externalInfo").flatMap { entity, _ ->
@@ -343,7 +344,7 @@ class CacheApiTest {
     val snapshot2 = snapshot.toBuilder().also {
       val parent = it.resolve(NameId("MyName"))!!
       it addEntity NamedChildEntity("prop3", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(it)
       }
     }.toSnapshot()
 
@@ -389,10 +390,10 @@ class CacheApiTest {
     val snapshot = createNamedEntity {
       val parent = this.resolve(NameId("MyName"))!!
       this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
       this addEntity NamedChildEntity("prop2", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
     }
     val query = entities<NamedEntity>().flatMap { entity, _ ->
@@ -456,10 +457,10 @@ class CacheApiTest {
     val snapshot = createNamedEntity {
       val parent = this.resolve(NameId("MyName"))!!
       this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
       this addEntity NamedChildEntity("prop2", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
     }
     val query = entities<NamedEntity>().flatMap { entity, _ ->
@@ -501,10 +502,10 @@ class CacheApiTest {
     val snapshot = createNamedEntity {
       val parent = this.resolve(NameId("MyName"))!!
       this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
       this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
     }
     val query = entities<NamedChildEntity>().map {
@@ -810,7 +811,7 @@ class CacheApiTest {
     val snapshot = createNamedEntity {
       val parent = this.entities(NamedEntity::class.java).single()
       this addEntity NamedChildEntity("Child", MySource) {
-        this.parentEntity = parent
+        this.parentEntity = parent.builderFrom(this@createNamedEntity)
       }
     }
     val query = entities<NamedEntity>()

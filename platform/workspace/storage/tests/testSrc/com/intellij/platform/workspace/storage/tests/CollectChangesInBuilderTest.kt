@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityChange
@@ -134,7 +134,7 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `add parent with child`() {
-    val parent = builder addEntity XParentEntity("added", MySource)
+    val parent = XParentEntity("added", MySource)
     builder addEntity XChildEntity("added", MySource) {
       parentEntity = parent
     }
@@ -147,7 +147,7 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `remove parent with child`() {
-    val parent = builder addEntity XParentEntity("to remove", MySource)
+    val parent = XParentEntity("to remove", MySource)
     builder addEntity XChildEntity("to remove", MySource) {
       parentEntity = parent
     }
@@ -163,7 +163,7 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `remove child by modifying parent`() {
-    val parent = builder addEntity XParentEntity("parent", MySource)
+    val parent = XParentEntity("parent", MySource)
     builder addEntity XChildEntity("to remove", MySource) {
       parentEntity = parent
     }
@@ -179,7 +179,7 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `move child between parents`() {
-    val parent = builder addEntity XParentEntity("One", MySource)
+    val parent = XParentEntity("One", MySource)
     val parent2 = builder addEntity XParentEntity("Two", MySource)
     val child = builder addEntity XChildEntity("Child", MySource) {
       parentEntity = parent
@@ -187,8 +187,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder.modifyEntity(parent2.from(newBuilder)) {
-      this.children = listOf(child)
+    newBuilder.modifyEntity(parent2.from(newBuilder)) parent@{
+      newBuilder.modifyEntity(child.from(newBuilder)) child@{
+        this@parent.children = listOf(this@child)
+      }
     }
 
     assertEquals(0, newBuilder.entities(XParentEntity::class.java).single { it.parentProperty == "One" }.children.size)
@@ -200,7 +202,7 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `move child between parents from child`() {
-    val parent = builder addEntity XParentEntity("One", MySource)
+    val parent = XParentEntity("One", MySource)
     val parent2 = builder addEntity XParentEntity("Two", MySource)
     val child = builder addEntity XChildEntity("Child", MySource) {
       parentEntity = parent
@@ -208,8 +210,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder.modifyEntity(child.from(newBuilder)) {
-      this.parentEntity = parent2
+    newBuilder.modifyEntity(child.from(newBuilder)) child@{
+      newBuilder.modifyEntity(parent2.from(newBuilder)) parent@{
+        this@child.parentEntity = this@parent
+      }
     }
 
     assertEquals(0, newBuilder.entities(XParentEntity::class.java).single { it.parentProperty == "One" }.children.size)
@@ -243,8 +247,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder addEntity XChildEntity("Child", MySource) {
-      this.parentEntity = parent.from(newBuilder)
+    newBuilder addEntity XChildEntity("Child", MySource) child@{
+      newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+        this@child.parentEntity = this@parent
+      }
     }
 
     assertEquals(1, newBuilder.entities(XParentEntity::class.java).single().children.size)
@@ -262,8 +268,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder.modifyEntity(parent.from(newBuilder)) {
-      this.child = child.from(newBuilder)
+    newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+      newBuilder.modifyEntity(child.from(newBuilder)) child@{
+        this@parent.child = this@child
+      }
     }
 
     assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
@@ -281,8 +289,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder.modifyEntity(child.from(newBuilder)) {
-      this.parent = parent.from(newBuilder)
+    newBuilder.modifyEntity(child.from(newBuilder)) child@{
+      newBuilder.modifyEntity(parent.from(newBuilder)) parent@{
+        this@child.parent = this@parent
+      }
     }
 
     assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
@@ -295,9 +305,8 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `remove child`() {
-    val parent = builder addEntity OptionalOneToOneParentEntity(MySource)
     val child = builder addEntity OptionalOneToOneChildEntity("Hey", MySource) {
-      this.parent = parent
+      this.parent = OptionalOneToOneParentEntity(MySource)
     }
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
@@ -318,8 +327,10 @@ class CollectChangesInBuilderTest {
     val snapshot = builder.toSnapshot()
     val newBuilder = snapshot.toBuilder()
 
-    newBuilder addEntity OptionalOneToOneParentEntity(MySource) {
-      this.child = child.from(newBuilder)
+    newBuilder addEntity OptionalOneToOneParentEntity(MySource) parent@{
+      newBuilder.modifyEntity(child.from(newBuilder)) child@{
+        this@parent.child = this@child
+      }
     }
 
     assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)

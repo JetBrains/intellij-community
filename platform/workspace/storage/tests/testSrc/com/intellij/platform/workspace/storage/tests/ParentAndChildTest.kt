@@ -139,9 +139,9 @@ class ParentAndChildTest {
     val entity = ParentEntity("ParentData", MySource)
 
     val builder = MutableEntityStorage.create()
-    builder.addEntity(entity)
+    val addedEntity = builder.addEntity(entity)
 
-    builder.modifyEntity(entity) {
+    builder.modifyEntity(addedEntity) {
       this.parentData = "NewData"
     }
 

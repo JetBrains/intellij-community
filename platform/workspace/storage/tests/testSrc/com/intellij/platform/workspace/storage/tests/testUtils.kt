@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
@@ -171,4 +172,14 @@ object SerializationRoundTripChecker: BaseSerializationChecker() {
  */
 internal fun <T : WorkspaceEntity> T.from(storage: EntityStorage): T {
   return this.createPointer<T>().resolve(storage)!!
+}
+
+internal fun <T: WorkspaceEntity.Builder<M>, M: WorkspaceEntity> M.builderFrom(from: MutableEntityStorage): T {
+  val pointer = this.createPointer<M>()
+  val entityFromBuilder = pointer.resolve(from)!!
+  var thief: T? = null
+  from.modifyEntity(WorkspaceEntity.Builder::class.java, entityFromBuilder) {
+    thief = this as T
+  }
+  return thief!!
 }

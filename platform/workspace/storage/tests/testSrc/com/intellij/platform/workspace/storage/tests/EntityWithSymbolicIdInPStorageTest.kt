@@ -69,8 +69,10 @@ class EntityWithSymbolicIdInPStorageTest {
   @Test
   fun `remove child entity with parent entity`() {
     val parent = builder addEntity XParentEntity("parent", MySource)
-    builder addEntity XChildEntity("child", MySource) {
-      parentEntity = parent
+    builder addEntity XChildEntity("child", MySource) child@{
+      builder.modifyEntity(parent) parent@{
+        this@child.parentEntity = this@parent
+      }
     }
     builder.assertConsistency()
     builder.removeEntity(parent)

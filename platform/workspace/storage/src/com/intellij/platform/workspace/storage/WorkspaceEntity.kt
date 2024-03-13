@@ -3,6 +3,7 @@ package com.intellij.platform.workspace.storage
 
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegate
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegateMutable
 
 /**
  * A base interface for entities in [the storage](psi_element://com.intellij.platform.workspace.storage).
@@ -106,6 +107,10 @@ public interface WorkspaceEntity {
      */
     public inline fun <reified T> extension(): WorkspaceEntityExtensionDelegate<T> {
       return WorkspaceEntityExtensionDelegate()
+    }
+
+    public inline fun <reified T, reified W: WorkspaceEntity> extensionBuilder(clazz: Class<W>): WorkspaceEntityExtensionDelegateMutable<T, W> {
+      return WorkspaceEntityExtensionDelegateMutable(clazz)
     }
   }
 

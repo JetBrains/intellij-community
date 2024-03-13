@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlready
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.testEntities.entities.*
+import com.intellij.platform.workspace.storage.tests.builderFrom
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.junit.Assert
@@ -263,7 +264,7 @@ private object ChildWithOptionalParentManipulation : EntityManipulation {
         ), null)
         val parentEntity = parentId?.let { storage.entityDataByIdOrDie(it).createEntity(storage) as XParentEntity }
         return storage addEntity XChildWithOptionalParentEntity(someProperty, source) {
-          optionalParent = parentEntity
+          optionalParent = parentEntity?.builderFrom(storage)
         } to "Select parent for child: ${parentId?.asString()}"
       }
     }
@@ -317,7 +318,7 @@ private object OoChildManipulation : EntityManipulation {
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parentEntity = selectParent(storage, env) ?: return null to "Cannot select parent"
         val newChild = storage addEntity OoChildEntity(someProperty, source) {
-          this.parentEntity = parentEntity
+          this.parentEntity = parentEntity.builderFrom(storage)
         }
         return newChild to "Selected parent: $parentEntity"
       }
@@ -348,7 +349,7 @@ private object OoChildWithNullableParentManipulation : EntityManipulation {
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parentEntity = selectParent(storage, env) ?: return null to "Cannot select parent"
         return storage addEntity OoChildWithNullableParentEntity(source) {
-          this.parentEntity = parentEntity
+          this.parentEntity = parentEntity.builderFrom(storage)
         } to "Selected parent: $parentEntity"
       }
     }
@@ -400,7 +401,7 @@ private object AbstractEntities {
                                 env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
           val children = selectChildren(env, storage).toList()
           return storage addEntity LeftEntity(source) {
-            this@LeftEntity.children = children
+            this@LeftEntity.children = children.map { it.builderFrom(storage) }
           } to "Children: ${children.toList()}"
         }
       }
@@ -426,7 +427,7 @@ private object AbstractEntities {
                                 env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
           val children = selectChildren(env, storage).toList()
           return storage addEntity RightEntity(source) {
-            this@RightEntity.children = children
+            this@RightEntity.children = children.map { it.builderFrom(storage) }
           } to "Children: ${children.toList()}"
         }
       }
@@ -468,7 +469,7 @@ private object ChildEntityManipulation : EntityManipulation {
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val parent = selectParent(storage, env) ?: return null to "Cannot select parent"
         return storage addEntity XChildEntity(someProperty, source) {
-          parentEntity = parent
+          parentEntity = parent.builderFrom(storage)
         } to "Selected parent: $parent"
       }
     }

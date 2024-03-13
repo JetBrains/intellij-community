@@ -185,7 +185,7 @@ internal class MutableEntityStorageImpl(
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> = getEntitiesTimeMs.addMeasuredTime {
     @Suppress("UNCHECKED_CAST")
-    entitiesByType[entityClass.toClassId()]?.all()?.map { it.wrapAsModifiable(this) } as? Sequence<E> ?: emptySequence()
+    entitiesByType[entityClass.toClassId()]?.all()?.map { it.createEntity(this) } as? Sequence<E> ?: emptySequence()
   }
 
   override fun <E : WorkspaceEntityWithSymbolicId, R : WorkspaceEntity> referrers(
@@ -197,7 +197,7 @@ internal class MutableEntityStorageImpl(
     @Suppress("UNCHECKED_CAST")
     indexes.softLinks.getIdsByEntry(id).asSequence()
       .filter { it.clazz == classId }
-      .map { entityDataByIdOrDie(it).wrapAsModifiable(this) as R }
+      .map { entityDataByIdOrDie(it).createEntity(this) as R }
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -205,7 +205,7 @@ internal class MutableEntityStorageImpl(
     val entityIds = indexes.symbolicIdIndex.getIdsByEntry(id) ?: return@addMeasuredTime null
     val entityData: WorkspaceEntityData<WorkspaceEntity> = entityDataById(entityIds) as? WorkspaceEntityData<WorkspaceEntity>
                                                            ?: return@addMeasuredTime null
-    return@addMeasuredTime entityData.wrapAsModifiable(this) as E?
+    return@addMeasuredTime entityData.createEntity(this) as E?
   }
 
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Sequence<WorkspaceEntity> {
@@ -218,7 +218,7 @@ internal class MutableEntityStorageImpl(
         .asSequence()
         .flatMap { source ->
           val entityIds = index.getIdsByEntry(source) ?: error("Entity source $source expected to be in the index")
-          entityIds.asSequence().map { this.entityDataByIdOrDie(it).wrapAsModifiable(this) }
+          entityIds.asSequence().map { this.entityDataByIdOrDie(it).createEntity(this) }
         }
     }
   }

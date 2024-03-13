@@ -3,9 +3,11 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
@@ -14,7 +16,7 @@ class AbstractEntitiesTest {
   fun `simple adding`() {
     val builder = MutableEntityStorage.create()
 
-    val middleEntity = builder addEntity MiddleEntity("prop", MySource)
+    val middleEntity = MiddleEntity("prop", MySource)
     builder addEntity LeftEntity(MySource) {
       children = listOf(middleEntity)
     }
@@ -29,12 +31,12 @@ class AbstractEntitiesTest {
   fun `modifying left entity`() {
     val builder = MutableEntityStorage.create()
 
-    val middleEntity = builder addEntity MiddleEntity("first", MySource)
+    val middleEntity = MiddleEntity("first", MySource)
     val leftEntity = builder addEntity LeftEntity(MySource) {
       children = listOf(middleEntity)
     }
 
-    val anotherMiddleEntity = builder addEntity MiddleEntity("second", MySource)
+    val anotherMiddleEntity = MiddleEntity("second", MySource)
     builder.modifyEntity(leftEntity) {
 
     }
@@ -46,7 +48,7 @@ class AbstractEntitiesTest {
 
     val actualLeftEntity = assertOneElement(storage.entities(LeftEntity::class.java).toList())
     val actualChild = assertOneElement(actualLeftEntity.children.toList())
-    assertEquals(anotherMiddleEntity, actualChild)
+    assertEquals(anotherMiddleEntity.property, (actualChild as MiddleEntity).property)
     assertEquals(anotherMiddleEntity.property, (actualChild as MiddleEntity).property)
   }
 
@@ -54,12 +56,12 @@ class AbstractEntitiesTest {
   fun `modifying abstract entity`() {
     val builder = MutableEntityStorage.create()
 
-    val middleEntity = builder addEntity MiddleEntity("prop", MySource)
+    val middleEntity = MiddleEntity("prop", MySource)
     val leftEntity = builder addEntity LeftEntity(MySource) {
       children = listOf(middleEntity)
     }
 
-    val anotherMiddleEntity = builder addEntity MiddleEntity("prop", MySource)
+    val anotherMiddleEntity = MiddleEntity("prop", MySource)
     builder.modifyEntity(leftEntity) {
       this.children = listOf(anotherMiddleEntity)
     }
@@ -68,25 +70,25 @@ class AbstractEntitiesTest {
 
     val actualLeftEntity = assertOneElement(storage.entities(LeftEntity::class.java).toList())
     val actualChild = assertOneElement(actualLeftEntity.children.toList())
-    assertEquals(anotherMiddleEntity, actualChild)
+    assertEquals(anotherMiddleEntity.property, (actualChild as MiddleEntity).property)
     assertEquals(anotherMiddleEntity.property, (actualChild as MiddleEntity).property)
   }
 
   @Test
   fun `children replace in applyChangesFrom`() {
     val builder = MutableEntityStorage.create()
-    val middleEntity = builder addEntity MiddleEntity("prop", MySource)
+    val middleEntity = MiddleEntity("prop", MySource)
     val leftEntity = builder addEntity LeftEntity(MySource) {
       children = listOf(middleEntity)
     }
 
     val anotherBuilder = MutableEntityStorage.from(builder.toSnapshot())
-    val anotherMiddleEntity = anotherBuilder addEntity MiddleEntity("Another", MySource)
+    val anotherMiddleEntity = MiddleEntity("Another", MySource)
     anotherBuilder.modifyEntity(leftEntity.from(anotherBuilder)) {
       this.children = listOf(middleEntity, anotherMiddleEntity)
     }
 
-    val initialMiddleEntity = builder addEntity MiddleEntity("Initial", MySource)
+    val initialMiddleEntity = MiddleEntity("Initial", MySource)
     builder.modifyEntity(leftEntity) {
       this.children = listOf(middleEntity, initialMiddleEntity)
     }
@@ -103,23 +105,23 @@ class AbstractEntitiesTest {
   @Test
   fun `keep children ordering when making storage`() {
     val builder = MutableEntityStorage.create()
-    val middleEntity1 = builder addEntity MiddleEntity("One", MySource)
-    val middleEntity2 = builder addEntity MiddleEntity("Two", MySource)
+    val middleEntity1 = MiddleEntity("One", MySource)
+    val middleEntity2 = MiddleEntity("Two", MySource)
     builder addEntity LeftEntity(MySource) {
       children = listOf(middleEntity1, middleEntity2)
     }
 
     val storage = builder.toSnapshot()
     val children = storage.entities(LeftEntity::class.java).single().children.toList()
-    assertEquals(middleEntity1, children[0])
-    assertEquals(middleEntity2, children[1])
+    assertEquals(middleEntity1.property, (children[0] as MiddleEntity).property)
+    assertEquals(middleEntity2.property, (children[1] as MiddleEntity).property)
   }
 
   @Test
   fun `keep children ordering when making storage 2`() {
     val builder = MutableEntityStorage.create()
-    val middleEntity1 = builder addEntity MiddleEntity("Two", MySource)
-    val middleEntity2 = builder addEntity MiddleEntity("One", MySource)
+    val middleEntity1 = MiddleEntity("Two", MySource)
+    val middleEntity2 = MiddleEntity("One", MySource)
     builder addEntity LeftEntity(MySource) {
       children = listOf(middleEntity1, middleEntity2)
     }
@@ -135,15 +137,15 @@ class AbstractEntitiesTest {
 
     val storage = builder.toSnapshot()
     val children = storage.entities(LeftEntity::class.java).last().children.toList()
-    assertEquals(middleEntity2, children[0])
-    assertEquals(middleEntity1, children[1])
+    assertEquals(middleEntity2.property, (children[0] as MiddleEntity).property)
+    assertEquals(middleEntity1.property, (children[1] as MiddleEntity).property)
   }
 
   @Test
   fun `keep children ordering after rbs 1`() {
     val builder = MutableEntityStorage.create()
-    val middleEntity1 = builder addEntity MiddleEntity("One", MySource)
-    val middleEntity2 = builder addEntity MiddleEntity("Two", MySource)
+    val middleEntity1 = MiddleEntity("One", MySource)
+    val middleEntity2 = MiddleEntity("Two", MySource)
     builder addEntity LeftEntity(MySource) {
       children = listOf(middleEntity1, middleEntity2)
     }
@@ -160,8 +162,8 @@ class AbstractEntitiesTest {
   @Test
   fun `keep children ordering after rbs 2`() {
     val builder = MutableEntityStorage.create()
-    val middleEntity1 = builder addEntity MiddleEntity("One", MySource)
-    val middleEntity2 = builder addEntity MiddleEntity("Two", MySource)
+    val middleEntity1 = MiddleEntity("One", MySource)
+    val middleEntity2 = MiddleEntity("Two", MySource)
     builder addEntity LeftEntity(MySource) {
       children = listOf(middleEntity2, middleEntity1)
     }
@@ -200,7 +202,7 @@ class AbstractEntitiesTest {
   fun `modifying one to one parent switch`() {
     val builder = MutableEntityStorage.create()
 
-    val child = builder addEntity LeftEntity(AnotherSource)
+    val child = LeftEntity(AnotherSource)
 
     builder addEntity HeadAbstractionEntity("Info", MySource) {
       this.child = child
@@ -215,6 +217,8 @@ class AbstractEntitiesTest {
   }
 
   @Test
+  @Disabled("Change of behaviour after IJPL-583")
+  // Deprecation note: Now builder.entities returns entitiesImpls instead of builders that are modified
   fun `entity changes visible in mutable storage`() {
     var builder = MutableEntityStorage.create()
     val entity = ParentEntity("ParentData", MySource)
@@ -224,7 +228,7 @@ class AbstractEntitiesTest {
     val resultEntity = builder.entities(ParentEntity::class.java).single()
     resultEntity.parentData
     var firstEntityData = (entity as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
-    var secondEntityData = (resultEntity as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
+    var secondEntityData = resultEntity.asBase().getData()
     assertSame(firstEntityData, secondEntityData)
     val originalEntityData = firstEntityData
 
@@ -252,8 +256,8 @@ class AbstractEntitiesTest {
   fun `add entity with child then steal this child with different entity`() {
     val builder = MutableEntityStorage.create()
 
-    val child = builder addEntity MiddleEntity("", SampleEntitySource(""))
-    val anotherChild = builder addEntity LeftEntity(MySource) {
+    val child = MiddleEntity("", SampleEntitySource(""))
+    val anotherChild = LeftEntity(MySource) {
       this.children = listOf(child)
     }
 

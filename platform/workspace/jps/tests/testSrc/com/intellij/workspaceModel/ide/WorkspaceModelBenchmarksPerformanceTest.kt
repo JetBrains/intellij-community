@@ -102,11 +102,10 @@ class WorkspaceModelBenchmarksPerformanceTest {
         val builder = storage.toBuilder()
 
 
-        val ooParent = builder addEntity NamedEntity("$it", MySource)
         builder addEntity NamedChildEntity("Child", MySource) {
-          this.parentEntity = ooParent
+          this.parentEntity = NamedEntity("$it", MySource)
         }
-        builder addEntity ComposedIdSoftRefEntity("-$it", ooParent.symbolicId, MySource)
+        builder addEntity ComposedIdSoftRefEntity("-$it", NameId("$it"), MySource)
 
         storage = builder.toSnapshot()
       }

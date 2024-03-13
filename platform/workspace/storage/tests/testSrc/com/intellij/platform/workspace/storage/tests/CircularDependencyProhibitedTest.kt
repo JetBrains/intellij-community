@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -15,7 +15,7 @@ class CircularDependencyProhibitedTest {
 
     assertThrows<IllegalStateException> {
       builder.modifyEntity(entity) {
-        this.parent = entity
+        this.parent = this
       }
     }
   }
@@ -27,7 +27,7 @@ class CircularDependencyProhibitedTest {
 
     assertThrows<IllegalStateException> {
       builder.modifyEntity(entity) {
-        this.child = entity
+        this.child = this
       }
     }
   }
@@ -39,7 +39,7 @@ class CircularDependencyProhibitedTest {
 
     assertThrows<IllegalStateException> {
       builder.modifyEntity(entity) {
-        this.children = listOf(entity)
+        this.children = listOf(this)
       }
     }
   }
@@ -51,7 +51,7 @@ class CircularDependencyProhibitedTest {
 
     assertThrows<IllegalStateException> {
       builder.modifyEntity(entity) {
-        this.parentEntity = entity
+        this.parentEntity = this
       }
     }
   }
@@ -63,7 +63,7 @@ class CircularDependencyProhibitedTest {
 
     assertThrows<IllegalStateException> {
       builder.modifyEntity(entity) {
-        this.children = listOf(entity)
+        this.children = listOf(this)
       }
     }
   }
@@ -75,7 +75,7 @@ class CircularDependencyProhibitedTest {
 
     assertThrows<IllegalStateException> {
       builder.modifyEntity(entity) {
-        this.parentInList = entity
+        this.parentInList = this
       }
     }
   }
