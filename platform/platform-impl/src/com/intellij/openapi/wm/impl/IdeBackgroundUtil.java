@@ -141,7 +141,7 @@ public final class IdeBackgroundUtil {
     }));
   }
 
-  public static void createTemporaryBackgroundTransform(JPanel root,
+  public static void createTemporaryBackgroundTransform(JComponent root,
                                                         Image image,
                                                         Fill fill,
                                                         Anchor anchor,
