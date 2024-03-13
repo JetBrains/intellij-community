@@ -74,11 +74,11 @@ fun isAIDisabledBeforeMigrated(): Boolean {
   return Files.exists(PathManager.getConfigDir().resolve(NOT_MIGRATED_FILENAME))
 }
 
-internal fun migrateAiFromUpdateCommand(newPluginsDir: Path,
-                                        newConfigDir: Path,
-                                        previousVersion: String?,
-                                        log: Logger,
-                                        pluginsToDownload: MutableList<IdeaPluginDescriptor>) {
+internal fun migrateAiForToolbox(newPluginsDir: Path,
+                                 newConfigDir: Path,
+                                 previousVersion: String?,
+                                 log: Logger,
+                                 pluginsToDownload: MutableList<IdeaPluginDescriptor>) {
   if (previousVersion == "2023.3") {
     val disabledPluginsConfig = newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
     val disabledIds: Set<PluginId> = if (Files.exists(disabledPluginsConfig)) {
