@@ -45,6 +45,7 @@ object Launcher {
       "-Duse.linux.keychain=false",
       "-Didea.initially.ask.config=never",
       "-Dide.show.tips.on.startup.default.value=false",
+      "-Didea.home.path=${paths.sourcesRootFolder.canonicalPath}",
       "-Didea.config.path=${paths.configFolder.canonicalPath}",
       "-Didea.system.path=${paths.systemFolder.canonicalPath}",
       "-Didea.log.path=${paths.logFolder.canonicalPath}",
