@@ -215,9 +215,11 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
   }
 
   override fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>) {
-    batchStorageEvents.forEach { (store, storages) ->
-      LOG.debug(Exception()) { "[RELOAD] registering to reload: ${storages.joinToString("\n")}" }
+    if (LOG.isDebugEnabled) {
+      LOG.debug("[RELOAD] registering to reload: ${batchStorageEvents.entries.joinToString("\n")}", Exception())
+    }
 
+    for ((store, storages) in batchStorageEvents) {
       synchronized(changedStorages) {
         changedStorages.computeIfAbsent(store as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
       }
@@ -232,8 +234,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     scheduleProcessingChangedFiles()
   }
 
-  internal fun <T : Scheme, M : T> registerChangedSchemes(events: List<SchemeChangeEvent<T, M>>,
-                                                          schemeFileTracker: SchemeChangeApplicator<T, M>) {
+  internal fun <T : Scheme, M : T> registerChangedSchemes(events: List<SchemeChangeEvent<T, M>>, schemeFileTracker: SchemeChangeApplicator<T, M>) {
     if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] Registering schemes to reload: $events", Exception())
     }
