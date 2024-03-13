@@ -106,6 +106,9 @@ object PartialChangesUtil {
     if (targetChangeList == null ||
         targetChangeList == oldDefaultList ||
         !changeListManager.areChangeListsEnabled()) {
+      if (targetChangeList != null) {
+        LOG.debug("Active changelist unchanged: ${targetChangeList.name}")
+      }
       return task.compute()
     }
 
@@ -129,6 +132,9 @@ object PartialChangesUtil {
     if (targetChangeList == null ||
         targetChangeList == oldDefaultList ||
         !changeListManager.areChangeListsEnabled()) {
+      if (targetChangeList != null) {
+        LOG.debug("Active changelist unchanged: ${targetChangeList.name}")
+      }
       return task()
     }
 
@@ -152,6 +158,9 @@ object PartialChangesUtil {
     val oldDefaultList = changeListManager.defaultChangeList
     if (targetChangeList == null ||
         !changeListManager.areChangeListsEnabled()) {
+      if (targetChangeList != null) {
+        LOG.debug("Active changelist unchanged: ${targetChangeList.name}")
+      }
       return task.compute()
     }
 

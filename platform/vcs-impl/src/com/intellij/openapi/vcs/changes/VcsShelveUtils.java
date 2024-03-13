@@ -56,8 +56,7 @@ public final class VcsShelveUtils {
     // Refresh files that might be affected by unshelve
     refreshFilesBeforeUnshelve(projectPath, changes, binaryFiles);
 
-    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList);
-    // we pass null as target change list for Patch Applier to do NOTHING with change lists
+    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList + " into " + targetChangeList);
     ApplyPatchStatus status = shelveManager.unshelveChangeList(shelvedChangeList, changes, binaryFiles, targetChangeList, false, true,
                                                                true, leftConflictTitle, rightConflictTitle, true,
                                                                reportLocalHistoryActivity);
