@@ -616,6 +616,16 @@ public final class ConfigImportHelper {
     return name;
   }
 
+  private static @Nullable String parseVersionFromConfig(@NotNull Path configDir) {
+    String nameWithVersion = getNameWithVersion(configDir);
+    Matcher m = matchNameWithVersion(nameWithVersion);
+    String version = null;
+    if (m.matches()) {
+      version = m.group(1);
+    }
+    return version;
+  }
+
   private static @Nullable String getPrefixFromSelector(@Nullable String nameWithSelector) {
     if (nameWithSelector != null) {
       Matcher m = SELECTOR_PATTERN.matcher(nameWithSelector);
@@ -997,15 +1007,12 @@ public final class ConfigImportHelper {
                                            List<IdeaPluginDescriptor> toDownload,
                                            Logger log) {
     var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+    String previousVersion = parseVersionFromConfig(oldConfigDir);
 
-    String nameWithVersion = getNameWithVersion(oldConfigDir);
-    Matcher m = matchNameWithVersion(nameWithVersion);
-    String previousVersion = null;
-    if (m.matches()) {
-      previousVersion = m.group(1);
-    }
-
-    var options = new PluginMigrationOptions(previousVersion, currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload, log);
+    var options = new PluginMigrationOptions(previousVersion, currentProductVersion,
+                                             newConfigDir, oldConfigDir,
+                                             toMigrate, toDownload,
+                                             log);
 
     performMigrations(options);
 
