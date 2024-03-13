@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.util.io.FileUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
+import org.gradle.util.GradleVersion.version
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.mavenRepository
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
@@ -227,7 +228,8 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
   @Test
   fun `test unresolved build script dependencies errors on Sync`() {
     val artifacts = when {
-      isGradleAtLeast("4.6") && isGradleOlderThan("7.4") -> "artifacts"
+      currentGradleBaseVersion in version("4.6")..version("7.4") -> "artifacts"
+      currentGradleBaseVersion >= version("8.7") -> "artifacts"
       else -> "files"
     }
 

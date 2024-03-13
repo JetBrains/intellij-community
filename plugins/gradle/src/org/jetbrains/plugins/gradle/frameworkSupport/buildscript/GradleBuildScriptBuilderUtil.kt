@@ -1,16 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleBuildScriptBuilderUtil")
 
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.util.GradleVersion
+import org.gradle.util.GradleVersion.version
 
 
 fun getKotlinVersion(gradleVersion: GradleVersion): String {
+  val base = gradleVersion.baseVersion
   return when {
-    GradleVersionUtil.isGradleAtLeast(gradleVersion, "6.7.1") -> "1.7.20"
-    GradleVersionUtil.isGradleAtLeast(gradleVersion, "5.6.2") -> "1.4.32"
+    base >= version("8.7") -> "1.9.23"
+    base >= version("6.7.1") -> "1.7.20"
+    base >= version("5.6.2") -> "1.4.32"
     else -> "1.3.50"
   }
 }
