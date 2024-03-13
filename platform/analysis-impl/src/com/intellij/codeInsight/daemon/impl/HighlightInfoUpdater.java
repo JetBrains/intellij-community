@@ -158,23 +158,22 @@ final class HighlightInfoUpdater implements Disposable {
     Document hostDocument = hostFile.getFileDocument();
     Map<PsiFile, Map<Object, ToolHighlights>> hostMap = getOrCreateHostMap(hostDocument);
     List<Map<Object, ToolHighlights>> myMaps = new ArrayList<>();
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(hostFile.getProject());
     hostMap.entrySet().removeIf(entry -> {
       PsiFile psi = entry.getKey();
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(hostFile.getProject());
-      Document document = documentManager.getDocument(psi);
       Map<Object, ToolHighlights> toolMap = entry.getValue();
-      Document topLevelDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
-      if (topLevelDocument == hostDocument) {
-        myMaps.add(toolMap);
+      if (psi.isValid()) {
+        Document document = documentManager.getDocument(psi);
+        Document topLevelDocument = document instanceof DocumentWindow ? ((DocumentWindow)document).getDelegate() : document;
+        if (topLevelDocument == hostDocument) {
+          myMaps.add(toolMap);
+        }
+        return false;
       }
       if (psi == psiFile) {
         return false;
       }
-      if (psi.isValid()) {
-        return false;
-      }
-      boolean isEmpty =
-        removeAllHighlighterInsideFile(psi, requestor, removeInspectionHighlights, removeAnnotatorHighlights, highlightingSession, toolMap);
+      boolean isEmpty = removeAllHighlighterInsideFile(psi, requestor, removeInspectionHighlights, removeAnnotatorHighlights, highlightingSession, toolMap);
       return isEmpty;
     });
     HighlightersRecycler toReuse = new HighlightersRecycler();
@@ -219,11 +218,11 @@ final class HighlightInfoUpdater implements Disposable {
 
   // return true if all highlighters are removed and we can delete the entire map
   private static boolean removeAllHighlighterInsideFile(@NotNull PsiFile psiFile,
-                                                     @NotNull Object requestor,
-                                                     boolean removeInspectionHighlights,
-                                                     boolean removeAnnotatorHighlights,
-                                                     @NotNull HighlightingSession highlightingSession,
-                                                     @NotNull Map<Object, ToolHighlights> toolMap) {
+                                                        @NotNull Object requestor,
+                                                        boolean removeInspectionHighlights,
+                                                        boolean removeAnnotatorHighlights,
+                                                        @NotNull HighlightingSession highlightingSession,
+                                                        @NotNull Map<Object, ToolHighlights> toolMap) {
     int removed = 0;
     boolean isEmpty = true;
     for (ToolHighlights highlights : toolMap.values()) {
