@@ -17,13 +17,13 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.intersect
 import java.awt.*
 import javax.swing.*
 
-class ProductChooserPage(val controller: ImportSettingsController) : OnboardingPage {
-
+class ProductChooserPage(val controller: ImportSettingsController, override val backgroundImage: Image?) : OnboardingPage {
   override val stage = StartupWizardStage.ProductChoicePage
   override fun confirmExit(parentComponent: Component?): Boolean {
     return true
@@ -101,7 +101,11 @@ class ProductChooserPage(val controller: ImportSettingsController) : OnboardingP
     preferredSize = Dimension(preferredSize.width, JBUI.scale(47))
   }
 
-  private val contentPage = JPanel(GridBagLayout()).apply {
+  private val contentPage = object: JPanel(GridBagLayout()) {
+    override fun getComponentGraphics(g: Graphics?): Graphics {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
+    }
+  }.apply {
     val gbc = GridBagConstraints()
     gbc.gridx = 0
     gbc.gridy = 0
