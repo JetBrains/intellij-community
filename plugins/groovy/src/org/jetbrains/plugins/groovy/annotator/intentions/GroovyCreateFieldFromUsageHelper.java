@@ -35,12 +35,14 @@ public final class GroovyCreateFieldFromUsageHelper extends CreateFieldFromUsage
                                     Editor editor,
                                     PsiElement context,
                                     boolean createConstantField,
+                                    boolean isScrollToTemplate,
                                     @NotNull PsiSubstitutor substitutor) {
     GrVariableDeclaration fieldDecl = (GrVariableDeclaration)f.getParent();
     GrField field = (GrField)fieldDecl.getVariables()[0];
     Project project = field.getProject();
     fieldDecl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(fieldDecl);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(fieldDecl);
+    builder.setScrollToTemplate(isScrollToTemplate);
 
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(project);
 

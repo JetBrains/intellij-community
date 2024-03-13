@@ -35,10 +35,21 @@ public abstract class CreateFieldFromUsageHelper {
                                        Object expectedTypes,
                                        PsiClass targetClass,
                                        Editor editor,
-                                       PsiElement context, boolean createConstantField) {
+                                       PsiElement context,
+                                       boolean createConstantField) {
+    return setupTemplate(field, expectedTypes, targetClass, editor, context, createConstantField, true);
+  }
+
+  public static Template setupTemplate(PsiField field,
+                                       Object expectedTypes,
+                                       PsiClass targetClass,
+                                       Editor editor,
+                                       PsiElement context,
+                                       boolean createConstantField,
+                                       boolean isScrollToTemplate) {
     CreateFieldFromUsageHelper helper = EP_NAME.forLanguage(field.getLanguage());
     if (helper == null) return null;
-    return helper.setupTemplateImpl(field, expectedTypes, targetClass, editor, context, createConstantField,
+    return helper.setupTemplateImpl(field, expectedTypes, targetClass, editor, context, createConstantField, isScrollToTemplate,
                                     CreateFromUsageBaseFix.getTargetSubstitutor(context));
   }
 
@@ -55,5 +66,7 @@ public abstract class CreateFieldFromUsageHelper {
                                              PsiClass targetClass,
                                              Editor editor,
                                              PsiElement context,
-                                             boolean createConstantField, @NotNull PsiSubstitutor substitutor);
+                                             boolean createConstantField,
+                                             boolean isScrollToTemplate,
+                                             @NotNull PsiSubstitutor substitutor);
 }

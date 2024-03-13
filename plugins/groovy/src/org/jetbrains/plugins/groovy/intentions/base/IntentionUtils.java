@@ -52,7 +52,7 @@ public final class IntentionUtils {
       context.getResolveScope(),
       method.getLanguage() == GroovyLanguage.INSTANCE
     );
-    createTemplateForMethod(paramTypesExpressions, nameExpressions, method, owner, returnTypeExpression, isConstructor, context);
+    createTemplateForMethod(paramTypesExpressions, nameExpressions, method, owner, returnTypeExpression, isConstructor, true, context);
   }
 
   public static void createTemplateForMethod(ChooseTypeExpression[] paramTypesExpressions,
@@ -61,12 +61,14 @@ public final class IntentionUtils {
                                              PsiClass owner,
                                              ChooseTypeExpression returnTypeExpression,
                                              boolean isConstructor,
+                                             boolean isScrollToTemplate,
                                              @Nullable final PsiElement context) {
 
     final Project project = owner.getProject();
     PsiTypeElement typeElement = method.getReturnTypeElement();
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
+    builder.setScrollToTemplate(isScrollToTemplate);
     if (!isConstructor) {
       assert typeElement != null;
       builder.replaceElement(typeElement, returnTypeExpression);

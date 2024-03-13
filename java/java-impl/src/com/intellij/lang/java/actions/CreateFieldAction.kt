@@ -105,7 +105,7 @@ internal class JavaFieldRenderer(
     val targetFile = targetClass.containingFile ?: return
     val newEditor = positionCursor(field.project, targetFile, field) ?: return
     val substitutor = request.targetSubstitutor.toPsiSubstitutor(project)
-    val template = helper.setupTemplateImpl(field, expectedTypes, targetClass, newEditor, javaUsage?.reference, constantField, substitutor)
+    val template = helper.setupTemplateImpl(field, expectedTypes, targetClass, newEditor, javaUsage?.reference, constantField, request.isStartTemplate, substitutor)
     val listener = MyTemplateListener(project, newEditor, targetFile)
     startTemplate(newEditor, template, project, listener, null)
   }

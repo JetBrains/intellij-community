@@ -145,6 +145,7 @@ private class JavaMethodRenderer(
     else {
       builder.setEndVariableAfter(method.body ?: method)
     }
+    builder.setScrollToTemplate(request.isStartTemplate)
     return builder
   }
 

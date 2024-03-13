@@ -45,6 +45,8 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private final PsiFile myFile;
   private Comparator<? super Variable> myVariableComparator;
 
+  private boolean scrollToTemplate = true;
+
   private static final Logger LOG = Logger.getInstance(TemplateBuilderImpl.class);
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
@@ -280,6 +282,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
 
     template.setToIndent(false);
     template.setToReformat(false);
+    template.setScrollToTemplate(scrollToTemplate);
 
     orderTemplateVariables(template);
 
@@ -365,5 +368,11 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myVariableNamesMap.put(key, varName);
     myVariableExpressions.put(key, dependantVariableName);
     myElements.add(key);
+  }
+
+  @Override
+  public TemplateBuilder setScrollToTemplate(boolean scrollToTemplate) {
+    this.scrollToTemplate = scrollToTemplate;
+    return this;
   }
 }

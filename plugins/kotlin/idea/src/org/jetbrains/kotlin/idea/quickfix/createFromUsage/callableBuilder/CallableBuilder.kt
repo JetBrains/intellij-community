@@ -997,6 +997,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             val declarationMarker = document.createRangeMarker(declaration.textRange)
 
             val builder = TemplateBuilderImpl(ktFileToEdit)
+            builder.setScrollToTemplate(isStartTemplate)
             if (declaration is KtProperty) {
                 if (isStartTemplate) {
                     setupValVarTemplate(builder, declaration)
