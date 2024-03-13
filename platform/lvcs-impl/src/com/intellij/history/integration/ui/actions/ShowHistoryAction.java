@@ -50,7 +50,7 @@ public class ShowHistoryAction extends LocalHistoryAction {
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
     VirtualFile f = Objects.requireNonNull(getFile(e));
     if (ActivityView.isViewEnabled()) {
-      ActivityView.showInToolWindow(p, gw, ActivityScope.fromFile(f));
+      ActivityView.showInDialog(p, gw, ActivityScope.fromFile(f));
     }
     else if (f.isDirectory()) {
       LocalHistoryCounter.INSTANCE.logLocalHistoryOpened(LocalHistoryCounter.Kind.Directory);

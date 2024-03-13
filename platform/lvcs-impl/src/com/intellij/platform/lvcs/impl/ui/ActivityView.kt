@@ -12,7 +12,6 @@ import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.history.integration.ui.views.FileHistoryDialog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -28,7 +27,6 @@ import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.lvcs.impl.*
-import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.platform.lvcs.impl.ui.SingleFileActivityDiffPreview.Companion.DIFF_PLACE
 import com.intellij.platform.util.coroutines.childScope
@@ -347,15 +345,10 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }
 
     @JvmStatic
-    fun isViewEnabled(): Boolean {
-      if (!isViewAvailable()) return false
-      return service<ActivityViewApplicationSettings>().isActivityToolWindowEnabled
-    }
+    fun isViewEnabled(): Boolean = isViewAvailable()
 
     @JvmStatic
-    fun isViewAvailable(): Boolean {
-      return ApplicationInfo.getInstance().isEAP || Registry.`is`("lvcs.show.activity.view")
-    }
+    fun isViewAvailable(): Boolean = Registry.`is`("lvcs.show.activity.view")
   }
 }
 
