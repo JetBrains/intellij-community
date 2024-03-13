@@ -858,14 +858,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myChangedFilesCollector.getValue();
   }
 
-  void filesUpdateStarted() {
-    ensureStaleIdsDeleted();
-    getChangedFilesCollector().ensureUpToDate();
-  }
-
   void ensureStaleIdsDeleted() {
-    loadIndexes();
-    waitUntilIndicesAreInitialized();
     synchronized (myStaleIds) {
       if (myStaleIds.isEmpty()) return;
       try {

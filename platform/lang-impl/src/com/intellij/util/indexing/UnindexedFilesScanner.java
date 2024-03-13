@@ -582,7 +582,10 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     }
     ProjectScanningHistoryImpl scanningHistory = new ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType);
     myIndex.loadIndexes();
-    myIndex.filesUpdateStarted();
+    myIndex.getRegisteredIndexes().waitUntilAllIndicesAreInitialized(); // wait until stale ids are deleted
+    // Not sure that ensureUpToDate is really needed, but it wouldn't hurt to clear up queue not from EDT
+    // It was added in this commit: 'Process vfs events asynchroneously (IDEA-109525), first cut Maxim.Mossienko 13.11.16, 14:15'
+    myIndex.getChangedFilesCollector().ensureUpToDate();
     IndexDiagnosticDumper.getInstance().onScanningStarted(scanningHistory);
     Ref<StatusMark> markRef = new Ref<>();
     try {
