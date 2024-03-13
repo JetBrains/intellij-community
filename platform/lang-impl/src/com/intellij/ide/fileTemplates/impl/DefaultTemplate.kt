@@ -3,30 +3,33 @@ package com.intellij.ide.fileTemplates.impl
 
 import com.intellij.DynamicBundle
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.reference.SoftReference
+import com.intellij.util.LocalizationUtil
 import com.intellij.util.ResourceUtil
 import java.io.IOException
 import java.lang.ref.Reference
 import java.net.MalformedURLException
 import java.net.URL
-import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import java.util.*
 import java.util.function.Function
-import java.util.function.Supplier
+import kotlin.io.path.pathString
 
 class DefaultTemplate(val name: String,
                       val extension: String,
-                      private val textSupplier: Supplier<String>,
-                      private val descriptionLoader: Function<String, String>?,
-                      private val descriptionPath: String?) {
+                      private val textLoader: Function<String, String?>,
+                      private val descriptionLoader: Function<String, String?>?,
+                      private val descriptionPath: String?,
+                      private val templatePath: Path) {
   private var text: Reference<String?>? = null
 
   //NON-NLS
   private var descriptionText: Reference<String>? = null
 
   @Deprecated("Use {@link #DefaultTemplate(String, String, Supplier, Function, String)}")
-  constructor(name: String, extension: String, templateUrl: URL, descriptionUrl: URL?) : this(name, extension, Supplier<String> {
+  constructor(name: String, extension: String, templateUrl: URL, descriptionUrl: URL?) : this(name, extension, Function<String, String?> {
     try {
       ResourceUtil.loadText(templateUrl.openStream())
     }
@@ -42,18 +45,27 @@ class DefaultTemplate(val name: String,
       logger<DefaultTemplate>().error(e)
       ""
     }
-  }, null)
+  }, null, Path.of(FileTemplatesLoader.TEMPLATES_DIR).resolve(FileTemplateBase.getQualifiedName(name, extension)))
 
   val qualifiedName: String
     get() = FileTemplateBase.getQualifiedName(name, this.extension)
 
   fun getText(): String {
     var text = SoftReference.dereference(this.text)
-    if (text == null) {
-      text = StringUtil.convertLineSeparators(textSupplier.get())
-      this.text = java.lang.ref.SoftReference(text)
+    if (text != null) return text
+    val locale = DynamicBundle.findLanguageBundle()?.locale?.let { Locale.forLanguageTag(it) }
+    if (locale != null) {
+      val localizedPaths = LocalizationUtil.getLocalizedPaths(templatePath).map { FileUtil.toSystemIndependentName(it.pathString) }
+      for (path in localizedPaths) {
+        text = textLoader.apply(path)?.let { Strings.convertLineSeparators(it) }
+        if (!text.isNullOrEmpty()) break
+      }
     }
-    return text
+    if (text == null) {
+      text = textLoader.apply(FileUtil.toSystemIndependentName(templatePath.pathString))
+    }
+    this.text = java.lang.ref.SoftReference(text)
+    return text ?: ""
   }
 
   fun getDescriptionText(): String {
@@ -67,24 +79,26 @@ class DefaultTemplate(val name: String,
     }
 
     try {
-      val langBundleLoader = DynamicBundle.findLanguageBundle()?.pluginDescriptor?.pluginClassLoader
-      if (langBundleLoader != null && descriptionPath != null) {
-        text = ResourceUtil.getResourceAsBytes("${FileTemplatesLoader.TEMPLATES_DIR}/$descriptionPath", langBundleLoader)
-          ?.toString(StandardCharsets.UTF_8)
+      if (DynamicBundle.findLanguageBundle() != null && descriptionPath != null) {
+          val localizedPaths = LocalizationUtil.getLocalizedPaths(Path.of(FileTemplatesLoader.TEMPLATES_DIR).resolve(descriptionPath))
+          val localizedPathStrings = localizedPaths.map { FileUtil.toSystemIndependentName(it.pathString) }
+          for (path in localizedPathStrings) {
+            text = descriptionLoader.apply(path)?.let { Strings.convertLineSeparators(it) }
+            if (text != null) break
+          }
       }
 
       if (text == null) {
         // descriptionPath is null if deprecated constructor is used - in this case descriptionPath doesn't matter
-        text = Strings.convertLineSeparators(descriptionLoader.apply(descriptionPath ?: ""))
+        text = descriptionLoader.apply(descriptionPath ?: "")?.let { Strings.convertLineSeparators(it) }
       }
     }
     catch (e: IOException) {
-      logger<DefaultTemplate>().error(e)
-      text = ""
+      logger<DefaultTemplate>().info(e)
     }
 
     descriptionText = java.lang.ref.SoftReference(text)
-    return text!!
+    return text ?: ""
   }
 
   // the only external usage - https://github.com/wrdv/testme-idea/blob/8e314aea969619f43f0c6bb17f53f1d95b1072be/src/main/java/com/weirddev/testme/intellij/ui/template/FTManager.java#L200
@@ -98,6 +112,6 @@ class DefaultTemplate(val name: String,
     }
   }
 
-  override fun toString(): String = textSupplier.toString()
+  override fun toString(): String = textLoader.toString()
 }
 
