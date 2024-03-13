@@ -6,10 +6,12 @@ package com.intellij.platform.ijent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.map2Array
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * If [selfDeleteOnExit] is true, IJent tries to delete itself AND its parent directory during/after it has exited.
  */
+@ApiStatus.Experimental
 fun getIjentGrpcArgv(
   remotePathToIjent: String,
   additionalEnv: Map<String, String> = mapOf(),
@@ -35,6 +37,7 @@ fun getIjentGrpcArgv(
   )
 }
 
+@ApiStatus.Internal
 fun ByteArray.toDebugString(offset: Int = 0, length: Int = size - offset): String = (offset until length).joinToString("") {
   var code = this[it].toInt()
   if (code < 0) {
