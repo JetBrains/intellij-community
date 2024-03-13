@@ -133,6 +133,4 @@ private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlC
 
 //test.release.agreements property is only for test purposes. To get release dialogs on EAP versions
 @VisibleForTesting
-internal fun isReleaseAgreementsEnabled(): Boolean {
-  return java.lang.Boolean.getBoolean("test.release.agreements")
-}
+internal fun isReleaseAgreementsEnabled(): Boolean = System.getProperty("test.release.agreements").toBoolean()
