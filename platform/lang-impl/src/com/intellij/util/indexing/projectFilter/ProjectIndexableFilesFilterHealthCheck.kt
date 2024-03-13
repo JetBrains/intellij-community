@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
@@ -35,6 +36,8 @@ internal typealias FileId = Int
 private fun FileId.fileInfo(): String = "file id=$this path=${PersistentFS.getInstance().findFileById(this)?.path}"
 
 private class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
+  val isInIntegrationTest = ApplicationManagerEx.isInIntegrationTest()
+
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
@@ -42,7 +45,7 @@ private class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
 
     val healthCheck = project.getService(ProjectIndexableFilesFilterHealthCheck::class.java)
     while (true) {
-      delay(5.minutes)
+      delay(if (isInIntegrationTest) 1.minutes else 5.minutes)
       healthCheck.launchHealthCheck()
     }
   }
