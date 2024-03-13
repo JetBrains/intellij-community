@@ -18,6 +18,7 @@ import com.intellij.psi.tree.TokenSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import static com.intellij.util.BitUtil.isSet;
 /**
  * Represents a type encoded inside a stub tree
  */
+@ApiStatus.Internal
 public /*sealed*/ abstract class TypeInfo {
   private static final int HAS_TYPE_ANNOTATIONS = 0x80;
 
