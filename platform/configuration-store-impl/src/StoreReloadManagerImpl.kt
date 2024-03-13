@@ -147,7 +147,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
 
   override fun isReloadBlocked(): Boolean {
     val count = reloadBlockCount.get()
-    LOG.debug { "[RELOAD] myReloadBlockCount = $count" }
+    LOG.debug { "[RELOAD] reloadBlockCount = $count" }
     return count > 0
   }
 
