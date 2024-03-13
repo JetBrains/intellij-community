@@ -5116,6 +5116,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/postProcessing/GuardClause.java");
         }
 
+        @TestMetadata("GuardClauseBasicMode.java")
+        public void testGuardClauseBasicMode() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/GuardClauseBasicMode.java");
+        }
+
         @TestMetadata("IfNullReturnToElvis.java")
         public void testIfNullReturnToElvis() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/IfNullReturnToElvis.java");
