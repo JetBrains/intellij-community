@@ -2,7 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ModelConverter;
-import io.opentelemetry.context.Context;
+import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.model.BuildIdentifier;
@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.DefaultBuild;
 import org.jetbrains.plugins.gradle.model.DefaultBuildController;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer;
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildEnvironment;
 
 import java.io.File;
 import java.util.*;
@@ -56,6 +57,7 @@ public class GradleDaemonModelHolder {
   private final @NotNull BlockingQueue<Future<DefaultBuild>> myConvertedRootBuild = new LinkedBlockingQueue<>();
   private final @NotNull BlockingQueue<Future<Collection<DefaultBuild>>> myConvertedNestedBuilds = new LinkedBlockingQueue<>();
   private final @NotNull BlockingQueue<Future<ConvertedModel>> myConvertedModelQueue = new LinkedBlockingQueue<>();
+  private final @NotNull BlockingQueue<Future<BuildEnvironment>> myConvertedBuildEnvironment = new LinkedBlockingQueue<>();
 
   public GradleDaemonModelHolder(
     @NotNull ExecutorService converterExecutor,
@@ -68,8 +70,15 @@ public class GradleDaemonModelHolder {
     myRootGradleBuild = rootGradleBuild;
     myNestedGradleBuilds = nestedGradleBuilds;
     myBuildEnvironment = buildEnvironment;
-    submitTask(converterExecutor, myConvertedRootBuild, () -> DefaultBuild.convertGradleBuild(rootGradleBuild));
-    submitTask(converterExecutor, myConvertedNestedBuilds, () -> convertNestedGradleBuilds(nestedGradleBuilds));
+    GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedRootBuild, () -> {
+      return DefaultBuild.convertGradleBuild(rootGradleBuild);
+    });
+    GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedNestedBuilds, () -> {
+      return convertNestedGradleBuilds(nestedGradleBuilds);
+    });
+    GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedBuildEnvironment, () -> {
+      return InternalBuildEnvironment.convertBuildEnvironment(myBuildEnvironment);
+    });
   }
 
   public @NotNull Collection<? extends GradleBuild> getGradleBuilds() {
@@ -96,7 +105,7 @@ public class GradleDaemonModelHolder {
       }
 
       private void consumeModel(@NotNull Object model, @NotNull GradleModelId modelId) {
-        submitTask(converterExecutor, myConvertedModelQueue, () -> {
+        GradleExecutorServiceUtil.submitTask(converterExecutor, myConvertedModelQueue, () -> {
           Object convertedModel = myModelConverter.convert(model);
           return new ConvertedModel(modelId, convertedModel);
         });
@@ -104,54 +113,34 @@ public class GradleDaemonModelHolder {
     };
   }
 
-  private static <T> void submitTask(
-    @NotNull ExecutorService executor,
-    @NotNull BlockingQueue<Future<T>> queue,
-    @NotNull Callable<T> task
-  ) {
-    Future<T> convertedModelFuture = Context.current()
-      .wrap(executor)
-      .submit(task);
-    queue.add(convertedModelFuture);
-  }
-
   public @NotNull GradleModelHolderState pollPendingState() {
     DefaultBuild rootBuild = pollPendingConvertedRootBuild();
     Collection<DefaultBuild> nestedBuilds = pollPendingConvertedNestedBuilds();
     Map<GradleModelId, Object> models = pollAllPendingConvertedModels();
-    return new GradleModelHolderState(rootBuild, nestedBuilds, myBuildEnvironment, models);
+    BuildEnvironment buildEnvironment = pollPendingBuildEnvironment();
+    return new GradleModelHolderState(rootBuild, nestedBuilds, buildEnvironment, models);
   }
 
   private @Nullable DefaultBuild pollPendingConvertedRootBuild() {
-    return poolPendingModel(myConvertedRootBuild);
+    return GradleExecutorServiceUtil.poolPendingResult(myConvertedRootBuild);
   }
 
   private @NotNull Collection<DefaultBuild> pollPendingConvertedNestedBuilds() {
-    Collection<DefaultBuild> builds = poolPendingModel(myConvertedNestedBuilds);
+    Collection<DefaultBuild> builds = GradleExecutorServiceUtil.poolPendingResult(myConvertedNestedBuilds);
     return builds == null ? Collections.emptyList() : builds;
   }
 
   private @NotNull Map<GradleModelId, Object> pollAllPendingConvertedModels() {
-    Map<GradleModelId, Object> models = new LinkedHashMap<>();
-    ConvertedModel model = poolPendingModel(myConvertedModelQueue);
-    while (model != null) {
-      models.put(model.myId, model.myModel);
-      model = poolPendingModel(myConvertedModelQueue);
+    List<ConvertedModel> models = GradleExecutorServiceUtil.pollAllPendingResults(myConvertedModelQueue);
+    Map<GradleModelId, Object> modelMap = new LinkedHashMap<>();
+    for (ConvertedModel convertedModel : models) {
+      modelMap.put(convertedModel.myId, convertedModel.myModel);
     }
-    return models;
+    return modelMap;
   }
 
-  private static <T> @Nullable T poolPendingModel(@NotNull BlockingQueue<Future<T>> modelQueue) {
-    try {
-      Future<T> future = modelQueue.poll();
-      if (future == null) {
-        return null;
-      }
-      return future.get();
-    }
-    catch (InterruptedException | ExecutionException ignored) {
-      return null;
-    }
+  private @Nullable BuildEnvironment pollPendingBuildEnvironment() {
+    return GradleExecutorServiceUtil.poolPendingResult(myConvertedBuildEnvironment);
   }
 
   private static @NotNull Collection<DefaultBuild> convertNestedGradleBuilds(

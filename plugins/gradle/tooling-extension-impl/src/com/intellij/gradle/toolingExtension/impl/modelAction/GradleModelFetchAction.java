@@ -3,6 +3,7 @@ package com.intellij.gradle.toolingExtension.impl.modelAction;
 
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleTracingContext;
+import com.intellij.gradle.toolingExtension.impl.util.GradleExecutorServiceUtil;
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -27,9 +28,6 @@ import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModel
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -83,29 +81,13 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
   @Override
   public @NotNull GradleModelHolderState execute(@NotNull BuildController controller) {
     configureAdditionalTypes(controller);
-    return withConverterExecutor(converterExecutor -> {
+    return GradleExecutorServiceUtil.withSingleThreadExecutor("idea-tooling-model-converter", converterExecutor -> {
       return withOpenTelemetry(telemetry -> {
         return telemetry.callWithSpan("ProjectImportAction", __ -> {
           return doExecute(controller, converterExecutor, telemetry);
         });
       });
     });
-  }
-
-  private static <T> T withConverterExecutor(@NotNull Function<ExecutorService, T> action) {
-    ExecutorService converterExecutor = Executors.newSingleThreadExecutor(new SimpleThreadFactory());
-    try {
-      return action.apply(converterExecutor);
-    }
-    finally {
-      converterExecutor.shutdown();
-      try {
-        converterExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-      }
-      catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    }
   }
 
   private GradleModelHolderState withOpenTelemetry(@NotNull Function<GradleOpenTelemetry, GradleModelHolderState> action) {
@@ -302,14 +284,5 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
       return modelProviders.headMap(GradleModelFetchPhase.PROJECT_LOADED_PHASE, true);
     }
     return modelProviders.tailMap(GradleModelFetchPhase.PROJECT_LOADED_PHASE, false);
-  }
-
-  // Use this static class as a simple ThreadFactory to prevent a memory leak when passing an anonymous ThreadFactory object to
-  // Executors.newSingleThreadExecutor. Memory leak will occur on the Gradle Daemon otherwise.
-  private static final class SimpleThreadFactory implements ThreadFactory {
-    @Override
-    public Thread newThread(@NotNull Runnable runnable) {
-      return new Thread(runnable, "idea-tooling-model-converter");
-    }
   }
 }
