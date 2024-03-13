@@ -109,7 +109,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(WaitForEDTQueueUnstuckCommand.PREFIX, WaitForEDTQueueUnstuckCommand::new),
       Map.entry(CreateScratchFile.PREFIX, CreateScratchFile::new),
       Map.entry(StoreHighlightingResultsCommand.PREFIX, StoreHighlightingResultsCommand::new),
-      Map.entry(AddContentRootToModule.PREFIX, AddContentRootToModule::new)
+      Map.entry(AddContentRootToModule.PREFIX, AddContentRootToModule::new),
+      Map.entry(DisableKotlinNotificationCommand.PREFIX, DisableKotlinNotificationCommand::new)
     );
   }
 }

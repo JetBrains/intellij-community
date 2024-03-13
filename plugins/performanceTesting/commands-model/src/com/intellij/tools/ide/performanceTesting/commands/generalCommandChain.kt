@@ -1006,3 +1006,7 @@ fun <T : CommandChain> T.createScratchFile(filename: String, content: String): T
   val modifiedContent = content.replace("\n", "\\n").replace(" ", "_")
   addCommand("${CMD_PREFIX}createScratchFile $filename $modifiedContent")
 }
+
+fun <T : CommandChain> T.disableKotlinNotification(): T = apply {
+  addCommand("${CMD_PREFIX}disableKotlinNotification")
+}
