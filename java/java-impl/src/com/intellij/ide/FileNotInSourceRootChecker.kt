@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
@@ -28,9 +29,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import java.util.concurrent.ForkJoinPool
 
-class FileNotInSourceRootChecker : ProjectActivity {
+private class FileNotInSourceRootChecker : ProjectActivity {
   override suspend fun execute(project: Project) {
-    project.getService(FileNotInSourceRootService::class.java).init()
+    project.serviceAsync<FileNotInSourceRootService>().init()
   }
 }
 
@@ -39,7 +40,7 @@ private const val JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES : String = "com.intellij.i
 
 @Service(Service.Level.PROJECT)
 class FileNotInSourceRootService(val project: Project) : Disposable {
-  
+
   fun init() {
     if (PropertiesComponent.getInstance(project).getBoolean(JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES, false)) return
     val editorFactory = EditorFactory.getInstance()
