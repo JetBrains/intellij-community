@@ -40,6 +40,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
@@ -1998,13 +1999,15 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  static final class BuildManagerStartupActivity implements StartupActivity.DumbAware {
+  static final class BuildManagerStartupActivity implements StartupActivity, DumbAware {
+    BuildManagerStartupActivity() {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        throw ExtensionNotApplicableException.create();
+      }
+    }
+
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        return;
-      }
-
       MessageBusConnection connection = project.getMessageBus().connect();
       connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
         @Override
