@@ -1,78 +1,67 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package org.jetbrains.plugins.groovy.lang.highlighting
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Max Medvedev
  */
-class GrReturnPointHighlightingTest extends LightGroovyTestCase {
+public class GrReturnPointHighlightingTest extends LightGroovyTestCase {
+  public void testReturnPoint1() {
+    doTest("""
+             private static getWorldType(stepFile) {
+                 final worldType //unused
+                 if (som) throw new IOException()
 
-  void testReturnPoint1() {
-    doTest('''\
-private static getWorldType(stepFile) {
-    final worldType //unused
-    if (som) throw new IOException()
-
-    for (statement in stepFile.statements) {
-        if (statement instanceof String && isWorldDeclaration(statement)) {
-            final closure = getClosureArg(statement)
-            re<caret>turn closure.returnType
-        }
-    }
-}
-''', 'throw new IOException()', 'return closure.returnType')
+                 for (statement in stepFile.statements) {
+                     if (statement instanceof String && isWorldDeclaration(statement)) {
+                         final closure = getClosureArg(statement)
+                         re<caret>turn closure.returnType
+                     }
+                 }
+             }
+             """, "throw new IOException()", "return closure.returnType");
   }
 
-  void testReturnPoint2() {
-    doTest('''\
-private static getWorldType(stepFile) {
-    final worldType //unused
-    if (som) throw new IOException()
+  public void testReturnPoint2() {
+    doTest("""
+             private static getWorldType(stepFile) {
+                 final worldType //unused
+                 if (som) throw new IOException()
 
-    for (statement in stepFile.statements) {
-        if (statement instanceof String && isWorldDeclaration(statement)) {
-            final closure = getClosureArg(statement)
-            re<caret>turn closure.returnType
-        }
-    }
-    2
-}
-''', 'throw new IOException()', 'return closure.returnType', '2')
+                 for (statement in stepFile.statements) {
+                     if (statement instanceof String && isWorldDeclaration(statement)) {
+                         final closure = getClosureArg(statement)
+                         re<caret>turn closure.returnType
+                     }
+                 }
+                 2
+             }
+             """, "throw new IOException()", "return closure.returnType", "2");
   }
 
   private void doTest(final String text, final String... usages) {
-    myFixture.configureByText('_.groovy', text)
-    HighlightUsagesHandlerBase<PsiElement> handler = HighlightUsagesHandler.createCustomHandler(myFixture.editor, myFixture.file)
-    assertNotNull(handler)
-    List<PsiElement> targets = handler.targets
-    assertEquals(1, targets.size())
-    assertEquals("return", targets.get(0).getText())
+    myFixture.configureByText("_.groovy", text);
+    HighlightUsagesHandlerBase<PsiElement> handler = HighlightUsagesHandler.createCustomHandler(myFixture.getEditor(), myFixture.getFile());
+    assertNotNull(handler);
+    List<PsiElement> targets = handler.getTargets();
+    assertEquals(1, targets.size());
+    assertEquals("return", targets.get(0).getText());
 
-    handler.computeUsages(targets)
-    List<TextRange> readUsages = handler.readUsages
-    assertEquals(usages.length, readUsages.size())
+    handler.computeUsages(targets);
+    List<TextRange> readUsages = handler.getReadUsages();
+    assertEquals(usages.length, readUsages.size());
 
-    final List<String> textUsages = readUsages.collect { myFixture.file.text.substring(it.startOffset, it.endOffset) }
-    assertSameElements(Arrays.asList(usages), textUsages)
+    String fileText = myFixture.getFile().getText();
+    List<String> textUsages = ContainerUtil.map(readUsages, r -> r.substring(fileText));
+    assertSameElements(Arrays.asList(usages), textUsages);
   }
-
 }
