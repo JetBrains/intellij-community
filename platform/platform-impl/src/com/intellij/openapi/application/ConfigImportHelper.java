@@ -78,6 +78,7 @@ import java.util.zip.ZipFile;
 import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FILENAME;
 import static com.intellij.openapi.application.ImportOldConfigsState.InitialImportScenario.*;
+import static com.intellij.openapi.application.migrations.AIAssistant241Kt.AI_PLUGIN_ID;
 import static com.intellij.openapi.application.migrations.AIAssistant241Kt.migrateAiForToolbox;
 import static com.intellij.openapi.application.migrations.PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT;
 import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
@@ -906,6 +907,7 @@ public final class ConfigImportHelper {
       migrateAiForToolbox(newPluginsDir, newConfigDir, previousVersion, log, pluginsToDownload);
       if (!pluginsToDownload.isEmpty()) {
         downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload);
+        writeMigrationResult(newConfigDir, AI_PLUGIN_ID, log);
       }
     }
     else {
@@ -1025,16 +1027,20 @@ public final class ConfigImportHelper {
 
     performMigrations(options);
 
-    var resultFile = newConfigDir.resolve(MIGRATION_INSTALLED_PLUGINS_TXT);
     var downloadIds = toDownload.stream()
       .map(descriptor -> descriptor.getPluginId().getIdString())
       .collect(Collectors.joining("\n"));
+    writeMigrationResult(newConfigDir, downloadIds, options.getLog());
+  }
+
+  private static void writeMigrationResult(Path newConfigDir, String downloadIds, Logger log) {
+    var resultFile = newConfigDir.resolve(MIGRATION_INSTALLED_PLUGINS_TXT);
 
     try {
       Files.writeString(resultFile, downloadIds);
     }
     catch (IOException e) {
-      options.getLog().error("Unable to write auto install result", e);
+      log.error("Unable to write auto install result", e);
     }
   }
 
