@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceWithUnnamedPatternFi
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
+import com.intellij.codeInspection.ExternalSourceProblemGroup;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
@@ -21,6 +22,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -584,10 +586,23 @@ class PostHighlightingVisitor extends JavaElementVisitor {
     HighlightInfoType.HighlightInfoTypeImpl configHighlightType =
       new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(unusedImportKey, myFile).getSeverity(), key);
 
+    ProblemGroup problemGroup = new ExternalSourceProblemGroup() {
+      @Override
+      public String getExternalCheckName() {
+        return UnusedImportInspection.SHORT_NAME;
+      }
+
+      @Override
+      public @Nullable String getProblemName() {
+        return null;
+      }
+    };
+
     HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(configHighlightType)
         .range(importStatement)
         .descriptionAndTooltip(description)
-        .group(GeneralHighlightingPass.POST_UPDATE_ALL);
+        .group(GeneralHighlightingPass.POST_UPDATE_ALL)
+        .problemGroup(problemGroup);
 
     builder.registerFix(new RemoveAllUnusedImportsFix(), null, HighlightDisplayKey.getDisplayNameByKey(unusedImportKey), null, unusedImportKey);
 
