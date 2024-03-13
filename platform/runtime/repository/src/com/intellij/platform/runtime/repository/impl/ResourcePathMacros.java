@@ -25,9 +25,14 @@ final class ResourcePathMacros {
   }
 
   private static @NotNull Path locateProjectHome(@NotNull Path baseDir) {
-    /* Todo: currently result of this method depends on baseDir of the first module repository this method is called from. 
-       It's supposed that firstly it'll be called from the main repository located under <project-home>/out/classes, so it'll find the 
-       project home properly, but this is not very reliable. */
+    String explicitHomePath = System.getProperty("idea.home.path");
+    if (explicitHomePath != null) {
+      return Path.of(explicitHomePath);
+    }
+    
+    /* This part is used when the process is started locally from sources (when tests are started from the build scripts, the home path
+       is specified explicitly via property). 
+       It's supposed to 'baseDir' refers to the main repository located under <project-home>/out/classes. */
     Path currentPath = baseDir;
     while (currentPath != null && !isProjectHome(currentPath)) {
       currentPath = currentPath.getParent();

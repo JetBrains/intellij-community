@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.repository
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 class RepositoryTest {
   @JvmField
@@ -103,12 +105,19 @@ class RepositoryTest {
       RawRuntimeModuleDescriptor("ij.bar", listOf("\$MAVEN_REPOSITORY$/bar/bar.jar"), emptyList()),
     )
     
-    //ensure that tempDirectory will be treated as the project root
+    //ensure that tempDirectory will be treated as the project root if 'idea.home.path' isn't specified explicitly
     tempDirectory.newFile("intellij.idea.community.main.iml")
     tempDirectory.newDirectory(".idea")
     
     val foo = repository.getModule(RuntimeModuleId.raw("ij.foo"))
-    assertEquals(listOf(tempDirectory.rootPath.resolve( "foo.jar")), foo.resourceRootPaths)
+    val fooJarPath = foo.resourceRootPaths.single()
+    //$PROJECT_DIR macro may be resolved differently depending on whether 'idea.home.path' property is specified or not 
+    val possibleExpectedPaths = setOf(
+      Path(PathManager.getHomePath(), "foo.jar"), 
+      tempDirectory.rootPath.resolve("foo.jar")
+    )
+    assertTrue(fooJarPath in possibleExpectedPaths, "$fooJarPath is not in $possibleExpectedPaths")
+    
     val bar = repository.getModule(RuntimeModuleId.raw("ij.bar"))
     assertEquals(listOf(IntelliJProjectConfiguration.getLocalMavenRepo().resolve("bar/bar.jar")), bar.resourceRootPaths)
   }
