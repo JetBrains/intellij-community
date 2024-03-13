@@ -267,6 +267,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
     private val visibility = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(ChangeVisibilityFixFactories.noExplicitVisibilityInApiMode)
         registerFactory(ChangeVisibilityFixFactories.noExplicitVisibilityInApiModeWarning)
+        registerFactory(UseInheritedVisibilityFixFactories.cannotChangeAccessPrivilege)
+        registerFactory(UseInheritedVisibilityFixFactories.cannotWeakenAccessPrivilege)
     }
 
     private val other = KtQuickFixesListBuilder.registerPsiQuickFix {

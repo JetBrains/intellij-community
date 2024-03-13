@@ -212,8 +212,8 @@ class QuickFixRegistrar : QuickFixContributor {
         FUNCTION_CALL_EXPECTED.registerFactory(ChangeToFunctionInvocationFix)
         FUNCTION_EXPECTED.registerFactory(ChangeToPropertyAccessFix)
 
-        CANNOT_CHANGE_ACCESS_PRIVILEGE.registerFactory(ChangeVisibilityModifierFix)
-        CANNOT_WEAKEN_ACCESS_PRIVILEGE.registerFactory(ChangeVisibilityModifierFix)
+        CANNOT_CHANGE_ACCESS_PRIVILEGE.registerFactory(UseInheritedVisibilityFixFactory)
+        CANNOT_WEAKEN_ACCESS_PRIVILEGE.registerFactory(UseInheritedVisibilityFixFactory)
 
         INVISIBLE_REFERENCE.registerFactory(MakeVisibleFactory)
         INVISIBLE_MEMBER.registerFactory(MakeVisibleFactory)
