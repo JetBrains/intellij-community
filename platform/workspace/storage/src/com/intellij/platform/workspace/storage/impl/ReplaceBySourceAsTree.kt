@@ -199,11 +199,13 @@ internal class ReplaceBySourceAsTree {
 
     private fun addElement(parents: Set<EntityId>?, replaceWithDataSource: EntityId, replaceToTarget: HashBiMap<EntityId, EntityId>) {
       val targetParents = mutableListOf<WorkspaceEntity>()
+      val targetParentBuilders = mutableListOf<WorkspaceEntity.Builder<*>>()
       parents?.forEach { parent ->
         targetParents += targetStorage.entityDataByIdOrDie(parent).createEntity(targetStorage)
+        targetParentBuilders += targetStorage.entityDataByIdOrDie(parent).wrapAsModifiable(targetStorage)
       }
 
-      val modifiableEntity = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParents)
+      val modifiableEntity = replaceWithStorage.entityDataByIdOrDie(replaceWithDataSource).createDetachedEntity(targetParentBuilders)
       modifiableEntity as ModifiableWorkspaceEntityBase<out WorkspaceEntity, out WorkspaceEntityData<*>>
 
       // We actually bind parents in [createDetachedEntity], but we can't do it for external entities (that are defined in a separate module)

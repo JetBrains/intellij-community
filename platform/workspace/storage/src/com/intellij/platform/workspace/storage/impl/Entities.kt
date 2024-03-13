@@ -570,6 +570,10 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
     throw NotImplementedError()
   }
 
+  public open fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+    throw NotImplementedError()
+  }
+
   public open fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     throw NotImplementedError()
   }
