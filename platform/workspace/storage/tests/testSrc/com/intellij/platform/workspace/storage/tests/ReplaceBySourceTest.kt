@@ -669,13 +669,13 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `replace oneToOne connection with partial move`() {
-    val parentEntity = builder.addOoParentEntity()
+    val parentEntity = builder addEntity OoParentEntity("parent", MySource)
     builder addEntity OoChildEntity("child", MySource) {
       this.parentEntity = parentEntity
     }
 
     replacement = createEmptyBuilder()
-    val anotherParent = replacement.addOoParentEntity(source = AnotherSource)
+    val anotherParent = replacement addEntity OoParentEntity("parent", entitySource = AnotherSource)
     replacement addEntity OoChildEntity("child", MySource) {
       this.parentEntity = anotherParent
     }
@@ -687,12 +687,12 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `replace oneToOne connection with partial move and pid`() {
-    val parentEntity = builder.addOoParentWithPidEntity(source = AnotherSource)
+    val parentEntity = builder addEntity OoParentWithPidEntity("parent", entitySource = AnotherSource)
     builder addEntity OoChildForParentWithPidEntity("child", entitySource = MySource) {
       this.parentEntity = parentEntity
     }
 
-    val anotherParent = replacement.addOoParentWithPidEntity(source = MySource)
+    val anotherParent = replacement addEntity OoParentWithPidEntity("parent", entitySource = MySource)
     replacement addEntity OoChildForParentWithPidEntity("child", entitySource = MySource) {
       this.parentEntity = anotherParent
     }

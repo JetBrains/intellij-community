@@ -52,15 +52,6 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-fun MutableEntityStorage.addOoParentEntity(
-  parentProperty: String = "parent",
-  source: EntitySource = MySource
-): OoParentEntity {
-  val ooParentEntity = OoParentEntity(parentProperty, source)
-  this.addEntity(ooParentEntity)
-  return ooParentEntity
-}
-
 //region ---------------- Child entity ----------------------
 
 
@@ -198,15 +189,6 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(OoParentWithPidEntity.Builder::class.java, entity, modification)
 }
 //endregion
-
-fun MutableEntityStorage.addOoParentWithPidEntity(
-  parentProperty: String = "parent",
-  source: EntitySource = MySource
-): OoParentWithPidEntity {
-  val ooParentWithPidEntity = OoParentWithPidEntity(parentProperty, source)
-  this.addEntity(ooParentWithPidEntity)
-  return ooParentWithPidEntity
-}
 
 
 // ---------------- Child entity for parent with SymbolicId for Nullable ref ----------------------

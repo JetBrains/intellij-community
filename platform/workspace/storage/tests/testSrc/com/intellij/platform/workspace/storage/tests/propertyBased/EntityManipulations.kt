@@ -288,7 +288,7 @@ private object OoParentManipulation : EntityManipulation {
       override fun makeEntity(source: EntitySource,
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
-        return storage.addOoParentEntity(someProperty, source) to "OoParent. $someProperty"
+        return storage addEntity OoParentEntity(someProperty, source) to "OoParent. $someProperty"
       }
     }
   }
