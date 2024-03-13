@@ -3,7 +3,6 @@ package com.intellij.collaboration.ui
 
 import com.intellij.application.subscribe
 import com.intellij.collaboration.async.nestedDisposable
-import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.collaboration.ui.util.DimensionRestrictions
@@ -22,6 +21,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
+import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.ui.content.Content
 import com.intellij.ui.speedSearch.NameFilteringListModel
@@ -309,7 +309,7 @@ object CollaborationToolsUIUtil {
         text = it
       }
     }.let {
-      RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
+      BackgroundRoundedPanel(4, SingleComponentCenteringLayout()).apply {
         border = JBUI.Borders.empty()
         background = CodeReviewColorUtil.Review.stateBackground
         add(it)

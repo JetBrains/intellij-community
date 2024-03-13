@@ -8915,10 +8915,6 @@ c:com.intellij.ui.components.labels.SwingActionLink
 - com.intellij.ui.components.labels.LinkListener
 - <init>(javax.swing.Action):V
 - linkSelected(com.intellij.ui.components.labels.LinkLabel,javax.swing.Action):V
-c:com.intellij.ui.components.panels.BackgroundRoundedPanel
-- javax.swing.JPanel
-- <init>(I):V
-- p:paintComponent(java.awt.Graphics):V
 c:com.intellij.ui.components.panels.FlowLayoutWrapper
 - com.intellij.ui.components.panels.NonOpaquePanel
 - <init>(javax.swing.JComponent):V
