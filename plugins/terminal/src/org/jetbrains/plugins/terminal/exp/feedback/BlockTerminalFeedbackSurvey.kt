@@ -15,9 +15,14 @@ import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.exp.TerminalUsageLocalStorage
+import org.jetbrains.plugins.terminal.fus.TerminalFeedbackEvent
+import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment
+import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment.AFTER_USAGE
+import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment.ON_DISABLING
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 
 /** Used to indicate that we are trying to show the feedback notification after block terminal is disabled */
-internal val BLOCK_TERMINAL_DISABLING: Key<Boolean> = Key.create("BlockTerminalDisabling")
+private val BLOCK_TERMINAL_DISABLING: Key<Boolean> = Key.create("BlockTerminalDisabling")
 
 internal fun showBlockTerminalFeedbackNotification(project: Project) {
   project.putUserData(BLOCK_TERMINAL_DISABLING, true)
@@ -25,6 +30,10 @@ internal fun showBlockTerminalFeedbackNotification(project: Project) {
   if (!shown) {
     project.putUserData(BLOCK_TERMINAL_DISABLING, null)
   }
+}
+
+internal fun getFeedbackMoment(project: Project): TerminalFeedbackMoment {
+  return if (project.getUserData(BLOCK_TERMINAL_DISABLING) == true) ON_DISABLING else AFTER_USAGE
 }
 
 internal class BlockTerminalFeedbackSurvey : FeedbackSurvey() {
@@ -35,11 +44,14 @@ internal class BlockTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
   override val surveyId: String = "new_terminal"
 
   override fun createFeedbackDialog(project: Project, forTest: Boolean): BlockBasedFeedbackDialog<out SystemDataJsonSerializable> {
+    if (!forTest) {
+      TerminalUsageTriggerCollector.triggerFeedbackSurveyEvent(project, TerminalFeedbackEvent.DIALOG_SHOWN, getFeedbackMoment(project))
+    }
     return BlockTerminalFeedbackDialog(project, forTest)
   }
 
   override fun updateStateAfterDialogClosedOk(project: Project) {
-    // do nothing
+    TerminalUsageTriggerCollector.triggerFeedbackSurveyEvent(project, TerminalFeedbackEvent.FEEDBACK_SENT, getFeedbackMoment(project))
   }
 
   // Last date is an approximate time of 2024.2 release
@@ -53,7 +65,7 @@ internal class BlockTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
     val usageStorage = TerminalUsageLocalStorage.getInstance()
     return !usageStorage.state.feedbackNotificationShown &&
            // show notification if user executed enough commands or if block terminal is being disabled
-           (usageStorage.executedCommandsNumber >= 15 || usageStorage.executedCommandsNumber > 0 && project.getUserData(BLOCK_TERMINAL_DISABLING) == true)
+           (usageStorage.executedCommandsNumber >= 15 || usageStorage.executedCommandsNumber > 0 && getFeedbackMoment(project) == ON_DISABLING)
   }
 
   override fun createNotification(project: Project, forTest: Boolean): RequestFeedbackNotification {
@@ -64,5 +76,6 @@ internal class BlockTerminalSurveyConfig : InIdeFeedbackSurveyConfig {
 
   override fun updateStateAfterNotificationShowed(project: Project) {
     TerminalUsageLocalStorage.getInstance().state.feedbackNotificationShown = true
+    TerminalUsageTriggerCollector.triggerFeedbackSurveyEvent(project, TerminalFeedbackEvent.NOTIFICATION_SHOWN, getFeedbackMoment(project))
   }
 }

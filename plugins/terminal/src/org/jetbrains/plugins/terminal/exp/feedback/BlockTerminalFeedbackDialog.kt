@@ -14,8 +14,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.exp.TerminalUsageLocalStorage
-import org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackMoment.AFTER_USAGE
-import org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackMoment.ON_DISABLING
+import org.jetbrains.plugins.terminal.fus.TerminalFeedbackMoment
 
 internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) : BlockBasedFeedbackDialog<BlockTerminalUsageData>(project, forTest) {
   override val myFeedbackReportId: String = "new_terminal"
@@ -28,7 +27,7 @@ internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) :
     BlockTerminalUsageData(
       mostUsedShell = usageStorage.mostUsedShell,
       executedCommandsNumber = usageStorage.executedCommandsNumber,
-      feedbackMoment = if (myProject!!.getUserData(BLOCK_TERMINAL_DISABLING) == true) ON_DISABLING else AFTER_USAGE,
+      feedbackMoment = getFeedbackMoment(project),
       systemInfo = CommonFeedbackSystemData.getCurrentData()
     )
   }
@@ -73,7 +72,7 @@ internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) :
 internal data class BlockTerminalUsageData(
   @NlsSafe val mostUsedShell: String,
   val executedCommandsNumber: Int,
-  val feedbackMoment: BlockTerminalFeedbackMoment,
+  val feedbackMoment: TerminalFeedbackMoment,
   val systemInfo: CommonFeedbackSystemData
 ) : SystemDataJsonSerializable {
   override fun serializeToJson(json: Json): JsonElement {
@@ -89,8 +88,4 @@ internal data class BlockTerminalUsageData(
     appendLine(feedbackMoment.toString())
     append(systemInfo.toString())
   }
-}
-
-internal enum class BlockTerminalFeedbackMoment {
-  ON_DISABLING, AFTER_USAGE
 }
