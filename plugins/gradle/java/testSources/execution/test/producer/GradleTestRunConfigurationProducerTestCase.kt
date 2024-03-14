@@ -12,15 +12,14 @@ import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemRunConfigurationProducer
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testIntegration.TestRunLineMarkerProvider
 import com.intellij.util.LocalTimeCounter
+import org.jetbrains.plugins.gradle.execution.GradleRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer
-import org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestName
 import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
@@ -68,21 +67,10 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleRunConfigurati
     expectedSettings: String,
     vararg elements: PsiElement,
     noinline testTasksFilter: (TestName) -> Boolean = { true }
-  ) = runReadActionAndWait {
-    val context = getContextByLocation(*elements)
-    val configurationFromContext = getConfigurationFromContext(context)
-    val producer = configurationFromContext.configurationProducer as P
-    producer.setTestTasksChooser(testTasksFilter)
-    val configuration = configurationFromContext.configuration as GradleRunConfiguration
-    assertTrue("Configuration created from context must force test re-execution", configuration.isRunAsTest)
-    assertTrue("Configuration can be setup by producer from his context",
-      producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-    if (producer !is PatternGradleConfigurationProducer) {
-      assertTrue("Producer have to identify configuration that was created by him",
-        producer.isConfigurationFromContext(configuration, context))
+  ) {
+    verifyRunConfigurationProducer<P>(expectedSettings, *elements) {
+      setTestTasksChooser(testTasksFilter)
     }
-    producer.onFirstRun(configurationFromContext, context, Runnable {})
-    assertEquals(expectedSettings, configuration.settings.toString())
   }
 
   protected fun assertConfigurationForTask(expectedSettings: String, taskName: String, element: PsiElement) = runReadActionAndWait {

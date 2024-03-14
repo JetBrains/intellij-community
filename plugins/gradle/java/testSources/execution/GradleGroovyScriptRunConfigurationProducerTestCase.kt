@@ -1,14 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution
 
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.plugins.gradle.execution.test.producer.GradleRunConfigurationProducerTestCase
-import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 
 abstract class GradleGroovyScriptRunConfigurationProducerTestCase : GradleRunConfigurationProducerTestCase() {
@@ -43,24 +39,7 @@ abstract class GradleGroovyScriptRunConfigurationProducerTestCase : GradleRunCon
                expectedTaskNames == taskDataMap.keys)
     for (taskName in expectedTaskNames) {
       val task = taskDataMap[taskName]!!
-      verifyRunConfigurationProducer(expectedSettings = task.name, task.nameElement)
+      verifyRunConfigurationProducer<GradleGroovyScriptRunConfigurationProducer>(expectedSettings = task.name, task.nameElement)
     }
-  }
-
-  private fun verifyRunConfigurationProducer(
-    expectedSettings: String,
-    vararg elements: PsiElement
-  ) = runReadActionAndWait {
-    val context = getContextByLocation(*elements)
-    val configurationFromContext = getConfigurationFromContext(context)
-    val producer = configurationFromContext.configurationProducer as GradleGroovyScriptRunConfigurationProducer
-    val configuration = configurationFromContext.configuration as GradleRunConfiguration
-    assertTrue("Configuration can be setup by producer from his context",
-               producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-    assertTrue("Producer have to identify configuration that was created by him",
-               producer.isConfigurationFromContext(configuration, context))
-
-    producer.onFirstRun(configurationFromContext, context, Runnable {})
-    assertEquals(expectedSettings, configuration.settings.toString())
   }
 }

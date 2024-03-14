@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -26,7 +27,8 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.resolvePro
 final class GradleGroovyScriptRunConfigurationProducer extends GradleRunConfigurationProducer {
 
   @Override
-  protected boolean setupConfigurationFromContext(@NotNull GradleRunConfiguration configuration,
+  @VisibleForTesting
+  public boolean setupConfigurationFromContext(@NotNull GradleRunConfiguration configuration,
                                                   @NotNull ConfigurationContext context,
                                                   @NotNull Ref<PsiElement> sourceElement) {
     ExternalSystemTaskExecutionSettings taskExecutionSettings = configuration.getSettings();
