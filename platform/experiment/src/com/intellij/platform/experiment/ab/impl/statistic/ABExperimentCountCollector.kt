@@ -18,10 +18,10 @@ object ABExperimentCountCollector : CounterUsagesCollector() {
 
   fun logABExperimentOptionUsed() {
     val service = getABExperimentInstance()
-    val userExperimentOption = service.getUserExperimentOptionId()
+    val userExperimentOptionId = service.getUserExperimentOptionId().value
     val userGroupNumber = service.getUserGroupNumber() ?: return
     val userBucket = service.getUserBucket()
-    AB_EXPERIMENT_OPTION_USED.log(userExperimentOption, userGroupNumber, userBucket)
+    AB_EXPERIMENT_OPTION_USED.log(userExperimentOptionId, userGroupNumber, userBucket)
   }
 
   override fun getGroup(): EventLogGroup = GROUP

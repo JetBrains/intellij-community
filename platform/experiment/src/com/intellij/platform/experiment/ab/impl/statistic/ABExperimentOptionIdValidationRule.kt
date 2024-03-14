@@ -11,7 +11,7 @@ class ABExperimentOptionIdValidationRule : CustomValidationRule() {
   override fun getRuleId(): String = "ab_experiment_option_id"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return if (ABExperiment.getJbABExperimentOptionList().any { it.id == data } || data == OPTION_ID_FREE_GROUP)
+    return if (ABExperiment.getJbABExperimentOptionList().any { it.id.value == data } || data == OPTION_ID_FREE_GROUP.value)
       ValidationResultType.ACCEPTED
     else ValidationResultType.REJECTED
   }

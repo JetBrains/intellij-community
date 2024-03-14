@@ -23,7 +23,7 @@ fun getABExperimentInstance(): ABExperiment {
  * which affects IDE metrics like user retention in IDE.
  *
  * Each feature is represented as an option.
- * An option defines the size of user groups which will be associated with this option.
+ * An option defines the number of user groups which will be associated with this option.
  * There is a control option for default behavior.
  * You need to implement `ABExperimentOption` extension point to implement an option for your feature.
  *
@@ -31,7 +31,7 @@ fun getABExperimentInstance(): ABExperiment {
  * It is necessary to keep a group audience sufficient to make statistically significant conclusions.
  * So it is crucial to choose group size judiciously.
  * If group capacity is exhausted for a specific IDE, there will be an error.
- * In such a case, you need to communicate with related persons to handle such a case and rearrange option groups accordingly.
+ * In such a case, you need to communicate with related people to handle such a case and rearrange option groups accordingly.
  *
  * A/B experiment supports the implemented options from JetBrains plugins.
  * Plugins can be installed/uninstalled or enabled/disabled.
@@ -54,7 +54,7 @@ class ABExperiment {
     private const val TOTAL_NUMBER_OF_BUCKETS = 1024
     internal val TOTAL_NUMBER_OF_GROUPS = if (isPopularIDE()) 16 else 8
 
-    internal const val OPTION_ID_FREE_GROUP = "free.option"
+    internal val OPTION_ID_FREE_GROUP = ABExperimentOptionId("free.option")
 
     internal fun getJbABExperimentOptionList(): List<ABExperimentOption> {
       return AB_EXPERIMENTAL_OPTION_EP.extensionList.filter {
@@ -67,39 +67,35 @@ class ABExperiment {
     internal fun isPopularIDE() = PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro()
   }
 
-  private val userABExperimentOption: Lazy<ABExperimentOption?> = lazy {
-    getUserExperimentOption()
-  }
-
   fun isControlExperimentOptionEnabled(): Boolean {
     return isExperimentOptionEnabled(ABExperimentControlOption::class.java)
   }
 
   fun isExperimentOptionEnabled(experimentOptionClass: Class<out ABExperimentOption>): Boolean {
-    return experimentOptionClass.isInstance(userABExperimentOption.value)
+    return experimentOptionClass.isInstance(getUserExperimentOption())
   }
 
   internal fun getUserExperimentOption(): ABExperimentOption? {
     val userOptionId = getUserExperimentOptionId()
-    return getJbABExperimentOptionList().find { it.id == userOptionId }
+    return getJbABExperimentOptionList().find { it.id.value == userOptionId.value }
   }
 
-  internal fun getUserExperimentOptionId(): String {
-    val manualOptionId = System.getProperty("platform.experiment.ab.manual.option", "")
-    if (manualOptionId.isNotBlank()) {
-      LOG.debug { "Use manual option id from Registry. Registry key value is: $manualOptionId" }
+  internal fun getUserExperimentOptionId(): ABExperimentOptionId {
+    val manualOptionIdText = System.getProperty("platform.experiment.ab.manual.option", "")
+    if (manualOptionIdText.isNotBlank()) {
+      LOG.debug { "Use manual option id from Registry. Registry key value is: $manualOptionIdText" }
 
-      val manualOption = getJbABExperimentOptionList().find { it.id == manualOptionId }
+      val manualOption = getJbABExperimentOptionList().find { it.id.value == manualOptionIdText }
       if (manualOption != null) {
         LOG.debug { "Found manual option is: $manualOption" }
         return manualOption.id
       }
-      else if (manualOptionId == OPTION_ID_FREE_GROUP) {
-        LOG.debug { "Found manual option is: $manualOptionId" }
-        return manualOptionId
+      else if (manualOptionIdText == OPTION_ID_FREE_GROUP.value) {
+        LOG.debug { "Found manual option is: $manualOptionIdText" }
+        return ABExperimentOptionId(manualOptionIdText)
       }
       else {
-        LOG.debug { "Manual option with id $manualOptionId not found." }
+        LOG.debug { "Manual option with id $manualOptionIdText not found." }
         return OPTION_ID_FREE_GROUP
       }
     }
@@ -107,9 +103,9 @@ class ABExperiment {
     val userGroupNumber = getUserGroupNumber() ?: return OPTION_ID_FREE_GROUP
     val userOptionId = ABExperimentGroupStorageService.getUserExperimentOptionId(userGroupNumber)
 
-    LOG.debug { "User option id is: $userOptionId." }
+    LOG.debug { "User option id is: ${userOptionId.value}." }
 
-    return userABExperimentOption.value?.id ?: OPTION_ID_FREE_GROUP
+    return userOptionId
   }
 
   internal fun getUserGroupNumber(): Int? {

@@ -13,7 +13,7 @@ import com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSi
  * @see com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionBase
  */
 interface ABExperimentOption : PluginAware {
-  val id: String
+  val id: ABExperimentOptionId
 
   /**
    * Returns a size of an audience group for the option.

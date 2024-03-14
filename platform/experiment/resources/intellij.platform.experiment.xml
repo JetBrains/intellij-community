@@ -6,8 +6,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.platform.experiment.ab.impl.experiment.ABExperimentGroupStorageService"/>
-
     <experiment.abExperimentOption implementation="com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOption"/>
 
     <statistics.counterUsagesCollector

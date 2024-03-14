@@ -11,7 +11,7 @@ import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment.Companio
 
 /**
  * This storage is used to ensure that option groups are assigned properly.
- * It maintains a map from group number to an assigned option id.
+ * It maintains a map from a group's number to an assigned option id.
  * It uses a special id to mark free groups.
  *
  * At the start, the map is initialized with available options.
@@ -33,8 +33,9 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
   companion object {
     private val LOG = logger<ABExperimentGroupStorageService>()
 
-    fun getUserExperimentOptionId(userGroupNumber: Int): String {
-      return service<ABExperimentGroupStorageService>().state.groupNumberToExperimentOptionId[userGroupNumber]!!
+    fun getUserExperimentOptionId(userGroupNumber: Int): ABExperimentOptionId {
+      val experimentOptionIdText = service<ABExperimentGroupStorageService>().state.groupNumberToExperimentOptionId[userGroupNumber]!!
+      return ABExperimentOptionId(experimentOptionIdText)
     }
   }
 
@@ -66,7 +67,7 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
 
     val options = ABExperiment.getJbABExperimentOptionList()
     val usedOptionIds = groupNumberToExperimentOptionId.values.toSet()
-    val newOptions = options.filter { it.id !in usedOptionIds }
+    val newOptions = options.filter { it.id.value !in usedOptionIds }
 
     if (newOptions.isEmpty()) {
       return
@@ -78,7 +79,7 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
       val groupCount = newOption.getGroupSizeForIde(isPopularIDE).count
       for (i in 0 until groupCount) {
         val freeGroupKey = groupNumberToExperimentOptionId.entries.find { entry ->
-          entry.value == OPTION_ID_FREE_GROUP
+          entry.value == OPTION_ID_FREE_GROUP.value
         }?.key
 
         if (freeGroupKey == null) {
@@ -89,7 +90,7 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
 
         LOG.debug { "Assign experiment option ${newOption.id} to group $freeGroupKey." }
 
-        groupNumberToExperimentOptionId[freeGroupKey] = newOption.id
+        groupNumberToExperimentOptionId[freeGroupKey] = newOption.id.value
       }
     }
     LOG.debug { "State AFTER update is: $groupNumberToExperimentOptionId" }
@@ -97,11 +98,11 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
 
   private fun getInitialGroupToOptionState(): MutableMap<Int, String> {
     val initialGroupNumberToExperimentOptionId = (0.rangeUntil(TOTAL_NUMBER_OF_GROUPS).associateWith {
-      OPTION_ID_FREE_GROUP
+      OPTION_ID_FREE_GROUP.value
     }).toMutableMap()
 
     val isPopularIDE = ABExperiment.isPopularIDE()
-    val options = ABExperiment.getJbABExperimentOptionList().sortedBy { it.id }
+    val options = ABExperiment.getJbABExperimentOptionList().sortedBy { it.id.value }
 
     var counter = 0
 
@@ -109,7 +110,7 @@ internal class ABExperimentGroupStorageService : PersistentStateComponent<ABExpe
       val optionGroupsCount = option.getGroupSizeForIde(isPopularIDE).count
       for (groupNumber in counter.rangeUntil(counter + optionGroupsCount)) {
         LOG.debug { "Assign experiment option ${option.id} to group $groupNumber." }
-        initialGroupNumberToExperimentOptionId[groupNumber] = option.id
+        initialGroupNumberToExperimentOptionId[groupNumber] = option.id.value
       }
       counter += optionGroupsCount
     }
