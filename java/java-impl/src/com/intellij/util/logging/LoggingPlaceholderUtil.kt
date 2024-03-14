@@ -16,26 +16,8 @@ const val MAX_BUILDER_LENGTH = 20
 const val ADD_ARGUMENT_METHOD_NAME = "addArgument"
 const val SET_MESSAGE_METHOD_NAME = "setMessage"
 
-fun getLogStringIndex(parameters: List<UParameter>): Int? {
-  if (parameters.isEmpty()) return null
-  if (!TypeUtils.isJavaLangString(parameters[0].type)) {
-    if (parameters.size < 2 || !TypeUtils.isJavaLangString(parameters[1].type)) {
-      return null
-    }
-    else {
-      return 2
-    }
-  }
-  else {
-    return 1
-  }
-}
-
-fun detectLoggerBuilderMethod(uCallExpression: UCallExpression): UCallExpression? {
-  val uQualifiedReferenceExpression = uCallExpression.getOutermostQualified() ?: return null
-  val selector = uQualifiedReferenceExpression.selector as? UCallExpression ?: return null
-  if (LOGGER_BUILDER_LOG_TYPE_SEARCHERS.mapFirst(selector) == null) return null
-  return selector
+interface LoggerTypeSearcher {
+  fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType?
 }
 
 private val SLF4J_HOLDER = object : LoggerTypeSearcher {
@@ -46,6 +28,7 @@ private val SLF4J_HOLDER = object : LoggerTypeSearcher {
     else PlaceholderLoggerType.SLF4J
   }
 }
+
 
 val LOG4J_LOG_BUILDER_HOLDER = object : LoggerTypeSearcher {
   override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType? {
@@ -70,7 +53,6 @@ val LOG4J_LOG_BUILDER_HOLDER = object : LoggerTypeSearcher {
     return PlaceholderLoggerType.LOG4J_EQUAL_PLACEHOLDERS
   }
 }
-
 
 val SLF4J_BUILDER_HOLDER = object : LoggerTypeSearcher {
   override fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType {
@@ -129,19 +111,59 @@ val IDEA_PLACEHOLDERS = object : LoggerTypeSearcher {
   }
 }
 
+enum class ResultType {
+  PARTIAL_PLACE_HOLDER_MISMATCH, PLACE_HOLDER_MISMATCH, INCORRECT_STRING, SUCCESS
+}
+
+
+enum class PlaceholderLoggerType {
+  SLF4J, SLF4J_EQUAL_PLACEHOLDERS, LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE, LOG4J_EQUAL_PLACEHOLDERS, AKKA_PLACEHOLDERS
+}
+
+enum class PlaceholdersStatus {
+  EXACTLY, PARTIAL, ERROR_TO_PARSE_STRING, EMPTY
+}
+
+
 class LoggerContext(val log4jAsImplementationForSlf4j: Boolean)
 
-interface LoggerTypeSearcher {
-  fun findType(expression: UCallExpression, context: LoggerContext): PlaceholderLoggerType?
+/**
+ * A data class representing the result of a placeholder count operation.
+ *
+ * @property placeholderRangesInPartHolderList   The list of [PlaceholderRangesInPartHolder] instances.
+ * @property status                              The status of the placeholders ranges extraction.
+ *
+ * @see countPlaceholders
+ */
+data class PlaceholderCountResult(val placeholderRangesInPartHolderList: List<PlaceholderRangesInPartHolder>, val status: PlaceholdersStatus) {
+  val count = placeholderRangesInPartHolderList.sumOf { it.rangeList.size }
 }
 
-private fun getImmediateLoggerQualifier(expression: UCallExpression): UExpression? {
-  val result = expression.receiver?.skipParenthesizedExprDown()
-  if (result is UQualifiedReferenceExpression) {
-    return result.selector
-  }
-  return result
-}
+/**
+ * A data class representing ranges of placeholders ({}, or %s) within the [LoggingStringPartEvaluator.PartHolder].
+ */
+data class PlaceholderRangesInPartHolder(val rangeList: List<TextRange?>)
+
+/**
+ * A data class representing the context for a placeholder of the logger.
+ *
+ * @property placeholderParameters   The list of [UExpression] representing the parameters for the placeholder.
+ * @property logStringArgument       The [UExpression] representing the string argument for logging.
+ * @property partHolderList          The list of PartHolder from the [LoggingStringPartEvaluator].
+ * @property loggerType              The type of logger used [PlaceholderLoggerType].
+ * @property lastArgumentIsException Indicates whether the last argument of logger method is an exception or not.
+ * @property lastArgumentIsSupplier  Indicates whether the last argument of logger method is a supplier or not.
+ *
+ * @see getPlaceholderContext
+ */
+data class PlaceholderContext(
+  val placeholderParameters: List<UExpression>,
+  val logStringArgument: UExpression,
+  val partHolderList: List<LoggingStringPartEvaluator.PartHolder>,
+  val loggerType: PlaceholderLoggerType,
+  val lastArgumentIsException: Boolean,
+  val lastArgumentIsSupplier: Boolean,
+)
 
 val LOGGER_BUILDER_LOG_TYPE_SEARCHERS: CallMapper<LoggerTypeSearcher> = CallMapper<LoggerTypeSearcher>()
   .register(CallMatcher.instanceCall(LoggingUtil.SLF4J_EVENT_BUILDER, "log"), SLF4J_BUILDER_HOLDER)
@@ -155,9 +177,37 @@ val LOGGER_RESOLVE_TYPE_SEARCHERS: CallMapper<LoggerTypeSearcher> = LOGGER_BUILD
 val LOGGER_TYPE_SEARCHERS: CallMapper<LoggerTypeSearcher> = LOGGER_RESOLVE_TYPE_SEARCHERS
   .register(CallMatcher.instanceCall(LoggingUtil.AKKA_LOGGING, "debug", "error", "format", "info", "log", "warning"), AKKA_PLACEHOLDERS)
 
-
 private val BUILDER_CHAIN = setOf("addKeyValue", "addMarker", "setCause")
 
+fun getLogStringIndex(parameters: List<UParameter>): Int? {
+  if (parameters.isEmpty()) return null
+  if (!TypeUtils.isJavaLangString(parameters[0].type)) {
+    if (parameters.size < 2 || !TypeUtils.isJavaLangString(parameters[1].type)) {
+      return null
+    }
+    else {
+      return 2
+    }
+  }
+  else {
+    return 1
+  }
+}
+
+fun detectLoggerBuilderMethod(uCallExpression: UCallExpression): UCallExpression? {
+  val uQualifiedReferenceExpression = uCallExpression.getOutermostQualified() ?: return null
+  val selector = uQualifiedReferenceExpression.selector as? UCallExpression ?: return null
+  if (LOGGER_BUILDER_LOG_TYPE_SEARCHERS.mapFirst(selector) == null) return null
+  return selector
+}
+
+private fun getImmediateLoggerQualifier(expression: UCallExpression): UExpression? {
+  val result = expression.receiver?.skipParenthesizedExprDown()
+  if (result is UQualifiedReferenceExpression) {
+    return result.selector
+  }
+  return result
+}
 
 fun findMessageSetterStringArg(node: UCallExpression,
                                loggerType: LoggerTypeSearcher?): UExpression? {
@@ -269,88 +319,6 @@ fun solvePlaceholderCount(loggerType: PlaceholderLoggerType,
   }
 }
 
-private fun countPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>, loggerType: PlaceholderLoggerType): PlaceholderCountResult {
-  var count = 0
-  var full = true
-  val partHolderPlaceholderList = mutableListOf<PlaceholderRangesInPartHolder>()
-  for (holderIndex in holders.indices) {
-    val partHolder = holders[holderIndex]
-    if (!partHolder.isConstant) {
-      full = false
-      continue
-    }
-    val string = partHolder.text ?: continue
-    val length = string.length
-    var escaped = false
-    var lastPlaceholderIndex = -1
-    val placeholderRanges = mutableListOf<TextRange>()
-    for (i in 0 until length) {
-      val c = string[i]
-      if (c == '\\' &&
-          (loggerType == PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS || loggerType == PlaceholderLoggerType.SLF4J)) {
-        escaped = !escaped
-      }
-      else if (c == '{') {
-        if (holderIndex != 0 && i == 0 && !holders[holderIndex - 1].isConstant) {
-          continue
-        }
-        if (!escaped) {
-          lastPlaceholderIndex = i
-        }
-      }
-      else if (c == '}') {
-        if (lastPlaceholderIndex != -1) {
-          count++
-          placeholderRanges.add(TextRange(lastPlaceholderIndex, lastPlaceholderIndex + 2))
-          lastPlaceholderIndex = -1
-        }
-      }
-      else {
-        escaped = false
-        lastPlaceholderIndex = -1
-      }
-    }
-    partHolderPlaceholderList.add(PlaceholderRangesInPartHolder(placeholderRanges))
-  }
-  return PlaceholderCountResult(partHolderPlaceholderList, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
-}
-
-private fun couldBeThrowableSupplier(loggerType: PlaceholderLoggerType, lastParameter: UParameter?, lastArgument: UExpression?): Boolean {
-  if (loggerType != PlaceholderLoggerType.LOG4J_OLD_STYLE && loggerType != PlaceholderLoggerType.LOG4J_FORMATTED_STYLE) {
-    return false
-  }
-  if (lastParameter == null || lastArgument == null) {
-    return false
-  }
-  val lastParameterType = lastParameter.type.let { if (it is PsiEllipsisType) it.componentType else it }
-  if (lastParameterType is UastErrorType) {
-    return false
-  }
-  if (!(InheritanceUtil.isInheritor(lastParameterType, CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER) || InheritanceUtil.isInheritor(
-      lastParameterType, "org.apache.logging.log4j.util.Supplier"))) {
-    return false
-  }
-  val sourcePsi = lastArgument.sourcePsi ?: return true
-  val throwable = PsiType.getJavaLangThrowable(sourcePsi.manager, sourcePsi.resolveScope)
-
-  if (lastArgument is ULambdaExpression) {
-    return !lastArgument.getReturnExpressions().any {
-      val expressionType = it.getExpressionType()
-      expressionType != null && !throwable.isConvertibleFrom(expressionType)
-    }
-  }
-
-  if (lastArgument is UCallableReferenceExpression) {
-    val psiType = lastArgument.getMethodReferenceReturnType() ?: return true
-    return throwable.isConvertibleFrom(psiType)
-  }
-
-  val type = lastArgument.getExpressionType() ?: return true
-  val functionalReturnType = LambdaUtil.getFunctionalInterfaceReturnType(type) ?: return true
-  return throwable.isConvertibleFrom(functionalReturnType)
-}
-
-
 fun getPlaceholderContext(
   uCallExpression: UCallExpression,
   mapper: CallMapper<LoggerTypeSearcher>,
@@ -420,6 +388,88 @@ fun hasThrowableType(lastArgument: UExpression): Boolean {
   return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)
 }
 
+private fun countPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>, loggerType: PlaceholderLoggerType): PlaceholderCountResult {
+  var count = 0
+  var full = true
+  val partHolderPlaceholderList = mutableListOf<PlaceholderRangesInPartHolder>()
+  for (holderIndex in holders.indices) {
+    val partHolder = holders[holderIndex]
+    if (!partHolder.isConstant) {
+      full = false
+      continue
+    }
+    val string = partHolder.text ?: continue
+    val length = string.length
+    var escaped = false
+    var lastPlaceholderIndex = -1
+    val placeholderRanges = mutableListOf<TextRange>()
+    for (i in 0 until length) {
+      val c = string[i]
+      if (c == '\\' &&
+          (loggerType == PlaceholderLoggerType.SLF4J_EQUAL_PLACEHOLDERS || loggerType == PlaceholderLoggerType.SLF4J)) {
+        escaped = !escaped
+      }
+      else if (c == '{') {
+        if (holderIndex != 0 && i == 0 && !holders[holderIndex - 1].isConstant) {
+          continue
+        }
+        if (!escaped) {
+          lastPlaceholderIndex = i
+        }
+      }
+      else if (c == '}') {
+        if (lastPlaceholderIndex != -1) {
+          count++
+          placeholderRanges.add(TextRange(lastPlaceholderIndex, lastPlaceholderIndex + 2))
+          lastPlaceholderIndex = -1
+        }
+      }
+      else {
+        escaped = false
+        lastPlaceholderIndex = -1
+      }
+    }
+    partHolderPlaceholderList.add(PlaceholderRangesInPartHolder(placeholderRanges))
+  }
+  return PlaceholderCountResult(partHolderPlaceholderList, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
+}
+
+
+private fun couldBeThrowableSupplier(loggerType: PlaceholderLoggerType, lastParameter: UParameter?, lastArgument: UExpression?): Boolean {
+  if (loggerType != PlaceholderLoggerType.LOG4J_OLD_STYLE && loggerType != PlaceholderLoggerType.LOG4J_FORMATTED_STYLE) {
+    return false
+  }
+  if (lastParameter == null || lastArgument == null) {
+    return false
+  }
+  val lastParameterType = lastParameter.type.let { if (it is PsiEllipsisType) it.componentType else it }
+  if (lastParameterType is UastErrorType) {
+    return false
+  }
+  if (!(InheritanceUtil.isInheritor(lastParameterType, CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER) || InheritanceUtil.isInheritor(
+      lastParameterType, "org.apache.logging.log4j.util.Supplier"))) {
+    return false
+  }
+  val sourcePsi = lastArgument.sourcePsi ?: return true
+  val throwable = PsiType.getJavaLangThrowable(sourcePsi.manager, sourcePsi.resolveScope)
+
+  if (lastArgument is ULambdaExpression) {
+    return !lastArgument.getReturnExpressions().any {
+      val expressionType = it.getExpressionType()
+      expressionType != null && !throwable.isConvertibleFrom(expressionType)
+    }
+  }
+
+  if (lastArgument is UCallableReferenceExpression) {
+    val psiType = lastArgument.getMethodReferenceReturnType() ?: return true
+    return throwable.isConvertibleFrom(psiType)
+  }
+
+  val type = lastArgument.getExpressionType() ?: return true
+  val functionalReturnType = LambdaUtil.getFunctionalInterfaceReturnType(type) ?: return true
+  return throwable.isConvertibleFrom(functionalReturnType)
+}
+
 private fun UCallableReferenceExpression.getMethodReferenceReturnType(): PsiType? {
   val method = this.resolveToUElement() as? UMethod ?: return null
   if (method.isConstructor) {
@@ -441,55 +491,3 @@ private fun ULambdaExpression.getReturnExpressions(): List<UExpression> {
   body.accept(visitor)
   return returnExpressions
 }
-
-enum class ResultType {
-  PARTIAL_PLACE_HOLDER_MISMATCH, PLACE_HOLDER_MISMATCH, INCORRECT_STRING, SUCCESS
-}
-
-
-enum class PlaceholderLoggerType {
-  SLF4J, SLF4J_EQUAL_PLACEHOLDERS, LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE, LOG4J_EQUAL_PLACEHOLDERS, AKKA_PLACEHOLDERS
-}
-
-enum class PlaceholdersStatus {
-  EXACTLY, PARTIAL, ERROR_TO_PARSE_STRING, EMPTY
-}
-
-
-/**
- * A data class representing the result of a placeholder count operation.
- *
- * @property placeholderRangesInPartHolderList   The list of [PlaceholderRangesInPartHolder] instances.
- * @property status                              The status of the placeholders ranges extraction.
- *
- * @see countPlaceholders
- */
-data class PlaceholderCountResult(val placeholderRangesInPartHolderList: List<PlaceholderRangesInPartHolder>, val status: PlaceholdersStatus) {
-  val count = placeholderRangesInPartHolderList.sumOf { it.rangeList.size }
-}
-
-/**
- * A data class representing ranges of placeholders ({}, or %s) within the [LoggingStringPartEvaluator.PartHolder].
- */
-data class PlaceholderRangesInPartHolder(val rangeList: List<TextRange?>)
-
-/**
- * A data class representing the context for a placeholder of the logger.
- *
- * @property placeholderParameters   The list of [UExpression] representing the parameters for the placeholder.
- * @property logStringArgument       The [UExpression] representing the string argument for logging.
- * @property partHolderList          The list of PartHolder from the [LoggingStringPartEvaluator].
- * @property loggerType              The type of logger used [PlaceholderLoggerType].
- * @property lastArgumentIsException Indicates whether the last argument of logger method is an exception or not.
- * @property lastArgumentIsSupplier  Indicates whether the last argument of logger method is a supplier or not.
- *
- * @see getPlaceholderContext
- */
-data class PlaceholderContext(
-  val placeholderParameters: List<UExpression>,
-  val logStringArgument: UExpression,
-  val partHolderList: List<LoggingStringPartEvaluator.PartHolder>,
-  val loggerType: PlaceholderLoggerType,
-  val lastArgumentIsException: Boolean,
-  val lastArgumentIsSupplier: Boolean,
-)
