@@ -20,7 +20,7 @@ import static java.beans.EventHandler.create;
 public class ColorPanel extends JComponent {
   private static final RelativeFont MONOSPACED_FONT = RelativeFont.SMALL.family(Font.MONOSPACED);
   private final List<ActionListener> myListeners = new CopyOnWriteArrayList<>();
-  private final JTextField myTextField = new JBTextField(8);
+  private final JTextField myTextField = new JBTextField(9);
   private boolean myEditable;
   private ActionEvent myEvent;
   private Color myColor;
