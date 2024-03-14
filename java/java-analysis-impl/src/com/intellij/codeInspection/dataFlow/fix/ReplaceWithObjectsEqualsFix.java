@@ -5,7 +5,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -57,7 +57,7 @@ public final class ReplaceWithObjectsEqualsFix extends PsiUpdateModCommandQuickF
                                                       @NotNull PsiReferenceExpression methodExpression) {
     if (!"equals".equals(methodExpression.getReferenceName()) ||
         call.getArgumentList().getExpressionCount() != 1 ||
-        !PsiUtil.getLanguageLevel(call).isAtLeast(LanguageLevel.JDK_1_7)) {
+        !PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, call)) {
       return null;
     }
 

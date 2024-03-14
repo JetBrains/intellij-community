@@ -65,7 +65,7 @@ public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElemen
   @Nullable
   public static PsiClass tryMakeRecord(@NotNull PsiElement element) {
     // We use java.util.Objects for code generation, but it's absent before Java 7
-    if (!PsiUtil.isLanguageLevel7OrHigher(element)) return null;
+    if (!PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, element)) return null;
     PsiJavaFile maybeRecord = (PsiJavaFile)PsiFileFactory.getInstance(element.getProject())
       .createFileFromText("Dummy.java", JavaLanguage.INSTANCE, element.getText(), false, false);
     PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(maybeRecord, LanguageLevel.JDK_16);

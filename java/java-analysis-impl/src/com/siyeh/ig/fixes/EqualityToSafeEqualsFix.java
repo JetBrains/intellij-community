@@ -17,10 +17,11 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
@@ -89,7 +90,7 @@ public final class EqualityToSafeEqualsFix extends PsiUpdateModCommandQuickFix i
     final String lhsText = tracker.text(lhs);
     final String rhsText = tracker.text(rhs);
     @NonNls final StringBuilder newExpression = new StringBuilder();
-    if (PsiUtil.isLanguageLevel7OrHigher(expression) && ClassUtils.findClass("java.util.Objects", expression) != null) {
+    if (PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, expression) && ClassUtils.findClass("java.util.Objects", expression) != null) {
       if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
         newExpression.append('!');
       }
