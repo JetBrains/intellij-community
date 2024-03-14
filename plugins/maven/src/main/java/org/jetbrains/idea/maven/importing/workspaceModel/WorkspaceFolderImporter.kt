@@ -13,7 +13,6 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.FileCollectionFactory
-import org.jetbrains.idea.maven.importing.BuildHelperMavenPluginUtil
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
@@ -162,6 +161,15 @@ internal class WorkspaceFolderImporter(
       }
       excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it))) }
     }
+    collectExcludedFoldersFromConfigurators(stats, configuratorContext, folders, mavenProject)
+
+    return CachedProjectFolders(mavenProject.directory, outputPath, testOutputPath, folders)
+  }
+
+  private fun collectExcludedFoldersFromConfigurators(stats: WorkspaceImportStats,
+                        configuratorContext: MavenWorkspaceConfigurator.FoldersContext,
+                        folders: MutableList<ContentRootCollector.ImportedFolder>,
+                        mavenProject: MavenProject) {
     for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
       stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
         try {
@@ -175,8 +183,6 @@ internal class WorkspaceFolderImporter(
         folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it)))
       }
     }
-
-    return CachedProjectFolders(mavenProject.directory, outputPath, testOutputPath, folders)
   }
 
   private fun collectGeneratedFolders(folders: MutableList<ContentRootCollector.ImportedFolder>,
@@ -210,46 +216,24 @@ internal class WorkspaceFolderImporter(
     mavenProject.testSources.forEach { result.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.TEST_SOURCE)) }
     mavenProject.testResources.forEach { result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.TEST_RESOURCE)) }
 
-    val buildHelperPlugin = BuildHelperMavenPluginUtil.findPlugin(mavenProject)
-    if (buildHelperPlugin != null) {
-      BuildHelperMavenPluginUtil.addBuilderHelperPaths(buildHelperPlugin, "add-source") { path ->
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaSourceRootType.SOURCE))
-      }
-      BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(buildHelperPlugin, "add-resource") { path ->
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaResourceRootType.RESOURCE))
-      }
-
-      BuildHelperMavenPluginUtil.addBuilderHelperPaths(buildHelperPlugin, "add-test-source") { path ->
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaSourceRootType.TEST_SOURCE))
-      }
-      BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(buildHelperPlugin, "add-test-resource") { path ->
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaResourceRootType.TEST_RESOURCE))
-      }
-    }
 
     for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
       stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
         try {
-          each.getAdditionalSourceFolders(configuratorContext)
+          each.getAdditionalFolders(configuratorContext)
         }
         catch (e: Exception) {
           MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.getAdditionalSourceFolders, skipping it.", e)
           Stream.empty()
         }
       }.forEach {
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it), JavaSourceRootType.SOURCE))
-      }
-
-      stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
-        try {
-          each.getAdditionalTestSourceFolders(configuratorContext)
+        val rootType = when(it.type) {
+          MavenWorkspaceConfigurator.FolderType.SOURCE -> JavaSourceRootType.SOURCE
+          MavenWorkspaceConfigurator.FolderType.TEST_SOURCE -> JavaSourceRootType.TEST_SOURCE
+          MavenWorkspaceConfigurator.FolderType.RESOURCE -> JavaResourceRootType.RESOURCE
+          MavenWorkspaceConfigurator.FolderType.TEST_RESOURCE -> JavaResourceRootType.TEST_RESOURCE
         }
-        catch (e: Exception) {
-          MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.getAdditionalTestSourceFolders, skipping it.", e)
-          Stream.empty()
-        }
-      }.forEach {
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it), JavaSourceRootType.TEST_SOURCE))
+        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it.path), rootType))
       }
     }
 

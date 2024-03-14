@@ -31,22 +31,10 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  fun getAdditionalSourceFolders(context: FoldersContext): Stream<String> {
+  fun getAdditionalFolders(context: MavenWorkspaceConfigurator.FoldersContext) : Stream<AdditionalFolder> {
     return Stream.empty()
   }
 
-  /**
-   * Called for each imported project in order to add
-   * [com.intellij.platform.workspace.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
-   *
-   * * Called on a background thread.
-   * * Side-effects are not allowed.
-   * * WriteActions are not allowed.
-   */
-  @RequiresBackgroundThread
-  fun getAdditionalTestSourceFolders(context: FoldersContext): Stream<String> {
-    return Stream.empty()
-  }
 
   /**
    * Called for each imported project.
@@ -142,6 +130,12 @@ interface MavenWorkspaceConfigurator {
   interface MutableMavenProjectContext : Context<MutableEntityStorage> {
     val mavenProjectWithModules: MavenProjectWithModules<ModuleEntity>
   }
+
+  enum class FolderType {
+    SOURCE, RESOURCE, TEST_SOURCE, TEST_RESOURCE
+  }
+
+  data class AdditionalFolder(val path: String, val type: FolderType)
 }
 
 @ApiStatus.Experimental
