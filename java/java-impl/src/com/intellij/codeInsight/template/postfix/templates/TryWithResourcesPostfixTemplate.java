@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.InheritanceUtil;
@@ -30,7 +31,7 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
 
   @Override
   public boolean isApplicable(@NotNull PsiElement element, @NotNull Document copyDocument, int newOffset) {
-    if (!PsiUtil.isLanguageLevel7OrHigher(element)) return false;
+    if (!PsiUtil.isAvailable(JavaFeature.TRY_WITH_RESOURCES, element)) return false;
 
     PsiExpression initializer = JavaPostfixTemplatesUtils.getTopmostExpression(element);
 

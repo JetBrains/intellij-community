@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberTypeIndex;
@@ -140,7 +141,7 @@ public abstract class MembersGetter {
           }
           // For parameterized class constructors, we add a diamond. Do not suggest constructors for parameterized classes
           // in Java 6 or older when diamond was not supported
-          if (aClass.getTypeParameters().length > 0 && !PsiUtil.isLanguageLevel7OrHigher(myPlace)) continue;
+          if (aClass.getTypeParameters().length > 0 && !PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, myPlace)) continue;
           // Constructor type parameters aren't supported yet
           if (method.getTypeParameters().length > 0) continue;
         }

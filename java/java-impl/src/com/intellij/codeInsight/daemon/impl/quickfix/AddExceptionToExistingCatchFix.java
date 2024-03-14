@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -40,7 +41,7 @@ public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandActi
     return ModCommand.chooseAction(QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"), actions);
   }
 
-  private static List<PsiCatchSection> findSuitableSections(List<? extends PsiCatchSection> sections, @NotNull List<? extends PsiClassType> exceptionTypes, boolean isJava7OrHigher) {
+  private static List<PsiCatchSection> findSuitableSections(List<? extends PsiCatchSection> sections, @NotNull List<? extends PsiClassType> exceptionTypes, boolean multiCatchAvailable) {
     List<PsiCatchSection> finalSections = new ArrayList<>();
     for (PsiCatchSection section : ContainerUtil.reverse(sections)) {
       finalSections.add(section);
@@ -54,7 +55,7 @@ public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandActi
         }
       }
     }
-    if (!isJava7OrHigher) {
+    if (!multiCatchAvailable) {
       // if we get to this point, this means, that we can't generify any catch clause, so we can't suggest a fix
       return Collections.emptyList();
     }
@@ -114,13 +115,13 @@ public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandActi
     @Nullable
     static Context from(@NotNull PsiElement element) {
       if (!element.isValid() || element instanceof PsiMethodReferenceExpression) return null;
-      boolean isJava7OrHigher = PsiUtil.isLanguageLevel7OrHigher(element);
+      boolean multiCatchAvailable = PsiUtil.isAvailable(JavaFeature.MULTI_CATCH, element);
       List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.getOwnUnhandledExceptions(element));
       if (unhandledExceptions.isEmpty()) return null;
       List<PsiTryStatement> tryStatements = getTryStatements(element);
       List<PsiCatchSection> sections =
         tryStatements.stream()
-          .flatMap(stmt -> findSuitableSections(Arrays.asList(stmt.getCatchSections()), unhandledExceptions, isJava7OrHigher).stream())
+          .flatMap(stmt -> findSuitableSections(Arrays.asList(stmt.getCatchSections()), unhandledExceptions, multiCatchAvailable).stream())
           .filter(catchSection -> {
             PsiParameter parameter = catchSection.getParameter();
             if (parameter == null) return false;

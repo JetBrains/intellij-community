@@ -134,7 +134,7 @@ public final class PsiDiamondTypeUtil {
 
   public static String getCollapsedType(PsiType type, PsiElement context) {
     String typeText = type.getCanonicalText();
-    if (PsiUtil.isLanguageLevel7OrHigher(context)) {
+    if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
       final int idx = typeText.indexOf('<');
       if (idx >= 0) {
         return typeText.substring(0, idx) + "<>";
