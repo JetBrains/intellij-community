@@ -32,9 +32,10 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 
 /**
- * The command creates a new gradle groovy/kotlin project.
+ * The command creates a new Gradle groovy/kotlin project.
  * The project also could be added as module (linked to the current project)
  * Argument is serialized [NewGradleProjectDto] as json
+ * You should have a focus (on file, for example) if you are creating a new project.
  */
 class CreateGradleProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
