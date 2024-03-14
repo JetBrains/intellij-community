@@ -385,20 +385,30 @@ internal class WindowsDistributionBuilder(
       }
       classpath.add(icoFilesDirectory.toString())
 
-      runIdea(
-        context = context,
-        mainClass = "com.pme.launcher.LauncherGeneratorMain",
-        args = listOf(
-          inputPath.absolutePathString(),
-          appInfoForLauncher.absolutePathString(),
-          "$communityHome/native/WinLauncher/resource.h",
-          launcherPropertiesPath.absolutePathString(),
-          icoFile?.fileName?.toString() ?: " ",
-          outputPath.absolutePathString(),
-        ),
-        jvmArgs = listOf("-Djava.awt.headless=true"),
-        classPath = classpath
-      )
+      try {
+        runIdea(
+          context = context,
+          mainClass = "com.pme.launcher.LauncherGeneratorMain",
+          args = listOf(
+            inputPath.absolutePathString(),
+            appInfoForLauncher.absolutePathString(),
+            "$communityHome/native/WinLauncher/resource.h",
+            launcherPropertiesPath.absolutePathString(),
+            icoFile?.fileName?.toString() ?: " ",
+            outputPath.absolutePathString(),
+          ),
+          jvmArgs = listOf("-Djava.awt.headless=true"),
+          classPath = classpath
+        )
+      } catch (e: Throwable) {
+        if (!customizer.useXPlatLauncher) throw e
+
+        throw IllegalStateException(
+          "Failed to patch resources in the new launcher." +
+          " Most likely `XPLAT_LAUNCHER_EMBED_RESOURCES_AND_MANIFEST` env var was not set to `1` during the cargo build.",
+          e
+        )
+      }
     }
   }
 }
