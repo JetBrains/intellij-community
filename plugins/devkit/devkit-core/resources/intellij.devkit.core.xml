@@ -63,6 +63,7 @@
     
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesDomFileDescription"
                       rootTagName="product-modules" />
+    <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.liveTemplates.TemplateSetDescription" rootTagName="templateSet"/>
 
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>

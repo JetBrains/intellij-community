@@ -35,6 +35,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
@@ -97,7 +98,7 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       if (implementationClass == null || implementationClass.getStringValue() == null) {
         return;
       }
-      checkNonLocalizableAttribute(holder, extension, "displayName", new InspectionI18NQuickFix());
+      checkNonLocalizableAttribute(holder, extension, "displayName", new InspectionI18NQuickFix("displayName"));
       checkNonLocalizableAttribute(holder, extension, "groupName", null);
       //checkNonLocalizableAttribute(holder, element, "groupPath", null);
     }
@@ -140,10 +141,10 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     highlightNonLocalizableElement(holder, DevKitDomUtil.getTag(element, tagName), tagName, quickFix);
   }
 
-  private static void highlightNonLocalizableElement(DomElementAnnotationHolder holder,
-                                                     GenericDomValue<?> valueElement,
-                                                     @NonNls String valueElementName,
-                                                     @Nullable LocalQuickFix fix) {
+  static void highlightNonLocalizableElement(DomElementAnnotationHolder holder,
+                                             GenericDomValue<?> valueElement,
+                                             @NonNls String valueElementName,
+                                             @Nullable LocalQuickFix fix) {
     if (valueElement != null && valueElement.getStringValue() != null) {
       holder.createProblem(valueElement,
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -330,13 +331,19 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
   }
 
-  private static class InspectionI18NQuickFix implements LocalQuickFix, BatchQuickFix {
+  static class InspectionI18NQuickFix implements LocalQuickFix, BatchQuickFix {
+
+    private final String attributeName;
+
+    InspectionI18NQuickFix(String attributeName) {
+      this.attributeName = attributeName;
+    }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "displayName");
+      return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", attributeName);
     }
 
     @Override
@@ -367,7 +374,7 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       return false;
     }
 
-    private static void doFix(@NotNull Project project, List<XmlTag> tags) {
+    private void doFix(@NotNull Project project, List<XmlTag> tags) {
       choosePropertiesFileAndExtract(project, tags, selection -> {
         PropertiesFile propertiesFile = findPropertiesFile(project, selection);
         if (propertiesFile != null) {
@@ -386,35 +393,44 @@ final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       });
     }
 
-    private static void registerPropertyKey(@NotNull Project project, XmlTag xml, PropertiesFile propertiesFile) {
-      String displayName = xml.getAttributeValue("displayName");
+    private void registerPropertyKey(@NotNull Project project, XmlTag xml, PropertiesFile propertiesFile) {
+      String displayName = xml.getAttributeValue(attributeName);
       if (displayName == null) return;
-      xml.setAttribute("displayName", null);
-      String shortName = xml.getAttributeValue("shortName");
-      if (shortName == null) {
-        String implementationClass = xml.getAttributeValue("implementationClass");
-        if (implementationClass == null) {
-          return;
-        }
-        shortName = InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass));
-      }
-      @NonNls String key =
-        "inspection." + StringUtil.join(NameUtilCore.splitNameIntoWords(shortName), s -> StringUtil.decapitalize(s), ".") +
-        ".display.name";
+      xml.setAttribute(attributeName, null);
+      String shortName = getName(xml);
+      if (shortName == null) return;
+      String[] items = ArrayUtil.mergeArrays(NameUtilCore.splitNameIntoWords(shortName), NameUtilCore.splitNameIntoWords(attributeName));
+      @NonNls String key = "inspection." + StringUtil.join(items, s -> StringUtil.decapitalize(s), ".");
       xml.setAttribute("key", key);
 
-      XmlTag rootTag = ((XmlFile)xml.getContainingFile()).getRootTag();
-      XmlTag resourceBundle = rootTag != null ? rootTag.findFirstSubTag("resource-bundle") : null;
       String bundleQName = getBundleQName(project, propertiesFile);
-      if (resourceBundle == null || !bundleQName.equals(resourceBundle.getValue().getTrimmedText())) {
-        xml.setAttribute("bundle", bundleQName);
-      }
+      setBundle(xml, bundleQName);
 
       JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                     Collections.singletonList(propertiesFile),
                                                                     key,
                                                                     StringUtil.unescapeXmlEntities(displayName),
                                                                     new UExpression[0]);
+    }
+
+    protected void setBundle(@NotNull XmlTag xml, @NotNull String bundleQName) {
+      XmlTag rootTag = ((XmlFile)xml.getContainingFile()).getRootTag();
+      XmlTag resourceBundle = rootTag != null ? rootTag.findFirstSubTag("resource-bundle") : null;
+      if (resourceBundle == null || !bundleQName.equals(resourceBundle.getValue().getTrimmedText())) {
+        xml.setAttribute("bundle", bundleQName);
+      }
+    }
+
+    protected @Nullable String getName(@NotNull XmlTag xml) {
+      String shortName = xml.getAttributeValue("shortName");
+      if (shortName == null) {
+        String implementationClass = xml.getAttributeValue("implementationClass");
+        if (implementationClass == null) {
+          return null;
+        }
+        shortName = getShortName(StringUtil.getShortName(implementationClass));
+      }
+      return shortName;
     }
 
     @Override
