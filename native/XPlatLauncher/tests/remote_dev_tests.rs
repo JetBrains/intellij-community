@@ -104,7 +104,6 @@ mod tests {
         assert!(output.contains("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable"));
     }
 
-    #[test]
     #[cfg(not(target_os = "windows"))]
     fn prepare_font_config_dir(dist_root: &PathBuf) {
         let font_config_root = dist_root.join("plugins/remote-dev-server/selfcontained/fontconfig");
