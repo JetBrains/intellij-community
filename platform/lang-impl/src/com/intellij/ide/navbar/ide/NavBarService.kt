@@ -22,6 +22,7 @@ import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.util.ui.EDT

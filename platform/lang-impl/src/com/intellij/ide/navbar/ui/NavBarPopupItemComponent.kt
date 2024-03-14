@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
-import com.intellij.ide.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.SimpleColoredComponent

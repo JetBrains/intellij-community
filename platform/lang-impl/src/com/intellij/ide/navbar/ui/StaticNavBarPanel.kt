@@ -1,10 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
-import com.intellij.ide.navbar.ide.*
+import com.intellij.ide.navbar.ide.NavBarVmImpl
+import com.intellij.ide.navbar.ide.contextModel
+import com.intellij.ide.navbar.ide.dataContext
+import com.intellij.ide.navbar.ide.defaultModel
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.ui.components.JBPanel
 import kotlinx.coroutines.*

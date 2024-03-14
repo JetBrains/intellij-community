@@ -4,7 +4,6 @@ package com.intellij.ide.navbar.actions
 import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.ide.IdeNavBarVmItem
-import com.intellij.ide.navbar.ide.NavBarVmItem
 import com.intellij.ide.navbar.impl.DefaultNavBarItem
 import com.intellij.ide.navbar.impl.ModuleNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
@@ -18,6 +17,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement

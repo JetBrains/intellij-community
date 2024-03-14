@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
@@ -29,6 +28,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationRequests
+import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.*

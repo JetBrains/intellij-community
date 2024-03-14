@@ -2,12 +2,13 @@
 package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.NavBarItemPresentation
-import com.intellij.ide.navbar.ide.NavBarVmItem.ItemExpandResult
 import com.intellij.ide.navbar.impl.children
 import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
+import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.NavBarVmItem
+import com.intellij.platform.navbar.NavBarVmItem.ItemExpandResult
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
