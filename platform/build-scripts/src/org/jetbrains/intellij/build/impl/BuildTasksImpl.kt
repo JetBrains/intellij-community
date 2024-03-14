@@ -197,7 +197,10 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = java.util.List.of(
 )
 
 private fun isSourceFile(path: String): Boolean {
-  return path.endsWith(".java") && path != "module-info.java" || path.endsWith(".groovy") || path.endsWith(".kt")
+  return path.endsWith(".java") && path != "module-info.java" ||
+         path.endsWith(".groovy") ||
+         path.endsWith(".kt") ||
+         path.endsWith(".form")
 }
 
 private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
