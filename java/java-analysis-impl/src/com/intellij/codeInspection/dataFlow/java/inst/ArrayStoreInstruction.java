@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -53,6 +54,10 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
     DfaValue valueToStore = stateBefore.pop();
     DfaValue index = stateBefore.pop();
     DfaValue array = stateBefore.pop();
+    List<DfaInstructionState> finalStates = new ArrayList<>();
+    if (myOutOfBoundsTransfer != null) {
+      finalStates.addAll(IndexOutOfBoundsProblem.dispatchTransfer(interpreter, stateBefore, myOutOfBoundsTransfer));
+    }
     DfaInstructionState[] states =
       myIndexProblem.processOutOfBounds(interpreter, stateBefore, index, array, myOutOfBoundsTransfer);
     if (states != null) return states;
@@ -71,7 +76,8 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
       stateBefore.flushFieldsQualifiedBy(Set.of(array));
       pushResult(interpreter, stateBefore, valueToStore);
     }
-    return nextStates(interpreter, stateBefore);
+    finalStates.add(nextState(interpreter, stateBefore));
+    return finalStates.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   protected void checkArrayElementAssignability(@NotNull DataFlowInterpreter interpreter,
