@@ -7,7 +7,8 @@ import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UAnnotation
+import org.jetbrains.uast.UReferenceExpression
 
 class JUnitReferenceContributor : PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
@@ -28,8 +29,10 @@ class JUnitReferenceContributor : PsiReferenceContributor() {
     registrar.registerUastReferenceProvider(
       injectionHostUExpression()
         .annotationParam("names", capture(UAnnotation::class.java).filter { annotation ->
-          val mode = annotation.findDeclaredAttributeValue("mode") ?: return@filter true // default is INCLUDE
-          val name = ((mode as? UReferenceExpression)?.referenceNameElement as USimpleNameReferenceExpression?)?.identifier
+          val mode = annotation.findDeclaredAttributeValue("mode")
+                       as? UReferenceExpression
+                     ?: return@filter true // default is INCLUDE
+          val name = mode.resolvedName
           name == "INCLUDE" || name == "EXCLUDE"
         }),
       uastInjectionHostReferenceProvider { _, host -> arrayOf(EnumSourceReference(host)) }
