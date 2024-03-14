@@ -4,6 +4,7 @@ import java.nio.file.StandardCopyOption
 
 plugins {
     id("java")
+      id("me.filippov.gradle.jvm.wrapper") version "0.14.0"
 }
 
 group = "com.intellij.idea"
