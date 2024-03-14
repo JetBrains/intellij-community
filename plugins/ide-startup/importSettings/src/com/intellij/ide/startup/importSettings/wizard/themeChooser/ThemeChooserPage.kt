@@ -107,7 +107,7 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     }
 
     val continueAction = controller.createDefaultButton(ImportSettingsBundle.message("wizard.button.continue")) {
-      controller.goToKeymapPage()
+      controller.goToKeymapPage(isForwardDirection = true)
     }
 
     val buttons: List<JButton> = backAction?.let {
@@ -128,6 +128,10 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     activeScheme.active = true
 
     service.updateScheme(schemePane.scheme.id)
+  }
+
+  fun onEnter(isForwardDirection: Boolean) {
+    service.onStepEnter(isForwardDirection)
   }
 
   override val content: JComponent = contentPage

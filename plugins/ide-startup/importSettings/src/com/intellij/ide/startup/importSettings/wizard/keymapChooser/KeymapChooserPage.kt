@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.wizard.keymapChooser
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
@@ -6,6 +6,7 @@ import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardController
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
+import com.intellij.ide.startup.importSettings.data.KeymapService
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.util.ui.JBUI
@@ -24,9 +25,10 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
   private val contentPage: JComponent
   private val buttonGroup = ButtonGroup()
 
-  init {
-    val keymapService = controller.service.getKeymapService()
+  private val keymapService: KeymapService
+    get() = controller.service.getKeymapService()
 
+  init {
     val list = keymapService.keymaps
     assert(list.isNotEmpty())
 
@@ -77,7 +79,7 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
     }
 
     val backAction = controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
-      controller.goToThemePage()
+      controller.goToThemePage(isForwardDirection = false)
     }
 
     val continueAction = controller.createDefaultButton(ImportSettingsBundle.message("wizard.button.continue")) {
@@ -101,6 +103,10 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
     activeKeymap.active = false
     activeKeymap = keymap
     activeKeymap.active = true
+  }
+
+  fun onEnter(isForwardDirection: Boolean) {
+    keymapService.onStepEnter(isForwardDirection)
   }
 
   override fun dispose() {

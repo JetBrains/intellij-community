@@ -20,8 +20,8 @@ interface WizardController : BaseController {
 
   val service: StartupWizardService
 
-  fun goToThemePage()
-  fun goToKeymapPage()
+  fun goToThemePage(isForwardDirection: Boolean)
+  fun goToKeymapPage(isForwardDirection: Boolean)
   fun goToPluginPage()
   fun goToInstallPluginPage(ids: List<String>)
   fun skipPlugins()
@@ -41,24 +41,27 @@ class WizardControllerImpl(dialog: OnboardingDialog,
     }
   }
 
-  override fun goToThemePage() {
+  override fun goToThemePage(isForwardDirection: Boolean) {
     if (ScreenReader.isActive()) {
-      goToKeymapPage()
+      goToKeymapPage(isForwardDirection = true)
       return
     }
 
     val page = ThemeChooserPage(this)
     dialog.changePage(page)
+    page.onEnter(isForwardDirection)
   }
 
-  override fun goToKeymapPage() {
+  override fun goToKeymapPage(isForwardDirection: Boolean) {
     val page = KeymapChooserPage(this)
     dialog.changePage(page)
+    page.onEnter(isForwardDirection)
   }
 
   override fun goToPluginPage() {
     val page = WizardPluginsPage(this)
     dialog.changePage(page)
+    page.onEnter()
   }
 
   override fun goToInstallPluginPage(ids: List<String>) {

@@ -83,7 +83,10 @@ class OnboardingController private constructor(){
   fun startWizard(cancelCallback: (() -> Unit)? = null,
                   titleGetter: (StartupWizardStage?) -> @NlsContexts.DialogTitle String? = { null },
                   isModal: Boolean = true,
-                  goBackAction: (() -> Unit)? = {startImport (cancelCallback, titleGetter, isModal)}) {
+                  goBackAction: (() -> Unit)? = {
+                    StartupWizardService.getInstance()?.onExit()
+                    startImport (cancelCallback, titleGetter, isModal)
+                  }) {
 
     val dl = getDialog(titleGetter)
 
@@ -95,7 +98,8 @@ class OnboardingController private constructor(){
       cancelCallback?.invoke()
     }
 
-    wizardController.goToThemePage()
+    service.onEnter()
+    wizardController.goToThemePage(true)
 
     if(!dl.isShowing) {
       dl.initialize()

@@ -34,7 +34,9 @@ class WizardServiceTest : StartupWizardService {
     return PluginServiceImpl()
   }
 
-
+  override fun onEnter() {}
+  override fun onCancel() {}
+  override fun onExit() {}
 }
 
 class ThemeServiceImpl : ThemeService {
@@ -69,6 +71,8 @@ class ThemeServiceImpl : ThemeService {
     }
 
   override val schemesList: List<WizardScheme> = map.values.toList()
+
+  override fun onStepEnter(isForwardDirection: Boolean) {}
 
   override fun updateScheme(schemeId: String) {
 
@@ -114,6 +118,8 @@ class PluginServiceImpl : PluginService {
   )
 
   override val plugins: List<WizardPlugin> = listOf
+
+  override fun onStepEnter() {}
 
   override fun install(lifetime: Lifetime, ids: List<String>): PluginImportProgress = TestPluginImportProgress(lifetime)
   override fun skipPlugins() {
@@ -172,6 +178,8 @@ class TestKeymapService : KeymapService {
   Shortcut(UUID.randomUUID().toString(), "Find Usages"),
   Shortcut(UUID.randomUUID().toString(), "Extend Selection"),
   Shortcut(UUID.randomUUID().toString(), "Build Solution"))
+
+  override fun onStepEnter(isForwardDirection: Boolean) {}
 
   override fun chosen(id: String) {
 

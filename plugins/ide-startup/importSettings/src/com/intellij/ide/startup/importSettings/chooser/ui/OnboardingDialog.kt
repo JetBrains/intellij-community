@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
-import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.data.NotificationData
+import com.intellij.ide.startup.importSettings.data.StartupWizardService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
@@ -40,6 +41,7 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
 
     if (shouldExit) {
       tracker.onLeave()
+      StartupWizardService.getInstance()?.onCancel()
       cancelCallback()
       super.doCancelAction()
     }
@@ -111,6 +113,11 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
         handler()
       }
     }
+  }
+
+  override fun dispose() {
+    StartupWizardService.getInstance()?.onExit()
+    super.dispose()
   }
 }
 

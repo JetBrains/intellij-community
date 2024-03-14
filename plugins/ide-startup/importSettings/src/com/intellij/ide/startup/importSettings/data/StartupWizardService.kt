@@ -30,6 +30,21 @@ interface StartupWizardService {
   fun getThemeService(): ThemeService
 
   fun getPluginService(): PluginService
+
+  /**
+   * Gets called when the wizard is shows on the screen.
+   */
+  fun onEnter()
+
+  /**
+   * Gets called when the wizard is canceled.
+   */
+  fun onCancel()
+
+  /**
+   * Gets called when the wizard is closed (even if canceled).
+   */
+  fun onExit()
 }
 
 class DisabledStartupWizardPages : StartupWizardService {
@@ -38,6 +53,9 @@ class DisabledStartupWizardPages : StartupWizardService {
   override fun getKeymapService() = error("Startup wizard is disabled.")
   override fun getThemeService() = error("Startup wizard is disabled.")
   override fun getPluginService() = error("Startup wizard is disabled.")
+  override fun onEnter() {}
+  override fun onCancel() {}
+  override fun onExit() {}
 }
 
 interface ThemeService {
@@ -56,6 +74,7 @@ interface ThemeService {
 
   val schemesList: List<WizardScheme>
 
+  fun onStepEnter(isForwardDirection: Boolean)
   fun updateScheme(schemeId: String)
 }
 
@@ -68,6 +87,7 @@ data class WizardScheme (
 
 interface PluginService {
   val plugins: List<WizardPlugin>
+  fun onStepEnter()
   fun install(lifetime: Lifetime, ids: List<String>): PluginImportProgress
   fun skipPlugins()
 }
@@ -86,6 +106,7 @@ interface WizardPlugin {
 interface KeymapService {
   val keymaps: List<WizardKeymap>
   val shortcuts: List<Shortcut>
+  fun onStepEnter(isForwardDirection: Boolean)
   fun chosen(id: String)
 }
 
