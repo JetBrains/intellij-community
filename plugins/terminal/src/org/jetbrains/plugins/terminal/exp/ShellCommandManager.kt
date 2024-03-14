@@ -85,7 +85,9 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     val gitBranch = Param.GIT_BRANCH.getDecodedValueOrNull(event.getOrNull(2))?.takeIf { it.isNotEmpty() }
     val virtualEnv = Param.VIRTUAL_ENV.getDecodedValueOrNull(event.getOrNull(3))?.takeIf { it.isNotEmpty() }
     val condaEnv = Param.CONDA_ENV.getDecodedValueOrNull(event.getOrNull(4))?.takeIf { it.isNotEmpty() }
-    val state = TerminalPromptState(currentDirectory, gitBranch, virtualEnv, condaEnv)
+    val originalPrompt = Param.ORIGINAL_PROMPT.getDecodedValueOrNull(event.getOrNull(5))?.takeIf { it.isNotEmpty() }
+    val originalRightPrompt = Param.ORIGINAL_RIGHT_PROMPT.getDecodedValueOrNull(event.getOrNull(6))?.takeIf { it.isNotEmpty() }
+    val state = TerminalPromptState(currentDirectory, gitBranch, virtualEnv, condaEnv, originalPrompt, originalRightPrompt)
     firePromptStateUpdated(state)
   }
 
@@ -228,6 +230,8 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     GIT_BRANCH,
     VIRTUAL_ENV,
     CONDA_ENV,
+    ORIGINAL_PROMPT,
+    ORIGINAL_RIGHT_PROMPT,
 
     /** Json with the following content [org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.ShellInfo] */
     SHELL_INFO;

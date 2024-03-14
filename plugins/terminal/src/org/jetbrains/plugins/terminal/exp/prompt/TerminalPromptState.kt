@@ -6,5 +6,7 @@ data class TerminalPromptState(
   val gitBranch: String? = null,
   /** Absolute path to the virtual env */
   val virtualEnv: String? = null,
-  val condaEnv: String? = null
+  val condaEnv: String? = null,
+  val originalPrompt: String? = null,
+  val originalRightPrompt: String? = null
 )

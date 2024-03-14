@@ -125,5 +125,8 @@ class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSe
   }
 }
 
-data class PromptRenderingInfo(val text: @NlsSafe String, val highlightings: List<HighlightingInfo>)
+data class PromptRenderingInfo(val text: @NlsSafe String,
+                               val highlightings: List<HighlightingInfo>,
+                               val rightText: @NlsSafe String = "",
+                               val rightHighlightings: List<HighlightingInfo> = emptyList())
 
