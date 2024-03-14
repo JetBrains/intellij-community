@@ -22,6 +22,7 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.util.asSafely
 import com.intellij.util.containers.map2Array
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 
 internal fun InlineCompletionTooltipComponent.shortcutActions(): ActionButtonWithText {
@@ -31,14 +32,26 @@ internal fun InlineCompletionTooltipComponent.shortcutActions(): ActionButtonWit
     "→" to KeyboardShortcut.fromString("RIGHT"),
     "Shift →" to KeyboardShortcut.fromString("shift pressed RIGHT"),
   )
-
   val customCurrentShortcut = KeymapUtil.getPrimaryShortcut(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
     .takeIf { predefinedShortcuts.find { (_, shortcut) -> shortcut.toString() == it.toString() } == null }
 
+  val shortcuts = listOfNotNull(
+    customCurrentShortcut?.let { KeymapUtil.getShortcutText(it) to it },
+    *predefinedShortcuts
+  )
+  val shortcutActions = shortcuts.map2Array { (name, shortcut) ->
+    object : InplaceChangeInlineCompletionShortcutAction(name, shortcut) {
+      lateinit var updateAfterActionPerformed: ActionButtonWithText
+      override fun actionPerformed(e: AnActionEvent) {
+        super.actionPerformed(e)
+        updateAfterActionPerformed.update()
+      }
+    }
+  }
+
   val actions = listOfNotNull<AnAction>(
     Separator.create(IdeBundle.message("inline.completion.tooltip.shortcuts.header")),
-    customCurrentShortcut?.let { InplaceChangeInlineCompletionShortcutAction(KeymapUtil.getShortcutText(it), it) },
-    *predefinedShortcuts.map2Array { (name, shortcut) -> InplaceChangeInlineCompletionShortcutAction(name, shortcut) },
+    *shortcutActions,
     ChangeToCustomInlineCompletionAction(),
   )
 
@@ -67,14 +80,14 @@ internal fun InlineCompletionTooltipComponent.shortcutActions(): ActionButtonWit
       }
     }
   }.also {
-    actions.filterIsInstance<InplaceChangeInlineCompletionShortcutAction>()
-      .forEach { action -> action.updateAfterActionPerformed = it }
+    shortcutActions.forEach { action -> action.updateAfterActionPerformed = it }
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-private class ChangeToCustomInlineCompletionAction : AnAction(
+@ApiStatus.Internal
+class ChangeToCustomInlineCompletionAction : AnAction(
   IdeBundle.message("inline.completion.tooltip.shortcuts.accept.select.custom"),
 ), DumbAware, LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
@@ -86,6 +99,7 @@ private class ChangeToCustomInlineCompletionAction : AnAction(
   }
 }
 
+@ApiStatus.Internal
 class InlineCompletionPopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {
   init {
     isPopup = true
@@ -103,12 +117,12 @@ class InlineCompletionPopupActionGroup(private val actions: Array<AnAction>) : A
   }
 }
 
-private class InplaceChangeInlineCompletionShortcutAction(
+@ApiStatus.Internal
+open class InplaceChangeInlineCompletionShortcutAction(
   @NlsActions.ActionText text: String,
   private val shortcut: Shortcut
 ) : AnAction(text), DumbAware, LightEditCompatible {
 
-  lateinit var updateAfterActionPerformed: ActionButtonWithText
   override fun actionPerformed(e: AnActionEvent) {
     if (!KeymapManager.getInstance().activeKeymap.canModify()) {
       val managerEx = KeymapManager.getInstance() as KeymapManagerEx
@@ -132,6 +146,5 @@ private class InplaceChangeInlineCompletionShortcutAction(
       IdeActions.ACTION_INSERT_INLINE_COMPLETION,
       shortcut
     )
-    updateAfterActionPerformed.update()
   }
 }
