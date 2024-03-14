@@ -153,24 +153,20 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KtAnalysisSession)
     private fun processConstant(expr: KtExpression?): Boolean {
-        expr ?: return false
-        val constantValue = expr.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) ?: return false
-        val declaredType = expr.getKotlinType() ?: return false
-        // Unsigned type handling is not supported yet
-        if (declaredType is KtNonErrorClassType) {
-            val classId = declaredType.classId
-            if (classId == StandardNames.FqNames.uInt ||
-                classId == StandardNames.FqNames.uByte ||
-                classId == StandardNames.FqNames.uLong ||
-                classId == StandardNames.FqNames.uShort
-            ) {
-                return false
-            }
-        }
+        val constantValue = expr?.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) ?: return false
         val value = constantValue.value
-        if (value !is Int && value !is Long && value !is Float && value !is Double && value !is String) return false
-        val dfConstantType = DfTypes.constant(value, declaredType.toDfType())
-        addInstruction(PushValueInstruction(dfConstantType, KotlinExpressionAnchor(expr)))
+        val ktType = when(value) {
+            is Boolean -> builtinTypes.BOOLEAN
+            is Int -> builtinTypes.INT
+            is Long -> builtinTypes.LONG
+            is Float -> builtinTypes.FLOAT
+            is Double -> builtinTypes.DOUBLE
+            is String -> builtinTypes.STRING
+            // Unsigned type handling is not supported yet
+            else -> return false
+        }
+        addInstruction(PushValueInstruction(DfTypes.constant(value, ktType.toDfType()), KotlinExpressionAnchor(expr)))
+        addImplicitConversion(ktType, expr.getKotlinType())
         return true
     }
 

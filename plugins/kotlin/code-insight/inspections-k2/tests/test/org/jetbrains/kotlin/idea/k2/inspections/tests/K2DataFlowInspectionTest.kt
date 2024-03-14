@@ -38,6 +38,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testCollectionConstructors() = doTest()
     fun testComparison() = doTest()
     fun testComparisonNoValues() = doTest(false)
+    fun testConstantWithDifferentType() = doTest()
     fun testCustomObjectComparison() = doTest()
     fun testDestructuringInLoop() = doTest()
     fun testDoubleComparison() = doTest()
