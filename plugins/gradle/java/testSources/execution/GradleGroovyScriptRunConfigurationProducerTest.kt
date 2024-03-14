@@ -28,13 +28,13 @@ class GradleGroovyScriptRunConfigurationProducerTest : GradleGroovyScriptRunConf
         for ((methodCall, taskName) in declaredWithMethods) {
           call(methodCall, taskName) {
             call("doFirst") {
-              code("println", "$taskName task created with $methodCall")
+              call("println", "$taskName task created with $methodCall")
             }
           }
         }
         call("task $taskNameNoParentheses") {
           call("doFirst") {
-            code("println('$taskNameNoParentheses task created as task taskName')")
+            call("println('$taskNameNoParentheses task created as task taskName')")
           }
         }
       }
@@ -67,7 +67,7 @@ class GradleGroovyScriptRunConfigurationProducerTest : GradleGroovyScriptRunConf
         for ((methodCall, taskName) in declaredWithMethods) {
           call(methodCall, taskName) {
             call("doFirst") {
-              code("println", "$taskName task created with $methodCall")
+              call("println", "$taskName task created with $methodCall")
             }
           }
         }
