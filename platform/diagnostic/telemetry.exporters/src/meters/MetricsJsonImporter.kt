@@ -17,6 +17,22 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.fileSize
 
+/**
+ * Imports metrics exported by com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporter
+ */
+@ApiStatus.Internal
+object MetricsJsonImporter {
+  fun fromJsonFile(jsonPath: Path): Collection<MetricData> {
+    val module = SimpleModule().apply { addDeserializer(MetricData::class.java, MetricDataDeserializer()) }
+
+    if (jsonPath.fileSize() == 0L) return emptyList()
+
+    return jacksonObjectMapper()
+      .registerModule(module)
+      .readValue<Collection<MetricData>>(jsonPath.toFile())
+  }
+}
+
 internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
   companion object {
     private val emptyResource = Resource.empty()
@@ -119,21 +135,5 @@ internal class MetricDataDeserializer : JsonDeserializer<MetricData>() {
       }
       MetricDataType.EXPONENTIAL_HISTOGRAM -> TODO("Exponential histogram isn't supported yet")
     }
-  }
-}
-
-/**
- * Imports metrics exported by com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporter
- */
-@ApiStatus.Internal
-object MetricsJsonImporter {
-  fun fromJsonFile(jsonPath: Path): Collection<MetricData> {
-    val module = SimpleModule().apply { addDeserializer(MetricData::class.java, MetricDataDeserializer()) }
-
-    if (jsonPath.fileSize() == 0L) return emptyList()
-
-    return jacksonObjectMapper()
-      .registerModule(module)
-      .readValue<Collection<MetricData>>(jsonPath.toFile())
   }
 }

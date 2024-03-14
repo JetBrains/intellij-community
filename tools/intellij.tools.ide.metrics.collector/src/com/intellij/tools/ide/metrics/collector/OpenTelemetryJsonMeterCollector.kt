@@ -4,8 +4,12 @@ import com.intellij.platform.diagnostic.telemetry.exporters.meters.MetricsJsonIm
 import com.intellij.tools.ide.metrics.collector.meters.*
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
+import com.intellij.tools.ide.util.common.logError
+import io.opentelemetry.sdk.common.InstrumentationScopeInfo
+import io.opentelemetry.sdk.metrics.data.Data
 import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.data.MetricDataType
+import io.opentelemetry.sdk.resources.Resource
 import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
@@ -17,19 +21,32 @@ import kotlin.io.path.name
  */
 open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: MetricsSelectionStrategy,
                                            val meterFilter: (MetricData) -> Boolean) : TelemetryMetricsCollector {
-  private fun getOpenTelemetryJsonReportFiles(logsDirPath: Path): List<Path> {
-    val metricsFiles = logsDirPath.listDirectoryEntries("*.json").filter { it.name.startsWith("open-telemetry-meter") }
-    require(metricsFiles.isNotEmpty()) {
-      "JSON files with metrics `open-telemetry-meters.***.json` must exist in directory '$logsDirPath'"
-    }
-
-    return metricsFiles
-  }
 
   override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> {
-    val telemetryMetrics: List<MetricData> = getOpenTelemetryJsonReportFiles(logsDirPath).flatMap {
-      MetricsJsonImporter.fromJsonFile(it)
+    val metricsFiles = logsDirPath.listDirectoryEntries("*.json").filter { it.name.startsWith("open-telemetry-meter") }
+
+    // fallback to the collecting meters from the .csv files for older IDEs versions (where meters aren't exported to JSON files)
+    if (metricsFiles.isEmpty()) {
+      logError("Cannot find JSON files with metrics `open-telemetry-meters.***.json` in '$logsDirPath'. Falling back to use metrics from *.csv files")
+
+      return OpenTelemetryCsvMeterCollector(metricsSelectionStrategy) { metricEntry ->
+        val metricData = object : MetricData {
+          override fun getResource(): Resource = TODO()
+          override fun getInstrumentationScopeInfo(): InstrumentationScopeInfo = TODO()
+
+          override fun getName(): String = metricEntry.key
+
+          override fun getDescription(): String = TODO()
+          override fun getUnit(): String = TODO()
+          override fun getType(): MetricDataType = TODO()
+          override fun getData(): Data<*> = TODO()
+        }
+
+        meterFilter(metricData)
+      }.collect(logsDirPath)
     }
+
+    val telemetryMetrics: List<MetricData> = metricsFiles.flatMap { MetricsJsonImporter.fromJsonFile(it) }
       .filter(meterFilter)
 
     val metricsGroupedByName: Map<String, List<MetricData>> = telemetryMetrics.groupBy { it.name }
