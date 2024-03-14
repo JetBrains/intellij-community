@@ -14,10 +14,6 @@
       implementationClass="com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector"/>
     <statistics.validation.customValidationRule
       implementation="com.intellij.platform.experiment.ab.impl.statistic.ABExperimentOptionIdValidationRule"/>
-
-    <registryKey description="Key for manual specifying A/B experiment option for test purposes."
-                 key="platform.experiment.ab.manual.option"
-                 defaultValue=""/>
   </extensions>
 
   <actions>

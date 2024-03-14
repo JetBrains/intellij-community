@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOption
 import com.intellij.util.MathUtil
 import com.intellij.util.PlatformUtils
@@ -86,7 +85,7 @@ class ABExperiment {
   }
 
   internal fun getUserExperimentOptionId(): String {
-    val manualOptionId = Registry.stringValue("platform.experiment.ab.manual.option")
+    val manualOptionId = System.getProperty("platform.experiment.ab.manual.option", "")
     if (manualOptionId.isNotBlank()) {
       LOG.debug { "Use manual option id from Registry. Registry key value is: $manualOptionId" }
 
