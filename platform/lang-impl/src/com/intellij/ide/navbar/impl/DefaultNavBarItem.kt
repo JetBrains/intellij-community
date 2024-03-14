@@ -135,24 +135,6 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
 internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelExtension?) : DefaultNavBarItem<PsiElement>(
   data) {
 
-  override fun presentation(): NavBarItemPresentation {
-    if (data is PsiFile) {
-      data.virtualFile
-        ?.asSafely<VirtualFileWindow>()
-        ?.let {
-          return NavBarItemPresentation(
-            getIcon(),
-            LangBundle.message("navBar.element.injected.file", data.language.displayName),
-            null,
-            REGULAR_ITALIC_ATTRIBUTES,
-            REGULAR_ITALIC_ATTRIBUTES,
-            true
-          )
-        }
-    }
-    return super.presentation()
-  }
-
   override fun createPointer(): Pointer<out NavBarItem> {
     val data = data
     val ownerExtension = ownerExtension
