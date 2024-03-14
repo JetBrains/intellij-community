@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerationAware {
+final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerationAware, CodeInsightContextAwareSearchScope {
   private final GlobalSearchScope @NotNull [] myScopes;
 
   @Override
@@ -104,6 +104,11 @@ final class UnionScope extends GlobalSearchScope implements VirtualFileEnumerati
   @Override
   public boolean contains(final @NotNull VirtualFile file) {
     return ContainerUtil.find(myScopes, scope -> scope.contains(file)) != null;
+  }
+
+  @Override
+  public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
+    return CodeInsightContextInfoUnionKt.createCodeInsightContextInfoUnion(myScopes);
   }
 
   @Override

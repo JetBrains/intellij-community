@@ -7,15 +7,23 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.function.Function;
 
-class OrderRootComputer {
+/**
+ * The `OrderRootComputer` class is responsible for computing the roots for a given {@link OrderRootsEnumeratorImpl}.
+ * There are two implementations that differ only by the type of returning values:
+ * - {@link ClassicOrderRootComputer} returns a list of VirtualFiles
+ * - {@link MutliverseOrderRootComputer} returns a list of {@link com.intellij.openapi.roots.RootEntry}
+ */
+abstract class OrderRootComputer<RootEntry> {
   private static final Logger LOG = Logger.getInstance(OrderRootComputer.class);
 
   private final @NotNull OrderEnumeratorBase myOrderEnumerator;
@@ -33,8 +41,8 @@ class OrderRootComputer {
     myWithoutSelfModuleOutput = withoutSelfModuleOutput;
   }
 
-  @NotNull Collection<VirtualFile> computeRoots() {
-    Collection<VirtualFile> result = new LinkedHashSet<>();
+  @NotNull Collection<RootEntry> computeRoots() {
+    Collection<RootEntry> result = new LinkedHashSet<>();
     myOrderEnumerator.forEach((orderEntry, customHandlers) -> {
       OrderRootType type = myOrderEntryToRootType.apply(orderEntry);
 
@@ -42,7 +50,7 @@ class OrderRootComputer {
         ModuleRootModel rootModel = ((ModuleSourceOrderEntry)orderEntry).getRootModel();
         boolean includeTests = !myOrderEnumerator.isProductionOnly() &&
                                (OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers) || myOrderEnumerator.isRootModuleModel(rootModel));
-        collectModuleRoots(type, rootModel, result, true, includeTests, customHandlers);
+        collectModuleRoots(type, rootModel, result, true, includeTests, customHandlers, orderEntry);
       }
       else if (orderEntry instanceof ModuleOrderEntry moduleOrderEntry) {
         Module module = moduleOrderEntry.getModule();
@@ -52,18 +60,18 @@ class OrderRootComputer {
           boolean includeTests = !myOrderEnumerator.isProductionOnly()
                                  && OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;
-          collectModuleRoots(type, rootModel, result, !productionOnTests, includeTests, customHandlers);
+          collectModuleRoots(type, rootModel, result, !productionOnTests, includeTests, customHandlers, orderEntry);
         }
       }
       else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
         if (myCustomSdkRootProvider != null && orderEntry instanceof JdkOrderEntry) {
-          Collections.addAll(result, myCustomSdkRootProvider.fun((JdkOrderEntry)orderEntry));
+          addAll(result, myCustomSdkRootProvider.fun((JdkOrderEntry)orderEntry), orderEntry);
           return true;
         }
         if (addCustomRootsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
           return true;
         }
-        Collections.addAll(result, ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(type));
+        addAll(result, ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(type), orderEntry);
       }
       else {
         LOG.error("Unexpected implementation of OrderEntry: " + orderEntry.getClass().getName());
@@ -74,16 +82,17 @@ class OrderRootComputer {
 
   private void collectModuleRoots(@NotNull OrderRootType type,
                                   ModuleRootModel rootModel,
-                                  @NotNull Collection<? super VirtualFile> result,
+                                  @NotNull Collection<? super RootEntry> result,
                                   boolean includeProduction,
                                   boolean includeTests,
-                                  @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
+                                  @NotNull List<? extends OrderEnumerationHandler> customHandlers,
+                                  @NotNull OrderEntry orderEntry) {
     if (type.equals(OrderRootType.SOURCES)) {
       if (includeProduction) {
-        Collections.addAll(result, rootModel.getSourceRoots(includeTests));
+        addAll(result, rootModel.getSourceRoots(includeTests), orderEntry);
       }
       else {
-        result.addAll(rootModel.getSourceRoots(JavaModuleSourceRootTypes.TESTS));
+        addAll(result, rootModel.getSourceRoots(JavaModuleSourceRootTypes.TESTS), orderEntry);
       }
     }
     else if (type.equals(OrderRootType.CLASSES)) {
@@ -91,31 +100,31 @@ class OrderRootComputer {
       if (extension != null) {
         if (myWithoutSelfModuleOutput && myOrderEnumerator.isRootModuleModel(rootModel)) {
           if (includeTests && includeProduction) {
-            Collections.addAll(result, extension.getOutputRoots(false));
+            addAll(result, extension.getOutputRoots(false), orderEntry);
           }
         }
         else {
           if (includeProduction) {
-            Collections.addAll(result, extension.getOutputRoots(includeTests));
+            addAll(result, extension.getOutputRoots(includeTests), orderEntry);
           }
           else {
-            ContainerUtil.addIfNotNull(result, extension.getCompilerOutputPathForTests());
+            addIfNotNull(result, extension.getCompilerOutputPathForTests(), orderEntry);
           }
         }
       }
     }
-    addCustomRootsForModule(type, rootModel, result, includeProduction, includeTests, customHandlers);
+    addCustomRootsForModule(type, rootModel, orderEntry, result, includeProduction, includeTests, customHandlers);
   }
 
-  private static boolean addCustomRootsForLibraryOrSdk(@NotNull LibraryOrSdkOrderEntry forOrderEntry,
-                                                       @NotNull OrderRootType type,
-                                                       @NotNull Collection<? super VirtualFile> result,
-                                                       @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
+  private boolean addCustomRootsForLibraryOrSdk(@NotNull LibraryOrSdkOrderEntry forOrderEntry,
+                                                @NotNull OrderRootType type,
+                                                @NotNull Collection<? super RootEntry> result,
+                                                @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
       List<String> urls = new ArrayList<>();
       boolean added = handler.addCustomRootsForLibraryOrSdk(forOrderEntry, type, urls);
       for (String url : urls) {
-        ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
+        addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url), forOrderEntry);
       }
       if (added) {
         return true;
@@ -124,20 +133,75 @@ class OrderRootComputer {
     return false;
   }
 
-  private static void addCustomRootsForModule(@NotNull OrderRootType type,
-                                              @NotNull ModuleRootModel rootModel,
-                                              @NotNull Collection<? super VirtualFile> result,
-                                              boolean includeProduction,
-                                              boolean includeTests,
-                                              @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
+  private void addCustomRootsForModule(@NotNull OrderRootType type,
+                                       @NotNull ModuleRootModel rootModel,
+                                       @NotNull OrderEntry entry,
+                                       @NotNull Collection<? super RootEntry> result,
+                                       boolean includeProduction,
+                                       boolean includeTests,
+                                       @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     for (OrderEnumerationHandler handler : customHandlers) {
       List<String> urls = new ArrayList<>();
       boolean added = handler.addCustomModuleRoots(type, rootModel, urls, includeProduction, includeTests);
       for (String url : urls) {
-        ContainerUtil.addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url));
+        addIfNotNull(result, VirtualFileManager.getInstance().findFileByUrl(url), entry);
       }
 
       if (added) return;
     }
+  }
+
+  private void addAll(@NotNull Collection<? super RootEntry> result,
+                      VirtualFile @NotNull [] roots,
+                      @NotNull OrderEntry orderEntry) {
+    for (VirtualFile root : roots) {
+      result.add(produceEntry(root, orderEntry));
+    }
+  }
+
+  private void addAll(@NotNull Collection<? super RootEntry> result,
+                      @NotNull Iterable<VirtualFile> roots,
+                      @NotNull OrderEntry orderEntry) {
+    for (VirtualFile root : roots) {
+      result.add(produceEntry(root, orderEntry));
+    }
+  }
+
+  private void addIfNotNull(@NotNull Collection<? super RootEntry> result,
+                            @Nullable VirtualFile root,
+                            @NotNull OrderEntry orderEntry) {
+    if (root != null) {
+      result.add(produceEntry(root, orderEntry));
+    }
+  }
+
+  protected abstract @NotNull RootEntry produceEntry(@NotNull VirtualFile root, @NotNull OrderEntry orderEntry);
+}
+
+class ClassicOrderRootComputer extends OrderRootComputer<VirtualFile> {
+  ClassicOrderRootComputer(@NotNull OrderEnumeratorBase enumerator,
+                           @NotNull Function<OrderEntry, OrderRootType> entryToRootType,
+                           @Nullable NotNullFunction<? super JdkOrderEntry, VirtualFile[]> provider,
+                           boolean withoutSelfModuleOutput) {
+    super(enumerator, entryToRootType, provider, withoutSelfModuleOutput);
+  }
+
+  @Override
+  protected @NotNull VirtualFile produceEntry(@NotNull VirtualFile root, @NotNull OrderEntry orderEntry) {
+    return root;
+  }
+}
+
+class MutliverseOrderRootComputer extends OrderRootComputer<RootEntry> {
+  MutliverseOrderRootComputer(@NotNull OrderEnumeratorBase enumerator,
+                              @NotNull Function<OrderEntry, OrderRootType> entryToRootType,
+                              @Nullable NotNullFunction<? super JdkOrderEntry, VirtualFile[]> provider,
+                              boolean withoutSelfModuleOutput) {
+    super(enumerator, entryToRootType, provider, withoutSelfModuleOutput);
+  }
+
+  @Override
+  protected @NotNull RootEntry produceEntry(@NotNull VirtualFile root, @NotNull OrderEntry orderEntry) {
+    return new RootEntry(root, orderEntry);
   }
 }

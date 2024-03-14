@@ -46,9 +46,24 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
       return cache.getOrComputeRoots(myRootType, flags, this::computeRootsUrls);
     }
 
-    OrderRootComputer computer = new OrderRootComputer(myOrderEnumerator, this::getRootType, myCustomSdkRootProvider, myWithoutSelfModuleOutput);
+    ClassicOrderRootComputer computer = new ClassicOrderRootComputer(myOrderEnumerator,
+                                                                     this::getRootType,
+                                                                     myCustomSdkRootProvider,
+                                                                     myWithoutSelfModuleOutput);
     Collection<VirtualFile> roots = computer.computeRoots();
     return VfsUtilCore.toVirtualFileArray(roots);
+  }
+
+  @Override
+  public @NotNull Collection<RootEntry> getRootEntries() {
+    // todo ijpl-339 do we need to support cache like in {@link #getRoots}?
+
+    MutliverseOrderRootComputer computer = new MutliverseOrderRootComputer(myOrderEnumerator,
+                                                                           this::getRootType,
+                                                                           myCustomSdkRootProvider,
+                                                                           myWithoutSelfModuleOutput);
+    Collection<RootEntry> entries = computer.computeRoots();
+    return entries;
   }
 
   @Override

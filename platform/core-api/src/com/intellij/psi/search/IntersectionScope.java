@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Arrays;
 import java.util.Collection;
 
-final class IntersectionScope extends GlobalSearchScope implements VirtualFileEnumerationAware {
+final class IntersectionScope extends GlobalSearchScope implements VirtualFileEnumerationAware, CodeInsightContextAwareSearchScope {
   private final GlobalSearchScope myScope1;
   private final GlobalSearchScope myScope2;
 
@@ -45,6 +45,11 @@ final class IntersectionScope extends GlobalSearchScope implements VirtualFileEn
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     return myScope1.contains(file) && myScope2.contains(file);
+  }
+
+  @Override
+  public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
+    return CodeInsightContextInfoIntersectionKt.createIntersectionCodeInsightContextInfo(myScope1, myScope2);
   }
 
   @Override

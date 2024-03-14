@@ -1,11 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -14,8 +16,9 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
-public class DelegatingGlobalSearchScope extends GlobalSearchScope {
+public class DelegatingGlobalSearchScope extends GlobalSearchScope implements CodeInsightContextAwareSearchScope {
   protected final GlobalSearchScope myBaseScope;
   private final Object myEquality;
 
@@ -39,6 +42,16 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     super(project);
     myBaseScope = null;
     myEquality = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+  }
+
+  // todo ijpl-339 mark experimental
+  @ApiStatus.Internal
+  @Override
+  public @NotNull CodeInsightContextInfo getCodeInsightContextInfo() {
+    GlobalSearchScope delegate = getDelegate();
+    return delegate instanceof CodeInsightContextAwareSearchScope
+           ? ((CodeInsightContextAwareSearchScope)delegate).getCodeInsightContextInfo()
+           : CodeInsightContextAwareSearchScopesKt.NoContextInformation();
   }
 
   @Override

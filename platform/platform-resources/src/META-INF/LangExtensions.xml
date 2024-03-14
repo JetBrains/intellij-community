@@ -98,6 +98,9 @@
     <initProjectActivity id="dumbServiceStartup" implementation="com.intellij.openapi.project.DumbServiceStartupActivity" order="last"/>
     <initProjectActivity id="vfsStartup" implementation="com.intellij.psi.impl.file.impl.PsiVfsInitProjectActivity" order="first"/>
 
+    <projectService serviceInterface="com.intellij.codeInsight.multiverse.ProjectModelContextBridge"
+                    serviceImplementation="com.intellij.codeInsight.multiverse.ProjectModelContextBridgeImpl"/>
+
     <applicationService serviceInterface="com.intellij.util.indexing.EntityIndexingService"
                         serviceImplementation="com.intellij.util.indexing.EntityIndexingServiceImpl"/>
     <!--suppress PluginXmlCapitalization -->

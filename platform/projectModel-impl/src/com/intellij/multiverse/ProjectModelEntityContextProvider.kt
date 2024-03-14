@@ -56,7 +56,29 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
     storage: ImmutableEntityStorage,
     project: Project,
   ): CodeInsightContext? {
-    val entityPointer = WorkspaceFileSetRecognizer.getEntityPointer(fileSet) ?: return null // todo ijpl-339 ???
+    val entityPointer = WorkspaceFileSetRecognizer.getEntityPointer(fileSet)
+    if (entityPointer != null) {
+      return extractContextFromPointer(entityPointer, storage, project)
+    }
+
+    val globalLibrary = LibrariesAndSdkContributors.getGlobalLibrary(fileSet)
+    if (globalLibrary != null) {
+      return DeprecatedLibraryContextImpl(globalLibrary)
+    }
+
+    val sdk = LibrariesAndSdkContributors.getSdk(fileSet)
+    if (sdk != null) {
+      return DeprecatedSdkContextImpl(sdk)
+    }
+
+    return null
+  }
+
+  private fun extractContextFromPointer(
+    entityPointer: EntityPointer<*>,
+    storage: ImmutableEntityStorage,
+    project: Project,
+  ): CodeInsightContext? {
     val entity = entityPointer.resolve(storage) ?: return null
 
     if (entity is SourceRootEntity) {
@@ -75,16 +97,6 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
 
     if (entity is SdkEntity) {
       return SdkContextImpl(entity.createPointer(), project)
-    }
-
-    val globalLibrary = LibrariesAndSdkContributors.getGlobalLibrary(fileSet)
-    if (globalLibrary != null) {
-      return DeprecatedLibraryContextImpl(globalLibrary)
-    }
-
-    val sdk = LibrariesAndSdkContributors.getSdk(fileSet)
-    if (sdk != null) {
-      return DeprecatedSdkContextImpl(sdk)
     }
 
     return null

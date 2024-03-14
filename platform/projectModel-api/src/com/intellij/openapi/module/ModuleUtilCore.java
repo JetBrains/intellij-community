@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
+import com.intellij.codeInsight.multiverse.ModuleContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -166,6 +169,14 @@ public class ModuleUtilCore {
       PsiFile originalFile = containingFile.getOriginalFile();
       if (originalFile.getUserData(KEY_MODULE) != null) {
         return originalFile.getUserData(KEY_MODULE);
+      }
+
+      CodeInsightContext codeInsightContext = FileViewProviderUtil.getCodeInsightContext(originalFile);
+      if (codeInsightContext instanceof ModuleContext) {
+        Module module = ((ModuleContext)codeInsightContext).getModule();
+        if (module != null) {
+          return module;
+        }
       }
 
       VirtualFile virtualFile = originalFile.getVirtualFile();
