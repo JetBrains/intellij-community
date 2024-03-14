@@ -3,9 +3,10 @@
 package org.jetbrains.kotlin.nj2k.tree
 
 import org.jetbrains.kotlin.nj2k.isInterface
+import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.Modality.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
-import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
+import org.jetbrains.kotlin.nj2k.tree.Visibility.*
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -149,9 +150,11 @@ internal fun JKModifierElement.isRedundant(): Boolean {
         (it is JKClass && it.isInterface()) ||
                 (it is JKDeclaration && it.parentOfType<JKClass>()?.isInterface() == true)
     }
+    val parentIsPrivate = owner.parentOfType<JKClass>()?.visibility == PRIVATE || owner.parentOfType<JKMethod>()?.visibility == PRIVATE
 
     return when (modifier) {
-        PUBLIC, FINAL -> !hasOverrideModifier
+        PUBLIC, FINAL ->  !hasOverrideModifier
+        INTERNAL -> parentIsPrivate
         OPEN, ABSTRACT -> isOpenAndAbstractByDefault
         else -> false
     }
