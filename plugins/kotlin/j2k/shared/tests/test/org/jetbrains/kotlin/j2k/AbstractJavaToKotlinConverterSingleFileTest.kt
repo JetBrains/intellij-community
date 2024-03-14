@@ -49,13 +49,16 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         val directives = KotlinTestUtils.parseDirectives(javaCode)
         val settings = configureSettings(directives)
         val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
+        val expectedFile = File(javaFile.path.replace(".java", ".kt"))
+        val shouldCheckForErrors = expectedFile.readText().contains(ERROR_HEADER)
 
-        val actualText = if (prefix == "file") {
+        val actualText = if (prefix == "file" && shouldCheckForErrors) {
+            // Optimization: K2 `getFileTextWithErrors` is expensive
             createKotlinFile(convertedText).getFileTextWithErrors()
         } else {
             convertedText
         }
-        val expectedFile = File(javaFile.path.replace(".java", ".kt"))
+
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
     }
 

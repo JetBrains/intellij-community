@@ -17,8 +17,10 @@ val J2K_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
         override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk21()
     }
 
-val J2K_FULL_JDK_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
+internal val J2K_FULL_JDK_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
+
+internal const val ERROR_HEADER: String = "// ERROR"
 
 // TODO: adapted from `org.jetbrains.kotlin.idea.test.TestUtilsKt.dumpTextWithErrors`
 @OptIn(KtAllowAnalysisOnEdt::class)
