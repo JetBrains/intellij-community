@@ -42,8 +42,9 @@ public final class CustomisedActionGroup extends ActionGroupWrapper {
         currentGroupStamp < 0 ||
         ArrayUtil.isEmpty(myChildren) ||
         delegate instanceof DynamicActionGroup) {
+      AnAction[] originalChildren = super.getChildren(e);
       myChildren = CustomizationUtil.getReordableChildren(
-        delegate, super.getChildren(e), mySchema, myDefaultGroupName, myRootGroupName);
+        delegate, originalChildren, mySchema, myDefaultGroupName, myRootGroupName);
       mySchemeModificationStamp = currentSchemaStamp;
       myGroupModificationStamp = currentGroupStamp;
     }
