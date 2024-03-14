@@ -14,7 +14,7 @@ interface P<<warning descr="Type parameter 'T' is never used">T</warning>> {
 
 class Test {
   void foo(P p) {
-    p.subscribe(s -> {});
+    p.subscribe(<warning descr="Parameter 's' is never used">s</warning> -> {});
   }
 }
 
