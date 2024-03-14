@@ -59,7 +59,7 @@ class DefaultTemplate(val name: String,
       }
     }
     if (text == null) {
-      text = textLoader.apply(templatePath.invariantSeparatorsPathString)
+      text = textLoader.apply(templatePath.invariantSeparatorsPathString)?.let { Strings.convertLineSeparators(it) }
     }
     this.text = java.lang.ref.SoftReference(text)
     if (text == null) {
