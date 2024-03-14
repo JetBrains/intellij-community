@@ -11,7 +11,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.ArrayUtil
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
-
 import org.jetbrains.idea.maven.importing.MavenWorkspaceFacetConfigurator
 import org.jetbrains.idea.maven.importing.workspaceModel.getSourceRootUrls
 import org.jetbrains.idea.maven.project.MavenProject
@@ -24,29 +23,26 @@ import org.jetbrains.kotlin.idea.base.util.substringAfterLastOrNull
 import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.workspaceModel.*
-import org.jetbrains.kotlin.idea.workspaceModel.CompilerSettingsData
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.isKotlinNative
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.utils.PathUtil.KOTLIN_JAVA_STDLIB_NAME
 import java.util.stream.Stream
+import kotlin.streams.asStream
 
 class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigurator {
     override fun isFacetDetectionDisabled(project: Project): Boolean {
         return false
     }
 
-    override fun getAdditionalSourceFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<String> {
-        return collectSourceDirectories(context.mavenProject).filter {
-            it.first == SourceType.PROD
-        }.map { it.second }.stream()
-    }
-
-    override fun getAdditionalTestSourceFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<String> {
-        return collectSourceDirectories(context.mavenProject).filter {
-            it.first == SourceType.TEST
-        }.map { it.second }.stream()
+    override fun getAdditionalFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<MavenWorkspaceConfigurator.AdditionalFolder> {
+        return collectSourceDirectories(context.mavenProject)
+            .map {
+                val type =
+                    if (it.first == SourceType.PROD) MavenWorkspaceConfigurator.FolderType.SOURCE else MavenWorkspaceConfigurator.FolderType.TEST_SOURCE
+                MavenWorkspaceConfigurator.AdditionalFolder(it.second, type)
+            }.asSequence().asStream()
     }
 
     private fun createWorkspaceEntity(module: ModuleEntity): KotlinSettingsEntity =
