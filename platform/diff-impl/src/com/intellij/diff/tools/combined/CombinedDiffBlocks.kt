@@ -160,20 +160,19 @@ internal class CombinedSimpleDiffBlock(project: Project,
 
   override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
 
-  override val stickyHeader: JComponent = CombinedDiffStickyHeaderPanel(BorderLayout(0, 0), CombinedDiffUI.BLOCK_ARC)
+  override val stickyHeader: JComponent = CombinedDiffContainerPanel(BorderLayout(0, 0), false)
     .apply {
-      background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
+      background = UIUtil.getPanelBackground()
       val combinedSimpleDiffHeader = CombinedSimpleDiffHeader(project, id, false).apply {
-        background = null
-        isOpaque = false
+        background = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
       }
       add(combinedSimpleDiffHeader, BorderLayout.CENTER)
     }
 
   override val body: Wrapper = Wrapper(initialContent)
 
-  override val component: JPanel = FillingRoundedRectanglePanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), CombinedDiffUI.BLOCK_ARC).apply {
-    fillColor = UIUtil.getPanelBackground()
+  override val component: JPanel = CombinedDiffContainerPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), true).apply {
+    background = UIUtil.getPanelBackground()
   }
 
   init {
