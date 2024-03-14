@@ -36,6 +36,9 @@ core-foundation = "0.9.3"
 [target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
 native-dialog = "0.6.3"
 
+# cargo-deny and cargo-about are used implicitly by the Kotlin counterpart responsible for building this
+# relies on the simplest syntax (packageName = "version")
+# (build/src/BuildXPlatLaunchersBuildTarget.kt)
 [build-dependencies]
 cargo-deny = "0.14.2" # checks licenses / vulns
 cargo-about = "0.5.7" # generates license report
