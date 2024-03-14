@@ -6,23 +6,14 @@ import com.intellij.find.SearchTextArea
 import com.intellij.find.editorHeaderActions.Utils
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryBundle
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.ReportFeedbackService
-import com.intellij.ide.actions.SendFeedbackAction
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.FrameWrapper
-import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
@@ -31,7 +22,6 @@ import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.lvcs.impl.*
 import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
@@ -50,13 +40,9 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.ui.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.DocumentEvent
 
@@ -102,9 +88,6 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     toolbar.targetComponent = this
     toolbar.setReservePlaceAutoPopupIcon(false)
     toolbarComponent.add(toolbar.component, BorderLayout.EAST)
-
-    val notificationPanel = createNotificationPanel()
-    if (notificationPanel != null) toolbarComponent.add(notificationPanel, BorderLayout.NORTH)
 
     val mainComponent = BorderLayoutPanel()
     mainComponent.add(progressStripe, BorderLayout.CENTER)
@@ -228,37 +211,6 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     return searchTextArea
   }
 
-  private fun createNotificationPanel(): EditorNotificationPanel? {
-    if (PropertiesComponent.getInstance().getBoolean(NOTIFICATION_DISMISSED_KEY)) return null
-
-    val notificationPanel = EditorNotificationPanel(JBUI.CurrentTheme.Banner.INFO_BACKGROUND)
-    notificationPanel.text = LocalHistoryBundle.message("activity.notification.text")
-    notificationPanel.border = JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.BOTTOM), notificationPanel.border)
-
-    notificationPanel.createActionLabel(LocalHistoryBundle.message("activity.notification.feedback.link")) {
-      service<ReportFeedbackService>().coroutineScope.launch {
-        withBackgroundProgress(project, IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
-          val description = SendFeedbackAction.getDescription(project)
-          BrowserUtil.browse(URL_PREFIX + URLEncoder.encode(description, StandardCharsets.UTF_8), project)
-        }
-      }
-    }
-    notificationPanel.add(InplaceButton(IconButton(LocalHistoryBundle.message("activity.notification.dismiss.tooltip"),
-                                                   AllIcons.Actions.Close, AllIcons.Actions.CloseHovered)) {
-      PropertiesComponent.getInstance().setValue(NOTIFICATION_DISMISSED_KEY, true)
-      notificationPanel.parent?.remove(notificationPanel)
-    }, BorderLayout.EAST)
-
-    val disableLabel = JLabel(LocalHistoryBundle.message("activity.notification.disable.text",
-                                                         ShowSettingsUtil.getSettingsMenuName(),
-                                                         LocalHistoryBundle.message("activity.configurable.title")))
-    disableLabel.foreground = EditorColorsManager.getInstance().getGlobalScheme().defaultForeground
-    disableLabel.border = JBUI.Borders.emptyTop(2)
-    notificationPanel.add(disableLabel, BorderLayout.SOUTH)
-
-    return notificationPanel
-  }
-
   private fun ActivityList.updateEmptyText(isLoading: Boolean) = setEmptyText(getListEmptyText(isLoading))
 
   private fun getListEmptyText(isLoading: Boolean): @NlsContexts.StatusText String {
@@ -299,9 +251,6 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   }
 
   companion object {
-    private const val NOTIFICATION_DISMISSED_KEY = "lvcs.experimental.ui.notification.dismissed"
-    private const val URL_PREFIX = "https://youtrack.jetbrains.com/newIssue?project=IDEA&c=Subsystem+Version+Control.+Local+History&c=Type+Support+Request&description="
-
     @JvmStatic
     fun showInToolWindow(project: Project, gateway: IdeaGateway, activityScope: ActivityScope) {
       LocalHistoryCounter.logLocalHistoryOpened(activityScope)
