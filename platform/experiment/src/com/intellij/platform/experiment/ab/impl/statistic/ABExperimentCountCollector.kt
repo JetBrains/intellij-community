@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.platform.experiment.ab.impl.experiment.getABExperimentInstance
 
 object ABExperimentCountCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("experiment.ab", 1)
+  private val GROUP = EventLogGroup("experiment.ab", 2)
 
   private val AB_EXPERIMENT_OPTION_USED = GROUP.registerEvent(
     "option.used",
@@ -18,10 +18,10 @@ object ABExperimentCountCollector : CounterUsagesCollector() {
 
   fun logABExperimentOptionUsed() {
     val service = getABExperimentInstance()
-    val userExperimentOption = service.getUserExperimentOption()
+    val userExperimentOption = service.getUserExperimentOptionId()
     val userGroupNumber = service.getUserGroupNumber() ?: return
     val userBucket = service.getUserBucket()
-    AB_EXPERIMENT_OPTION_USED.log(userExperimentOption.id, userGroupNumber, userBucket)
+    AB_EXPERIMENT_OPTION_USED.log(userExperimentOption, userGroupNumber, userBucket)
   }
 
   override fun getGroup(): EventLogGroup = GROUP

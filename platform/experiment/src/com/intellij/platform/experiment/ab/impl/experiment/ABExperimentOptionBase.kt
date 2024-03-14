@@ -3,6 +3,10 @@ package com.intellij.platform.experiment.ab.impl.experiment
 
 import com.intellij.openapi.extensions.PluginDescriptor
 
+
+/**
+ *
+ */
 abstract class ABExperimentOptionBase : ABExperimentOption {
 
   private lateinit var pluginDescriptor: PluginDescriptor
