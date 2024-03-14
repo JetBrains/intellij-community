@@ -296,14 +296,15 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
           }
         }
 
-        if (overrider instanceof SyntheticElement) continue;
+        PsiMember realMember = overrider instanceof LightRecordMethod lrm ? lrm.getRecordComponent() : overrider;
+        if (realMember instanceof SyntheticElement) continue;
 
-        final String overriderName = overrider.getName();
+        final String overriderName = realMember.getName();
         final String baseName = sibling.getName();
         final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
         if (newOverriderName != null) {
-          RenameUtil.assertNonCompileElement(overrider);
-          allRenames.put(overrider, newOverriderName);
+          RenameUtil.assertNonCompileElement(realMember);
+          allRenames.put(realMember, newOverriderName);
         }
       }
     }
