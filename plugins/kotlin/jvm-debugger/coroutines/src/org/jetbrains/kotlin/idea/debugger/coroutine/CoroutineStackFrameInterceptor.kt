@@ -120,8 +120,9 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val suspendExitMode = frameProxy.location().getSuspendExitMode()
         return when (suspendExitMode) {
             SuspendExitMode.SUSPEND_LAMBDA -> frameProxy.thisVariableValue()
-            // completionVariableValue seems wrong here
-            SuspendExitMode.SUSPEND_METHOD_PARAMETER -> /*frameProxy.completionVariableValue() ?:*/ frameProxy.continuationVariableValue()
+            // If the final call within a function body is a suspend call, and it's the only suspend call,
+            // then tail call optimization is applied, and no state machine is generated, hence only completion variable is available.
+            SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.continuationVariableValue() ?: frameProxy.completionVariableValue()
             else -> null
         }
     }
@@ -131,7 +132,9 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         val continuationObject = extractContinuation(frameProxy) ?: return null
         val executionContext = DefaultExecutionContext(suspendContext, frameProxy)
         val debugMetadata = DebugMetadata.instance(executionContext) ?: return null
-        val completionObject = debugMetadata.baseContinuationImpl.getNextContinuation(continuationObject, executionContext) ?: return null
+        // At first, try to extract the completion field of the current BaseContinuationImpl instance,
+        // if the completion field is null, then return the object itself and try to extract the StackTraceElement
+        val completionObject = debugMetadata.baseContinuationImpl.getNextContinuation(continuationObject, executionContext) ?: continuationObject
         val stackTraceElement = debugMetadata.getStackTraceElement(completionObject, executionContext)?.stackTraceElement() ?: return null
         return DebuggerUtilsEx.findOrCreateLocation(suspendContext.debugProcess, stackTraceElement)
     }

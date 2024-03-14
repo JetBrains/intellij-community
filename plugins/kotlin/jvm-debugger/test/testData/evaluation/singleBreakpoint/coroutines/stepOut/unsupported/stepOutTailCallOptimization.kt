@@ -1,8 +1,8 @@
-// ATTACH_LIBRARY: coroutines
+// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3)-javaagent
 
 package souSuspendFun
 
-import forTests.builder
+import kotlinx.coroutines.*
 
 private fun foo(): Int {
     //Breakpoint!
@@ -26,10 +26,14 @@ suspend fun first(): Int {
     return 12
 }
 
-fun main(args: Array<String>) {
-    builder {
-        first()                                                    // 6
+fun main() {
+    runBlocking {
+        launch {
+            first()
+        }
     }
 }
 
 // STEP_OUT: 5
+
+// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true

@@ -119,7 +119,7 @@ object KotlinStepActionFactory {
                     // first check coroutines
                     // TODO: it is better to move it somewhere else
                     val method = DebuggerUtilsEx.getMethod(StackFrameInterceptor.instance?.callerLocation(suspendContext))
-                    if (method != null && method != getDirectCallerMethod(suspendContext.frameProxy)) {
+                    if (method != null) {
                         installCoroutineResumedBreakpoint(suspendContext, method)
                         applyThreadFilter(getThreadFilterFromContext(suspendContext))
                         // call ResumeCommand.contextAction directly: if createResumeCommand is used, it will also reset thread filter
@@ -154,25 +154,6 @@ object KotlinStepActionFactory {
         val location = suspendContext.location
         if (location != null && isInSuspendMethod(location)) {
             return extractJobInfo(suspendContext)
-        }
-        return null
-    }
-
-    private fun getDirectCallerMethod(frame: StackFrameProxyImpl?): Method? {
-        if (frame != null) {
-            try {
-                val threadProxy = frame.threadProxy()
-                val callerIndex = frame.frameIndex + 1
-                if (callerIndex >= threadProxy.frameCount()) {
-                    return null
-                }
-                val callerFrame = threadProxy.frame(callerIndex)
-                if (callerFrame != null) {
-                    return DebuggerUtilsEx.getMethod(callerFrame.location())
-                }
-            } catch (e: EvaluateException) {
-                LOG.error(e)
-            }
         }
         return null
     }

@@ -364,11 +364,6 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/stepOut/inapplicableFieldWatchpoints.kt");
         }
 
-        @TestMetadata("souSuspendFun.kt")
-        public void testSouSuspendFun() throws Exception {
-            runTest("../testData/stepping/stepOut/souSuspendFun.kt");
-        }
-
         @TestMetadata("stepOutFromInlineFunctionThenResume.kt")
         public void testStepOutFromInlineFunctionThenResume() throws Exception {
             runTest("../testData/stepping/stepOut/stepOutFromInlineFunctionThenResume.kt");

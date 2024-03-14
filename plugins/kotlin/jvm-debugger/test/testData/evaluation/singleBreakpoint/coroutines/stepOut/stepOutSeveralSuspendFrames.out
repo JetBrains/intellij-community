@@ -1,0 +1,12 @@
+LineBreakpoint created at stepOutSeveralSuspendFrames.kt:9
+Run Java
+Connected to the target VM
+stepOutSeveralSuspendFrames.kt:9
+stepOutSeveralSuspendFrames.kt:14
+stepOutSeveralSuspendFrames.kt:20
+stepOutSeveralSuspendFrames.kt:27
+stepOutSeveralSuspendFrames.kt:33
+stepOutSeveralSuspendFrames.kt:40
+Disconnected from the target VM
+
+Process finished with exit code 0
