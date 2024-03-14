@@ -10950,44 +10950,6 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/infixCallToOrdinary")
-    public static class InfixCallToOrdinary extends AbstractK1IntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("functionCallAfterInfixCall.kt")
-        public void testFunctionCallAfterInfixCall() throws Exception {
-            runTest("testData/intentions/infixCallToOrdinary/functionCallAfterInfixCall.kt");
-        }
-
-        @TestMetadata("functionLiteralArgument.kt")
-        public void testFunctionLiteralArgument() throws Exception {
-            runTest("testData/intentions/infixCallToOrdinary/functionLiteralArgument.kt");
-        }
-
-        @TestMetadata("nonApplicableBinaryOperation.kt")
-        public void testNonApplicableBinaryOperation() throws Exception {
-            runTest("testData/intentions/infixCallToOrdinary/nonApplicableBinaryOperation.kt");
-        }
-
-        @TestMetadata("nullAssertedCall.kt")
-        public void testNullAssertedCall() throws Exception {
-            runTest("testData/intentions/infixCallToOrdinary/nullAssertedCall.kt");
-        }
-
-        @TestMetadata("parenthesesAroundRightHandArgument.kt")
-        public void testParenthesesAroundRightHandArgument() throws Exception {
-            runTest("testData/intentions/infixCallToOrdinary/parenthesesAroundRightHandArgument.kt");
-        }
-
-        @TestMetadata("simpleInfixFunctionCall.kt")
-        public void testSimpleInfixFunctionCall() throws Exception {
-            runTest("testData/intentions/infixCallToOrdinary/simpleInfixFunctionCall.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/insertCurlyBracesToTemplate")
     public static class InsertCurlyBracesToTemplate extends AbstractK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

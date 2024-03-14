@@ -429,6 +429,44 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/infixCallToOrdinary")
+    public static class InfixCallToOrdinary extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("functionCallAfterInfixCall.kt")
+        public void testFunctionCallAfterInfixCall() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/functionCallAfterInfixCall.kt");
+        }
+
+        @TestMetadata("functionLiteralArgument.kt")
+        public void testFunctionLiteralArgument() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/functionLiteralArgument.kt");
+        }
+
+        @TestMetadata("nonApplicableBinaryOperation.kt")
+        public void testNonApplicableBinaryOperation() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/nonApplicableBinaryOperation.kt");
+        }
+
+        @TestMetadata("nullAssertedCall.kt")
+        public void testNullAssertedCall() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/nullAssertedCall.kt");
+        }
+
+        @TestMetadata("parenthesesAroundRightHandArgument.kt")
+        public void testParenthesesAroundRightHandArgument() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/parenthesesAroundRightHandArgument.kt");
+        }
+
+        @TestMetadata("simpleInfixFunctionCall.kt")
+        public void testSimpleInfixFunctionCall() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/simpleInfixFunctionCall.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve")
     public static class JavaIoSerializableObjectMustHaveReadResolve extends AbstractSharedK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

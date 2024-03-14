@@ -331,5 +331,13 @@
                      language="kotlin"
                      key="inspection.redundant.labeled.return.on.last.expression.in.lambda.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.InfixCallToOrdinaryInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.code.migration"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="infix.call.may.be.dot.call" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

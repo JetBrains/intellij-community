@@ -1,4 +1,4 @@
-// IS_APPLICABLE: false
+// PROBLEM: none
 fun foo(x: String) {
     x <caret>== x
 }
