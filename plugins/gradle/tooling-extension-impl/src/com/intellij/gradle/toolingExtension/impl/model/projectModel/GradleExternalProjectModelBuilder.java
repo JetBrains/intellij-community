@@ -6,10 +6,10 @@ import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.DefaultGradleSourceSetModel;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCache;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskCache;
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil;
 import com.intellij.gradle.toolingExtension.impl.util.GradleTaskUtil;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.testing.AbstractTestTask;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
+import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.builder.ProjectExtensionsDataBuilderImpl;
 
@@ -42,17 +43,6 @@ public class GradleExternalProjectModelBuilder extends AbstractModelBuilderServi
   @Override
   public @Nullable Object buildAll(
     @NotNull String modelName,
-    @NotNull Project project,
-    @NotNull ModelBuilderContext context
-  ) {
-    if (Objects.equals(System.getProperty("idea.internal.failEsModelBuilder"), "true")) {
-      throw new RuntimeException("Boom!");
-    }
-    return buildExternalProject(project, context);
-  }
-
-  @NotNull
-  private static DefaultExternalProject buildExternalProject(
     @NotNull Project project,
     @NotNull ModelBuilderContext context
   ) {
@@ -165,10 +155,12 @@ public class GradleExternalProjectModelBuilder extends AbstractModelBuilderServi
     GradleExternalProjectCache.getInstance(context)
       .markProjectModelAsError(project);
 
-    //Probably checked exception might still pop from poorly behaving implementation
-    if (exception instanceof RuntimeException) {
-      throw (RuntimeException)exception;
-    }
-    throw new ExternalSystemException(exception);
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.PROJECT_MODEL_GROUP)
+      .withKind(Message.Kind.ERROR)
+      .withTitle("Project model building failure")
+      .withText("Project structure cannot be resolved")
+      .withException(exception)
+      .reportMessage(project);
   }
 }

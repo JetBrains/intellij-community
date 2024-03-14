@@ -77,6 +77,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       .withGroup(Messages.SOURCE_SET_MODEL_GROUP)
       .withKind(Message.Kind.ERROR)
       .withTitle("Source set model building failure")
+      .withText("Project source sets cannot be resolved")
       .withException(exception)
       .reportMessage(project);
   }
