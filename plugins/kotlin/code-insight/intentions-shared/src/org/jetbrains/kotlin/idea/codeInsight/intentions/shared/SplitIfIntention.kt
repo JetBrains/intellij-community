@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExitStatement
@@ -17,10 +17,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
 
-class SplitIfIntention : AbstractKotlinApplicableModCommandIntention<KtExpression>(KtExpression::class) {
-    override fun getActionName(element: KtExpression): String = familyName
-
-    override fun apply(element: KtExpression, context: ActionContext, updater: ModPsiUpdater) {
+class SplitIfIntention : KotlinPsiUpdateModCommandIntention<KtExpression>(KtExpression::class) {
+    override fun invoke(context: ActionContext, element: KtExpression, updater: ModPsiUpdater) {
         val operator = when (element) {
             is KtIfExpression -> getFirstValidOperator(element)!!
             else -> element as KtOperationReferenceExpression

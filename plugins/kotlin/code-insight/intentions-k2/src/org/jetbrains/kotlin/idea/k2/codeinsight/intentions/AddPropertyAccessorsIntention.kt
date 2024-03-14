@@ -8,7 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
@@ -23,9 +23,8 @@ import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 internal abstract class AbstractAddAccessorIntention(
     private val addGetter: Boolean,
     private val addSetter: Boolean,
-) : AbstractKotlinApplicableModCommandIntention<KtProperty>(KtProperty::class) {
+) : KotlinPsiUpdateModCommandIntention<KtProperty>(KtProperty::class) {
     override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
-    override fun getActionName(element: KtProperty): String = familyName
 
     override fun getApplicabilityRange() = applicabilityTarget { ktProperty: KtProperty ->
         if (ktProperty.hasInitializer()) ktProperty.nameIdentifier else ktProperty
@@ -57,7 +56,7 @@ internal abstract class AbstractAddAccessorIntention(
         return symbol.backingFieldSymbol?.hasAnnotation(JVM_FIELD_CLASS_ID) != true
     }
 
-    override fun apply(element: KtProperty, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(context: ActionContext, element: KtProperty, updater: ModPsiUpdater) {
         addAccessors(element, addGetter, addSetter, updater::moveCaretTo)
     }
 }

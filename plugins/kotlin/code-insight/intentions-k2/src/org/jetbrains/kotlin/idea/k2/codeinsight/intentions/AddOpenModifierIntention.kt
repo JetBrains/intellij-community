@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -18,11 +18,9 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal class AddOpenModifierIntention :
-    AbstractKotlinApplicableModCommandIntention<KtCallableDeclaration>(KtCallableDeclaration::class),
-    LowPriorityAction {
-
+  KotlinPsiUpdateModCommandIntention<KtCallableDeclaration>(KtCallableDeclaration::class),
+  LowPriorityAction {
     override fun getFamilyName(): String = KotlinBundle.message("make.open")
-    override fun getActionName(element: KtCallableDeclaration): String = familyName
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.SELF
 
@@ -49,7 +47,7 @@ internal class AddOpenModifierIntention :
                 || ownerSymbol.modality == Modality.SEALED
     }
 
-    override fun apply(element: KtCallableDeclaration, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(context: ActionContext, element: KtCallableDeclaration, updater: ModPsiUpdater) {
         element.addModifier(KtTokens.OPEN_KEYWORD)
     }
 }

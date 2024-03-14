@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared.branchedTransfor
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.UnfoldFunctionCallToIfOrWhenUtils.canUnfold
 import org.jetbrains.kotlin.idea.codeinsight.utils.UnfoldFunctionCallToIfOrWhenUtils.unfold
@@ -12,10 +12,8 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class UnfoldFunctionCallToWhenIntention : AbstractKotlinApplicableModCommandIntention<KtCallExpression>(KtCallExpression::class) {
+internal class UnfoldFunctionCallToWhenIntention : KotlinPsiUpdateModCommandIntention<KtCallExpression>(KtCallExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.function.call.with.when")
-
-    override fun getActionName(element: KtCallExpression): String = familyName
 
     override fun getApplicabilityRange() = applicabilityRange<KtCallExpression> {
         it.calleeExpression?.textRange?.shiftLeft(it.startOffset)
@@ -23,7 +21,7 @@ internal class UnfoldFunctionCallToWhenIntention : AbstractKotlinApplicableModCo
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean = canUnfold<KtWhenExpression>(element)
 
-    override fun apply(element: KtCallExpression, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(context: ActionContext, element: KtCallExpression, updater: ModPsiUpdater) {
         unfold<KtWhenExpression>(element)
     }
 }

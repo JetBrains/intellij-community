@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTargets
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 
-internal class OperatorToFunctionIntention : AbstractKotlinApplicableModCommandIntention<KtExpression>(
+internal class OperatorToFunctionIntention : KotlinPsiUpdateModCommandIntention<KtExpression>(
     KtExpression::class
 ) {
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = applicabilityTargets { element ->
@@ -121,9 +121,7 @@ internal class OperatorToFunctionIntention : AbstractKotlinApplicableModCommandI
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.overloaded.operator.with.function.call")
 
-    override fun getActionName(element: KtExpression): String = familyName
-
-    override fun apply(element: KtExpression, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(context: ActionContext, element: KtExpression, updater: ModPsiUpdater) {
         OperatorToFunctionConverter.convert(element)
     }
 }

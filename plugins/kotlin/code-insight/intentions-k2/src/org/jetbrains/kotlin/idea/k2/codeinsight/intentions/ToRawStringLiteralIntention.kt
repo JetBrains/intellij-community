@@ -6,19 +6,17 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntentionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.canBeConvertedToStringLiteral
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertToStringLiteral
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
-internal class ToRawStringLiteralIntention : AbstractKotlinApplicableModCommandIntentionBase<KtStringTemplateExpression>(
+internal class ToRawStringLiteralIntention : KotlinPsiUpdateModCommandIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class
 ), LowPriorityAction {
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.raw.string.literal")
-
-    override fun getActionName(element: KtStringTemplateExpression): String = familyName
 
     override fun invoke(context: ActionContext, element: KtStringTemplateExpression, updater: ModPsiUpdater) {
         convertToStringLiteral(element, context, updater)

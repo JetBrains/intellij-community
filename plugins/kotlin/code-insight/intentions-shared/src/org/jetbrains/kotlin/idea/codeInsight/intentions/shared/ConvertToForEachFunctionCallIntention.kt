@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -11,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -20,15 +21,16 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-internal class ConvertToForEachFunctionCallIntention : AbstractKotlinApplicableModCommandIntention<KtForExpression>(KtForExpression::class) {
+internal class ConvertToForEachFunctionCallIntention : KotlinPsiUpdateModCommandIntention<KtForExpression>(KtForExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.foreach.function.call", "forEach")
 
-    override fun getActionName(element: KtForExpression): String {
+    override fun getPresentation(context: ActionContext, element: KtForExpression): Presentation {
         val callExpression = element.loopRange?.getPossiblyQualifiedCallExpression()
-        return KotlinBundle.message(
+        val problemMessage = KotlinBundle.message(
             "replace.with.a.foreach.function.call",
             if (callExpression?.calleeExpression?.text == WITH_INDEX_NAME) "forEachIndexed" else "forEach"
         )
+        return Presentation.of(problemMessage)
     }
 
     override fun isApplicableByPsi(element: KtForExpression): Boolean {
@@ -55,7 +57,7 @@ internal class ConvertToForEachFunctionCallIntention : AbstractKotlinApplicableM
         return loopRange.getKtType()?.isLoopRangeType() == true
     }
 
-    override fun apply(element: KtForExpression, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(context: ActionContext, element: KtForExpression, updater: ModPsiUpdater) {
         val commentSaver = CommentSaver(element, saveLineBreaks = true)
 
         val labelName = element.getLabelName()

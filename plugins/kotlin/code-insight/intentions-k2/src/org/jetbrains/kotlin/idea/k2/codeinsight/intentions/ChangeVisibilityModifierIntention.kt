@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
@@ -28,11 +29,11 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 abstract class ChangeVisibilityModifierIntention protected constructor(
     val modifier: KtModifierKeywordToken
-) : AbstractKotlinApplicableModCommandIntention<KtDeclaration>(KtDeclaration::class) {
-    override fun getActionName(element: KtDeclaration): String {
+) : KotlinPsiUpdateModCommandIntention<KtDeclaration>(KtDeclaration::class) {
+    override fun getPresentation(context: ActionContext, element: KtDeclaration): Presentation {
         val targetVisibility = modifier.toVisibility()
         val explicitVisibility = element.modifierList?.visibilityModifierType()?.value
-        return when {
+        val problemMessage = when {
             element is KtPropertyAccessor
                     && targetVisibility == Visibilities.Public
                     && element.isSetter
@@ -46,6 +47,7 @@ abstract class ChangeVisibilityModifierIntention protected constructor(
 
             else -> KotlinBundle.message("make.0", modifier.value)
         }
+        return Presentation.of(problemMessage)
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("make.0", modifier.value)
@@ -111,7 +113,7 @@ abstract class ChangeVisibilityModifierIntention protected constructor(
         return true
     }
 
-    override fun apply(element: KtDeclaration, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(context: ActionContext, element: KtDeclaration, updater: ModPsiUpdater) {
         (element.actualsForExpected() + element.expectedDeclarationIfAny() + element).filterNotNull().forEach { declaration ->
             val psiFactory = KtPsiFactory(declaration.project)
             declaration.setVisibility(modifier)

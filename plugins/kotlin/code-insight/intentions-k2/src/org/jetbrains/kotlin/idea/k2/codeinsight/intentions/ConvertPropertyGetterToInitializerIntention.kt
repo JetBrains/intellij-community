@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -14,11 +14,9 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
-internal class ConvertPropertyGetterToInitializerIntention : AbstractKotlinApplicableModCommandIntention<KtPropertyAccessor>(
+internal class ConvertPropertyGetterToInitializerIntention : KotlinPsiUpdateModCommandIntention<KtPropertyAccessor>(
     KtPropertyAccessor::class
 ) {
-    override fun getActionName(element: KtPropertyAccessor) = familyName
-
     override fun getFamilyName() = KotlinBundle.message("convert.property.getter.to.initializer")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtPropertyAccessor> = ApplicabilityRanges.SELF
@@ -34,7 +32,7 @@ internal class ConvertPropertyGetterToInitializerIntention : AbstractKotlinAppli
                 element.containingClass()?.hasExpectModifier() != true
     }
 
-    override fun apply(element: KtPropertyAccessor, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(context: ActionContext, element: KtPropertyAccessor, updater: ModPsiUpdater) {
         val property = element.parent as? KtProperty ?: return
         val commentSaver = CommentSaver(property)
         property.initializer = element.singleExpression()

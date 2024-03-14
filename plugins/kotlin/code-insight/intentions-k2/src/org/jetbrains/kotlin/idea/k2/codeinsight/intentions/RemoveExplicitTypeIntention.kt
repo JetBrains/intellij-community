@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandIntention<KtDeclaration>(KtDeclaration::class) {
+internal class RemoveExplicitTypeIntention : KotlinPsiUpdateModCommandIntention<KtDeclaration>(KtDeclaration::class) {
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclaration> =
         applicabilityRanges { declaration ->
@@ -161,9 +161,8 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         }
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.explicit.type.specification")
-    override fun getActionName(element: KtDeclaration): String = familyName
 
-    override fun apply(element: KtDeclaration, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(context: ActionContext, element: KtDeclaration, updater: ModPsiUpdater) {
         element.removeTypeReference()
     }
 

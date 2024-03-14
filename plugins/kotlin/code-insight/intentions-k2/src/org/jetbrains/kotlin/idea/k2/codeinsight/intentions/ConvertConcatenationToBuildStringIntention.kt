@@ -7,16 +7,15 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertConcatenationToBuildStringCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 
-internal class ConvertConcatenationToBuildStringIntention : AbstractKotlinApplicableModCommandIntention<KtBinaryExpression>(KtBinaryExpression::class) {
+internal class ConvertConcatenationToBuildStringIntention : KotlinPsiUpdateModCommandIntention<KtBinaryExpression>(KtBinaryExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("convert.concatenation.to.build.string")
-    override fun getActionName(element: KtBinaryExpression): String = familyName
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
 
@@ -32,7 +31,7 @@ internal class ConvertConcatenationToBuildStringIntention : AbstractKotlinApplic
                 parent.getKtType()?.isString == false)
     }
 
-    override fun apply(element: KtBinaryExpression, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(context: ActionContext, element: KtBinaryExpression, updater: ModPsiUpdater) {
         val buildStringCall = convertConcatenationToBuildStringCall(element)
         shortenReferences(buildStringCall)
     }
