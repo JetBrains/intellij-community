@@ -1,9 +1,10 @@
+// technically we shouldn't use #cfg in build.rs due to cross-compilation,
+// but the only we do is windows x64 -> arm64, so it's fine for our purposes
+
 use std::path::{PathBuf};
 
+#[cfg(target_os = "windows")]
 use winresource::WindowsResource;
-
-// technically we shouldn't use #cfg here due to cross-compilation,
-// but the only we do is windows x64 -> arm64, so it's fine for our purposes
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
@@ -24,6 +25,7 @@ fn main_os_specific() {
     }
 }
 
+#[cfg(target_os = "windows")]
 fn enable_symlinks_if_can_create_them() {
     let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
     let target = out_dir.join("target");
@@ -54,6 +56,7 @@ fn enable_symlinks_if_can_create_them() {
     }
 }
 
+#[cfg(target_os = "windows")]
 fn embed_metadata() {
     let cargo_root_env_var = std::env::var("CARGO_MANIFEST_DIR").unwrap();
 
