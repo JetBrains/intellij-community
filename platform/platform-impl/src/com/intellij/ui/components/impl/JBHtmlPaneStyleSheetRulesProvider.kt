@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.components
+package com.intellij.ui.components.impl
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
@@ -11,8 +11,9 @@ import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_P
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ControlKind
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ControlProperty
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementKind
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementProperty
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.StartupUiUtil
@@ -46,7 +47,7 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
     )
 
   private val inlineCodeStyling = ControlColorStyleBuilder(
-    ControlKind.CodeInline,
+    ElementKind.CodeInline,
     defaultBackgroundColor = Color(0x5A5D6B),
     defaultBackgroundOpacity = 10,
     defaultBorderRadius = 10,
@@ -54,7 +55,7 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
   )
 
   private val blockCodeStyling = ControlColorStyleBuilder(
-    ControlKind.CodeBlock,
+    ElementKind.CodeBlock,
     defaultBorderColor = Color(0xEBECF0),
     defaultBorderRadius = 10,
     defaultBorderWidth = 1,
@@ -63,7 +64,7 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
   )
 
   private val shortcutStyling = ControlColorStyleBuilder(
-    ControlKind.Shortcut,
+    ElementKind.Shortcut,
     defaultBorderColor = Color(0xA8ADBD),
     defaultBorderRadius = 7,
     defaultBorderWidth = 1,
@@ -199,7 +200,7 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
     toHexString(color.rgb and 0xFFFFFF)
 
   private data class ControlColorStyleBuilder(
-    val controlKind: ControlKind,
+    val elementKind: ElementKind,
     val defaultBackgroundColor: Color? = null,
     val defaultBackgroundOpacity: Int = 100,
     val defaultForegroundColor: Color? = null,
@@ -211,23 +212,23 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
     val fallbackToEditorBorder: Boolean = false
   ) {
 
-    private fun getBackgroundColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ControlProperty.BackgroundColor)
+    private fun getBackgroundColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ElementProperty.BackgroundColor)
 
-    private fun getForegroundColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ControlProperty.ForegroundColor)
+    private fun getForegroundColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ElementProperty.ForegroundColor)
 
-    private fun getBorderColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ControlProperty.BorderColor)
+    private fun getBorderColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ElementProperty.BorderColor)
 
-    private fun getBackgroundOpacity(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ControlProperty.BackgroundOpacity)
+    private fun getBackgroundOpacity(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ElementProperty.BackgroundOpacity)
 
-    private fun getBorderWidth(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ControlProperty.BorderWidth)
+    private fun getBorderWidth(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ElementProperty.BorderWidth)
 
-    private fun getBorderRadius(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ControlProperty.BorderRadius)
+    private fun getBorderRadius(configuration: JBHtmlPaneStyleConfiguration): Int? = getInt(configuration, ElementProperty.BorderRadius)
 
     fun getCssStyle(editorPaneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): String {
       val result = StringBuilder()
 
       if (configuration.editorInlineContext) {
-        val attributes = configuration.colorScheme.getAttributes(controlKind.colorSchemeKey, false)
+        val attributes = configuration.colorScheme.getAttributes(elementKind.colorSchemeKey, false)
         if (attributes != null) {
           attributes.backgroundColor?.let { result.append("background-color: #${toHtmlColor(it)};") }
           attributes.foregroundColor?.let { result.append("color: #${toHtmlColor(it)};") }
@@ -300,19 +301,19 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
       )
     }
 
-    private fun getColor(configuration: JBHtmlPaneStyleConfiguration, property: ControlProperty): Color? =
+    private fun getColor(configuration: JBHtmlPaneStyleConfiguration, property: ElementProperty): Color? =
       UIManager.getColor(getKey(configuration, property))
 
-    private fun getInt(configuration: JBHtmlPaneStyleConfiguration, property: ControlProperty): Int? =
+    private fun getInt(configuration: JBHtmlPaneStyleConfiguration, property: ElementProperty): Int? =
       UIManager.get(getKey(configuration, property)) as Int?
 
-    private fun getKey(configuration: JBHtmlPaneStyleConfiguration, property: ControlProperty): String {
-      val themeOverrides = configuration.controlStyleOverrides
-      val suffix = if (themeOverrides != null && themeOverrides.overrides[controlKind]?.contains(property) == true) {
-        "." + themeOverrides.controlKindSuffix
+    private fun getKey(configuration: JBHtmlPaneStyleConfiguration, property: ElementProperty): String {
+      val themeOverrides = configuration.elementStyleOverrides
+      val suffix = if (themeOverrides != null && themeOverrides.overrides[elementKind]?.contains(property) == true) {
+        "." + themeOverrides.elementKindThemePropertySuffix
       }
       else ""
-      return "${controlKind.id}$suffix.${property.id}"
+      return "${elementKind.id}$suffix.${property.id}"
     }
 
   }

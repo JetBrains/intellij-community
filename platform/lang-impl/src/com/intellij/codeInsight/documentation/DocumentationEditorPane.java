@@ -5,7 +5,6 @@ import com.intellij.lang.documentation.DocumentationImageResolver;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
@@ -34,7 +33,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.*;
-import static com.intellij.lang.documentation.DocumentationMarkup.*;
+import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_BOTTOM;
+import static com.intellij.lang.documentation.DocumentationMarkup.CLASS_DEFINITION;
 import static com.intellij.lang.documentation.QuickDocHighlightingHelper.getDefaultDocStyleOptions;
 
 @Internal
@@ -63,14 +63,13 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
   ) {
     super(
       getDefaultDocStyleOptions(EditorColorsManager.getInstance().getGlobalScheme(), false),
-      new JBHtmlPaneConfiguration(
-        keyboardActions,
-        component -> new DocumentationImageProvider(component, imageResolver),
-        getModuleIconResolver(iconResolver),
-        bg -> getDocumentationPaneAdditionalCssRules(),
-        EditorCssFontResolver.getGlobalInstance(),
-        Collections.singletonList(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
-      )
+      JBHtmlPaneConfiguration.builder()
+        .keyboardActions(keyboardActions)
+        .imageResolverFactory(component -> new DocumentationImageProvider(component, imageResolver))
+        .iconResolver(name -> iconResolver.apply(name))
+        .customStyleSheetProvider(bg -> getDocumentationPaneAdditionalCssRules())
+        .extensions(Collections.singletonList(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES))
+        .build()
     );
     setBackground(BACKGROUND_COLOR);
   }

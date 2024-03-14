@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.components
+package com.intellij.ui.components.impl
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -16,7 +16,7 @@ import javax.swing.text.html.CSS
 import javax.swing.text.html.HTML
 import javax.swing.text.html.StyleSheet
 
-internal class EditorColorsSchemeStyleProvider(private val editorColorsScheme: EditorColorsScheme) : StyleSheet() {
+internal class EditorColorsSchemeStyleSheet(private val editorColorsScheme: EditorColorsScheme) : StyleSheet() {
 
   private val computedStyles = mutableMapOf<String, Style>()
 
@@ -112,10 +112,6 @@ internal class EditorColorsSchemeStyleProvider(private val editorColorsScheme: E
     private fun colorValue(color: Color): Any =
       ColorValueConstructor.newInstance()
         .also { ColorValueColorField.set(it, color) }
-
-    private fun stringValue(value: String): Any =
-      StringValueConstructor.newInstance()
-        .also { CssCssValueSvalueField.set(it, value) }
 
     private fun lengthValue(value: Float): Any =
       LengthValueConstructor.newInstance()

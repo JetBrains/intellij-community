@@ -1,16 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
-import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.editor.impl.EditorCssFontResolver
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider.buildCodeBlock
-import com.intellij.ui.components.JBHtmlPaneStyleSheetRulesProvider.getStyleSheet
-import com.intellij.util.SmartList
-import com.intellij.util.asSafely
-import com.intellij.util.containers.CollectionFactory
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.*
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
@@ -20,13 +14,9 @@ import com.intellij.util.ui.html.cssPadding
 import com.intellij.util.ui.html.width
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Element
-import org.jsoup.nodes.Node
-import org.jsoup.nodes.TextNode
-import org.jsoup.select.NodeVisitor
 import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Graphics
@@ -123,7 +113,7 @@ open class JBHtmlPane(
   private val myPaneConfiguration: JBHtmlPaneConfiguration
 ) : JEditorPane(), Disposable {
 
-
+  private val service: ImplService = ApplicationManager.getApplication().service()
   private var myText: @Nls String = "" // getText() surprisingly crashes…, let's cache the text
   private var myCurrentDefaultStyleSheet: StyleSheet? = null
   private val mutableBackgroundFlow: MutableStateFlow<Color>
@@ -158,7 +148,7 @@ open class JBHtmlPane(
 
     val editorKit = HTMLEditorKitBuilder()
       .replaceViewFactoryExtensions(*extensions.toTypedArray())
-      .withFontResolver(myPaneConfiguration.fontResolver ?: EditorCssFontResolver.getGlobalInstance())
+      .withFontResolver(myPaneConfiguration.fontResolver ?: service.defaultEditorCssFontResolver())
       .build()
     updateDocumentationPaneDefaultCssRules(editorKit)
 
@@ -183,7 +173,7 @@ open class JBHtmlPane(
   }
 
   override fun setText(t: @Nls String?) {
-    myText = t?.let { transpileHtmlPaneInput(it) } ?: ""
+    myText = t?.let { service.transpileHtmlPaneInput(it) } ?: ""
     super.setText(myText)
   }
 
@@ -201,8 +191,8 @@ open class JBHtmlPane(
     val newStyleSheet = StyleSheet()
       .also { myCurrentDefaultStyleSheet = it }
     val background = background
-    newStyleSheet.addStyleSheet(getStyleSheet(background, myStyleConfiguration))
-    newStyleSheet.addStyleSheet(EditorColorsSchemeStyleProvider(myStyleConfiguration.colorScheme))
+    newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, myStyleConfiguration))
+    newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorScheme))
     myPaneConfiguration.customStyleSheetProvider(background)?.let {
       newStyleSheet.addStyleSheet(it)
     }
@@ -260,196 +250,17 @@ open class JBHtmlPane(
     return null
   }
 
-  /**
-   * Transpiler pane input to fit to limited AWT HTML toolkit support.
-   */
-  @Suppress("HardCodedStringLiteral")
-  private fun transpileHtmlPaneInput(text: @Nls String): @Nls String {
-    val document = Jsoup.parse(text)
-    document.traverse(NodeVisitor { node, _ ->
-      when (node) {
-        is TextNode -> {
-          transpileTextNode(node)
-        }
-        is Element -> {
-          when {
-            node.nameIs("p") -> transpileParagraph(node)
-            node.nameIs("shortcut") -> transpileShortcut(node)
-            node.nameIs("blockquote") -> transpileBlockquote(node)
-            node.nameIs("pre") -> transpilePre(node)
-            node.nameIs("icon") -> transpileIcon(node)
-          }
-        }
-      }
-    })
-    document.outputSettings().prettyPrint(false)
-    return document.html()
+  @ApiStatus.Internal
+  interface ImplService {
+
+    fun transpileHtmlPaneInput(text: @Nls String): @Nls String
+
+    fun defaultEditorCssFontResolver(): CSSFontResolver
+
+    fun getDefaultStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet
+
+    fun getEditorColorsSchemeStyleSheet(editorColorsScheme: EditorColorsScheme): StyleSheet
+
   }
 
-  /**
-   * Remove empty `<p>` before some tags - workaround for Swing html renderer not removing empty paragraphs before non-inline tags
-   */
-  private fun transpileParagraph(node: Element) {
-    if (node.childNodeSize() == 0
-        || (node.childNodeSize() == 1
-            && node.childNode(0).asSafely<TextNode>()?.wholeText?.isBlank() == true)
-        && node.nextElementSibling()?.let { dropPrecedingEmptyParagraphTags.contains(it.tagName()) } == true
-    ) {
-      node.remove()
-    }
-  }
-
-  /**
-   * Expand `<shortcut raw|actionId="*"/>` tag into a sequence of `<kbd>` tags
-   */
-  private fun transpileShortcut(node: Element) {
-    val actionId = node.attributes().getIgnoreCase("actionid")
-      .takeIf { it.isNotEmpty() }
-    val raw = node.attributes().getIgnoreCase("raw")
-      .takeIf { it.isNotEmpty() }
-
-    if (actionId != null || raw != null) {
-      val shortcutData =
-        if (actionId != null)
-          ShortcutsRenderingUtil.getShortcutByActionId(actionId)
-            ?.let { ShortcutsRenderingUtil.getKeyboardShortcutData(it) }?.first
-          ?: ShortcutsRenderingUtil.getGotoActionData(actionId, false)
-            .takeIf { ActionManager.getInstance().getAction(actionId) != null }
-            ?.first
-        else
-          KeyStroke.getKeyStroke(raw)
-            ?.let { ShortcutsRenderingUtil.getKeyStrokeData(it) }
-            ?.first
-      if (shortcutData != null) {
-        val replacement = shortcutData
-          .splitToSequence(ShortcutsRenderingUtil.SHORTCUT_PART_SEPARATOR)
-          .fold(mutableListOf<Node>()) { acc, s ->
-            if (acc.isNotEmpty()) {
-              acc.add(TextNode(StringUtil.NON_BREAK_SPACE))
-            }
-            acc.add(Element("kbd").text(s))
-            acc
-          }
-        node.replaceWith(replacement)
-      }
-      else {
-        node.replaceWith(Element("kbd").text(actionId ?: raw!!))
-      }
-    }
-  }
-
-  /**
-   * Replace `<pre><code>(...)</code></pre>` with [JBHtmlPaneStyleSheetRulesProvider.buildCodeBlock]
-   */
-  private fun transpilePre(node: Element) {
-    if (node.childNodeSize() != 1) return
-    val childNodes =
-      node.childNode(0)
-        .asSafely<Element>()
-        ?.takeIf { it.nameIs("code") }
-        ?.childNodes()
-      ?: return
-    node.replaceWith(buildCodeBlock(childNodes))
-  }
-
-  /**
-   * Replace `<blockquote>\\s*<pre>(...)</pre>\\s*</blockquote>` with [JBHtmlPaneStyleSheetRulesProvider.buildCodeBlock]
-   */
-  private fun transpileBlockquote(node: Element) {
-    if (node.childNodeSize() > 3 || node.childNodeSize() < 1) return
-    val nodes = node.childNodes()
-    val wsNode1 = nodes.getOrNull(0).asSafely<TextNode>()
-    val preNode = nodes.getOrNull(if (wsNode1 == null) 0 else 1).asSafely<Element>()
-                  ?: return
-    val wsNode2 = nodes.getOrNull(if (wsNode1 == null) 1 else 2)
-
-    if (wsNode1?.wholeText.isNullOrBlank()
-        && preNode.nameIs("pre")
-        && wsNode2.let { it == null || it is TextNode && it.wholeText.isBlank() }) {
-
-      val preNodes = preNode.childNodes()
-      preNodes.getOrNull(0)?.asSafely<TextNode>()?.let {
-        it.text(it.wholeText.trim('\n', '\r'))
-      }
-      preNodes.lastOrNull()?.asSafely<TextNode>()?.let {
-        it.text(it.wholeText.trimEnd())
-      }
-      node.replaceWith(buildCodeBlock(preNodes))
-    }
-  }
-
-  /**
-   * Move icon children to parent node
-   */
-  private fun transpileIcon(node: Element) {
-    node.parent()
-      ?.insertChildren(node.siblingIndex() + 1, node.childNodes())
-  }
-
-  /**
-   * - Add `<wbr>` after `.` if surrounded by letters
-   * - Add `<wbr>` after `]`, `)` or `/` followed by a char or digit
-   */
-  private fun transpileTextNode(node: TextNode) {
-    val builder = StringBuilder()
-
-    val text = node.wholeText
-    val codePoints = text.codePoints().iterator()
-    if (!codePoints.hasNext()) return
-    var codePoint = codePoints.nextInt()
-
-    fun next() {
-      builder.appendCodePoint(codePoint)
-      codePoint = if (codePoints.hasNext())
-        codePoints.nextInt()
-      else
-        -1
-    }
-
-    val replacement = SmartList<Node>()
-
-    while (codePoint >= 0) {
-      when {
-        // break after dot if surrounded by letters
-        Character.isLetter(codePoint) -> {
-          next()
-          if (codePoint == '.'.code) {
-            next()
-            if (Character.isLetter(codePoint)) {
-              replacement.add(TextNode(builder.toString()))
-              replacement.add(Element("wbr"))
-              builder.clear()
-            }
-          }
-        }
-        // break after ], ) or / followed by a char or digit
-        codePoint == ')'.code || codePoint == ']'.code || codePoint == '/'.code -> {
-          next()
-          if (Character.isLetterOrDigit(codePoint)) {
-            replacement.add(TextNode(builder.toString()))
-            replacement.add(Element("wbr"))
-            builder.clear()
-          }
-        }
-        else -> next()
-      }
-    }
-    if (!replacement.isEmpty()) {
-      replacement.add(TextNode(builder.toString()))
-      node.replaceWith(replacement)
-    }
-  }
-
-  private fun Node.replaceWith(nodes: List<Node>) {
-    val parent = parent() as? Element ?: return
-    parent.insertChildren(siblingIndex(), nodes)
-    remove()
-  }
-
-  companion object {
-    private val dropPrecedingEmptyParagraphTags = CollectionFactory.createCharSequenceSet(false).also {
-      it.addAll(listOf("ul", "ol", "dl", "h1", "h2", "h3", "h4", "h5", "h6", "p", "tr", "td",
-                       "table", "pre", "blockquote", "div"))
-    }
-  }
 }

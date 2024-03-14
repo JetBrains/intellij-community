@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import java.awt.Color
 import java.io.IOException
-import java.util.*
 import javax.swing.JEditorPane
 
 /**
@@ -25,12 +24,9 @@ import javax.swing.JEditorPane
  */
 open class DescriptionEditorPane : JBHtmlPane(
   JBHtmlPaneStyleConfiguration(),
-  JBHtmlPaneConfiguration(
-    emptyMap(), { null }, { null },
-    { StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre, a {overflow-wrap: anywhere;}") },
-    null, Collections.emptyList()
-  )
-) {
+  JBHtmlPaneConfiguration {
+    customStyleSheetProvider { StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre, a {overflow-wrap: anywhere;}") }
+  }) {
 
   init {
     isEditable = false

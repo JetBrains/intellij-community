@@ -41,7 +41,6 @@ import javax.swing.border.Border;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
 public class IdeTooltipManager implements Disposable {
@@ -713,11 +712,9 @@ public class IdeTooltipManager implements Disposable {
                                      boolean limitWidthToScreen) {
 
     JBHtmlPaneStyleConfiguration styleConfiguration = new JBHtmlPaneStyleConfiguration();
-    JBHtmlPaneConfiguration paneConfiguration = new JBHtmlPaneConfiguration(
-      Collections.emptyMap(), url -> null, icon -> null,
-      color -> StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}"),
-      null, Collections.emptyList()
-    );
+    JBHtmlPaneConfiguration paneConfiguration = JBHtmlPaneConfiguration.builder()
+      .customStyleSheetProvider(color -> StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}"))
+      .build();
 
 
     Ref<Boolean> prefSizeWasComputed = new Ref<>(false);

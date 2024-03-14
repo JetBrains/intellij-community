@@ -404,9 +404,11 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
     EditorInlineHtmlPane(boolean trackMemory, Editor editor) {
       super(
         QuickDocHighlightingHelper.getDefaultDocStyleOptions(editor.getColorsScheme(), true),
-        new JBHtmlPaneConfiguration(Collections.emptyMap(), pane -> IMAGE_MANAGER.getImageProvider(),
-                                    url -> null, bg -> getStyleSheet(editor),
-                                    EditorCssFontResolver.getInstance(editor), Collections.emptyList())
+        JBHtmlPaneConfiguration.builder()
+          .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
+          .customStyleSheetProvider(bg -> getStyleSheet(editor))
+          .fontResolver(EditorCssFontResolver.getInstance(editor))
+          .build()
       );
       if (trackMemory) {
         MEMORY_MANAGER.register(DocRenderer.this, 50 /* rough size estimation */);

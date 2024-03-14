@@ -13,7 +13,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.*
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementKind
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementProperty
 import com.intellij.util.applyIf
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xml.util.XmlStringUtil
@@ -272,26 +273,22 @@ object QuickDocHighlightingHelper {
   @Internal
   @JvmStatic
   fun getDefaultDocStyleOptions(colorScheme: EditorColorsScheme, editorInlineContext: Boolean): JBHtmlPaneStyleConfiguration =
-    JBHtmlPaneStyleConfiguration(
-      colorScheme = colorScheme,
-      editorInlineContext = editorInlineContext,
+    JBHtmlPaneStyleConfiguration {
+      this.colorScheme = colorScheme
+      this.editorInlineContext = editorInlineContext
       inlineCodeParentSelectors = listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)",
-                                         ".$CLASS_CONTENT div:not(.$CLASS_TOP)", ".$CLASS_SECTIONS"),
-      largeCodeFontSizeSelectors = listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_BOTTOM code", ".$CLASS_TOP code"),
-      enableInlineCodeBackground = DocumentationSettings.isCodeBackgroundEnabled()
-                                   && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
+                                         ".$CLASS_CONTENT div:not(.$CLASS_TOP)", ".$CLASS_SECTIONS")
+      largeCodeFontSizeSelectors = listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_BOTTOM code", ".$CLASS_TOP code")
+      enableInlineCodeBackground = (DocumentationSettings.isCodeBackgroundEnabled()
+                                    && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING)
       enableCodeBlocksBackground = DocumentationSettings.isCodeBackgroundEnabled()
-                                   && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
-      useFontLigaturesInCode = false,
-      controlStyleOverrides = if (editorInlineContext)
-        ControlStyleOverrides(
-          controlKindSuffix = "EditorPane",
-          overrides = mapOf(
-            ControlKind.CodeBlock to listOf(ControlProperty.BackgroundColor, ControlProperty.BackgroundOpacity, ControlProperty.BorderColor)
-          )
-        )
-      else null
-    )
+                                   && DocumentationSettings.isHighlightingOfCodeBlocksEnabled()
+      if (editorInlineContext)
+        overrideElementStyle {
+          elementKindThemePropertySuffix = "EditorPane"
+          overrideThemeProperties(ElementKind.CodeBlock, ElementProperty.BackgroundColor, ElementProperty.BackgroundOpacity, ElementProperty.BorderColor)
+        }
+    }
 
   private fun StringBuilder.appendHighlightedCode(project: Project, language: Language?, doHighlighting: Boolean,
                                                   code: CharSequence, isForRenderedDoc: Boolean, trim: Boolean): StringBuilder {
