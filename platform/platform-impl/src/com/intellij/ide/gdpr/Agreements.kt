@@ -3,7 +3,6 @@
 
 package com.intellij.ide.gdpr
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.DynamicBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.SystemLanguage
@@ -17,6 +16,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AppUIUtil
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import kotlin.system.exitProcess
 
