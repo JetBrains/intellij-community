@@ -99,10 +99,15 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             val argument = arguments[index]
             val symbolName = symbol.name
             val name: Name = symbolName
+            // do not put inlay hints for a named argument
             if (argument.isNamed()) {
+                // it is possible to place named argument in a wrong position when there is some default value
+                // after which you have to name rest arguments and no reason to proceed further
                 if (argument.getArgumentName()?.asName != name) break
                 continue
             }
+            // avoid cases like "`value:` value"
+            if (argument.text == name.asString()) continue
 
             name.takeUnless(Name::isSpecial)?.asString()?.let { stringName ->
                 sink.addPresentation(InlineInlayPosition(argument.startOffset, true), hasBackground = true) {
