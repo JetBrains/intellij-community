@@ -5,4 +5,4 @@ fun test() {
     assert(<caret>s != null)
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SimplifyComparisonFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.SimplifyComparisonFixFactory$SimplifyComparisonFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SimplifyComparisonFixFactory$SimplifyComparisonFix

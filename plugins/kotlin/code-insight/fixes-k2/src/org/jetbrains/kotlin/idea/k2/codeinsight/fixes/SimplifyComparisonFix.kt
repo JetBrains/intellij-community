@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.quickfix.fixes
+package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.areThereExpressionsToBeSimplified
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.performSimplification
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.removeRedundantAssertion
-import org.jetbrains.kotlin.idea.quickfix.fixes.SimplifyComparisonFixFactory.SimplifyComparisonFix.ElementContext
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SimplifyComparisonFixFactory.SimplifyComparisonFix.ElementContext
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
