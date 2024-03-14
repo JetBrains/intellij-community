@@ -173,7 +173,7 @@ class TerminalOutputController(
     // Can not use invokeAndWait here because deadlock may happen. TerminalTextBuffer is locked at this place,
     // and EDT can be frozen now trying to acquire this lock
     invokeLater(ModalityState.any()) {
-      if (!editor.isDisposed) {
+      if (!editor.isDisposed && runningCommandContext != null) {
         doWithScrollingAware {
           doUpdateEditorContent(output)
         }
