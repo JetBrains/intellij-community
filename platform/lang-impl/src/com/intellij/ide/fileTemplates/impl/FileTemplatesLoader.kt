@@ -3,7 +3,6 @@
 
 package com.intellij.ide.fileTemplates.impl
 
-import com.intellij.DynamicBundle
 import com.intellij.configurationStore.StreamProvider
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -18,7 +17,6 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.project.stateStore
@@ -41,7 +39,7 @@ import java.util.*
 import java.util.function.BiPredicate
 import java.util.function.Function
 import java.util.function.Supplier
-import kotlin.io.path.pathString
+import kotlin.io.path.invariantSeparatorsPathString
 
 private const val DEFAULT_TEMPLATES_ROOT = FileTemplatesLoader.TEMPLATES_DIR
 private const val DESCRIPTION_FILE_EXTENSION = "html"
@@ -251,7 +249,7 @@ private fun loadDefaultsFromJar(url: URL, prefixes: List<String>, result: FileTe
       result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { loadTemplate(url, it) } }
     }
     else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
-      val filePath = FileUtil.toSystemIndependentName(Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path).pathString)
+      val filePath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path).invariantSeparatorsPathString
       descriptionPaths.add(filePath)
     }
   }
@@ -308,7 +306,7 @@ private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult,
   val rootFolder = pathToFileTemplate.parent
   Files.find(pathToFileTemplate, Int.MAX_VALUE, BiPredicate { _, a -> a.isRegularFile }).use {
     it.forEach { file ->
-      val path = FileUtil.toSystemIndependentName(pathToFileTemplate.relativize(file).toString())
+      val path = pathToFileTemplate.relativize(file).invariantSeparatorsPathString
       if (path.endsWith("includes/default.html")) {
         result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(rootFolder, filePath) } }
       }
@@ -334,18 +332,23 @@ private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult,
 }
 
 private fun getLocalizedContent(path: String, pathResolver: Function<String, String?>): String {
-  if (DynamicBundle.findLanguageBundle() != null) {
-    val localizedPaths = LocalizationUtil.getLocalizedPaths(Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path)).map { FileUtil.toSystemIndependentName(it.pathString) }
+  val fullPath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path)
+  if (LocalizationUtil.getLocaleFromPlugin() != null) {
+    val localizedPaths = LocalizationUtil.getLocalizedPaths(fullPath).map { it.invariantSeparatorsPathString }
     for (localizedPath in localizedPaths) {
       pathResolver.apply(localizedPath)?.let { return it }
     }
   }
-  return pathResolver.apply(path) ?: ""
+  val result = pathResolver.apply(fullPath.invariantSeparatorsPathString)
+  if (result == null) {
+    logger<FileTemplatesLoader>().error("Cannot find file by path: $path")
+  }
+  return result ?: ""
 }
 
 private fun loadFileContent(root: Path, filePath: String): String? {
   try {
-    val pluginClassLoader = DynamicBundle.findLanguageBundle()?.pluginDescriptor?.classLoader
+    val pluginClassLoader = LocalizationUtil.getPluginClassLoader()
     return pluginClassLoader?.let {
       ResourceUtil.getResourceAsBytesSafely(filePath, pluginClassLoader)?.toString(StandardCharsets.UTF_8)
     } ?: ResourceUtil.getResourceAsBytesSafely(filePath, FileTemplatesLoader::class.java.classLoader)?.toString(StandardCharsets.UTF_8)
@@ -385,7 +388,7 @@ private class LoadedConfiguration(@JvmField val managers: Map<String, FTManager>
 
 private fun loadTemplate(root: URL, path: String): String? {
   try {
-    val pluginClassLoader = DynamicBundle.findLanguageBundle()?.pluginDescriptor?.classLoader
+    val pluginClassLoader = LocalizationUtil.getPluginClassLoader()
     val result = pluginClassLoader?.let {
       ResourceUtil.getResourceAsBytesSafely(path, pluginClassLoader)?.toString(StandardCharsets.UTF_8)
     } ?: FileTemplatesLoader::class.java.classLoader.let {

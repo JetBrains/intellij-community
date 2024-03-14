@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl
 
-import com.intellij.DynamicBundle
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.reference.SoftReference
 import com.intellij.util.LocalizationUtil
@@ -13,9 +11,8 @@ import java.lang.ref.Reference
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Path
-import java.util.*
 import java.util.function.Function
-import kotlin.io.path.pathString
+import kotlin.io.path.invariantSeparatorsPathString
 
 class DefaultTemplate(val name: String,
                       val extension: String,
@@ -53,18 +50,21 @@ class DefaultTemplate(val name: String,
   fun getText(): String {
     var text = SoftReference.dereference(this.text)
     if (text != null) return text
-    val locale = DynamicBundle.findLanguageBundle()?.locale?.let { Locale.forLanguageTag(it) }
+    val locale = LocalizationUtil.getLocaleFromPlugin()
     if (locale != null) {
-      val localizedPaths = LocalizationUtil.getLocalizedPaths(templatePath).map { FileUtil.toSystemIndependentName(it.pathString) }
+      val localizedPaths = LocalizationUtil.getLocalizedPaths(templatePath).map { it.invariantSeparatorsPathString }
       for (path in localizedPaths) {
         text = textLoader.apply(path)?.let { Strings.convertLineSeparators(it) }
         if (!text.isNullOrEmpty()) break
       }
     }
     if (text == null) {
-      text = textLoader.apply(FileUtil.toSystemIndependentName(templatePath.pathString))
+      text = textLoader.apply(templatePath.invariantSeparatorsPathString)
     }
     this.text = java.lang.ref.SoftReference(text)
+    if (text == null) {
+      logger<DefaultTemplate>().error("Cannot find file template by path: $templatePath")
+    }
     return text ?: ""
   }
 
@@ -79,9 +79,9 @@ class DefaultTemplate(val name: String,
     }
 
     try {
-      if (DynamicBundle.findLanguageBundle() != null && descriptionPath != null) {
+      if (LocalizationUtil.getLocaleFromPlugin() != null && descriptionPath != null) {
           val localizedPaths = LocalizationUtil.getLocalizedPaths(Path.of(FileTemplatesLoader.TEMPLATES_DIR).resolve(descriptionPath))
-          val localizedPathStrings = localizedPaths.map { FileUtil.toSystemIndependentName(it.pathString) }
+          val localizedPathStrings = localizedPaths.map { it.invariantSeparatorsPathString }
           for (path in localizedPathStrings) {
             text = descriptionLoader.apply(path)?.let { Strings.convertLineSeparators(it) }
             if (text != null) break
