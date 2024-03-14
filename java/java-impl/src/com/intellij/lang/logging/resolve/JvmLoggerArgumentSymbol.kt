@@ -12,9 +12,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
-import com.intellij.util.logging.LOGGER_RESOLVE_TYPE_SEARCHERS
-import com.intellij.util.logging.LoggingUtil
-import com.intellij.util.logging.getPlaceholderContext
+import com.intellij.util.logging.*
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.getParentOfType
@@ -23,14 +21,20 @@ import org.jetbrains.uast.toUElementOfType
 class JvmLoggerArgumentSymbol(val expression: PsiElement) : Symbol, NavigatableSymbol, SearchTarget {
   override val usageHandler: UsageHandler = UsageHandler.createEmptyUsageHandler(expression.text)
 
-
   fun getPlaceholderString(): UExpression? {
     val uExpression = expression.toUElementOfType<UExpression>() ?: return null
     val uCallExpression = uExpression.getParentOfType<UCallExpression>() ?: return null
 
     val log4jHasImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
 
-    return getPlaceholderContext(uCallExpression, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j)?.logStringArgument
+    val logMethod = if (uCallExpression.methodName == ADD_ARGUMENT_METHOD_NAME) {
+      detectLoggerBuilderMethod(uCallExpression) ?: return null
+    }
+    else {
+      uCallExpression
+    }
+
+    return getPlaceholderContext(logMethod, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j)?.logStringArgument
   }
 
   override fun createPointer(): Pointer<JvmLoggerArgumentSymbol> {

@@ -13,6 +13,8 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 const val MAX_BUILDER_LENGTH = 20
+const val ADD_ARGUMENT_METHOD_NAME = "addArgument"
+const val SET_MESSAGE_METHOD_NAME = "setMessage"
 
 fun getLogStringIndex(parameters: List<UParameter>): Int? {
   if (parameters.isEmpty()) return null
@@ -27,6 +29,13 @@ fun getLogStringIndex(parameters: List<UParameter>): Int? {
   else {
     return 1
   }
+}
+
+fun detectLoggerBuilderMethod(uCallExpression: UCallExpression): UCallExpression? {
+  val uQualifiedReferenceExpression = uCallExpression.getOutermostQualified() ?: return null
+  val selector = uQualifiedReferenceExpression.selector as? UCallExpression ?: return null
+  if (LOGGER_BUILDER_LOG_TYPE_SEARCHERS.mapFirst(selector) == null) return null
+  return selector
 }
 
 private val SLF4J_HOLDER = object : LoggerTypeSearcher {
@@ -134,20 +143,21 @@ private fun getImmediateLoggerQualifier(expression: UCallExpression): UExpressio
   return result
 }
 
-val LOGGER_RESOLVE_TYPE_SEARCHERS: CallMapper<LoggerTypeSearcher> = CallMapper<LoggerTypeSearcher>()
+val LOGGER_BUILDER_LOG_TYPE_SEARCHERS: CallMapper<LoggerTypeSearcher> = CallMapper<LoggerTypeSearcher>()
+  .register(CallMatcher.instanceCall(LoggingUtil.SLF4J_EVENT_BUILDER, "log"), SLF4J_BUILDER_HOLDER)
+  .register(CallMatcher.instanceCall(LoggingUtil.LOG4J_LOG_BUILDER, "log"), LOG4J_LOG_BUILDER_HOLDER)
+
+val LOGGER_RESOLVE_TYPE_SEARCHERS: CallMapper<LoggerTypeSearcher> = LOGGER_BUILDER_LOG_TYPE_SEARCHERS
   .register(CallMatcher.instanceCall(LoggingUtil.SLF4J_LOGGER, "trace", "debug", "info", "warn", "error"), SLF4J_HOLDER)
   .register(CallMatcher.instanceCall(LoggingUtil.IDEA_LOGGER, "trace", "debug", "info", "warn", "error"), IDEA_PLACEHOLDERS)
-  .register(CallMatcher.instanceCall(LoggingUtil.SLF4J_EVENT_BUILDER, "log"), SLF4J_BUILDER_HOLDER)
   .register(CallMatcher.instanceCall(LoggingUtil.LOG4J_LOGGER, "trace", "debug", "info", "warn", "error", "fatal", "log"), LOG4J_HOLDER)
-  .register(CallMatcher.instanceCall(LoggingUtil.LOG4J_LOG_BUILDER, "log"), LOG4J_LOG_BUILDER_HOLDER)
 
 val LOGGER_TYPE_SEARCHERS: CallMapper<LoggerTypeSearcher> = LOGGER_RESOLVE_TYPE_SEARCHERS
   .register(CallMatcher.instanceCall(LoggingUtil.AKKA_LOGGING, "debug", "error", "format", "info", "log", "warning"), AKKA_PLACEHOLDERS)
 
 
 private val BUILDER_CHAIN = setOf("addKeyValue", "addMarker", "setCause")
-private const val ADD_ARGUMENT = "addArgument"
-private const val SET_MESSAGE = "setMessage"
+
 
 fun findMessageSetterStringArg(node: UCallExpression,
                                loggerType: LoggerTypeSearcher?): UExpression? {
@@ -167,14 +177,14 @@ fun findMessageSetterStringArg(node: UCallExpression,
       return null
     }
     val methodName = currentCall.methodName ?: return null
-    if (methodName == SET_MESSAGE && currentCall.valueArgumentCount == 1) {
+    if (methodName == SET_MESSAGE_METHOD_NAME && currentCall.valueArgumentCount == 1) {
       val uExpression = currentCall.valueArguments[0]
       if (!TypeUtils.isJavaLangString(uExpression.getExpressionType())) {
         return null
       }
       return uExpression
     }
-    if (BUILDER_CHAIN.contains(methodName) || methodName == ADD_ARGUMENT) {
+    if (BUILDER_CHAIN.contains(methodName) || methodName == ADD_ARGUMENT_METHOD_NAME) {
       currentCall = currentCall.receiver
       continue
     }
@@ -200,15 +210,15 @@ fun findAdditionalArgumentCount(node: UCallExpression,
     }
     if (currentCall is UCallExpression) {
       val methodName = currentCall.methodName ?: return null
-      if (methodName == ADD_ARGUMENT) {
-        uExpressions.add(currentCall)
+      if (methodName == ADD_ARGUMENT_METHOD_NAME) {
+        uExpressions.add(currentCall.valueArguments.first())
         currentCall = currentCall.receiver
         continue
       }
       if (methodName.startsWith("at") && LoggingUtil.getLoggerLevel(currentCall) != null) {
         return uExpressions
       }
-      if (BUILDER_CHAIN.contains(methodName) || (allowIntermediateMessage && methodName == SET_MESSAGE)) {
+      if (BUILDER_CHAIN.contains(methodName) || (allowIntermediateMessage && methodName == SET_MESSAGE_METHOD_NAME)) {
         currentCall = currentCall.receiver
         continue
       }
@@ -385,7 +395,14 @@ fun getPlaceholderContext(
 
   val parts = collectParts(logStringArgument) ?: return null
 
-  return PlaceholderContext(placeholderParameters, logStringArgument, parts, loggerType, lastArgumentIsException, lastArgumentIsSupplier)
+  return PlaceholderContext(
+    placeholderParameters.sortedBy { it.textRange?.startOffset },
+    logStringArgument,
+    parts,
+    loggerType,
+    lastArgumentIsException,
+    lastArgumentIsSupplier
+  )
 }
 
 fun collectParts(logStringArgument: UExpression): List<LoggingStringPartEvaluator.PartHolder>? {
