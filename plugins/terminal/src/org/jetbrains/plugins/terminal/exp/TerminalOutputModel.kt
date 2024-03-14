@@ -333,6 +333,10 @@ data class CommandBlock(val command: String?, val prompt: PromptRenderingInfo?, 
   val withPrompt: Boolean = !prompt?.text.isNullOrEmpty()
   val withCommand: Boolean = !command.isNullOrEmpty()
 
+  /** There can be no output in the result of command execution. For example, in `cd` command. */
+  val withOutput: Boolean
+    get() = outputStartOffset < endOffset
+
   /** If block is finalized it means that its length won't be expanded if some text is added before or after it */
   val isFinalized: Boolean
     get() = !range.isGreedyToRight
