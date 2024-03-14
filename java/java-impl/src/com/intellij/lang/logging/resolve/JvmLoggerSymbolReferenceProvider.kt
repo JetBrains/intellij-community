@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.util.logging.*
-import com.intellij.util.logging.PlaceholderLoggerType.SLF4J
+import com.intellij.util.logging.PlaceholderLoggerType.*
 import org.jetbrains.uast.*
 
 class JvmLoggerSymbolReferenceProvider : PsiSymbolReferenceProvider {
@@ -37,43 +37,38 @@ class JvmLoggerSymbolReferenceProvider : PsiSymbolReferenceProvider {
 
 fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolReference>? {
   val uCallExpression = literalExpression.getParentOfType<UCallExpression>() ?: return null
-
   val log4jHasImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
 
   val context = getPlaceholderContext(uCallExpression, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j) ?: return null
-
-  if (literalExpression != context.logStringArgument) return null
-
-  if (context.partHolderList.size > 1) return null
+  if (literalExpression != context.logStringArgument || context.partHolderList.size > 1) return null
 
   val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, context.partHolderList)
-
   if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY || placeholderCountResult.placeholderRangesInPartHolderList.size != 1) return null
 
   val placeholderRanges = placeholderCountResult.placeholderRangesInPartHolderList.single()
-
-  val zipped = placeholderRanges.rangeList.zip(context.placeholderParameters)
-
+  val rangeWithParameterList = placeholderRanges.rangeList.zip(context.placeholderParameters)
   val psiLiteralExpression = literalExpression.sourcePsi ?: return null
   val value = literalExpression.evaluateString() ?: return null
 
   val offset = getOffsetInText(psiLiteralExpression, value) ?: return null
-
   val placeholderParametersSize = context.placeholderParameters.size
 
-  val result = when (context.loggerType) {
-    SLF4J -> {
-      zipped.map { (range, parameter) ->
-        if (range == null) return null
-        val alignedRange = range.shiftTextRange(offset)
-        val parameterPsi = parameter.sourcePsi ?: return null
-        JvmLoggerArgumentSymbolReference(psiLiteralExpression, alignedRange, parameterPsi)
-      }.take(if (context.lastArgumentIsException) placeholderParametersSize - 1 else placeholderParametersSize)
+  val loggerReferenceList = rangeWithParameterList.map { (range, parameter) ->
+    if (range == null) return null
+    val alignedRange = range.shiftTextRange(offset)
+    val parameterPsi = parameter.sourcePsi ?: return null
+    JvmLoggerArgumentSymbolReference(psiLiteralExpression, alignedRange, parameterPsi)
+  }
+
+  return when (context.loggerType) {
+    SLF4J, LOG4J_OLD_STYLE, LOG4J_FORMATTED_STYLE -> {
+      loggerReferenceList.take(if (context.lastArgumentIsException) placeholderParametersSize - 1 else placeholderParametersSize)
+    }
+    SLF4J_EQUAL_PLACEHOLDERS, LOG4J_EQUAL_PLACEHOLDERS -> {
+      loggerReferenceList
     }
     else -> null
   }
-
-  return result
 }
 
 private fun TextRange.shiftTextRange(shift: Int): TextRange = TextRange(this.startOffset + shift, this.endOffset + shift)
