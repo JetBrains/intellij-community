@@ -21,7 +21,7 @@ import kotlin.io.path.fileSize
  * Imports metrics exported by com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporter
  */
 @ApiStatus.Internal
-object MetricsJsonImporter {
+object OpenTelemetryMetersJsonImporter {
   fun fromJsonFile(jsonPath: Path): Collection<MetricData> {
     val module = SimpleModule().apply { addDeserializer(MetricData::class.java, MetricDataDeserializer()) }
 

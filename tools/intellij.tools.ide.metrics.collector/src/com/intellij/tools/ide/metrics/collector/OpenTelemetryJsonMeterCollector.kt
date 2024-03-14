@@ -1,6 +1,6 @@
 package com.intellij.tools.ide.metrics.collector
 
-import com.intellij.platform.diagnostic.telemetry.exporters.meters.MetricsJsonImporter
+import com.intellij.platform.diagnostic.telemetry.exporters.meters.OpenTelemetryMetersJsonImporter
 import com.intellij.tools.ide.metrics.collector.meters.*
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
@@ -46,7 +46,7 @@ open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: Metrics
       }.collect(logsDirPath)
     }
 
-    val telemetryMetrics: List<MetricData> = metricsFiles.flatMap { MetricsJsonImporter.fromJsonFile(it) }
+    val telemetryMetrics: List<MetricData> = metricsFiles.flatMap { OpenTelemetryMetersJsonImporter.fromJsonFile(it) }
       .filter(meterFilter)
 
     val metricsGroupedByName: Map<String, List<MetricData>> = telemetryMetrics.groupBy { it.name }

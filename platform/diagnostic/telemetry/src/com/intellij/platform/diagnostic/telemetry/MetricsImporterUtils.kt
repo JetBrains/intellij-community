@@ -10,7 +10,7 @@ import java.nio.file.Path
 import kotlin.io.path.bufferedReader
 
 @ApiStatus.Internal
-@Deprecated("Use com.intellij.platform.diagnostic.telemetry.exporters.meters.MetricsJsonImporter")
+@Deprecated("Use com.intellij.platform.diagnostic.telemetry.exporters.meters.OpenTelemetryMetersJsonImporter")
 object MetricsImporterUtils {
   private fun String.isLongNumber(): Boolean {
     return try {
