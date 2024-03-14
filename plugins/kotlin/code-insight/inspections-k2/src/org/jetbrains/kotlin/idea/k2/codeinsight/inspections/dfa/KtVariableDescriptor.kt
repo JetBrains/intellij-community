@@ -93,10 +93,7 @@ class KtVariableDescriptor(
 
         context(KtAnalysisSession)
         internal fun KtVariableLikeSymbol.variableDescriptor(): KtVariableDescriptor {
-            return KtVariableDescriptor(
-                this.getContainingModule(), this.createPointer(), this.returnType.toDfType(),
-                this.name.hashCode()
-            )
+            return KtVariableDescriptor(useSiteModule, this.createPointer(), this.returnType.toDfType(), this.name.hashCode())
         }
 
         private fun getVariablesChangedInNestedFunctions(parent: KtElement): Set<KtVariableDescriptor> =
