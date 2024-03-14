@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure
 
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiFile
@@ -15,11 +16,12 @@ interface KotlinResolveScopeEnlarger {
 
         fun enlargeScope(scope: GlobalSearchScope, file: PsiFile): GlobalSearchScope {
             val virtualFile = file.originalFile.virtualFile ?: return scope
+            val context = file.originalFile.codeInsightContext
 
             var result = scope
             for (extension in ResolveScopeEnlarger.EP_NAME.extensions) {
                 val project = scope.project ?: continue
-                val additionalScope = extension.getAdditionalResolveScope(virtualFile, project) ?: continue
+                val additionalScope = extension.getAdditionalResolveScope(virtualFile, context, project) ?: continue
                 result = result.union(additionalScope)
             }
             return result
