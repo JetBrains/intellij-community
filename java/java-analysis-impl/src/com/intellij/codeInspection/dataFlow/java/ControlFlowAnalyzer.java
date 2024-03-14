@@ -1897,7 +1897,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       .isInstance(expression);
   }
 
-  void addMethodThrows(PsiMember methodOrClass) {
+  void addMethodThrows(@Nullable PsiMember methodOrClass) {
     if (myTrapTracker.shouldHandleException()) {
       if (methodOrClass == null) {
         DfaControlTransferValue transfer = myTrapTracker.transferValue(JAVA_LANG_THROWABLE);
