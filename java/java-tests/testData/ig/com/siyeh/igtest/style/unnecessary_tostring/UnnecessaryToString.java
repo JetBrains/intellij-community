@@ -29,6 +29,10 @@ public class UnnecessaryToString {
         builder.append(o.<warning descr="Unnecessary 'toString()' call">toString</warning>());
     }
 
+    void builder(StringBuilder sb, StringBuilder chars) {
+      sb.append(chars.<warning descr="Unnecessary 'toString()' call">toString</warning>(), 0, 2);
+    }
+
   String self() {
     return toString();
   }
