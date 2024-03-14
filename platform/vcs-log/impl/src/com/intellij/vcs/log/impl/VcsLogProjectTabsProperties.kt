@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Comparing
+import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
@@ -21,29 +22,10 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
 
   override fun loadState(state: State) {
     _state = state
-    initTabOrderIfEmpty(state)
   }
-
-  //For migrating from older versions that don't have an 'order' field
-  private fun initTabOrderIfEmpty(state: State) {
-    _state.openTabs.onEachIndexed { index, entry ->
-      var myState = state.tabStates[entry.key]
-      if (myState == null) {
-        createProperties(entry.key)
-        myState = state.tabStates[entry.key]!!
-        myState.tabOrder = index + 1
-      }
-      else if (myState.tabOrder == 0) {
-        myState.tabOrder = index + 1
-      }
-    }
-  }
-
 
   override fun createProperties(id: String): MainVcsLogUiProperties {
-    val myState = MyState()
-    myState.tabOrder = _state.openTabs.size + 1
-    _state.tabStates.putIfAbsent(id, myState)
+    _state.tabStates.putIfAbsent(id, MyState())
     return MyVcsLogUiPropertiesImpl(id)
   }
 
@@ -61,7 +43,7 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   }
 
   val tabs: Map<String, VcsLogTabLocation>
-    get() = _state.openTabs.toSortedMap(compareBy { _state.tabStates[it]?.tabOrder })
+    get() = _state.openTabs
 
   fun getRecentlyFilteredGroups(filterName: String): List<List<String>> {
     return getRecentGroup(_state.recentFilters, filterName)
@@ -76,6 +58,7 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
     var tabStates: MutableMap<String, MyState> = TreeMap()
 
     @get:OptionTag("OPEN_GENERIC_TABS")
+    @get:MapAnnotation(sortBeforeSave = false)
     var openTabs = LinkedHashMap<String, VcsLogTabLocation>()
 
     @get:OptionTag("RECENT_FILTERS")
@@ -136,9 +119,6 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
   class MyState : VcsLogUiPropertiesImpl.State() {
     @get:OptionTag("CUSTOM_BOOLEAN_PROPERTIES")
     var customBooleanProperties: MutableMap<String, Boolean> = HashMap()
-
-    @get: OptionTag("TAB_ORDER")
-    var tabOrder = 0
   }
 
   open class CustomBooleanTabProperty(name: @NonNls String) : VcsLogUiProperty<Boolean>(name) {
