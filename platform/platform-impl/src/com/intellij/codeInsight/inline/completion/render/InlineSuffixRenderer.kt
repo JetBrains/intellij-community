@@ -6,9 +6,12 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 
+@ApiStatus.Internal
+@ApiStatus.Experimental
 class InlineSuffixRenderer(private val editor: Editor, suffix: String) : EditorCustomElementRenderer {
   private val font = InlineCompletionFontUtils.font(editor)
   private val width = editor.contentComponent.getFontMetrics(font).stringWidth(suffix)
