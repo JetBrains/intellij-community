@@ -2,6 +2,7 @@
 
 package com.intellij.psi.impl.source.tree.injected;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +27,13 @@ class VirtualFileWindowImpl extends LightVirtualFile implements VirtualFileWindo
     if (delegate instanceof VirtualFileWindow) throw new IllegalArgumentException(delegate +" must not be injected");
     myDelegate = delegate;
     myDocumentWindow = window;
+  }
+
+  @Override
+  public @NotNull String getPresentableName() {
+    var language = getLanguage();
+    return AnalysisBundle.message("virtual.file.window.name",
+                                  language != null && language != Language.ANY ? language.getDisplayName() + " " : "");
   }
 
   @Override
