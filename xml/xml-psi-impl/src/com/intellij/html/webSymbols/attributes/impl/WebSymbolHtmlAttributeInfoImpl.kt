@@ -50,7 +50,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
           WebSymbolHtmlAttributeValue.Type.SYMBOL -> null
           WebSymbolHtmlAttributeValue.Type.OF_MATCH -> symbol.type
           WebSymbolHtmlAttributeValue.Type.COMPLEX -> attrValue?.langType
-        }?.let { typeSupport.resolve(symbol, it) }
+        }
       else null
 
       val isHtmlBoolean = if (kind == WebSymbolHtmlAttributeValue.Kind.PLAIN)

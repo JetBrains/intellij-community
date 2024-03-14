@@ -8,8 +8,6 @@ import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 
 interface WebSymbolHtmlAttributeValueTypeSupport : WebSymbolTypeSupport {
 
-  fun resolve(symbol: WebSymbol, type: Any?): Any?
-
   /**
    * @return [ThreeState.YES] if the type is equal to boolean ignoring null or undefined values,
    * [ThreeState.UNSURE] if the boolean is assignable to the type and
