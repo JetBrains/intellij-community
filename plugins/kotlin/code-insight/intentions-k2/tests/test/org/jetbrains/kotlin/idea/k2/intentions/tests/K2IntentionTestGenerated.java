@@ -6110,6 +6110,500 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/changeVisibility")
+    public abstract static class ChangeVisibility extends AbstractK2IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/changeVisibility/internal")
+        public static class Internal extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("hasJvmFieldInInterfaceCompanion.kt")
+            public void testHasJvmFieldInInterfaceCompanion() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/hasJvmFieldInInterfaceCompanion.kt");
+            }
+
+            @TestMetadata("hasJvmFieldInInterfaceObject.kt")
+            public void testHasJvmFieldInInterfaceObject() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/hasJvmFieldInInterfaceObject.kt");
+            }
+
+            @TestMetadata("inInterface.kt")
+            public void testInInterface() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/inInterface.kt");
+            }
+
+            @TestMetadata("inInterfaceCompanion.kt")
+            public void testInInterfaceCompanion() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/inInterfaceCompanion.kt");
+            }
+
+            @TestMetadata("notForAnnotationClassPrimaryConstructor.kt")
+            public void testNotForAnnotationClassPrimaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/notForAnnotationClassPrimaryConstructor.kt");
+            }
+
+            @TestMetadata("notForSealedPrimaryConstructor.kt")
+            public void testNotForSealedPrimaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/notForSealedPrimaryConstructor.kt");
+            }
+
+            @TestMetadata("notForSealedSecondaryConstructor.kt")
+            public void testNotForSealedSecondaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/notForSealedSecondaryConstructor.kt");
+            }
+
+            @TestMetadata("propertySetter.kt")
+            public void testPropertySetter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/propertySetter.kt");
+            }
+
+            @TestMetadata("propertySetterForPrivateProperty.kt")
+            public void testPropertySetterForPrivateProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/propertySetterForPrivateProperty.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/simple.kt");
+            }
+
+            @TestMetadata("valParameter.kt")
+            public void testValParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/internal/valParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/changeVisibility/private")
+        public static class Private extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("actual.kt")
+            public void testActual() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/actual.kt");
+            }
+
+            @TestMetadata("actual2.kt")
+            public void testActual2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/actual2.kt");
+            }
+
+            @TestMetadata("annotated.kt")
+            public void testAnnotated() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/annotated.kt");
+            }
+
+            @TestMetadata("expect.kt")
+            public void testExpect() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/expect.kt");
+            }
+
+            @TestMetadata("expect2.kt")
+            public void testExpect2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/expect2.kt");
+            }
+
+            @TestMetadata("hasModifier1.kt")
+            public void testHasModifier1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/hasModifier1.kt");
+            }
+
+            @TestMetadata("hasModifier2.kt")
+            public void testHasModifier2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/hasModifier2.kt");
+            }
+
+            @TestMetadata("hasModifier3.kt")
+            public void testHasModifier3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/hasModifier3.kt");
+            }
+
+            @TestMetadata("hasModifier4.kt")
+            public void testHasModifier4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/hasModifier4.kt");
+            }
+
+            @TestMetadata("hasModifier5.kt")
+            public void testHasModifier5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/hasModifier5.kt");
+            }
+
+            @TestMetadata("inAnnotation.kt")
+            public void testInAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/inAnnotation.kt");
+            }
+
+            @TestMetadata("interfaceFunction.kt")
+            public void testInterfaceFunction() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/interfaceFunction.kt");
+            }
+
+            @TestMetadata("interfaceFunctionWithBody.kt")
+            public void testInterfaceFunctionWithBody() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/interfaceFunctionWithBody.kt");
+            }
+
+            @TestMetadata("interfaceFunctionWithExpressionBody.kt")
+            public void testInterfaceFunctionWithExpressionBody() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/interfaceFunctionWithExpressionBody.kt");
+            }
+
+            @TestMetadata("interfaceProperty.kt")
+            public void testInterfaceProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/interfaceProperty.kt");
+            }
+
+            @TestMetadata("interfacePropertyWithGetter.kt")
+            public void testInterfacePropertyWithGetter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/interfacePropertyWithGetter.kt");
+            }
+
+            @TestMetadata("jvmField.kt")
+            public void testJvmField() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/jvmField.kt");
+            }
+
+            @TestMetadata("noModifierListAnnotation.kt")
+            public void testNoModifierListAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListAnnotation.kt");
+            }
+
+            @TestMetadata("noModifierListClass.kt")
+            public void testNoModifierListClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListClass.kt");
+            }
+
+            @TestMetadata("noModifierListConst.kt")
+            public void testNoModifierListConst() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListConst.kt");
+            }
+
+            @TestMetadata("noModifierListContext.kt")
+            public void testNoModifierListContext() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListContext.kt");
+            }
+
+            @TestMetadata("noModifierListFun.kt")
+            public void testNoModifierListFun() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListFun.kt");
+            }
+
+            @TestMetadata("noModifierListFunInterface.kt")
+            public void testNoModifierListFunInterface() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListFunInterface.kt");
+            }
+
+            @TestMetadata("noModifierListInterface.kt")
+            public void testNoModifierListInterface() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListInterface.kt");
+            }
+
+            @TestMetadata("noModifierListObject.kt")
+            public void testNoModifierListObject() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListObject.kt");
+            }
+
+            @TestMetadata("noModifierListPrimaryConstructor.kt")
+            public void testNoModifierListPrimaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListPrimaryConstructor.kt");
+            }
+
+            @TestMetadata("noModifierListSealed.kt")
+            public void testNoModifierListSealed() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListSealed.kt");
+            }
+
+            @TestMetadata("noModifierListSecondaryConstructor.kt")
+            public void testNoModifierListSecondaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListSecondaryConstructor.kt");
+            }
+
+            @TestMetadata("noModifierListVal.kt")
+            public void testNoModifierListVal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListVal.kt");
+            }
+
+            @TestMetadata("noModifierListValParam.kt")
+            public void testNoModifierListValParam() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierListValParam.kt");
+            }
+
+            @TestMetadata("noModifierTypeAlias.kt")
+            public void testNoModifierTypeAlias() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/noModifierTypeAlias.kt");
+            }
+
+            @TestMetadata("notForAbstract.kt")
+            public void testNotForAbstract() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/notForAbstract.kt");
+            }
+
+            @TestMetadata("notForAnnotationClassPrimaryConstructor.kt")
+            public void testNotForAnnotationClassPrimaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/notForAnnotationClassPrimaryConstructor.kt");
+            }
+
+            @TestMetadata("notForLocal.kt")
+            public void testNotForLocal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/notForLocal.kt");
+            }
+
+            @TestMetadata("notForParameter.kt")
+            public void testNotForParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/notForParameter.kt");
+            }
+
+            @TestMetadata("onAnnotation.kt")
+            public void testOnAnnotation() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/onAnnotation.kt");
+            }
+
+            @TestMetadata("onAnnotationParameter.kt")
+            public void testOnAnnotationParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/onAnnotationParameter.kt");
+            }
+
+            @TestMetadata("propertyGetter.kt")
+            public void testPropertyGetter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/propertyGetter.kt");
+            }
+
+            @TestMetadata("propertySetter.kt")
+            public void testPropertySetter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/propertySetter.kt");
+            }
+
+            @TestMetadata("propertySetterForInternalProperty.kt")
+            public void testPropertySetterForInternalProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/propertySetterForInternalProperty.kt");
+            }
+
+            @TestMetadata("propertySetterForPrivateProperty.kt")
+            public void testPropertySetterForPrivateProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/propertySetterForPrivateProperty.kt");
+            }
+
+            @TestMetadata("propertySetterForProtectedProperty.kt")
+            public void testPropertySetterForProtectedProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/propertySetterForProtectedProperty.kt");
+            }
+
+            @TestMetadata("propertySetterInLocalClass.kt")
+            public void testPropertySetterInLocalClass() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/propertySetterInLocalClass.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/simple.kt");
+            }
+
+            @TestMetadata("withAnnotations.kt")
+            public void testWithAnnotations() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/private/withAnnotations.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/changeVisibility/protected")
+        public static class Protected extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("caretAfter.kt")
+            public void testCaretAfter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/caretAfter.kt");
+            }
+
+            @TestMetadata("constructorParameter.kt")
+            public void testConstructorParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/constructorParameter.kt");
+            }
+
+            @TestMetadata("noModifier.kt")
+            public void testNoModifier() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/noModifier.kt");
+            }
+
+            @TestMetadata("notForAnnotationPrimaryConstructor.kt")
+            public void testNotForAnnotationPrimaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForAnnotationPrimaryConstructor.kt");
+            }
+
+            @TestMetadata("notForFinalClass1.kt")
+            public void testNotForFinalClass1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForFinalClass1.kt");
+            }
+
+            @TestMetadata("notForFinalClass2.kt")
+            public void testNotForFinalClass2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForFinalClass2.kt");
+            }
+
+            @TestMetadata("notForFinalClass3.kt")
+            public void testNotForFinalClass3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForFinalClass3.kt");
+            }
+
+            @TestMetadata("notForFinalClass4.kt")
+            public void testNotForFinalClass4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForFinalClass4.kt");
+            }
+
+            @TestMetadata("notForFinalClass5.kt")
+            public void testNotForFinalClass5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForFinalClass5.kt");
+            }
+
+            @TestMetadata("notForInterfaceMember.kt")
+            public void testNotForInterfaceMember() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForInterfaceMember.kt");
+            }
+
+            @TestMetadata("notForNonValParameter.kt")
+            public void testNotForNonValParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForNonValParameter.kt");
+            }
+
+            @TestMetadata("notForObjectMember.kt")
+            public void testNotForObjectMember() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForObjectMember.kt");
+            }
+
+            @TestMetadata("notForOverride.kt")
+            public void testNotForOverride() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForOverride.kt");
+            }
+
+            @TestMetadata("notForTopLevel.kt")
+            public void testNotForTopLevel() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/notForTopLevel.kt");
+            }
+
+            @TestMetadata("primaryConstructor.kt")
+            public void testPrimaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/primaryConstructor.kt");
+            }
+
+            @TestMetadata("propertySetter.kt")
+            public void testPropertySetter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/propertySetter.kt");
+            }
+
+            @TestMetadata("propertySetterForPrivateProperty.kt")
+            public void testPropertySetterForPrivateProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/propertySetterForPrivateProperty.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/protected/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/changeVisibility/public")
+        public static class Public extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("alreadyPublic.kt")
+            public void testAlreadyPublic() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/alreadyPublic.kt");
+            }
+
+            @TestMetadata("destructuringPropertyException.kt")
+            public void testDestructuringPropertyException() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/destructuringPropertyException.kt");
+            }
+
+            @TestMetadata("notForSealedPrimaryConstructor.kt")
+            public void testNotForSealedPrimaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/notForSealedPrimaryConstructor.kt");
+            }
+
+            @TestMetadata("notForSealedSecondaryConstructor.kt")
+            public void testNotForSealedSecondaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/notForSealedSecondaryConstructor.kt");
+            }
+
+            @TestMetadata("primaryConstructor.kt")
+            public void testPrimaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/primaryConstructor.kt");
+            }
+
+            @TestMetadata("primaryConstructorPublicByDefault.kt")
+            public void testPrimaryConstructorPublicByDefault() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/primaryConstructorPublicByDefault.kt");
+            }
+
+            @TestMetadata("propertyPrivateSetter.kt")
+            public void testPropertyPrivateSetter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/propertyPrivateSetter.kt");
+            }
+
+            @TestMetadata("propertyPrivateSetterForPrivateProperty.kt")
+            public void testPropertyPrivateSetterForPrivateProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/propertyPrivateSetterForPrivateProperty.kt");
+            }
+
+            @TestMetadata("propertySetter.kt")
+            public void testPropertySetter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/propertySetter.kt");
+            }
+
+            @TestMetadata("propertySetterForPrivateProperty.kt")
+            public void testPropertySetterForPrivateProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/propertySetterForPrivateProperty.kt");
+            }
+
+            @TestMetadata("publicByDefault.kt")
+            public void testPublicByDefault() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/publicByDefault.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/simple.kt");
+            }
+
+            @TestMetadata("typeAlias.kt")
+            public void testTypeAlias() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/public/typeAlias.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/intentions/changeVisibility/publicExplicitApi")
+        public static class PublicExplicitApi extends AbstractK2IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("primaryConstructor.kt")
+            public void testPrimaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/publicExplicitApi/primaryConstructor.kt");
+            }
+
+            @TestMetadata("propertyPrivateSetter.kt")
+            public void testPropertyPrivateSetter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/publicExplicitApi/propertyPrivateSetter.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/changeVisibility/publicExplicitApi/simple.kt");
+            }
+        }
+    }
+
 
 
 

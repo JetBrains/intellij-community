@@ -1,2 +1,4 @@
 @Deprecated("a")
-private<caret> class C
+<caret>private class C
+
+// IGNORE_K1

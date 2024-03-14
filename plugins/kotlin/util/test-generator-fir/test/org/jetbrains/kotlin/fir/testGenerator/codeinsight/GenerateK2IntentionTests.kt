@@ -54,6 +54,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/lambdaToAnonymousFunction", pattern = pattern)
             model("${idea}intentions/removeExplicitTypeArguments", pattern = pattern)
             model("${idea}intentions/specifyExplicitLambdaSignature", pattern = pattern)
+            model("${idea}intentions/changeVisibility", pattern = pattern)
 
             //
             model("${idea}intentions/addJvmOverloads", pattern = pattern, isIgnored = true)

@@ -53,5 +53,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" />
     <orderEntry type="module" module-name="kotlin.refactorings.introduce.k2" />
+    <orderEntry type="module" module-name="kotlin.base.analysis" />
   </component>
 </module>
