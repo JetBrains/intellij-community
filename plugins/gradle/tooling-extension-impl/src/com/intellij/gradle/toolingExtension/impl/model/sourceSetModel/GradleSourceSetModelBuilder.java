@@ -493,7 +493,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     Task javaCompileTask = project.getTasks().findByName(sourceSet.getCompileJavaTaskName());
     if (javaCompileTask instanceof JavaCompile) {
       JavaCompile javaCompile = (JavaCompile)javaCompileTask;
-      externalSourceSet.setJdkInstallationPath(getJavaToolchainInstallationPath(project, javaCompile));
+      externalSourceSet.setJavaToolchainHome(getJavaToolchainHome(project, javaCompile));
       externalSourceSet.setSourceCompatibility(javaCompile.getSourceCompatibility());
       externalSourceSet.setPreview(javaCompile.getOptions().getCompilerArgs().contains("--enable-preview"));
       externalSourceSet.setTargetCompatibility(javaCompile.getTargetCompatibility());
@@ -506,7 +506,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     }
   }
 
-  private static @Nullable String getJavaToolchainInstallationPath(@NotNull Project project, @NotNull JavaCompile javaCompile) {
+  private static @Nullable File getJavaToolchainHome(@NotNull Project project, @NotNull JavaCompile javaCompile) {
     if (GradleVersionUtil.isCurrentGradleOlderThan("6.7")) {
       return null;
     }
@@ -516,14 +516,14 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
     }
     try {
       JavaInstallationMetadata metadata = compiler.get().getMetadata();
-      String configuredInstallationPath = metadata.getInstallationPath().getAsFile().getCanonicalPath();
+      File javaToolchainHome = metadata.getInstallationPath().getAsFile();
       if (GradleVersionUtil.isCurrentGradleOlderThan("8.0")) {
-        return configuredInstallationPath;
+        return javaToolchainHome;
       }
       if (metadata instanceof JavaToolchain) {
         JavaToolchain javaToolchain = (JavaToolchain)metadata;
         if (!javaToolchain.isFallbackToolchain()) {
-          return configuredInstallationPath;
+          return javaToolchainHome;
         }
       }
     }

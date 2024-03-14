@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
@@ -53,6 +54,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -462,9 +464,9 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     if (sdkName != null) {
       return resolveSdkByName(sdkName);
     }
-    String javaToolchainHome = ObjectUtils.doIfNotNull(sourceSet, it -> it.getJdkInstallationPath());
+    File javaToolchainHome = ObjectUtils.doIfNotNull(sourceSet, it -> it.getJavaToolchainHome());
     if (javaToolchainHome != null) {
-      return lookupJdkByPath(javaToolchainHome);
+      return lookupJdkByPath(NioPathUtil.toCanonicalPath(javaToolchainHome.toPath()));
     }
     return null;
   }

@@ -134,7 +134,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     writeFiles(writer, "artifacts", sourceSet.getArtifacts());
     writeDependencies(writer, context, sourceSet.getDependencies());
     writeSourceDirectorySets(writer, sourceSet.getSources());
-    writeString(writer, "jdkInstallationPath", sourceSet.getJdkInstallationPath());
+    writeFile(writer, "javaToolchainHome", sourceSet.getJavaToolchainHome());
 
     writer.stepOut();
   }
@@ -507,7 +507,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     sourceSet.setArtifacts(readFiles(reader));
     sourceSet.setDependencies(readDependencies(reader, context));
     sourceSet.setSources(readSourceDirectorySets(reader));
-    sourceSet.setJdkInstallationPath(readString(reader, "jdkInstallationPath"));
+    sourceSet.setJavaToolchainHome(readFile(reader, "javaToolchainHome"));
     reader.stepOut();
     return sourceSet;
   }
