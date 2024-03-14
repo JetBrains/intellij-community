@@ -28,8 +28,8 @@ import java.awt.event.MouseEvent
 internal fun InlineCompletionTooltipComponent.shortcutActions(): ActionButtonWithText {
   val predefinedShortcuts = arrayOf(
     "Tab" to KeyboardShortcut.fromString("TAB"),
-    "Enter" to KeyboardShortcut.fromString("ENTER"),
     "→" to KeyboardShortcut.fromString("RIGHT"),
+    "Enter" to KeyboardShortcut.fromString("ENTER"),
     "Shift →" to KeyboardShortcut.fromString("shift pressed RIGHT"),
   )
   val customCurrentShortcut = KeymapUtil.getPrimaryShortcut(IdeActions.ACTION_INSERT_INLINE_COMPLETION)
