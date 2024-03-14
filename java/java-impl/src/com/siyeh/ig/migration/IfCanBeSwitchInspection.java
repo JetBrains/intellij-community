@@ -149,7 +149,9 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
             PsiElement nextSibling = upperIf.getNextSibling();
             while (nextSibling != null && nextSibling != nextIfStatement) {
               sb.append(commentTracker.text(nextSibling));
-              toDeleteElements.add(nextSibling);
+              if (!(nextSibling instanceof PsiWhiteSpace)) {
+                toDeleteElements.add(nextSibling);
+              }
               nextSibling = nextSibling.getNextSibling();
             }
             addText = true;
@@ -163,9 +165,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
         break;
       }
       for (PsiElement toDelete : toDeleteElements) {
-        if (!(toDelete instanceof PsiWhiteSpace)) {
-          commentTracker.delete(toDelete);
-        }
+        toDelete.delete();
       }
       PsiElement replaced = commentTracker.replace(originalIfStatement, sb.toString());
       return replaced instanceof PsiIfStatement ? (PsiIfStatement)replaced : originalIfStatement;
