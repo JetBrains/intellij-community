@@ -20,4 +20,8 @@ class Substring {
 
 
   }
+
+  void m(StringBuilder sb, StringBuilder chars) {
+    sb.append(chars.<warning descr="Call to 'substring()' is redundant">substring</warning>(1, 3));
+  }
 }
