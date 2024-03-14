@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
@@ -96,12 +96,13 @@ fun KtPsiFactory.combineWhenConditions(conditions: Array<KtWhenCondition>, subje
  *  }
  * ```
  */
-fun KtWhenExpression.introduceSubjectIfPossible(subject: KtExpression?): KtWhenExpression {
+context(KtAnalysisSession)
+fun KtWhenExpression.introduceSubjectIfPossible(subject: KtExpression?, context: PsiElement = this): KtWhenExpression {
     subject ?: return this
 
-    val psiFactory = KtPsiFactory.contextual(context = this)
+    val psiFactory = KtPsiFactory.contextual(context)
 
-    val whenExpression = psiFactory.buildExpression {
+    return psiFactory.buildExpression {
         appendFixedText("when(").appendExpression(subject).appendFixedText("){\n")
 
         for (entry in entries) {
@@ -114,7 +115,10 @@ fun KtWhenExpression.introduceSubjectIfPossible(subject: KtExpression?): KtWhenE
                     if (i > 0) appendFixedText(",")
 
                     val conditionExpression = (condition as KtWhenConditionWithExpression).expression
-                    appendConditionWithSubjectRemoved(conditionExpression, subject)
+                    if (conditionExpression != null) {
+                        val codeFragment = psiFactory.createExpressionCodeFragment(conditionExpression.text, context).getContentElement() as KtExpression
+                        appendConditionWithSubjectRemoved(codeFragment, subject)
+                    }
                 }
             }
             appendFixedText("->")
@@ -124,9 +128,7 @@ fun KtWhenExpression.introduceSubjectIfPossible(subject: KtExpression?): KtWhenE
         }
 
         appendFixedText("}")
-    }
-
-    return replaced(whenExpression) as KtWhenExpression
+    } as KtWhenExpression
 }
 
 /**
@@ -155,6 +157,7 @@ fun KtWhenExpression.getSubjectToIntroduce(checkConstants: Boolean = true): KtEx
     return lastCandidate
 }
 
+context(KtAnalysisSession)
 private fun BuilderByPattern<KtExpression>.appendConditionWithSubjectRemoved(conditionExpression: KtExpression?, subject: KtExpression) {
     when (conditionExpression) {
         is KtIsExpression -> {
@@ -171,7 +174,7 @@ private fun BuilderByPattern<KtExpression>.appendConditionWithSubjectRemoved(con
             when (conditionExpression.operationToken) {
                 KtTokens.IN_KEYWORD -> appendFixedText("in ").appendExpression(rhs)
                 KtTokens.NOT_IN -> appendFixedText("!in ").appendExpression(rhs)
-                KtTokens.EQEQ -> appendExpression(rhs)
+                KtTokens.EQEQ -> appendExpression(if (subject.matches(lhs)) rhs else lhs)
                 KtTokens.OROR -> {
                     appendConditionWithSubjectRemoved(lhs, subject)
                     appendFixedText(", ")

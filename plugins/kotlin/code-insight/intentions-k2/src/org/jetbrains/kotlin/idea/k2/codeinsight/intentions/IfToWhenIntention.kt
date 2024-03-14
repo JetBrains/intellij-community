@@ -25,10 +25,9 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 
 class IfToWhenIntention : AbstractKotlinModCommandWithContext<KtIfExpression, IfToWhenIntention.Context>(KtIfExpression::class) {
     data class Context(
-        val whenExpression: KtWhenExpression,
+        val subjectedWhenExpression: KtWhenExpression,
         val toDelete: List<PsiElement>,
         val commentSaver: CommentSaver,
-        val subject: KtExpression?,
     )
 
     override fun apply(element: KtIfExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
@@ -37,14 +36,10 @@ class IfToWhenIntention : AbstractKotlinModCommandWithContext<KtIfExpression, If
         val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
         val loopJumpVisitor = LabelLoopJumpVisitor(loop)
 
-        val (whenExpression, toDelete, commentSaver, subject) = context.analyzeContext
-        val writableWhenExpression = updater.getWritable(whenExpression)
-
+        val (whenExpression, toDelete, commentSaver) = context.analyzeContext
         val parent = ifExpression.parent
 
-        val subjectedWhenExpression = writableWhenExpression.introduceSubjectIfPossible(subject)
-
-        val result = ifExpression.replaced(subjectedWhenExpression)
+        val result = ifExpression.replaced(whenExpression)
         updater.moveCaretTo(result.startOffset)
         commentSaver.restore(result)
 
@@ -131,11 +126,15 @@ class IfToWhenIntention : AbstractKotlinModCommandWithContext<KtIfExpression, If
             appendFixedText("}")
         } as KtWhenExpression
 
-        val subject = (psiFactory.createExpressionCodeFragment(whenExpression.text, ifExpression).getContentElement() as KtWhenExpression).getSubjectToIntroduce(false)
+        val codeFragmentWhenExpression =
+            psiFactory.createExpressionCodeFragment(whenExpression.text, ifExpression).getContentElement() as KtWhenExpression
+
+        val subject = codeFragmentWhenExpression.getSubjectToIntroduce(false)
+        val subjectedWhenExpression = whenExpression.introduceSubjectIfPossible(subject, ifExpression)
 
         val commentSaver = if (applyFullCommentSaver) fullCommentSaver else elementCommentSaver
 
-        return Context(whenExpression, toDelete, commentSaver, subject)
+        return Context(subjectedWhenExpression, toDelete, commentSaver)
     }
 
     override fun getActionName(element: KtIfExpression, context: Context): String = familyName
