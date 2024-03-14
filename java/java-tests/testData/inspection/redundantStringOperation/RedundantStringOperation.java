@@ -12,6 +12,8 @@ class Substring {
     String.valueOf(<warning descr="'new char[]' is redundant">new char[] </warning>{ 'c' });
     new <warning descr="Can be replaced with 'String.valueOf()'">String</warning>(new char[] { 'c' });
     String s2 = new <warning descr="'new String()' is redundant">String</warning>();
+    sb.append(message.<warning descr="Call to 'substring()' is redundant">substring</warning>(1, <warning descr="Unnecessary string length argument">message.length()</warning>));
+    sb.append(message.<warning descr="Call to 'substring()' is redundant">substring</warning>(1));
 
     // incorrect type
     if (s.substring(0, 1).equals(1)) {
