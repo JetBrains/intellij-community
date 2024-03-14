@@ -152,8 +152,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         warningLabel.setIcon(AllIcons.General.WarningDialog);
 
         additionalArgsOptionsField.attachLabel(additionalArgsLabel);
-        kotlinJpsPluginVersionComboBox.addActionListener(
-                e -> onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()));
+        if (isJpsCompilerVisible()) {
+            kotlinJpsPluginVersionComboBox.addActionListener(
+                    e -> onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()));
+        }
 
         fillVersions();
 
@@ -373,14 +375,18 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         }
 
         apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
-        languageVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
+        if (isJpsCompilerVisible()) {
+            languageVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
+        }
 
         VersionView selectedItem =
                 VersionComparatorUtil.compare(selectedAPIVersion.getVersionString(), upperBound.getVersionString()) <= 0
                 ? selectedAPIView
                 : upperBoundView;
         apiVersionComboBox.setSelectedItem(selectedItem);
-        languageVersionComboBox.setSelectedItem(selectedItem);
+        if (isJpsCompilerVisible()) {
+            languageVersionComboBox.setSelectedItem(selectedItem);
+        }
     }
 
     private void fillJvmVersionList() {
@@ -432,8 +438,12 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                 });
     }
 
+    private boolean isJpsCompilerVisible() {
+        return isProjectSettings && jpsPluginSettings != null;
+    }
+
     private void fillVersions() {
-        if (isProjectSettings && jpsPluginSettings != null) {
+        if (isJpsCompilerVisible()) {
             defaultJpsVersionItem = JpsVersionItem.createFromRawVersion(
                     KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)
             );
