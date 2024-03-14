@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
@@ -15,7 +15,6 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -86,7 +85,7 @@ public final class JdkUtil {
   }
 
   public static boolean checkForJdk(@NotNull Path homePath) {
-    return (SystemInfo.isWindows ? Files.exists(homePath.resolve("bin/javac.exe")) : Files.exists(homePath.resolve("bin/javac"))) &&
+    return (Files.exists(homePath.resolve("bin/javac")) || Files.exists(homePath.resolve("bin/javac.exe"))) &&
            (isModularRuntime(homePath) ||                               // Jigsaw JDK/JRE
             Files.exists(homePath.resolve("jre/lib/rt.jar")) ||         // pre-modular JDK
             Files.isDirectory(homePath.resolve("classes")) ||           // custom build
