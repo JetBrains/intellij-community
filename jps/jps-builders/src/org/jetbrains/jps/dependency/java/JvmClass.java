@@ -105,13 +105,12 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
   }
 
   public @NotNull String getShortName() {
-    return getShortName(getName());
-  }
-
-  @NotNull
-  public static String getShortName(String jvmClassName) {
-    int index = jvmClassName.lastIndexOf('/');
-    return index >= 0? jvmClassName.substring(index + 1) : jvmClassName;
+    String fqName = getName();
+    if (isInnerClass() && fqName.startsWith(myOuterFqName) && fqName.length() > myOuterFqName.length()) {
+      return fqName.substring(myOuterFqName.length() + 1); // for inner classes use 'real' class short name as it appears in source code
+    }
+    int index = fqName.lastIndexOf('/');
+    return index >= 0? fqName.substring(index + 1) : fqName;
   }
 
   public boolean isInterface() {

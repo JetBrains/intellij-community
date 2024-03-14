@@ -48,17 +48,11 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
     debug("Processing added classes:");
 
-    BackDependencyIndex index = context.getGraph().getIndex(ClassShortNameIndex.NAME);
-    assert index != null;
-
-    // affecting dependencies on all other classes with the same short name
-    Set<ReferenceID> affectedNodes = new HashSet<>();
-
     for (JvmClass addedClass : addedClasses) {
       debug("Class name: ", addedClass.getName());
 
       // class duplication checks
-      if (!addedClass.isAnonymous() && !addedClass.isLocal() && addedClass.getOuterFqName().isEmpty()) {
+      if (!addedClass.isAnonymous() && !addedClass.isLocal() && !addedClass.isInnerClass()) {
         Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
         Predicate<? super NodeSource> belongsToChunk = context.getParams().belongsToCurrentCompilationChunk();
         Set<NodeSource> candidates = collect(
@@ -78,15 +72,23 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         }
       }
 
-      if (!addedClass.isAnonymous() && !addedClass.isLocal()) {
-        collect(index.getDependencies(new JvmNodeReferenceID(addedClass.getShortName())), affectedNodes);
-        affectedNodes.add(addedClass.getReferenceID());
-      }
+      String shortName = addedClass.getShortName();
+      String scope = addedClass.isInnerClass()? addedClass.getOuterFqName().replace('$', '/') : addedClass.getPackageName();
+      debug("Affecting dependencies importing package/class '", scope, "' on-demand and having class-usages with the same short name: '", shortName, "' ");
+      context.affectUsage(
+        new ImportPackageOnDemandUsage(scope),
+        n -> find(n.getUsages(), u -> {
+          if (u instanceof ClassUsage || u instanceof MemberUsage) {
+            String ownerName = ((JvmElementUsage)u).getElementOwner().getNodeName();
+            if (ownerName.endsWith(shortName) && (ownerName.length() == shortName.length() || ownerName.charAt(ownerName.length() - shortName.length() - 1) == '/')) {
+              return true;
+            }
+          }
+          return false;
+        }) != null
+      );
     }
 
-    for (ReferenceID id : unique(flat(map(affectedNodes, id -> context.getGraph().getDependingNodes(id))))) {
-      affectNodeSources(context, id, "Affecting dependencies on class with the same short name: " + id + " ", true);
-    }
     debug("End of added classes processing.");
     return true;
   }

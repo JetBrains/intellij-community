@@ -500,7 +500,10 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       }
       else if (container instanceof KmClass) {
         owner = new JvmNodeReferenceID(((KmClass)container).getName());
-        myUsages.remove(new LookupNameUsage(JvmClass.getPackageName(owner.getNodeName()), JvmClass.getShortName(owner.getNodeName())));
+        String nodeName = owner.getNodeName();
+        String scopeName = JvmClass.getPackageName(nodeName);
+        String symbolName = scopeName.isEmpty()? nodeName : nodeName.substring(scopeName.length() + 1);
+        myUsages.remove(new LookupNameUsage(scopeName, symbolName));
       }
       if (owner != null) {
         for (String name : Iterators.unique(Iterators.flat(Iterators.map(container.getFunctions(), KmFunction::getName), Iterators.map(container.getProperties(), KmProperty::getName)))) {
@@ -516,6 +519,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   public void visit(int version, int access, String name, String sig, String superName, String[] interfaces) {
     myAccess = access;
     myName = name;
+    myUsages.add(new ImportPackageOnDemandUsage(JvmClass.getPackageName(name))); // implicit 'import' of the package to which the node belongs to
     myVersion = String.valueOf(version);
     mySignature = sig;
     mySuperClass = superName;
@@ -730,7 +734,9 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       @Override
       public void visitLocalVariable(String n, String desc, String signature, Label start, Label end, int index) {
         processSignature(signature);
-        Iterators.collect(TypeRepr.getType(desc).getUsages(), myUsages);
+        if (!"this".equals(n)) {
+          Iterators.collect(TypeRepr.getType(desc).getUsages(), myUsages);
+        }
         super.visitLocalVariable(n, desc, signature, start, end, index);
       }
 

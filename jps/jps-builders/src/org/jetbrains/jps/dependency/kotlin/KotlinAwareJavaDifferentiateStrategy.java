@@ -387,22 +387,18 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   private void affectClassLookupUsages(DifferentiateContext context, JvmClass cls) {
     String scope;
     String name;
-    String ktName = getKotlinName(cls);
+    KmDeclarationContainer container = getDeclarationContainer(cls);
+    if (container != null && !(container instanceof KmClass)) {
+      return;
+    }
+    String ktName = container != null? getKotlinName(cls) : null;
     if (ktName != null) {
       scope = JvmClass.getPackageName(ktName);
-      name = JvmClass.getShortName(ktName);
+      name = scope.isEmpty()? ktName : ktName.substring(scope.length() + 1);
     }
     else { // not a kotlin-compiled class or a synthetic kotlin class
-      if (cls.isInnerClass()) {
-        String fqName = cls.getName();
-        String outerFqName = cls.getOuterFqName();
-        scope = outerFqName.replace('$', '/');
-        name = fqName.length() > outerFqName.length() && fqName.startsWith(outerFqName)? cls.getName().substring(outerFqName.length() + 1 /* separator char, usually '$' */) : cls.getShortName();
-      }
-      else {
-        scope = cls.getPackageName();
-        name = cls.getShortName();
-      }
+      scope = cls.isInnerClass()? cls.getOuterFqName().replace('$', '/') : cls.getPackageName();
+      name = cls.getShortName();
     }
     affectUsages(context, "lookup '" + name + "'" , asIterable(new JvmNodeReferenceID(scope)), id -> new LookupNameUsage(id, name), null);
   }

@@ -99,7 +99,10 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
   private static void addImportUsages(JvmClassNodeBuilder builder, Collection<String> classImports, Collection<String> staticImports) {
     for (final String anImport : classImports) {
-      if (!anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+      if (anImport.endsWith(IMPORT_WILDCARD_SUFFIX)) {
+        builder.addUsage(new ImportPackageOnDemandUsage(anImport.substring(0, anImport.length() - IMPORT_WILDCARD_SUFFIX.length()).replace('.', '/')));
+      }
+      else {
         builder.addUsage(new ClassUsage(anImport.replace('.', '/')));
       }
     }

@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 
@@ -25,7 +24,6 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   public DependencyGraphImpl(MapletFactory containerFactory) throws IOException {
     super(containerFactory);
     addIndex(new SubclassesIndex(containerFactory));
-    addIndex(new ClassShortNameIndex(containerFactory));
     myRegisteredIndices = Collections.unmodifiableSet(collect(map(getIndices(), index -> index.getName()), new HashSet<>()));
   }
 
