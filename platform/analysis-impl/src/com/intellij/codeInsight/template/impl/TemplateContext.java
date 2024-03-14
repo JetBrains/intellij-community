@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.LiveTemplateContext;
@@ -6,8 +6,6 @@ import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.codeInsight.template.LiveTemplateContextsSnapshot;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.util.JdomKt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import kotlin.jvm.functions.Function0;
@@ -37,8 +35,12 @@ public final class TemplateContext {
   static @Nullable LiveTemplateContext getDifference(@NotNull LiveTemplateContextsSnapshot allContexts,
                                                      @NotNull TemplateContext thisContext,
                                                      @NotNull TemplateContext defaultContext) {
-    return ContainerUtil.find(allContexts.getLiveTemplateContexts(),
-                              type -> isEnabled(allContexts, thisContext, type) != isEnabled(allContexts, defaultContext, type));
+    for (LiveTemplateContext value : allContexts.getLiveTemplateContexts()) {
+      if (isEnabled(allContexts, thisContext, value) != isEnabled(allContexts, defaultContext, value)) {
+        return value;
+      }
+    }
+    return null;
   }
 
   static @Nullable TemplateContextType getDifferenceType(@NotNull LiveTemplateContextsSnapshot allContexts,
@@ -142,10 +144,16 @@ public final class TemplateContext {
   }
 
   private boolean isDisabledByInheritance(TemplateContext thisContext, LiveTemplateContextsSnapshot allContexts, LiveTemplateContext type) {
-    return !thisContext.hasOwnValue(type) &&
-           !isEnabled(allContexts, thisContext, type) &&
-           JBIterable.generate(type, context -> allContexts.getLiveTemplateContext(context.getBaseContextId())).filter(this::hasOwnValue)
-             .first() != null;
+    if (!thisContext.hasOwnValue(type) && !isEnabled(allContexts, thisContext, type)) {
+      LiveTemplateContext context = type;
+      while (context != null) {
+        if (hasOwnValue(context)) {
+          return true;
+        }
+        context = allContexts.getLiveTemplateContext(context.getBaseContextId());
+      }
+    }
+    return false;
   }
 
   private boolean hasOwnValue(LiveTemplateContext t) {
