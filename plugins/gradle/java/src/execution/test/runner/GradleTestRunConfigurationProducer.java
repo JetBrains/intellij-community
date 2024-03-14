@@ -5,8 +5,6 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,9 +25,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.gradle.execution.GradleRunConfigurationProducer;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
-import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
@@ -44,20 +42,11 @@ import java.util.Set;
 
 import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
 
-public abstract class GradleTestRunConfigurationProducer extends RunConfigurationProducer<GradleRunConfiguration> {
+public abstract class GradleTestRunConfigurationProducer extends GradleRunConfigurationProducer {
 
   protected static final Logger LOG = Logger.getInstance(GradleTestRunConfigurationProducer.class);
 
   private TestTasksChooser testTasksChooser = new TestTasksChooser();
-
-  protected GradleTestRunConfigurationProducer() {
-    super(true);
-  }
-
-  @Override
-  public @NotNull ConfigurationFactory getConfigurationFactory() {
-    return GradleExternalTaskConfigurationType.getInstance().getFactory();
-  }
 
   @Override
   public boolean isPreferredConfiguration(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
