@@ -240,10 +240,21 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
     }
 
     /**
-     * Throws away the cache for all the registered plugins.
+     * Throws away the cache for all the registered plugins, and executes all the disposables
+     * registered in the corresponding [CompilerPluginRegistrar.ExtensionStorage]s.
      */
     private fun resetPluginsCache() {
-        pluginsCacheCachedValue.drop()
+        val droppedCache = pluginsCacheCachedValue.drop() ?: return
+
+        val extensionStorages = droppedCache.registrarForModule.values.mapNotNull { it.orNull() }
+
+        for (storage in extensionStorages) {
+            for (disposable in storage.disposables) {
+                LOG.runAndLogException {
+                    disposable.dispose()
+                }
+            }
+        }
     }
 
     companion object {
