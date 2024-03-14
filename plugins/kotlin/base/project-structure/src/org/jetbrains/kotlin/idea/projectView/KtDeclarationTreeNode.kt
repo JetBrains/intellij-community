@@ -12,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 @ApiStatus.Internal
 class KtDeclarationTreeNode private constructor(
@@ -62,7 +63,8 @@ class KtDeclarationTreeNode private constructor(
                         }
                     }
                     if (func is KtFunctionLiteral) {
-                        val calleeExpression = (func.parent.parent.parent as? KtCallExpression)?.calleeExpression
+                        val calleeExpression =
+                            func.getParentOfType<KtCallExpression>(true, KtDeclarationWithBody::class.java)?.calleeExpression
                         val name =
                             ((calleeExpression as? KtNameReferenceExpression)?.getReferencedNameAsName()?.asString())
                                 ?: func.name ?: SpecialNames.ANONYMOUS_STRING
