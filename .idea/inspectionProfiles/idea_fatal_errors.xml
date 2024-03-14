@@ -2002,8 +2002,8 @@
     <inspection_tool class="LessUnresolvedMixin" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="LessUnresolvedVariable" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="LiftReturnOrAssignment" enabled="false" level="INFO" enabled_by_default="false" />
-    <inspection_tool class="LightServiceMigrationCodeInspection" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="LightServiceMigrationXMLInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LightServiceMigrationCode" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LightServiceMigrationXML" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="LightServiceMustBeFinal" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="LimitedScopeInnerClass" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ListIndexOfReplaceableByContains" enabled="true" level="WARNING" enabled_by_default="true" />
