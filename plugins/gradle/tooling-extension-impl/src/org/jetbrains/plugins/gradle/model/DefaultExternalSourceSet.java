@@ -19,7 +19,7 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   private boolean isPreview;
   private String sourceCompatibility;
   private String targetCompatibility;
-  private String jdkInstallationPath;
+  private File javaToolchainHome;
   private Collection<File> artifacts;
   private @NotNull Collection<ExternalDependency> dependencies;
   private @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
@@ -79,12 +79,12 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   }
 
   @Override
-  public @Nullable String getJdkInstallationPath() {
-    return jdkInstallationPath;
+  public @Nullable File getJavaToolchainHome() {
+    return javaToolchainHome;
   }
 
-  public void setJdkInstallationPath(@Nullable String jdkInstallationPath) {
-    this.jdkInstallationPath = jdkInstallationPath;
+  public void setJavaToolchainHome(@Nullable File javaToolchainHome) {
+    this.javaToolchainHome = javaToolchainHome;
   }
 
   @Override
