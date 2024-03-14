@@ -20,21 +20,18 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
 
-internal abstract class SingleFileActivityDiffPreview(project: Project, private val scope: ActivityScope,
-                                                      disposable: Disposable) : EditorTabDiffPreview(project) {
+internal class SingleFileActivityDiffPreview(project: Project, private val model: ActivityViewModel, disposable: Disposable) : EditorTabDiffPreview(project) {
   init {
     Disposer.register(disposable, this)
   }
 
-  abstract val selection: ActivitySelection?
-  abstract fun onSelectionChange(disposable: Disposable, runnable: () -> Unit)
-  abstract fun getDiffRequestProducer(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer?
-
-  override fun hasContent() = selection != null
+  override fun hasContent() = model.selection != null
 
   override fun createViewer(): DiffEditorViewer {
-    val processor = MyDiffRequestProcessor(project)
-    onSelectionChange(processor) { processor.updatePreview() }
+    val processor = SingleFileActivityDiffRequestProcessor(project, model)
+    model.addListener(object : ActivityModelListener {
+      override fun onSelectionChanged(selection: ActivitySelection?) = processor.updatePreview()
+    }, processor)
     UiNotifyConnector.installOn(processor.component, object : Activatable {
       override fun showNotify() = processor.updatePreview()
     })
@@ -42,25 +39,17 @@ internal abstract class SingleFileActivityDiffPreview(project: Project, private 
   }
 
   override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<DiffRequestProducer>? {
-    val diffRequestProducer = getCurrentDiffRequestProducer() ?: return null
+    val diffRequestProducer = model.getSingleDiffRequestProducer() ?: return null
     return ListSelection.createSingleton(diffRequestProducer)
   }
 
   override fun performDiffAction(): Boolean {
-    LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.Diff, scope)
+    LocalHistoryCounter.logActionInvoked(LocalHistoryCounter.ActionKind.Diff, model.activityScope)
     return super.performDiffAction()
   }
 
-  override fun getEditorTabName(processor: DiffEditorViewer?) = getDiffTitleFor((scope as? ActivityScope.File)?.filePath, scope)
-
-  private fun getCurrentDiffRequestProducer(): DiffRequestProducer? {
-    val currentSelection = selection ?: return null
-    return getDiffRequestProducer(scope, currentSelection)
-  }
-
-  private inner class MyDiffRequestProcessor(project: Project) : SingleFileDiffPreviewProcessor(project, DIFF_PLACE), DiffPreviewUpdateProcessor {
-    override fun getCurrentRequestProvider() = getCurrentDiffRequestProducer()
-  }
+  override fun getEditorTabName(processor: DiffEditorViewer?) = getDiffTitleFor((model.activityScope as? ActivityScope.File)?.filePath,
+                                                                                model.activityScope)
 
   companion object {
     const val DIFF_PLACE = "ActivityView"
@@ -71,4 +60,15 @@ internal abstract class SingleFileActivityDiffPreview(project: Project, private 
       return LocalHistoryBundle.message("activity.diff.tab.title")
     }
   }
+}
+
+private class SingleFileActivityDiffRequestProcessor(project: Project, val model: ActivityViewModel) :
+  SingleFileDiffPreviewProcessor(project, SingleFileActivityDiffPreview.DIFF_PLACE), DiffPreviewUpdateProcessor {
+
+  override fun getCurrentRequestProvider() = model.getSingleDiffRequestProducer()
+}
+
+private fun ActivityViewModel.getSingleDiffRequestProducer(): DiffRequestProducer? {
+  val currentSelection = selection ?: return null
+  return activityProvider.loadSingleDiff(activityScope, currentSelection)
 }

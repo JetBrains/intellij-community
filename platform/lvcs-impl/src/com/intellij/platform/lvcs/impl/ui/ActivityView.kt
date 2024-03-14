@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
-import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.find.SearchTextArea
 import com.intellij.find.editorHeaderActions.Utils
 import com.intellij.history.integration.IdeaGateway
@@ -183,19 +182,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       return diffPreview
     }
 
-    return object : SingleFileActivityDiffPreview(project, activityScope, this@ActivityView) {
-      override val selection: ActivitySelection? get() = model.selection
-
-      override fun onSelectionChange(disposable: Disposable, runnable: () -> Unit) {
-        model.addListener(object : ActivityModelListener {
-          override fun onSelectionChanged(selection: ActivitySelection?) = runnable()
-        }, disposable)
-      }
-
-      override fun getDiffRequestProducer(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer? {
-        return model.activityProvider.loadSingleDiff(scope, selection)
-      }
-    }
+    return SingleFileActivityDiffPreview(project, model, this@ActivityView)
   }
 
   private fun createSearchField(): SearchTextArea {
