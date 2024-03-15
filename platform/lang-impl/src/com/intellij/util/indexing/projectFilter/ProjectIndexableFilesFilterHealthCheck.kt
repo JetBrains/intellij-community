@@ -6,7 +6,9 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -29,24 +31,26 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.minutes
 
-
 private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::class.java)
 
 internal typealias FileId = Int
 private fun FileId.fileInfo(): String = "file id=$this path=${PersistentFS.getInstance().findFileById(this)?.path}"
 
 private class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
-  val isInIntegrationTest = ApplicationManagerEx.isInIntegrationTest()
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
 
   override suspend fun execute(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      return
-    }
-
-    val healthCheck = project.getService(ProjectIndexableFilesFilterHealthCheck::class.java)
+    val delay = if (ApplicationManagerEx.isInIntegrationTest()) 1.minutes else 5.minutes
+    // don't get service too early
+    delay(delay)
+    val healthCheck = project.serviceAsync<ProjectIndexableFilesFilterHealthCheck>()
     while (true) {
-      delay(if (isInIntegrationTest) 1.minutes else 5.minutes)
       healthCheck.launchHealthCheck()
+      delay(delay)
     }
   }
 }
