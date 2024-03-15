@@ -119,6 +119,7 @@ class TerminalPromptView(
     textField.alignmentX = JComponent.LEFT_ALIGNMENT
 
     val editor = textField.getEditor(true) as EditorImpl
+    editor.settings.isUseSoftWraps = true
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.gutterComponentEx.isPaintBackground = false
     editor.useTerminalDefaultBackground(this)
