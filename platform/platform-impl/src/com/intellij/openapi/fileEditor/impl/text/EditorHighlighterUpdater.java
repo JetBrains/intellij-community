@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -34,15 +34,18 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public class EditorHighlighterUpdater {
-  protected final @NotNull Project myProject;
-  protected final @NotNull EditorEx myEditor;
-  private final @Nullable VirtualFile myFile;
+  protected final @NotNull Project project;
+  protected final @NotNull EditorEx editor;
+  private final @Nullable VirtualFile file;
 
   public EditorHighlighterUpdater(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull EditorEx editor, @Nullable VirtualFile file) {
-    myProject = project;
-    myEditor = editor;
-    myFile = file;
-    MessageBusConnection connection = project.getMessageBus().connect(parentDisposable);
+    this.project = project;
+    this.editor = editor;
+    this.file = file;
+    connect(parentDisposable, project.getMessageBus().connect(parentDisposable));
+  }
+
+  private void connect(@NotNull Disposable parentDisposable, @NotNull MessageBusConnection connection) {
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
@@ -56,9 +59,9 @@ public class EditorHighlighterUpdater {
       }
     });
 
-    updateHighlightersOnExtensionsChange(parentDisposable, LanguageSyntaxHighlighters.EP_NAME);
-    updateHighlightersOnExtensionsChange(parentDisposable, SyntaxHighlighterLanguageFactory.EP_NAME);
-    updateHighlightersOnExtensionsChange(parentDisposable, FileTypeEditorHighlighterProviders.EP_NAME);
+    updateHighlightersOnExtensionChange(parentDisposable, LanguageSyntaxHighlighters.EP_NAME);
+    updateHighlightersOnExtensionChange(parentDisposable, SyntaxHighlighterLanguageFactory.EP_NAME);
+    updateHighlightersOnExtensionChange(parentDisposable, FileTypeEditorHighlighterProviders.EP_NAME);
 
     SyntaxHighlighter.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
@@ -77,8 +80,8 @@ public class EditorHighlighterUpdater {
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         IdeaPluginDescriptor loadedPluginDescriptor = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
         ClassLoader pluginClassLoader = loadedPluginDescriptor != null ? loadedPluginDescriptor.getPluginClassLoader() : null;
-        if (myFile != null && pluginClassLoader instanceof PluginAwareClassLoader) {
-          FileType fileType = myFile.getFileType();
+        if (EditorHighlighterUpdater.this.file != null && pluginClassLoader instanceof PluginAwareClassLoader) {
+          FileType fileType = EditorHighlighterUpdater.this.file.getFileType();
           if (fileType.getClass().getClassLoader() == pluginClassLoader ||
               (fileType instanceof LanguageFileType && ((LanguageFileType) fileType).getClass().getClassLoader() == pluginClassLoader)) {
             setupHighlighter(createHighlighter(true));
@@ -88,30 +91,29 @@ public class EditorHighlighterUpdater {
     });
   }
 
-  private <T> void updateHighlightersOnExtensionsChange(@NotNull Disposable parentDisposable, @NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
-    epName.addExtensionPointListener(
-      new ExtensionPointListener<>() {
-        @Override
-        public void extensionAdded(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
-          checkUpdateHighlighters(extension.getKey(), false);
-        }
+  private <T> void updateHighlightersOnExtensionChange(@NotNull Disposable parentDisposable, @NotNull ExtensionPointName<KeyedLazyInstance<T>> epName) {
+    epName.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionAdded(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
+        checkUpdateHighlighters(extension.getKey(), false);
+      }
 
-        @Override
-        public void extensionRemoved(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
-          checkUpdateHighlighters(extension.getKey(), true);
-        }
-      }, parentDisposable);
+      @Override
+      public void extensionRemoved(@NotNull KeyedLazyInstance<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
+        checkUpdateHighlighters(extension.getKey(), true);
+      }
+    }, parentDisposable);
   }
 
   private void checkUpdateHighlighters(String key, boolean updateSynchronously) {
-    if (myFile != null) {
-      FileType fileType = myFile.getFileType();
+    if (file != null) {
+      FileType fileType = file.getFileType();
       boolean needUpdate = (fileType.getName().equals(key) ||
                             (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().getID().equals(key)));
       if (!needUpdate) return;
     }
 
-    if (ApplicationManager.getApplication().isDispatchThread() && updateSynchronously) {
+    if (updateSynchronously && ApplicationManager.getApplication().isDispatchThread()) {
       updateHighlightersSynchronously();
     }
     else {
@@ -122,38 +124,37 @@ public class EditorHighlighterUpdater {
   public void updateHighlightersAsync() {
     ReadAction
       .nonBlocking(() -> createHighlighter(false))
-      .expireWith(myProject)
-      .expireWhen(() -> (myFile != null && !myFile.isValid()) || myEditor.isDisposed())
-      .coalesceBy(EditorHighlighterUpdater.class, myEditor)
+      .expireWith(project)
+      .expireWhen(() -> (file != null && !file.isValid()) || editor.isDisposed())
+      .coalesceBy(EditorHighlighterUpdater.class, editor)
       .finishOnUiThread(ModalityState.any(), highlighter -> setupHighlighter(highlighter))
       .submit(NonUrgentExecutor.getInstance());
   }
 
   protected @NotNull EditorHighlighter createHighlighter(boolean forceEmpty) {
-    EditorHighlighter highlighter = myFile != null && !forceEmpty
-                                    ? EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile)
+    EditorHighlighter highlighter = file != null && !forceEmpty
+                                    ? EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file)
                                     : new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme(),
                                                                  HighlighterColors.TEXT);
-    highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
+    highlighter.setText(editor.getDocument().getImmutableCharSequence());
     return highlighter;
   }
 
   protected void setupHighlighter(@NotNull EditorHighlighter highlighter) {
-    myEditor.setHighlighter(highlighter);
+    editor.setHighlighter(highlighter);
   }
 
   /**
-   * Updates editors' highlighters. This should be done when the opened file
-   * changes its file type.
+   * Updates editors' highlighters. This should be done when the opened file changes its file type.
    */
   public void updateHighlighters() {
-    if (!myProject.isDisposed() && !myEditor.isDisposed()) {
+    if (!project.isDisposed() && !editor.isDisposed()) {
       updateHighlightersAsync();
     }
   }
 
   private void updateHighlightersSynchronously() {
-    if (!myProject.isDisposed() && !myEditor.isDisposed()) {
+    if (!project.isDisposed() && !editor.isDisposed()) {
       setupHighlighter(createHighlighter(false));
     }
   }
@@ -164,15 +165,13 @@ public class EditorHighlighterUpdater {
   }
 
   /**
-   * Listen changes of file types. When type of the file changes we need
-   * to also change highlighter.
+   * Listen to changes of file types. When the type of the file changes, we need to also change highlighter.
    */
   private final class MyFileTypeListener implements FileTypeListener {
     @Override
     public void fileTypesChanged(final @NotNull FileTypeEvent event) {
       ThreadingAssertions.assertEventDispatchThread();
-      // File can be invalid after file type changing. The editor should be removed
-      // by the FileEditorManager if it's invalid.
+      // File can be invalid after file type changing. The editor should be removed by the FileEditorManager if it's invalid.
       FileType type = event.getRemovedFileType();
       if (type != null && !(type instanceof AbstractFileType)) {
         // Plugin is being unloaded, so we need to release plugin classes immediately

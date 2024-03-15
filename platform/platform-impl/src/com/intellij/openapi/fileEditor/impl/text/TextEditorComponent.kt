@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LeakingThis")
 
 package com.intellij.openapi.fileEditor.impl.text
@@ -92,8 +92,8 @@ open class TextEditorComponent(
     val virtualFileListener = MyVirtualFileListener()
     file.fileSystem.addVirtualFileListener(virtualFileListener)
     Disposer.register(this) { file.fileSystem.removeVirtualFileListener(virtualFileListener) }
-    editorHighlighterUpdater = EditorHighlighterUpdater(project, this, editor, file)
     project.messageBus.connect(this).subscribe(FileTypeManager.TOPIC, MyFileTypeListener())
+    editorHighlighterUpdater = EditorHighlighterUpdater(project, this, editor, file)
   }
 
   final override fun add(comp: Component): Component {
@@ -122,7 +122,7 @@ open class TextEditorComponent(
 
   /**
    * Disposes all resources allocated be the TextEditorComponent. It disposes all created
-   * editors, unregisters listeners. The behaviour of the splitter after disposing is unpredictable.
+   * editors, unregisters listeners. The behavior of the splitter after disposing is unpredictable.
    */
   override fun dispose() {
     disposeEditor()
@@ -226,8 +226,7 @@ open class TextEditorComponent(
 
   private inner class MyFileTypeListener : FileTypeListener {
     override fun fileTypesChanged(event: FileTypeEvent) {
-      // File can be invalid after file type changing. The editor should be removed
-      // by the FileEditorManager if it's invalid.
+      // File can be invalid after file type changing. The editor should be removed by the FileEditorManager if it's invalid.
       updateValidProperty()
     }
   }
@@ -237,7 +236,7 @@ open class TextEditorComponent(
    */
   private inner class MyVirtualFileListener : VirtualFileListener {
     override fun propertyChanged(e: VirtualFilePropertyEvent) {
-      if (VirtualFile.PROP_NAME == e.propertyName) {
+      if (e.propertyName == VirtualFile.PROP_NAME) {
         // File can be invalidated after file changes name (an extension also can change). The editor should be removed if it's invalid.
         updateValidProperty()
         if (e.file == file &&
