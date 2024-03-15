@@ -11,6 +11,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.util.indexing.IndexDataInitializer.Companion.submitGenesisTask
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.removeCurrentFile
 import com.intellij.util.indexing.UnindexedFilesScanner.LOG
 import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
@@ -18,7 +20,6 @@ import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.events.FileIndexingRequest.Companion.updateRequest
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder
 import com.intellij.util.indexing.projectFilter.usePersistentFilesFilter
-import it.unimi.dsi.fastutil.ints.IntList
 import kotlinx.coroutines.future.asCompletableFuture
 
 @JvmField
@@ -75,14 +76,18 @@ private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFi
   val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   return if (isShutdownPerformedForFileBasedIndex(fileBasedIndex)) emptyList()
   else {
+    val projectQueueFile = project.getQueueFile()
+    val projectDirtyFileIds = PersistentDirtyFilesQueue.readIndexingQueue(projectQueueFile, ManagingFS.getInstance().creationTimestamp)
     val processedIds = fileBasedIndex.ensureDirtyFileIndexesDeleted()
-    val projectFiles = findProjectFiles(project, processedIds, if (findAllVirtualFiles) -1 else dumbModeThreshold - 1)
+    val projectProcessedIds = fileBasedIndex.ensureDirtyFileIndexesDeleted(projectDirtyFileIds)
+    removeCurrentFile(projectQueueFile)
+    val projectFiles = findProjectFiles(project, processedIds + projectProcessedIds, if (findAllVirtualFiles) -1 else dumbModeThreshold - 1)
     scheduleForIndexing(projectFiles, fileBasedIndex, dumbModeThreshold - 1)
     projectFiles
   }
 }
 
-private suspend fun findProjectFiles(project: Project, dirtyFilesIds: IntList, limit: Int = -1): List<VirtualFile> {
+private suspend fun findProjectFiles(project: Project, dirtyFilesIds: Collection<Int>, limit: Int = -1): List<VirtualFile> {
   return readAction {
     val fs = ManagingFS.getInstance()
     val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl

@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.createDirectories
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -30,6 +31,9 @@ object PersistentDirtyFilesQueue {
 
   @JvmStatic
   fun getQueueFile(): Path = PathManager.getIndexRoot() / "dirty-file-ids"
+
+  @JvmStatic
+  fun Project.getQueueFile(): Path = getQueuesDir() / locationHash
 
   @JvmStatic
   fun removeCurrentFile(queueFile: Path) {

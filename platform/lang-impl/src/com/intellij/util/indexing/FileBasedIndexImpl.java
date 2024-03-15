@@ -581,7 +581,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private void persistDirtyFiles(@NotNull Project project) {
     IntSet dirtyFileIds = getAllDirtyFiles(project);
-    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueuesDir().resolve(project.getLocationHash()), dirtyFileIds, vfsCreationStamp);
+    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(project), dirtyFileIds, vfsCreationStamp);
   }
 
   @NotNull
@@ -900,7 +900,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  IntList ensureDirtyFileIndexesDeleted(@NotNull IntSet dirtyFiles) {
+  IntList ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {
     if (dirtyFiles.isEmpty()) return new IntArrayList();
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       Collection<ID<?, ?>> indexIDs = myRegisteredIndexes.getState().getIndexIDs();
