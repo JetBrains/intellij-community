@@ -65,7 +65,7 @@ class CombinedDiffViewer(
   blockListener: BlockListener,
   private val blockState: BlockState,
   private val viewState: CombinedDiffUIState
-  ) : CombinedDiffNavigation,
+) : CombinedDiffNavigation,
     CombinedDiffCaretNavigation,
     DataProvider,
     Disposable {
@@ -184,8 +184,12 @@ class CombinedDiffViewer(
 
   internal fun replaceBlockWithPlaceholder(blockId: CombinedBlockId) {
     runPreservingViewportContent(scrollPane, blocksPanel) {
-      val viewer = diffViewers.remove(blockId)?.also(Disposer::dispose)
+      val viewer = diffViewers.remove(blockId)
       val size = viewer?.component?.size?.height
+      val block = diffBlocks[blockId]
+      if (block != null) {
+        Disposer.dispose(block)
+      }
       blocksPanel.setPlaceholder(blockId, size)
     }
   }
