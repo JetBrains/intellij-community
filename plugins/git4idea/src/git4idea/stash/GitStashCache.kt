@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash
 
 import com.github.benmanes.caffeine.cache.AsyncCacheLoader
@@ -25,7 +25,7 @@ import java.util.concurrent.CompletionException
 import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
-class GitStashCache(val project: Project) : Disposable {
+class GitStashCache(private val project: Project) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git Stash Loader", 1)
   private val cache = Caffeine.newBuilder()
