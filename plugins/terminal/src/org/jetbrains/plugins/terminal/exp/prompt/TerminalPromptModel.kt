@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -25,10 +26,12 @@ import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.HighlightingInfo
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 
-class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSession) {
+class TerminalPromptModel(private val editor: EditorEx, private val session: BlockTerminalSession) {
   private val renderer: TerminalPromptRenderer = BuiltInPromptRenderer(session)
   private val document: DocumentEx
     get() = editor.document
+
+  private var rightPromptManager: RightPromptManager? = null
 
   var promptRenderingInfo: PromptRenderingInfo = PromptRenderingInfo("", emptyList())
     @RequiresEdt
@@ -89,6 +92,24 @@ class TerminalPromptModel(private val editor: EditorEx, session: BlockTerminalSe
       editor.markupModel.addRangeHighlighter(highlighting.startOffset, highlighting.endOffset, HighlighterLayer.SYNTAX,
                                              highlighting.textAttributesProvider.getTextAttributes(), HighlighterTargetArea.EXACT_RANGE)
     }
+
+    val rightPrompt = renderingInfo.rightText
+    if (rightPrompt.isNotEmpty()) {
+      val manager = getOrCreateRightPromptManager()
+      manager.update(renderingInfo.text.length, rightPrompt, renderingInfo.rightHighlightings)
+    }
+    else {
+      rightPromptManager?.let { Disposer.dispose(it) }
+      rightPromptManager = null
+    }
+  }
+
+  private fun getOrCreateRightPromptManager(): RightPromptManager {
+    rightPromptManager?.let { return it }
+    val manager = RightPromptManager(editor, session.settings)
+    Disposer.register(session, manager)
+    rightPromptManager = manager
+    return manager
   }
 
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
