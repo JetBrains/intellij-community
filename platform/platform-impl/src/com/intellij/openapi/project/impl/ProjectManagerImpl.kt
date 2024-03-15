@@ -920,8 +920,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         return true
       }
 
-      val perProcessSupport = p3Support()
-      val projectNameValue = options.projectName ?: projectDir?.fileName?.toString() ?: projectDir?.toString()
+      val perProcessSupport = processPerProjectSupport()
+      val projectNameValue = options.projectName ?: projectDir.fileName?.toString() ?: projectDir.toString()
       val exitCode = confirmOpenNewProject(options.copy(projectName = projectNameValue))
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
         if (!closeAndDisposeKeepingFrame(projectToClose)) {

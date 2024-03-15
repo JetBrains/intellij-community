@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.actions.OpenFileAction
@@ -41,7 +41,7 @@ private class NewProjectActionDisabler : OpenFileAction() {
 }
 
 internal suspend fun checkChildProcess(projectStoreBaseDir: Path, options: OpenProjectTask): Boolean {
-  val perProcessInstanceSupport = p3Support()
+  val perProcessInstanceSupport = processPerProjectSupport()
   if (!perProcessInstanceSupport.isEnabled())
       return false
 

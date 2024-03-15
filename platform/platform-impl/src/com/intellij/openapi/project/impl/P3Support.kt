@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
-import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -69,9 +69,9 @@ object P3SupportInstaller {
 }
 
 @Experimental
-fun p3Support(): P3Support {
+fun processPerProjectSupport(): P3Support {
   return P3SupportInstaller.atomicSupport.get() ?: run {
-    fileLogger().error("PerProcessInstanceSupportInstaller is not installed yet")
+    logger<P3Support>().error("PerProcessInstanceSupportInstaller is not installed yet")
 
     DisabledP3Support
   }

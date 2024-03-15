@@ -9,7 +9,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.impl.p3Support
+import com.intellij.openapi.project.impl.processPerProjectSupport
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
@@ -25,7 +25,7 @@ import kotlin.io.path.readBytes
 
 private class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListener {
   override suspend fun beforeApplicationLoaded(application: Application, configPath: Path) {
-    if (application.isUnitTestMode || !p3Support().isEnabled()) {
+    if (application.isUnitTestMode || !processPerProjectSupport().isEnabled()) {
       return
     }
 
@@ -37,7 +37,7 @@ private class P3SharedConfigFolderApplicationLoadListener : ApplicationLoadListe
 internal class P3SharedConfigFolderApplicationInitializedListener : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
     val path = PathManager.getOriginalConfigDir()
-    if (p3Support().isEnabled()) {
+    if (processPerProjectSupport().isEnabled()) {
       LOG.info("P3 mode is enabled, configuration files with be synchronized with $path.")
       SharedConfigFolderUtil.installFsWatcher(path, useVfsWatcher())
       ApplicationManager.getApplication().messageBus.connect().subscribe(DynamicPluginListener.TOPIC, P3DynamicPluginSynchronizer.getInstance())
