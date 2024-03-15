@@ -54,10 +54,8 @@ class SignatureBuilder(private val project: Project) {
   }
 
   private fun visibilityCanBeApplied(targetClass: PsiClass, visibility: String): Boolean {
-    if (targetClass.isInterface) {
-      return PsiUtil.isLanguageLevel9OrHigher(targetClass) && visibility == PsiModifier.PRIVATE
-    }
-    return true
+    return !targetClass.isInterface
+           || (visibility == PsiModifier.PRIVATE && PsiUtil.isAvailable(JavaFeature.PRIVATE_INTERFACE_METHODS, targetClass))
   }
 
   private fun createParameterList(inputParameters: List<InputParameter>, scope: List<PsiElement>): PsiParameterList {
@@ -69,7 +67,7 @@ class SignatureBuilder(private val project: Project) {
     if (inputParameters.isEmpty()) return parameterList
 
     val element = inputParameters.first().references.first()
-    val useDefaultFinal = JavaCodeStyleSettings.getInstance(scope.first().project).GENERATE_FINAL_PARAMETERS
+    val useDefaultFinal = JavaCodeStyleSettings.getInstance(scope.first().containingFile).GENERATE_FINAL_PARAMETERS
 
     inputParameters.forEach { parameter ->
       val shouldBeFinal = when {

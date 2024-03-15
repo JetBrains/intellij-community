@@ -46,7 +46,7 @@ public final class ThreadLocalConversionRule extends TypeConversionRule {
         return false;
       }
       final PsiTypeParameter[] typeParameters = threadLocalClass.getTypeParameters();
-      if (typeParameters.length != 1) return !PsiUtil.isLanguageLevel5OrHigher(context);
+      if (typeParameters.length != 1) return !PsiUtil.isAvailable(JavaFeature.GENERICS, context);
       final PsiType toTypeParameterValue = resolveResult.getSubstitutor().substitute(typeParameters[0]);
       if (toTypeParameterValue != null) {
         if (from instanceof PsiPrimitiveType) {
@@ -172,11 +172,11 @@ public final class ThreadLocalConversionRule extends TypeConversionRule {
     }
     final StringBuilder result = new StringBuilder("new ");
     result.append(to.getCanonicalText()).append("() {\n");
-    if (PsiUtil.isLanguageLevel5OrHigher(context)) {
+    if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, context)) {
       result.append("  @").append(CommonClassNames.JAVA_LANG_OVERRIDE).append("\n");
     }
     result.append("  protected ")
-      .append(PsiUtil.isLanguageLevel5OrHigher(context) ? to.getParameters()[0].getCanonicalText() : CommonClassNames.JAVA_LANG_OBJECT)
+      .append(PsiUtil.isAvailable(JavaFeature.GENERICS, context) ? to.getParameters()[0].getCanonicalText() : CommonClassNames.JAVA_LANG_OBJECT)
       .append(" initialValue() {\n")
       .append("    return ")
       .append(coerceType("$qualifier$", from, to, context)).append(";\n")
