@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -474,7 +474,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       indicator.setIndeterminate(true);
       indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
       ChangedFilesPushingStatistics statistics;
-      if (!ApplicationManager.getApplication().isUnitTestMode() || IndexDiagnosticDumper.getShouldDumpInUnitTestMode()) {
+      if (!ApplicationManager.getApplication().isUnitTestMode() || IndexDiagnosticDumper.Companion.getShouldDumpInUnitTestMode()) {
         statistics = new ChangedFilesPushingStatistics(myReason);
       }
       else {
