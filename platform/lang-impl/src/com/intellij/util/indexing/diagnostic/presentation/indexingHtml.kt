@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused", "HardCodedStringLiteral")
 
 package com.intellij.util.indexing.diagnostic.presentation
@@ -98,13 +98,14 @@ private fun FlowContent.printAppInfoForActivity(appInfo: JsonIndexDiagnosticAppI
 private const val HIDE_MINOR_DATA_INITIAL = true
 private fun getMinorDataClass(isMinor: Boolean) = if (isMinor) "minor-data" + (if (HIDE_MINOR_DATA_INITIAL) " invisible" else "") else ""
 
-fun JsonIndexingActivityDiagnostic.generateHtml(target: Appendable): String =
-  when (type) {
+fun JsonIndexingActivityDiagnostic.generateHtml(target: Appendable): String {
+  return when (type) {
     IndexingActivityType.Scanning ->
       (this.projectIndexingActivityHistory as JsonProjectScanningHistory).generateScanningHtml(target, appInfo, runtimeInfo)
     IndexingActivityType.DumbIndexing ->
       (this.projectIndexingActivityHistory as JsonProjectDumbIndexingHistory).generateDumbIndexingHtml(target, appInfo, runtimeInfo)
   }
+}
 
 
 private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,

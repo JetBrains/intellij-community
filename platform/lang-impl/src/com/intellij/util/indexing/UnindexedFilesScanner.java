@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -592,7 +592,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       awaitWithCheckCanceled(myStartCondition);
     }
     // Not sure that ensureUpToDate is really needed, but it wouldn't hurt to clear up queue not from EDT
-    // It was added in this commit: 'Process vfs events asynchroneously (IDEA-109525), first cut Maxim.Mossienko 13.11.16, 14:15'
+    // It was added in this commit: 'Process vfs events asynchronously (IDEA-109525), first cut Maxim.Mossienko 13.11.16, 14:15'
     myIndex.getChangedFilesCollector().ensureUpToDate();
     IndexDiagnosticDumper.getInstance().onScanningStarted(scanningHistory);
     Ref<StatusMark> markRef = new Ref<>();
