@@ -17,6 +17,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.bindApplicationTitle
 import com.intellij.ui.util.preferredHeight
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
@@ -159,6 +160,7 @@ class BlockTerminalView(
     session.start(ttyConnector)
   }
 
+  @RequiresEdt(generateAssertion = false)
   private fun alternateBufferStateChanged(enabled: Boolean) {
     if (enabled) {
       installAlternateBufferPanel()
@@ -168,6 +170,7 @@ class BlockTerminalView(
       alternateBufferView = null
       installPromptAndOutput()
     }
+    outputView.controller.alternateBufferStateChanged(enabled)
     IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
     invokeLater {
       updateTerminalSize()
