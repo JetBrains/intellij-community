@@ -42,9 +42,9 @@ internal class ZipArchiveOutputStream(
     buffer.clear()
     buffer.writeIntLE(0x04034b50)
     // Version needed to extract (minimum)
-    buffer.writeShortLE(0)
+    buffer.writeShortLE(0x0014)
     // General purpose bit flag
-    buffer.writeShortLE(0)
+    buffer.writeShortLE(0x0800)
     // Compression method
     buffer.writeShortLE(ZipEntry.STORED)
     // File last modification time
@@ -407,7 +407,8 @@ internal class ZipArchiveOutputStream(
 fun writeZipLocalFileHeader(name: ByteArray, size: Int, compressedSize: Int, crc32: Long, method: Int, buffer: ByteBuf): Int {
   buffer.writeIntLE(0x04034b50)
   // Version needed to extract (2), General purpose bit flag (2)
-  buffer.writeZero(4)
+  buffer.writeShortLE(0x0014)
+  buffer.writeShortLE(0x0800)
   // Compression method
   buffer.writeShortLE(method)
   // File last modification time (2), File last modification date (2)

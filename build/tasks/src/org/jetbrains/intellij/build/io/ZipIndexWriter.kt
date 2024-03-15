@@ -33,7 +33,9 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
 
     buffer.writeIntLE(CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE)
     // Version made by (2), Version needed to extract (2), General purpose bit flag (2)
-    buffer.writeZero(6)
+    buffer.writeShortLE(0x0314)
+    buffer.writeShortLE(0x0014)
+    buffer.writeShortLE(0x0800)
     // compression method
     buffer.writeShortLE(method)
     // File last modification time (2), File last modification date(2)
@@ -53,7 +55,10 @@ class ZipIndexWriter(@JvmField val indexWriter: IkvIndexBuilder?) {
     // file name length
     buffer.writeShortLE((name.size and 0xffff))
     // Extra field length (2), File comment length (2), Disk number where a file starts (or 0xffff for ZIP64)(2), Internal file attributes (2), External file attributes(4)
-    buffer.writeZero(12)
+    buffer.writeZero(8)
+    val isDir = name.lastOrNull() == '/'.code.toByte()
+    val unixAttributes = if (isDir) 0x41ed0000L else 0x81a40000L
+    buffer.writeIntLE(unixAttributes.toInt())
     // relative offset of local file header
     buffer.writeIntLE((localFileHeaderOffset and 0xffffffffL).toInt())
     // file name
