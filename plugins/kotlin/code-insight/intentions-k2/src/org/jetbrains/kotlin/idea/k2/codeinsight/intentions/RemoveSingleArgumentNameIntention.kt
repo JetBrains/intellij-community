@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
@@ -11,8 +12,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.createArgumentWithoutName
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class RemoveSingleArgumentNameIntention :
-    AbstractKotlinModCommandWithContext<KtValueArgument, RemoveSingleArgumentNameIntention.SingleArgumentContext>(KtValueArgument::class) {
+    KotlinPsiUpdateModCommandIntentionWithContext<KtValueArgument, RemoveSingleArgumentNameIntention.SingleArgumentContext>(KtValueArgument::class) {
     /**
      * @property anchorArgumentPointer an argument after which the unnamed argument should be placed once the argument name is removed;
      * when the argument should be placed in the beginning of argument list, [anchorArgumentPointer] is null
@@ -35,27 +35,15 @@ internal class RemoveSingleArgumentNameIntention :
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.argument.name")
-    override fun getActionName(element: KtValueArgument, context: SingleArgumentContext): String = familyName
-
-    override fun isApplicableByPsi(element: KtValueArgument): Boolean {
-        if (!element.isNamed() || element.getArgumentExpression() == null) return false
-        return (element.parent as? KtValueArgumentList)?.parent is KtCallElement
-    }
-
-    override fun apply(element: KtValueArgument, context: AnalysisActionContext<SingleArgumentContext>, updater: ModPsiUpdater) {
-        val argumentList = element.parent as? KtValueArgumentList ?: return
-
-        val analyzeContext = context.analyzeContext
-        val newArguments = createArgumentWithoutName(element, analyzeContext.isVararg, analyzeContext.isArrayOfCall)
-        argumentList.removeArgument(element)
-        newArguments.asReversed().forEach {
-            argumentList.addArgumentAfter(it, analyzeContext.anchorArgumentPointer?.element)
-        }
-    }
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtValueArgument> = applicabilityRange { valueArgument ->
         val argumentExpression = valueArgument.getArgumentExpression() ?: return@applicabilityRange null
         TextRange(valueArgument.startOffset, argumentExpression.startOffset).relativeTo(valueArgument)
+    }
+
+    override fun isApplicableByPsi(element: KtValueArgument): Boolean {
+        if (!element.isNamed() || element.getArgumentExpression() == null) return false
+        return (element.parent as? KtValueArgumentList)?.parent is KtCallElement
     }
 
     context(KtAnalysisSession)
@@ -80,5 +68,15 @@ internal class RemoveSingleArgumentNameIntention :
             isVararg = element == vararg,
             isArrayOfCall = element == vararg && varargIsArrayOfCall
         )
+    }
+
+    override fun invoke(actionContext: ActionContext, element: KtValueArgument, preparedContext: SingleArgumentContext, updater: ModPsiUpdater) {
+        val argumentList = element.parent as? KtValueArgumentList ?: return
+
+        val newArguments = createArgumentWithoutName(element, preparedContext.isVararg, preparedContext.isArrayOfCall)
+        argumentList.removeArgument(element)
+        newArguments.asReversed().forEach {
+            argumentList.addArgumentAfter(it, preparedContext.anchorArgumentPointer?.element)
+        }
     }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -8,8 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
@@ -43,9 +43,9 @@ private val FOR_EACH_INDEXED_CALLABLE_IDS: Set<CallableId> = setOf(
 private typealias ReturnsToReplace = List<SmartPsiElementPointer<KtReturnExpression>>
 
 internal class ConvertForEachToForLoopIntention
-    : AbstractKotlinModCommandWithContext<KtCallExpression, ConvertForEachToForLoopIntention.Context>(
-        KtCallExpression::class
-    ) {
+    : KotlinPsiUpdateModCommandIntentionWithContext<KtCallExpression, ConvertForEachToForLoopIntention.Context>(
+    KtCallExpression::class
+) {
 
     class Context(
         /** Caches the [KtReturnExpression]s which need to be replaced with `continue`. */
@@ -54,8 +54,6 @@ internal class ConvertForEachToForLoopIntention
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.for.loop")
-
-    override fun getActionName(element: KtCallExpression, context: Context): String = familyName
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> = ApplicabilityRanges.SELF
 
@@ -113,16 +111,16 @@ internal class ConvertForEachToForLoopIntention
         }
     }
 
-    override fun apply(element: KtCallExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
+    override fun invoke(actionContext: ActionContext, element: KtCallExpression, preparedContext: Context, updater: ModPsiUpdater) {
         val qualifiedExpression = element.getQualifiedExpressionForSelector()
         val receiverExpression = qualifiedExpression?.receiverExpression
         val targetExpression = qualifiedExpression ?: element
         val commentSaver = CommentSaver(targetExpression)
 
         val lambda = element.getSingleLambdaArgument()?.takeIf { it.bodyExpression != null } ?: return
-        val isForEachIndexed =  element.getCallNameExpression()?.getReferencedName() == FOR_EACH_INDEXED_NAME.asString()
-        val loopLabelName= suggestLoopName(lambda)
-        val loop = generateLoop(receiverExpression, lambda, loopLabelName, isForEachIndexed, context.analyzeContext) ?: return
+        val isForEachIndexed = element.getCallNameExpression()?.getReferencedName() == FOR_EACH_INDEXED_NAME.asString()
+        val loopLabelName = suggestLoopName(lambda)
+        val loop = generateLoop(receiverExpression, lambda, loopLabelName, isForEachIndexed, preparedContext) ?: return
         val result = targetExpression.replace(loop)
         commentSaver.restore(result)
 

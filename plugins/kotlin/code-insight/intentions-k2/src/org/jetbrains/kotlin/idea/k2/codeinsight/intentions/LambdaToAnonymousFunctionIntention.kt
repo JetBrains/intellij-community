@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.codeInspection.util.IntentionName
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
@@ -12,8 +13,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
-internal class LambdaToAnonymousFunctionIntention: AbstractKotlinModCommandWithContext<KtLambdaExpression, LambdaToAnonymousFunctionIntention.LambdaToFunctionContext>(
+internal class LambdaToAnonymousFunctionIntention: KotlinPsiUpdateModCommandIntentionWithContext<KtLambdaExpression, LambdaToAnonymousFunctionIntention.LambdaToFunctionContext>(
     KtLambdaExpression::class
 ) {
 
@@ -33,10 +33,13 @@ internal class LambdaToAnonymousFunctionIntention: AbstractKotlinModCommandWithC
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.lambda.expression.to.anonymous.function")
 
-    override fun getActionName(
+    override fun getPresentation(
+        context: ActionContext,
         element: KtLambdaExpression,
-        context: LambdaToFunctionContext
-    ): @IntentionName String = KotlinBundle.message("convert.to.anonymous.function")
+        analyzeContext: LambdaToFunctionContext
+    ): Presentation {
+        return Presentation.of(KotlinBundle.message("convert.to.anonymous.function"))
+    }
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtLambdaExpression): LambdaToFunctionContext? {
@@ -68,13 +71,13 @@ internal class LambdaToAnonymousFunctionIntention: AbstractKotlinModCommandWithC
         return call?.getStrictParentOfType<KtFunction>()?.hasModifier(KtTokens.INLINE_KEYWORD) != true
     }
 
-    override fun apply(
+    override fun invoke(
+        actionContext: ActionContext,
         element: KtLambdaExpression,
-        context: AnalysisActionContext<LambdaToFunctionContext>,
+        preparedContext: LambdaToFunctionContext,
         updater: ModPsiUpdater
     ) {
-        val lambdaToFunctionContext = context.analyzeContext
-        val resultingFunction = LambdaToAnonymousFunctionUtil.convertLambdaToFunction(element, lambdaToFunctionContext.signature) ?: return
+        val resultingFunction = LambdaToAnonymousFunctionUtil.convertLambdaToFunction(element, preparedContext.signature) ?: return
 
         var parent = resultingFunction.parent
         if (parent is KtLabeledExpression) {
@@ -87,6 +90,6 @@ internal class LambdaToAnonymousFunctionIntention: AbstractKotlinModCommandWithC
             ?: errorWithAttachment("no argument expression for $argument") {
                 withPsiEntry("lambdaExpression", argument)
             }
-        argument.moveInsideParenthesesAndReplaceWith(replacement, lambdaToFunctionContext.lambdaArgumentName)
+        argument.moveInsideParenthesesAndReplaceWith(replacement, preparedContext.lambdaArgumentName)
     }
 }

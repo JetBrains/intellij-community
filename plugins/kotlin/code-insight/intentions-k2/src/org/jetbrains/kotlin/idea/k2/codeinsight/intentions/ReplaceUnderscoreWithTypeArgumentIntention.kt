@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.refactoring.suggested.createSmartPointer
@@ -11,8 +12,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.isUnderscoreTypeArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.replaceTypeProjection
@@ -24,12 +24,10 @@ import org.jetbrains.kotlin.psi.KtTypeProjection
 import org.jetbrains.kotlin.types.Variance
 
 internal class ReplaceUnderscoreWithTypeArgumentIntention :
-    AbstractKotlinModCommandWithContext<KtTypeProjection, ReplaceUnderscoreWithTypeArgumentIntention.Context>(KtTypeProjection::class) {
+    KotlinPsiUpdateModCommandIntentionWithContext<KtTypeProjection, ReplaceUnderscoreWithTypeArgumentIntention.Context>(KtTypeProjection::class) {
     class Context(var updatedTypeProjection: SmartPsiElementPointer<KtTypeProjection>)
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.explicit.type")
-
-    override fun getActionName(element: KtTypeProjection, context: Context): String = familyName
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtTypeProjection> = ApplicabilityRanges.SELF
 
@@ -46,12 +44,6 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
         return Context(newTypeProjection.createSmartPointer())
     }
 
-    override fun apply(element: KtTypeProjection, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
-        val updatedTypeProjection = context.analyzeContext.updatedTypeProjection.dereference() ?: return
-        val replacedElement = element.replace(updatedTypeProjection) as? KtElement ?: return
-        shortenReferences(replacedElement)
-    }
-
     override fun isApplicableByPsi(element: KtTypeProjection): Boolean =
         isUnderscoreTypeArgument(element)
 
@@ -62,5 +54,11 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
         val argumentsTypes = call.typeArgumentsMapping.map { it.value }.toTypedArray()
         val resolvedElementIndex = typeArgumentList.arguments.indexOf(this)
         return argumentsTypes[resolvedElementIndex]
+    }
+
+    override fun invoke(actionContext: ActionContext, element: KtTypeProjection, preparedContext: Context, updater: ModPsiUpdater) {
+        val updatedTypeProjection = preparedContext.updatedTypeProjection.dereference() ?: return
+        val replacedElement = element.replace(updatedTypeProjection) as? KtElement ?: return
+        shortenReferences(replacedElement)
     }
 }

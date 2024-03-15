@@ -3,14 +3,14 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.psi.KtProperty
@@ -19,14 +19,13 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.types.Variance
 
-class SplitPropertyDeclarationIntention : AbstractKotlinModCommandWithContext<KtProperty, SplitPropertyDeclarationIntention.Context> (
+class SplitPropertyDeclarationIntention : KotlinPsiUpdateModCommandIntentionWithContext<KtProperty, SplitPropertyDeclarationIntention.Context> (
   KtProperty::class
 ), LowPriorityAction {
     data class Context(val propertyType: String?)
 
     override fun getFamilyName(): String = KotlinBundle.message("split.property.declaration")
 
-    override fun getActionName(element: KtProperty, context: Context): String = familyName
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtProperty> = applicabilityRange {
         TextRange(0, it.initializer!!.startOffsetInParent)
@@ -43,12 +42,12 @@ class SplitPropertyDeclarationIntention : AbstractKotlinModCommandWithContext<Kt
         return Context(if (ktType is KtErrorType) null else ktType.render(position = Variance.OUT_VARIANCE))
     }
 
-    override fun apply(element: KtProperty, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
+    override fun invoke(actionContext: ActionContext, element: KtProperty, preparedContext: Context, updater: ModPsiUpdater) {
         val parent = element.parent
 
         val initializer = element.initializer ?: return
 
-        val explicitTypeToSet = if (element.typeReference != null) null else context.analyzeContext.propertyType
+        val explicitTypeToSet = if (element.typeReference != null) null else preparedContext.propertyType
 
         val psiFactory = KtPsiFactory(element.project)
 

@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 internal class InvertIfConditionIntention :
-    AbstractKotlinModCommandWithContext<KtIfExpression, InvertIfConditionIntention.Context>(KtIfExpression::class) {
+    KotlinPsiUpdateModCommandIntentionWithContext<KtIfExpression, InvertIfConditionIntention.Context>(KtIfExpression::class) {
 
     data class Context(
         val newCondition: SmartPsiElementPointer<KtExpression>,
@@ -41,7 +41,14 @@ internal class InvertIfConditionIntention :
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("invert.if.condition")
-    override fun getActionName(element: KtIfExpression, context: Context): String = familyName
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtIfExpression> = applicabilityTarget { ifExpression: KtIfExpression ->
+        ifExpression.ifKeyword
+    }
+
+    override fun isApplicableByPsi(element: KtIfExpression): Boolean {
+        return element.condition != null && element.then != null
+    }
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtIfExpression): Context {
@@ -77,31 +84,22 @@ internal class InvertIfConditionIntention :
         return null
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtIfExpression> = applicabilityTarget { ifExpression: KtIfExpression ->
-        ifExpression.ifKeyword
-    }
-
-    override fun isApplicableByPsi(element: KtIfExpression): Boolean {
-        return element.condition != null && element.then != null
-    }
-
-    override fun apply(element: KtIfExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
+    override fun invoke(actionContext: ActionContext, element: KtIfExpression, preparedContext: Context, updater: ModPsiUpdater) {
         val rBrace = parentBlockRBrace(element)
         if (rBrace != null) element.nextEolCommentOnSameLine()?.delete()
 
-        val analyzeContext = context.analyzeContext
-        val newIf = handleSpecialCases(element, analyzeContext) ?: handleStandardCase(element, analyzeContext.newCondition.element!!)
+        val newIf = handleSpecialCases(element, preparedContext) ?: handleStandardCase(element, preparedContext.newCondition.element!!)
 
         val commentRestoreRange = if (rBrace != null)
             PsiChildRange(newIf, rBrace)
         else
             PsiChildRange(newIf, parentBlockRBrace(newIf) ?: newIf)
 
-        context.analyzeContext.commentSaver.restore(commentRestoreRange)
+        preparedContext.commentSaver.restore(commentRestoreRange)
 
         val binaryExpr = newIf.condition?.let(::getBinaryExpression)
         if (binaryExpr != null) {
-            context.analyzeContext.demorgansLawContext?.let { demorgansLawContext ->
+            preparedContext.demorgansLawContext?.let { demorgansLawContext ->
                 applyDemorgansLaw(binaryExpr, demorgansLawContext)
             }
         }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -11,8 +12,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unwrapBlockOrParenthesis
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
@@ -23,43 +23,12 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-class IfToWhenIntention : AbstractKotlinModCommandWithContext<KtIfExpression, IfToWhenIntention.Context>(KtIfExpression::class) {
+class IfToWhenIntention : KotlinPsiUpdateModCommandIntentionWithContext<KtIfExpression, IfToWhenIntention.Context>(KtIfExpression::class) {
     data class Context(
         val subjectedWhenExpression: KtWhenExpression,
         val toDelete: List<PsiElement>,
         val commentSaver: CommentSaver,
     )
-
-    override fun apply(element: KtIfExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
-        val ifExpression = element.topmostIfExpression()
-
-        val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
-        val loopJumpVisitor = LabelLoopJumpVisitor(loop)
-
-        val (whenExpression, toDelete, commentSaver) = context.analyzeContext
-        val parent = ifExpression.parent
-
-        val result = ifExpression.replaced(whenExpression)
-        updater.moveCaretTo(result.startOffset)
-        commentSaver.restore(result)
-
-        if (toDelete.isNotEmpty()) {
-            parent.deleteChildRange(
-                toDelete.first().let { it.prevSibling as? PsiWhiteSpace ?: it },
-                toDelete.last()
-            )
-        }
-
-        result.accept(loopJumpVisitor)
-        val labelName = loopJumpVisitor.labelName
-        if (loop != null && loopJumpVisitor.labelRequired && labelName != null && loop.parent !is KtLabeledExpression) {
-            val labeledLoopExpression = KtPsiFactory(result.project).createLabeledExpression(labelName)
-            labeledLoopExpression.baseExpression!!.replace(loop)
-
-            val replacedLabeledLoopExpression = loop.replace(labeledLoopExpression)
-            replacedLabeledLoopExpression.reformat()
-        }
-    }
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.if.with.when")
 
@@ -137,7 +106,35 @@ class IfToWhenIntention : AbstractKotlinModCommandWithContext<KtIfExpression, If
         return Context(subjectedWhenExpression, toDelete, commentSaver)
     }
 
-    override fun getActionName(element: KtIfExpression, context: Context): String = familyName
+    override fun invoke(actionContext: ActionContext, element: KtIfExpression, preparedContext: Context, updater: ModPsiUpdater) {
+        val ifExpression = element.topmostIfExpression()
+
+        val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
+        val loopJumpVisitor = LabelLoopJumpVisitor(loop)
+
+        val parent = ifExpression.parent
+        val result = ifExpression.replaced(preparedContext.subjectedWhenExpression)
+        updater.moveCaretTo(result.startOffset)
+        preparedContext.commentSaver.restore(result)
+
+        val toDelete = preparedContext.toDelete
+        if (toDelete.isNotEmpty()) {
+            parent.deleteChildRange(
+                toDelete.first().let { it.prevSibling as? PsiWhiteSpace ?: it },
+                toDelete.last()
+            )
+        }
+
+        result.accept(loopJumpVisitor)
+        val labelName = loopJumpVisitor.labelName
+        if (loop != null && loopJumpVisitor.labelRequired && labelName != null && loop.parent !is KtLabeledExpression) {
+            val labeledLoopExpression = KtPsiFactory(result.project).createLabeledExpression(labelName)
+            labeledLoopExpression.baseExpression!!.replace(loop)
+
+            val replacedLabeledLoopExpression = loop.replace(labeledLoopExpression)
+            replacedLabeledLoopExpression.reformat()
+        }
+    }
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtIfExpression> = applicabilityTarget {
         it.ifKeyword

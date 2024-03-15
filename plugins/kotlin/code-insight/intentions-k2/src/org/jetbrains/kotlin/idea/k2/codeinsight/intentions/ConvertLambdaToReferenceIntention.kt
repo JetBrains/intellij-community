@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
@@ -13,8 +15,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getCallReferencedName
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getSafeReferencedName
@@ -31,14 +32,17 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertLambdaToReferenceIntention :
-    AbstractKotlinModCommandWithContext<KtLambdaExpression, ConvertLambdaToReferenceIntention.Context>(KtLambdaExpression::class) {
+    KotlinPsiUpdateModCommandIntentionWithContext<KtLambdaExpression, ConvertLambdaToReferenceIntention.Context>(KtLambdaExpression::class) {
 
     data class Context(
         val newElement: SmartPsiElementPointer<KtElement>, val renderedPropertyType: String?, val renderedTypeArguments: String?
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.lambda.to.reference.before.text")
-    override fun getActionName(element: KtLambdaExpression, context: Context): String = KotlinBundle.message("convert.lambda.to.reference")
+
+    override fun getPresentation(context: ActionContext, element: KtLambdaExpression, analyzeContext: Context): Presentation {
+        return Presentation.of(KotlinBundle.message("convert.lambda.to.reference"))
+    }
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtLambdaExpression> = ApplicabilityRanges.SELF
 
@@ -132,11 +136,10 @@ internal class ConvertLambdaToReferenceIntention :
         }
     }
 
-    override fun apply(element: KtLambdaExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
-        val analyzeContext = context.analyzeContext
-        val newElement = analyzeContext.newElement.element ?: return
+    override fun invoke(actionContext: ActionContext, element: KtLambdaExpression, preparedContext: Context, updater: ModPsiUpdater) {
+        val newElement = preparedContext.newElement.element ?: return
         val parent = element.parent
-        val renderedPropertyType = analyzeContext.renderedPropertyType
+        val renderedPropertyType = preparedContext.renderedPropertyType
 
         if (parent is KtProperty && renderedPropertyType != null) {
             parent.typeReference = KtPsiFactory(element.project).createType(renderedPropertyType)
@@ -145,8 +148,8 @@ internal class ConvertLambdaToReferenceIntention :
 
         val outerCallExpression = parent.getStrictParentOfType<KtCallExpression>()
         if (outerCallExpression != null) {
-            analyzeContext.renderedTypeArguments?.let {
-                addTypeArguments(outerCallExpression, it, context.actionContext.project)
+            preparedContext.renderedTypeArguments?.let {
+                addTypeArguments(outerCallExpression, it, actionContext.project)
                 outerCallExpression.typeArgumentList?.let(::shortenReferences)
             }
         }

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
- * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext]
+ * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext]
  * and [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext].
  */
 interface KotlinApplicableToolWithContext<ELEMENT : KtElement, CONTEXT> : KotlinApplicableToolBase<ELEMENT> {
@@ -34,8 +34,3 @@ interface KotlinApplicableToolWithContext<ELEMENT : KtElement, CONTEXT> : Kotlin
 internal fun <ELEMENT : KtElement, CONTEXT> KotlinApplicableToolWithContext<ELEMENT, CONTEXT>.prepareContextWithAnalyze(
     element: ELEMENT,
 ): CONTEXT? = analyze(element) { prepareContext(element) }
-
-@OptIn(KtAllowAnalysisOnEdt::class)
-internal fun <ELEMENT : KtElement, CONTEXT> KotlinApplicableToolWithContext<ELEMENT, CONTEXT>.prepareContextWithAnalyzeAllowEdt(
-    element: ELEMENT,
-): CONTEXT? = allowAnalysisOnEdt { prepareContextWithAnalyze(element) }
