@@ -414,7 +414,7 @@ class JbSettingsImporter(private val configDirPath: Path,
       ) { false }
       return
     }
-    RepositoryHelper.updatePluginHostsFromConfigDir(configDirPath) { LOG.info(it) }
+    RepositoryHelper.updatePluginHostsFromConfigDir(configDirPath, LOG)
     val updateableMap = HashMap(pluginsMap)
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")
     val internalPluginUpdates = UpdateChecker.getInternalPluginUpdates(

@@ -33,7 +33,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 
@@ -243,13 +242,9 @@ public final class RepositoryHelper {
     return mergePluginsFromRepositories(mpPlugins, customPlugins, true);
   }
 
-
   @ApiStatus.Internal
-  public static void updatePluginHostsFromConfigDir(@NotNull Path oldConfigDir, @Nullable Consumer<String> logger) {
-    if (logger == null) {
-      logger = s -> LOG.info(s);
-    }
-    logger.accept("Reading plugin repositories from " + oldConfigDir);
+  public static void updatePluginHostsFromConfigDir(@NotNull Path oldConfigDir, @NotNull Logger logger) {
+    logger.info("reading plugin repositories from " + oldConfigDir);
     try {
       var text = ComponentStorageUtil.loadTextContent(oldConfigDir.resolve("options/updates.xml"));
       var components = ComponentStorageUtil.loadComponents(JDOMUtil.load(text), null);
@@ -258,12 +253,12 @@ public final class RepositoryHelper {
         var hosts = XmlSerializer.deserialize(element, UpdateOptions.class).getPluginHosts();
         if (!hosts.isEmpty()) {
           amendPluginHostsProperty(hosts);
-          logger.accept("Plugin hosts: " + System.getProperty("idea.plugin.hosts"));
+          logger.info("plugin hosts: " + System.getProperty("idea.plugin.hosts"));
         }
       }
     }
     catch (InvalidPathException | IOException | JDOMException e) {
-      logger.accept("... failed: " + e.getMessage());
+      logger.error("... failed: " + e.getMessage());
     }
   }
 
