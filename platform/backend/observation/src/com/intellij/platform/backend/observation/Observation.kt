@@ -8,23 +8,11 @@ object Observation {
   /**
    * Suspends until configuration processes in the IDE are completed.
    * The awaited configuration processes are those that use [ActivityTracker] or [ActivityKey]
+   *
+   * @return `true`, if some non-trivial activity was happening during the execution of this method.
+   *         `false`, otherwise
    */
-  suspend fun awaitConfiguration(project: Project, messageCallback: ((String) -> Unit)? = null) {
-    // we perform several phases of awaiting here,
-    // because we need to be prepared for idempotent side effects from trackers
-    while (true) {
-      val wasModified = awaitConfigurationPhase(project, messageCallback)
-      if (wasModified) {
-        messageCallback?.invoke("Configuration phase is completed. Initiating another phase to cover possible side effects...") // NON-NLS
-      }
-      else {
-        messageCallback?.invoke("All configuration phases are completed.") // NON-NLS
-        break
-      }
-    }
-  }
-
-  private suspend fun awaitConfigurationPhase(project: Project, messageCallback: ((String) -> Unit)?): Boolean {
+  suspend fun awaitConfiguration(project: Project, messageCallback: ((String) -> Unit)? = null): Boolean {
     var isModificationOccurred = false
     val extensionTrackers = collectTrackersFromExtensions(project)
     outer@ while (true) {

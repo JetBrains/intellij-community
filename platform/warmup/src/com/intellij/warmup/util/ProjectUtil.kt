@@ -22,9 +22,9 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.asSafely
+import com.intellij.util.awaitCompleteProjectConfiguration
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
@@ -75,7 +75,7 @@ private suspend fun importOrOpenProjectImpl0(args: OpenProjectArgs): Project {
 val abortFlow : MutableStateFlow<String?> = MutableStateFlow(null)
 
 fun CoroutineScope.getFailureDeferred() : Deferred<String> {
-  return async<String> {
+  return async {
     while (coroutineContext.job.isActive) {
       val message = abortFlow.value
       if (message != null) {
@@ -90,7 +90,7 @@ fun CoroutineScope.getFailureDeferred() : Deferred<String> {
 fun CoroutineScope.getConfigurationDeferred(project : Project) : Deferred<Unit> {
   return async(start = CoroutineStart.UNDISPATCHED) {
     withLoggingProgressReporter {
-      Observation.awaitConfiguration(project, WarmupLogger::logInfo)
+      project.awaitCompleteProjectConfiguration(WarmupLogger::logInfo)
     }
   }
 }
