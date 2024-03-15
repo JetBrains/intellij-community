@@ -12,6 +12,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.JBPanel
 import java.awt.Color
+import java.awt.Graphics
 import javax.swing.BoxLayout
 import kotlin.math.min
 
@@ -19,6 +20,7 @@ internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLi
 
   // ui
   private val layeredPane: JBLayeredPane = JBLayeredPane()
+  private val shadowPainter: StickyLineShadowPainter = StickyLineShadowPainter()
 
   // ui + state
   private val stickyLinesComp: MutableList<StickyLineComponent> = mutableListOf()
@@ -204,6 +206,16 @@ internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLi
     } else {
       return 0
     }
+  }
+
+  override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
+    super.setBounds(x, y, width, height)
+    shadowPainter.updateShadow(this, width, height)
+  }
+
+  override fun paintComponent(g: Graphics?) {
+    super.paintComponent(g)
+    shadowPainter.paintShadow(g)
   }
 
   // ------------------------------------------- Utils -------------------------------------------
