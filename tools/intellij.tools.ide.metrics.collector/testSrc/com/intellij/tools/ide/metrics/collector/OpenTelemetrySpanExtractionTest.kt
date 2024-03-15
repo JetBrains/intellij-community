@@ -14,10 +14,10 @@ import java.nio.file.Paths
 import kotlin.io.path.div
 
 internal val openTelemetryReports by lazy {
-  Paths.get(OpenTelemetryTest::class.java.classLoader.getResource("opentelemetry")!!.toURI())
+  Paths.get(OpenTelemetrySpanExtractionTest::class.java.classLoader.getResource("opentelemetry")!!.toURI())
 }
 
-class OpenTelemetryTest {
+class OpenTelemetrySpanExtractionTest {
 
   @Test
   fun startupMetricsCollected() {

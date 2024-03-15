@@ -8,7 +8,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
 
-class HistogramStatisticsTest {
+class OpenTelemetryHistogramStatisticsTest {
   // Median
 
   @Test

@@ -22,7 +22,7 @@ internal fun createHistogramPointData(boundaries: List<Double>, counts: List<Lon
                                             boundaries, counts)
 }
 
-class HistogramPercentileTest {
+class OpenTelemetryHistogramPercentileTest {
   @Test
   fun testWhenPercentileIsZero() {
     val histogramData = createHistogramData(arrayListOf(1.0, 2.0, 3.0), arrayListOf(10, 20, 30, 5))

@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 
 
-class MedianCalculationTest {
+class StatisticsMedianCalculationTest {
   @Test
   fun medianValueCalculationForOddCollectionSize() {
     val values = listOf(6L, 1L, 0L, 4L, 9L) // 0, 1, 4, 6, 9 => 4
