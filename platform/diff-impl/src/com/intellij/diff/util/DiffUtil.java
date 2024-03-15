@@ -464,14 +464,6 @@ public final class DiffUtil {
     action.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
 
-  /**
-   * This logic depends on the ActionToolbar state.
-   * That is: the actions are not promoted until async toolbar update is finished. The invisible actions are not promoted either.
-   * <p>
-   * Prefer not using to avoid flaky behavior, especially if the actions themselves
-   * may change the list of actions visible on the toolbar (ex: 'Next Tab').
-   */
-  @Deprecated
   public static void keepToolbarActionsPromoted(@NotNull ActionToolbar toolbar) {
     JComponent toolbarTargetComponent = toolbar.getTargetComponent();
     if (toolbarTargetComponent == null) {
