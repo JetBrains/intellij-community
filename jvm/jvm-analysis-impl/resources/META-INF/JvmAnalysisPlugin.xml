@@ -181,6 +181,15 @@
 
     <inspectionCustomComponent implementation="com.intellij.codeInsight.options.JavaInspectionButtons"/>
 
+    <psi.symbolReferenceProvider
+      hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
+      hostLanguage="UAST"
+      implementationClass="com.intellij.analysis.logging.resolve.JvmLoggerSymbolReferenceProvider"
+      targetClass="com.intellij.analysis.logging.resolve.JvmLoggerArgumentSymbol"/>
+
+    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
+              implementationClass="com.intellij.analysis.logging.resolve.JvmLoggerUsageSearcher"/>
+
     <!--console filter-->
     <colorSettingsPage implementation="com.intellij.analysis.customization.console.ClassFinderConsoleColorsPage"/>
     <consoleFilterProvider implementation="com.intellij.analysis.customization.console.ClassLoggingConsoleFilterProvider"/>

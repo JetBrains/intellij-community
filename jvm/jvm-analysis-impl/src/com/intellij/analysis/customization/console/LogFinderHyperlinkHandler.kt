@@ -4,6 +4,7 @@ package com.intellij.analysis.customization.console
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
+import com.intellij.codeInspection.logging.*
 import com.intellij.execution.filters.HyperlinkInfoFactory
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
@@ -18,7 +19,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementVisitor
-import com.intellij.util.logging.*
 import org.jetbrains.uast.*
 
 internal class LogFinderHyperlinkHandler(private val probableClassName: ProbableClassName) : HyperlinkInfoFactory.HyperlinkHandler {

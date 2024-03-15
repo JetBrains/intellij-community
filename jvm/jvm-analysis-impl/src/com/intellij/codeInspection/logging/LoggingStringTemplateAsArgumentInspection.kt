@@ -12,11 +12,10 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.intellij.util.logging.LoggingUtil
-import com.intellij.util.logging.LoggingUtil.Companion
-import com.intellij.util.logging.LoggingUtil.Companion.LOG_MATCHERS
-import com.intellij.util.logging.LoggingUtil.Companion.countPlaceHolders
-import com.intellij.util.logging.LoggingUtil.Companion.isGuarded
+import com.intellij.codeInspection.logging.LoggingUtil.Companion
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.LOG_MATCHERS
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.countPlaceHolders
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.isGuarded
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.generate.getUastElementFactory

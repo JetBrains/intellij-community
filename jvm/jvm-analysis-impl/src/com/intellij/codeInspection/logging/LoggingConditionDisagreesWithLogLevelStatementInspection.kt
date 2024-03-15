@@ -3,7 +3,6 @@ package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
-import com.intellij.util.logging.LoggingUtil
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project

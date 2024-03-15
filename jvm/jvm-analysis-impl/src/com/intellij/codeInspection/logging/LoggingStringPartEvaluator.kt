@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.logging
+package com.intellij.codeInspection.logging
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiTypes

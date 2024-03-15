@@ -2511,15 +2511,6 @@
     <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
       <statistics.counterUsagesCollector
               implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
-
-    <psi.symbolReferenceProvider
-      hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
-      hostLanguage="UAST"
-      implementationClass="com.intellij.lang.logging.resolve.JvmLoggerSymbolReferenceProvider"
-      targetClass="com.intellij.lang.logging.resolve.JvmLoggerArgumentSymbol"/>
-
-    <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
-              implementationClass="com.intellij.lang.logging.resolve.JvmLoggerUsageSearcher"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

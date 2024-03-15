@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.logging
+package com.intellij.codeInspection.logging
 
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.psi.util.CachedValueProvider
@@ -78,12 +78,12 @@ class LoggingUtil {
         val loggerLevel = getLoggerLevel(node)
         if (loggerLevel == null) return true
         val notSkip: Boolean = when (loggerLevel) {
-          Companion.LevelType.FATAL -> false
-          Companion.LevelType.ERROR -> false
-          Companion.LevelType.WARN -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
-          Companion.LevelType.INFO -> myLimitLevelType.ordinal <= LimitLevelType.INFO_AND_LOWER.ordinal
-          Companion.LevelType.DEBUG -> myLimitLevelType.ordinal <= LimitLevelType.DEBUG_AND_LOWER.ordinal
-          Companion.LevelType.TRACE -> myLimitLevelType.ordinal <= LimitLevelType.TRACE.ordinal
+          LevelType.FATAL -> false
+          LevelType.ERROR -> false
+          LevelType.WARN -> myLimitLevelType.ordinal == LimitLevelType.WARN_AND_LOWER.ordinal
+          LevelType.INFO -> myLimitLevelType.ordinal <= LimitLevelType.INFO_AND_LOWER.ordinal
+          LevelType.DEBUG -> myLimitLevelType.ordinal <= LimitLevelType.DEBUG_AND_LOWER.ordinal
+          LevelType.TRACE -> myLimitLevelType.ordinal <= LimitLevelType.TRACE.ordinal
         }
         return !notSkip
       }

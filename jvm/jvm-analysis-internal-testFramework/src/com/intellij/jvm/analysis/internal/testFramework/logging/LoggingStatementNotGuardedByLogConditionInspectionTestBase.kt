@@ -4,7 +4,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInspection.logging.LoggingStatementNotGuardedByLogConditionInspection
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
-import com.intellij.util.logging.LoggingUtil
+import com.intellij.codeInspection.logging.LoggingUtil
 
 abstract class LoggingStatementNotGuardedByLogConditionInspectionTestBase : LoggingInspectionTestBase() {
   override val inspection = LoggingStatementNotGuardedByLogConditionInspection()

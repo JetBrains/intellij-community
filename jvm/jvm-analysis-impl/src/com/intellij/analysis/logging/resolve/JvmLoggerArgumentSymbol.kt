@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.logging.resolve
+package com.intellij.analysis.logging.resolve
 
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
@@ -12,10 +12,10 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
-import com.intellij.util.logging.LOGGER_RESOLVE_TYPE_SEARCHERS
-import com.intellij.util.logging.LoggingUtil
-import com.intellij.util.logging.detectLoggerMethod
-import com.intellij.util.logging.getPlaceholderContext
+import com.intellij.codeInspection.logging.LOGGER_RESOLVE_TYPE_SEARCHERS
+import com.intellij.codeInspection.logging.LoggingUtil
+import com.intellij.codeInspection.logging.detectLoggerMethod
+import com.intellij.codeInspection.logging.getPlaceholderContext
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.getParentOfType
