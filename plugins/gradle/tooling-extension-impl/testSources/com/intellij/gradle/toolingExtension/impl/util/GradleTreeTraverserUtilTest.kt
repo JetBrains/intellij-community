@@ -7,7 +7,7 @@ import com.intellij.platform.testFramework.treeAssertion.getTreeString
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 
-class GradleModelProviderUtilTest {
+class GradleTreeTraverserUtilTest {
 
   @Test
   fun `test forward tree traverser`() {
@@ -33,7 +33,7 @@ class GradleModelProviderUtilTest {
     }
 
     val result = ArrayList<Int>()
-    GradleModelProviderUtil.traverseTree(tree.roots.first(), SimpleTree.Node<Int>::children) {
+    GradleTreeTraverserUtil.traverseTree(tree.roots.first(), SimpleTree.Node<Int>::children) {
       result.add(it.value)
     }
     Assertions.assertEquals(listOf(1, 2, 9, 3, 4, 10, 11, 13, 5, 6, 7, 8, 12), result) {
@@ -65,7 +65,7 @@ class GradleModelProviderUtilTest {
     }
 
     val result = ArrayList<Int>()
-    GradleModelProviderUtil.backwardTraverseTree(tree.roots.first(), SimpleTree.Node<Int>::children) {
+    GradleTreeTraverserUtil.backwardTraverseTree(tree.roots.first(), SimpleTree.Node<Int>::children) {
       result.add(it.value)
     }
     Assertions.assertEquals(listOf(3, 5, 6, 7, 8, 4, 2, 10, 12, 11, 13, 9, 1), result) {
