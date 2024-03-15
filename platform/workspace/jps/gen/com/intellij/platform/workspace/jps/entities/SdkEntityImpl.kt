@@ -299,7 +299,7 @@ class SdkEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SdkEntity>() 
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return SdkEntity(name, type, roots, additionalData, entitySource) {
       this.version = this@SdkEntityData.version
       this.homePath = this@SdkEntityData.homePath

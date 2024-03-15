@@ -55,31 +55,31 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : KotlinSettingsEntity, ModuleSettingsBase.Builder<KotlinSettingsEntity>, WorkspaceEntity.Builder<KotlinSettingsEntity> {
+  interface Builder : WorkspaceEntity.Builder<KotlinSettingsEntity>, ModuleSettingsBase.Builder<KotlinSettingsEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var moduleId: ModuleId
-    override var sourceRoots: MutableList<String>
-    override var configFileItems: MutableList<ConfigFileItem>
-    override var module: ModuleEntity
-    override var useProjectSettings: Boolean
-    override var implementedModuleNames: MutableList<String>
-    override var dependsOnModuleNames: MutableList<String>
-    override var additionalVisibleModuleNames: MutableSet<String>
-    override var productionOutputPath: String
-    override var testOutputPath: String
-    override var sourceSetNames: MutableList<String>
-    override var isTestModule: Boolean
-    override var externalProjectId: String
-    override var isHmppEnabled: Boolean
-    override var pureKotlinSourceFolders: MutableList<String>
-    override var kind: KotlinModuleKind
-    override var compilerArguments: String
-    override var compilerSettings: CompilerSettingsData
-    override var targetPlatform: String
-    override var externalSystemRunTasks: MutableList<String>
-    override var version: Int
-    override var flushNeeded: Boolean
+    var sourceRoots: MutableList<String>
+    var configFileItems: MutableList<ConfigFileItem>
+    var module: ModuleEntity.Builder
+    var useProjectSettings: Boolean
+    var implementedModuleNames: MutableList<String>
+    var dependsOnModuleNames: MutableList<String>
+    var additionalVisibleModuleNames: MutableSet<String>
+    var productionOutputPath: String
+    var testOutputPath: String
+    var sourceSetNames: MutableList<String>
+    var isTestModule: Boolean
+    var externalProjectId: String
+    var isHmppEnabled: Boolean
+    var pureKotlinSourceFolders: MutableList<String>
+    var kind: KotlinModuleKind
+    var compilerArguments: String
+    var compilerSettings: CompilerSettingsData
+    var targetPlatform: String
+    var externalSystemRunTasks: MutableList<String>
+    var version: Int
+    var flushNeeded: Boolean
   }
 
   companion object : EntityType<KotlinSettingsEntity, Builder>(ModuleSettingsBase) {
@@ -111,7 +111,7 @@ interface KotlinSettingsEntity : ModuleSettingsBase {
       flushNeeded: Boolean,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): KotlinSettingsEntity {
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.moduleId = moduleId
@@ -152,8 +152,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(KotlinSettingsEntity.Builder::class.java, entity, modification)
 }
 
-var ModuleEntity.Builder.kotlinSettings: @Child List<KotlinSettingsEntity>
-  by WorkspaceEntity.extension()
+var ModuleEntity.Builder.kotlinSettings: @Child List<KotlinSettingsEntity.Builder>
+  by WorkspaceEntity.extensionBuilder(KotlinSettingsEntity::class.java)
 //endregion
 
 

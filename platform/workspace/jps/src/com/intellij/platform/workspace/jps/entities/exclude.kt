@@ -19,9 +19,9 @@ interface ExcludeUrlEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ExcludeUrlEntity, WorkspaceEntity.Builder<ExcludeUrlEntity> {
+  interface Builder : WorkspaceEntity.Builder<ExcludeUrlEntity> {
     override var entitySource: EntitySource
-    override var url: VirtualFileUrl
+    var url: VirtualFileUrl
   }
 
   companion object : EntityType<ExcludeUrlEntity, Builder>() {
@@ -32,7 +32,7 @@ interface ExcludeUrlEntity : WorkspaceEntity {
       url: VirtualFileUrl,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ExcludeUrlEntity {
+    ): Builder {
       val builder = builder()
       builder.url = url
       builder.entitySource = entitySource
@@ -51,8 +51,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ExcludeUrlEntity.Builder::class.java, entity, modification)
 }
 
-var ExcludeUrlEntity.Builder.contentRoot: ContentRootEntity?
-  by WorkspaceEntity.extension()
-var ExcludeUrlEntity.Builder.library: LibraryEntity?
-  by WorkspaceEntity.extension()
+var ExcludeUrlEntity.Builder.contentRoot: ContentRootEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(ContentRootEntity::class.java)
+var ExcludeUrlEntity.Builder.library: LibraryEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(LibraryEntity::class.java)
 //endregion

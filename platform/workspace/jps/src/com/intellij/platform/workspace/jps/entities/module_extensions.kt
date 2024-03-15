@@ -30,11 +30,11 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ModuleCustomImlDataEntity, WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
+  interface Builder : WorkspaceEntity.Builder<ModuleCustomImlDataEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var rootManagerTagCustomData: String?
-    override var customModuleOptions: Map<String, String>
+    var module: ModuleEntity.Builder
+    var rootManagerTagCustomData: String?
+    var customModuleOptions: Map<String, String>
   }
 
   companion object : EntityType<ModuleCustomImlDataEntity, Builder>() {
@@ -45,7 +45,7 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
       customModuleOptions: Map<String, String>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ModuleCustomImlDataEntity {
+    ): Builder {
       val builder = builder()
       builder.customModuleOptions = customModuleOptions
       builder.entitySource = entitySource
@@ -82,10 +82,10 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ModuleGroupPathEntity, WorkspaceEntity.Builder<ModuleGroupPathEntity> {
+  interface Builder : WorkspaceEntity.Builder<ModuleGroupPathEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var path: MutableList<String>
+    var module: ModuleEntity.Builder
+    var path: MutableList<String>
   }
 
   companion object : EntityType<ModuleGroupPathEntity, Builder>() {
@@ -96,7 +96,7 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
       path: List<String>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ModuleGroupPathEntity {
+    ): Builder {
       val builder = builder()
       builder.path = path.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -138,16 +138,16 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ExternalSystemModuleOptionsEntity, WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity> {
+  interface Builder : WorkspaceEntity.Builder<ExternalSystemModuleOptionsEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var externalSystem: String?
-    override var externalSystemModuleVersion: String?
-    override var linkedProjectPath: String?
-    override var linkedProjectId: String?
-    override var rootProjectPath: String?
-    override var externalSystemModuleGroup: String?
-    override var externalSystemModuleType: String?
+    var module: ModuleEntity.Builder
+    var externalSystem: String?
+    var externalSystemModuleVersion: String?
+    var linkedProjectPath: String?
+    var linkedProjectId: String?
+    var rootProjectPath: String?
+    var externalSystemModuleGroup: String?
+    var externalSystemModuleType: String?
   }
 
   companion object : EntityType<ExternalSystemModuleOptionsEntity, Builder>() {
@@ -157,7 +157,7 @@ interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ExternalSystemModuleOptionsEntity {
+    ): Builder {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -191,10 +191,10 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : TestModulePropertiesEntity, WorkspaceEntity.Builder<TestModulePropertiesEntity> {
+  interface Builder : WorkspaceEntity.Builder<TestModulePropertiesEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var productionModuleId: ModuleId
+    var module: ModuleEntity.Builder
+    var productionModuleId: ModuleId
   }
 
   companion object : EntityType<TestModulePropertiesEntity, Builder>() {
@@ -205,7 +205,7 @@ interface TestModulePropertiesEntity : WorkspaceEntity {
       productionModuleId: ModuleId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): TestModulePropertiesEntity {
+    ): Builder {
       val builder = builder()
       builder.productionModuleId = productionModuleId
       builder.entitySource = entitySource

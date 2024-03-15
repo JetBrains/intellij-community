@@ -29,13 +29,13 @@ interface ContentRootEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ContentRootEntity, WorkspaceEntity.Builder<ContentRootEntity> {
+  interface Builder : WorkspaceEntity.Builder<ContentRootEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var url: VirtualFileUrl
-    override var excludedPatterns: MutableList<String>
-    override var sourceRoots: List<SourceRootEntity>
-    override var excludedUrls: List<ExcludeUrlEntity>
+    var module: ModuleEntity.Builder
+    var url: VirtualFileUrl
+    var excludedPatterns: MutableList<String>
+    var sourceRoots: List<SourceRootEntity.Builder>
+    var excludedUrls: List<ExcludeUrlEntity.Builder>
   }
 
   companion object : EntityType<ContentRootEntity, Builder>() {
@@ -47,7 +47,7 @@ interface ContentRootEntity : WorkspaceEntity {
       excludedPatterns: List<String>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ContentRootEntity {
+    ): Builder {
       val builder = builder()
       builder.url = url
       builder.excludedPatterns = excludedPatterns.toMutableWorkspaceList()
@@ -68,10 +68,10 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ContentRootEntity.Builder::class.java, entity, modification)
 }
 
-var ContentRootEntity.Builder.excludeUrlOrder: @Child ExcludeUrlOrderEntity?
-  by WorkspaceEntity.extension()
-var ContentRootEntity.Builder.sourceRootOrder: @Child SourceRootOrderEntity?
-  by WorkspaceEntity.extension()
+var ContentRootEntity.Builder.excludeUrlOrder: @Child ExcludeUrlOrderEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(ExcludeUrlOrderEntity::class.java)
+var ContentRootEntity.Builder.sourceRootOrder: @Child SourceRootOrderEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(SourceRootOrderEntity::class.java)
 //endregion
 
 val ExcludeUrlEntity.contentRoot: ContentRootEntity? by WorkspaceEntity.extension()
@@ -91,11 +91,11 @@ interface SourceRootEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SourceRootEntity, WorkspaceEntity.Builder<SourceRootEntity> {
+  interface Builder : WorkspaceEntity.Builder<SourceRootEntity> {
     override var entitySource: EntitySource
-    override var contentRoot: ContentRootEntity
-    override var url: VirtualFileUrl
-    override var rootTypeId: SourceRootTypeId
+    var contentRoot: ContentRootEntity.Builder
+    var url: VirtualFileUrl
+    var rootTypeId: SourceRootTypeId
   }
 
   companion object : EntityType<SourceRootEntity, Builder>() {
@@ -107,7 +107,7 @@ interface SourceRootEntity : WorkspaceEntity {
       rootTypeId: SourceRootTypeId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SourceRootEntity {
+    ): Builder {
       val builder = builder()
       builder.url = url
       builder.rootTypeId = rootTypeId
@@ -128,6 +128,6 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(SourceRootEntity.Builder::class.java, entity, modification)
 }
 
-var SourceRootEntity.Builder.customSourceRootProperties: @Child CustomSourceRootPropertiesEntity?
-  by WorkspaceEntity.extension()
+var SourceRootEntity.Builder.customSourceRootProperties: @Child CustomSourceRootPropertiesEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(CustomSourceRootPropertiesEntity::class.java)
 //endregion

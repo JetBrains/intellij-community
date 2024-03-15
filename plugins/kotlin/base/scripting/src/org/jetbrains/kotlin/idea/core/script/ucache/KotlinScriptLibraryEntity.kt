@@ -49,12 +49,12 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : KotlinScriptLibraryEntity, WorkspaceEntity.Builder<KotlinScriptLibraryEntity> {
+  interface Builder : WorkspaceEntity.Builder<KotlinScriptLibraryEntity> {
     override var entitySource: EntitySource
-    override var name: String
-    override var roots: MutableList<KotlinScriptLibraryRoot>
-    override var indexSourceRoots: Boolean
-    override var usedInScripts: MutableSet<KotlinScriptId>
+    var name: String
+    var roots: MutableList<KotlinScriptLibraryRoot>
+    var indexSourceRoots: Boolean
+    var usedInScripts: MutableSet<KotlinScriptId>
   }
 
   companion object : EntityType<KotlinScriptLibraryEntity, Builder>() {
@@ -68,7 +68,7 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
       usedInScripts: Set<KotlinScriptId>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): KotlinScriptLibraryEntity {
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.roots = roots.toMutableWorkspaceList()

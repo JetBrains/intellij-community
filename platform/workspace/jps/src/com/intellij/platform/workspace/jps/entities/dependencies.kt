@@ -32,13 +32,13 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : LibraryEntity, WorkspaceEntity.Builder<LibraryEntity> {
+  interface Builder : WorkspaceEntity.Builder<LibraryEntity> {
     override var entitySource: EntitySource
-    override var name: String
-    override var tableId: LibraryTableId
-    override var typeId: LibraryTypeId?
-    override var roots: MutableList<LibraryRoot>
-    override var excludedRoots: List<ExcludeUrlEntity>
+    var name: String
+    var tableId: LibraryTableId
+    var typeId: LibraryTypeId?
+    var roots: MutableList<LibraryRoot>
+    var excludedRoots: List<ExcludeUrlEntity.Builder>
   }
 
   companion object : EntityType<LibraryEntity, Builder>() {
@@ -51,7 +51,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
       roots: List<LibraryRoot>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): LibraryEntity {
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.tableId = tableId
@@ -73,8 +73,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(LibraryEntity.Builder::class.java, entity, modification)
 }
 
-var LibraryEntity.Builder.libraryProperties: @Child LibraryPropertiesEntity?
-  by WorkspaceEntity.extension()
+var LibraryEntity.Builder.libraryProperties: @Child LibraryPropertiesEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(LibraryPropertiesEntity::class.java)
 //endregion
 
 val ExcludeUrlEntity.library: LibraryEntity? by WorkspaceEntity.extension()

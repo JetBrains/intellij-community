@@ -334,7 +334,7 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return KotlinScriptLibraryEntity(name, roots, indexSourceRoots, usedInScripts, entitySource) {
     }
   }

@@ -22,10 +22,10 @@ interface FacetsOrderEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : FacetsOrderEntity, WorkspaceEntity.Builder<FacetsOrderEntity> {
+  interface Builder : WorkspaceEntity.Builder<FacetsOrderEntity> {
     override var entitySource: EntitySource
-    override var orderOfFacets: MutableList<String>
-    override var moduleEntity: ModuleEntity
+    var orderOfFacets: MutableList<String>
+    var moduleEntity: ModuleEntity.Builder
   }
 
   companion object : EntityType<FacetsOrderEntity, Builder>() {
@@ -36,7 +36,7 @@ interface FacetsOrderEntity : WorkspaceEntity {
       orderOfFacets: List<String>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): FacetsOrderEntity {
+    ): Builder {
       val builder = builder()
       builder.orderOfFacets = orderOfFacets.toMutableWorkspaceList()
       builder.entitySource = entitySource

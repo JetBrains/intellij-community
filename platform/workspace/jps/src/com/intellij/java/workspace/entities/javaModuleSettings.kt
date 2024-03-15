@@ -25,15 +25,15 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : JavaModuleSettingsEntity, WorkspaceEntity.Builder<JavaModuleSettingsEntity> {
+  interface Builder : WorkspaceEntity.Builder<JavaModuleSettingsEntity> {
     override var entitySource: EntitySource
-    override var module: ModuleEntity
-    override var inheritedCompilerOutput: Boolean
-    override var excludeOutput: Boolean
-    override var compilerOutput: VirtualFileUrl?
-    override var compilerOutputForTests: VirtualFileUrl?
-    override var languageLevelId: String?
-    override var manifestAttributes: Map<String, String>
+    var module: ModuleEntity.Builder
+    var inheritedCompilerOutput: Boolean
+    var excludeOutput: Boolean
+    var compilerOutput: VirtualFileUrl?
+    var compilerOutputForTests: VirtualFileUrl?
+    var languageLevelId: String?
+    var manifestAttributes: Map<String, String>
   }
 
   companion object : EntityType<JavaModuleSettingsEntity, Builder>() {
@@ -45,7 +45,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
       excludeOutput: Boolean,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): JavaModuleSettingsEntity {
+    ): Builder {
       val builder = builder()
       builder.inheritedCompilerOutput = inheritedCompilerOutput
       builder.excludeOutput = excludeOutput
@@ -66,8 +66,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(JavaModuleSettingsEntity.Builder::class.java, entity, modification)
 }
 
-var ModuleEntity.Builder.javaSettings: @Child JavaModuleSettingsEntity?
-  by WorkspaceEntity.extension()
+var ModuleEntity.Builder.javaSettings: @Child JavaModuleSettingsEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(JavaModuleSettingsEntity::class.java)
 //endregion
 
 val ModuleEntity.javaSettings: @Child JavaModuleSettingsEntity?

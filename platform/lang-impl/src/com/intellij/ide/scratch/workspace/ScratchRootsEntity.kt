@@ -14,9 +14,9 @@ interface ScratchRootsEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ScratchRootsEntity, WorkspaceEntity.Builder<ScratchRootsEntity> {
+  interface Builder : WorkspaceEntity.Builder<ScratchRootsEntity> {
     override var entitySource: EntitySource
-    override var roots: MutableList<VirtualFileUrl>
+    var roots: MutableList<VirtualFileUrl>
   }
 
   companion object : EntityType<ScratchRootsEntity, Builder>() {
@@ -27,7 +27,7 @@ interface ScratchRootsEntity : WorkspaceEntity {
       roots: List<VirtualFileUrl>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ScratchRootsEntity {
+    ): Builder {
       val builder = builder()
       builder.roots = roots.toMutableWorkspaceList()
       builder.entitySource = entitySource

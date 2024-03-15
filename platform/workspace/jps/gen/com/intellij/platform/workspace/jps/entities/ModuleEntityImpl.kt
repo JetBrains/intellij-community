@@ -27,6 +27,7 @@ import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableInde
 import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.annotations.NonNls
 
@@ -216,16 +217,18 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
 
     // List of non-abstract referenced types
     var _contentRoots: List<ContentRootEntity>? = emptyList()
-    override var contentRoots: List<ContentRootEntity>
+    override var contentRoots: List<ContentRootEntity.Builder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(
-            true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity> ?: emptyList())
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<ContentRootEntity.Builder>) +
+          (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity.Builder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity.Builder> ?: emptyList()
         }
       }
       set(value) {
@@ -261,17 +264,18 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
 
     // List of non-abstract referenced types
     var _facets: List<FacetEntity>? = emptyList()
-    override var facets: List<FacetEntity>
+    override var facets: List<FacetEntity.Builder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
-                                                                                                                            FACETS_CONNECTION_ID)] as? List<FacetEntity>
-                                                                                                ?: emptyList())
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<FacetEntity.Builder>) +
+          (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntity.Builder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntity> ?: emptyList()
+          this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntity.Builder> ?: emptyList()
         }
       }
       set(value) {
@@ -504,7 +508,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ModuleEntity(name, dependencies, entitySource) {
       this.type = this@ModuleEntityData.type
     }

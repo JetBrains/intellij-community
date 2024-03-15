@@ -27,14 +27,14 @@ interface FacetEntity: ModuleSettingsBase {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : FacetEntity, ModuleSettingsBase.Builder<FacetEntity>, WorkspaceEntity.Builder<FacetEntity> {
+  interface Builder : WorkspaceEntity.Builder<FacetEntity>, ModuleSettingsBase.Builder<FacetEntity> {
     override var entitySource: EntitySource
     override var name: String
     override var moduleId: ModuleId
-    override var module: ModuleEntity
-    override var typeId: FacetEntityTypeId
-    override var configurationXmlTag: String?
-    override var underlyingFacet: FacetEntity?
+    var module: ModuleEntity.Builder
+    var typeId: FacetEntityTypeId
+    var configurationXmlTag: String?
+    var underlyingFacet: FacetEntity.Builder?
   }
 
   companion object : EntityType<FacetEntity, Builder>(ModuleSettingsBase) {
@@ -47,7 +47,7 @@ interface FacetEntity: ModuleSettingsBase {
       typeId: FacetEntityTypeId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): FacetEntity {
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.moduleId = moduleId
@@ -69,8 +69,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(FacetEntity.Builder::class.java, entity, modification)
 }
 
-var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity>
-  by WorkspaceEntity.extension()
+var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity.Builder>
+  by WorkspaceEntity.extensionBuilder(FacetEntity::class.java)
 //endregion
 
 val FacetEntity.childrenFacets: List<@Child FacetEntity>

@@ -2,14 +2,9 @@
 package com.intellij.java.workspace.entities
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.annotations.Child
 
 interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
   val sourceRoot: SourceRootEntity
@@ -19,11 +14,11 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : JavaSourceRootPropertiesEntity, WorkspaceEntity.Builder<JavaSourceRootPropertiesEntity> {
+  interface Builder : WorkspaceEntity.Builder<JavaSourceRootPropertiesEntity> {
     override var entitySource: EntitySource
-    override var sourceRoot: SourceRootEntity
-    override var generated: Boolean
-    override var packagePrefix: String
+    var sourceRoot: SourceRootEntity.Builder
+    var generated: Boolean
+    var packagePrefix: String
   }
 
   companion object : EntityType<JavaSourceRootPropertiesEntity, Builder>() {
@@ -35,7 +30,7 @@ interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
       packagePrefix: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): JavaSourceRootPropertiesEntity {
+    ): Builder {
       val builder = builder()
       builder.generated = generated
       builder.packagePrefix = packagePrefix
@@ -56,8 +51,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(JavaSourceRootPropertiesEntity.Builder::class.java, entity, modification)
 }
 
-var SourceRootEntity.Builder.javaSourceRoots: @Child List<JavaSourceRootPropertiesEntity>
-  by WorkspaceEntity.extension()
+var SourceRootEntity.Builder.javaSourceRoots: @Child List<JavaSourceRootPropertiesEntity.Builder>
+  by WorkspaceEntity.extensionBuilder(JavaSourceRootPropertiesEntity::class.java)
 //endregion
 
 val SourceRootEntity.javaSourceRoots: List<@Child JavaSourceRootPropertiesEntity>
@@ -71,11 +66,11 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : JavaResourceRootPropertiesEntity, WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity> {
+  interface Builder : WorkspaceEntity.Builder<JavaResourceRootPropertiesEntity> {
     override var entitySource: EntitySource
-    override var sourceRoot: SourceRootEntity
-    override var generated: Boolean
-    override var relativeOutputPath: String
+    var sourceRoot: SourceRootEntity.Builder
+    var generated: Boolean
+    var relativeOutputPath: String
   }
 
   companion object : EntityType<JavaResourceRootPropertiesEntity, Builder>() {
@@ -87,7 +82,7 @@ interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
       relativeOutputPath: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): JavaResourceRootPropertiesEntity {
+    ): Builder {
       val builder = builder()
       builder.generated = generated
       builder.relativeOutputPath = relativeOutputPath
@@ -108,8 +103,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(JavaResourceRootPropertiesEntity.Builder::class.java, entity, modification)
 }
 
-var SourceRootEntity.Builder.javaResourceRoots: @Child List<JavaResourceRootPropertiesEntity>
-  by WorkspaceEntity.extension()
+var SourceRootEntity.Builder.javaResourceRoots: @Child List<JavaResourceRootPropertiesEntity.Builder>
+  by WorkspaceEntity.extensionBuilder(JavaResourceRootPropertiesEntity::class.java)
 //endregion
 
 val SourceRootEntity.javaResourceRoots: List<@Child JavaResourceRootPropertiesEntity>

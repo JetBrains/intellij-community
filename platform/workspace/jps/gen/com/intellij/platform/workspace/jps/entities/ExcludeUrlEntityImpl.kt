@@ -160,7 +160,7 @@ class ExcludeUrlEntityData : WorkspaceEntityData<ExcludeUrlEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
     return ExcludeUrlEntity(url, entitySource) {
     }
   }

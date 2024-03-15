@@ -16,9 +16,9 @@ interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : MavenProjectsTreeSettingsEntity, WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity> {
+  interface Builder : WorkspaceEntity.Builder<MavenProjectsTreeSettingsEntity> {
     override var entitySource: EntitySource
-    override var importedFilePaths: MutableList<String>
+    var importedFilePaths: MutableList<String>
   }
 
   companion object : EntityType<MavenProjectsTreeSettingsEntity, Builder>() {
@@ -29,7 +29,7 @@ interface MavenProjectsTreeSettingsEntity: WorkspaceEntity {
       importedFilePaths: List<String>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): MavenProjectsTreeSettingsEntity {
+    ): Builder {
       val builder = builder()
       builder.importedFilePaths = importedFilePaths.toMutableWorkspaceList()
       builder.entitySource = entitySource

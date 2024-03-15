@@ -25,14 +25,14 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : SdkEntity, WorkspaceEntity.Builder<SdkEntity> {
+  interface Builder : WorkspaceEntity.Builder<SdkEntity> {
     override var entitySource: EntitySource
-    override var name: String
-    override var type: String
-    override var version: String?
-    override var homePath: VirtualFileUrl?
-    override var roots: MutableList<SdkRoot>
-    override var additionalData: String
+    var name: String
+    var type: String
+    var version: String?
+    var homePath: VirtualFileUrl?
+    var roots: MutableList<SdkRoot>
+    var additionalData: String
   }
 
   companion object : EntityType<SdkEntity, Builder>() {
@@ -46,7 +46,7 @@ interface SdkEntity: WorkspaceEntityWithSymbolicId {
       additionalData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): SdkEntity {
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.type = type

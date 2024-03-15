@@ -5,11 +5,6 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.NonNls
@@ -34,13 +29,13 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : ModuleEntity, WorkspaceEntity.Builder<ModuleEntity> {
+  interface Builder : WorkspaceEntity.Builder<ModuleEntity> {
     override var entitySource: EntitySource
-    override var name: String
-    override var type: ModuleTypeId?
-    override var dependencies: MutableList<ModuleDependencyItem>
-    override var contentRoots: List<ContentRootEntity>
-    override var facets: List<FacetEntity>
+    var name: String
+    var type: ModuleTypeId?
+    var dependencies: MutableList<ModuleDependencyItem>
+    var contentRoots: List<ContentRootEntity.Builder>
+    var facets: List<FacetEntity.Builder>
   }
 
   companion object : EntityType<ModuleEntity, Builder>() {
@@ -52,7 +47,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
       dependencies: List<ModuleDependencyItem>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ModuleEntity {
+    ): Builder {
       val builder = builder()
       builder.name = name
       builder.dependencies = dependencies.toMutableWorkspaceList()
@@ -73,16 +68,16 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ModuleEntity.Builder::class.java, entity, modification)
 }
 
-var ModuleEntity.Builder.customImlData: @Child ModuleCustomImlDataEntity?
-  by WorkspaceEntity.extension()
-var ModuleEntity.Builder.exModuleOptions: @Child ExternalSystemModuleOptionsEntity?
-  by WorkspaceEntity.extension()
-var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity?
-  by WorkspaceEntity.extension()
-var ModuleEntity.Builder.groupPath: @Child ModuleGroupPathEntity?
-  by WorkspaceEntity.extension()
-var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity>
-  by WorkspaceEntity.extension()
-var ModuleEntity.Builder.testProperties: @Child TestModulePropertiesEntity?
-  by WorkspaceEntity.extension()
+var ModuleEntity.Builder.customImlData: @Child ModuleCustomImlDataEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(ModuleCustomImlDataEntity::class.java)
+var ModuleEntity.Builder.exModuleOptions: @Child ExternalSystemModuleOptionsEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(ExternalSystemModuleOptionsEntity::class.java)
+var ModuleEntity.Builder.facetOrder: @Child FacetsOrderEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(FacetsOrderEntity::class.java)
+var ModuleEntity.Builder.groupPath: @Child ModuleGroupPathEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(ModuleGroupPathEntity::class.java)
+var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity.Builder>
+  by WorkspaceEntity.extensionBuilder(SourceRootEntity::class.java)
+var ModuleEntity.Builder.testProperties: @Child TestModulePropertiesEntity.Builder?
+  by WorkspaceEntity.extensionBuilder(TestModulePropertiesEntity::class.java)
 //endregion

@@ -27,10 +27,10 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
 
   //region generated code
   @GeneratedCodeApiVersion(2)
-  interface Builder : KotlinScriptEntity, WorkspaceEntity.Builder<KotlinScriptEntity> {
+  interface Builder : WorkspaceEntity.Builder<KotlinScriptEntity> {
     override var entitySource: EntitySource
-    override var path: String
-    override var dependencies: MutableSet<KotlinScriptLibraryId>
+    var path: String
+    var dependencies: MutableSet<KotlinScriptLibraryId>
   }
 
   companion object : EntityType<KotlinScriptEntity, Builder>() {
@@ -42,7 +42,7 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
       dependencies: Set<KotlinScriptLibraryId>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): KotlinScriptEntity {
+    ): Builder {
       val builder = builder()
       builder.path = path
       builder.dependencies = dependencies.toMutableWorkspaceSet()
