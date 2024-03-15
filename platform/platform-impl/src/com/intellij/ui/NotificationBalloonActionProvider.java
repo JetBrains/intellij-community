@@ -76,8 +76,13 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
         })) {
         @Override
         protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
-          icon = paintHover(g, icon, myButton, CloseHoverBounds.x, CloseHoverBounds.y);
-          icon.paintIcon(this, g, CloseHoverBounds.x, CloseHoverBounds.y);
+          if (ExperimentalUI.isNewUI()) {
+            icon = paintHover(g, icon, myButton, CloseHoverBounds.x, CloseHoverBounds.y);
+            icon.paintIcon(this, g, CloseHoverBounds.x, CloseHoverBounds.y);
+          }
+          else {
+            super.paintIcon(g, icon);
+          }
         }
 
         @Override
