@@ -72,10 +72,6 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
             } else if (isNullabilityFlexibleType(lower, upper)) {
                 printKtType(lower)
                 text("!")
-            } else {
-                printKtType(lower)
-                text("..")
-                printKtType(upper)
             }
         }
         is KtTypeParameterType -> {
