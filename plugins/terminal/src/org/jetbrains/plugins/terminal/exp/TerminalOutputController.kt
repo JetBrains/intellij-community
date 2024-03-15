@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -69,7 +68,7 @@ class TerminalOutputController(
     runningCommandContext = RunningCommandContext(command, prompt)
 
     // Create a block forcefully in a timeout if there are no content updates. Command can output nothing for some time.
-    val createBlockRequest = {
+    val createBlockRequest: () -> Unit = {
       doWithScrollingAware {
         val context = runningCommandContext ?: error("No running command context")
         createNewBlock(context)
@@ -105,10 +104,12 @@ class TerminalOutputController(
   }
 
   fun finishCommandBlock(exitCode: Int) {
-    updateEditorContent(scraper.scrapeOutput())
+    val output = scraper.scrapeOutput()
     invokeLater {
+      val block = doWithScrollingAware {
+        updateCommandOutput(output)
+      }
       disposeRunningCommandListeners()
-      val block = outputModel.getActiveBlock() ?: error("No active block")
       val document = editor.document
       val lastLineInd = document.getLineNumber(block.endOffset)
       val lastLineStart = document.getLineStartOffset(lastLineInd)
@@ -164,24 +165,19 @@ class TerminalOutputController(
   private fun setupContentListener(disposable: Disposable) {
     scraper.addListener(object : ShellCommandOutputListener {
       override fun commandOutputChanged(output: StyledCommandOutput) {
-        updateEditorContent(output)
+        invokeLater {
+          if (!editor.isDisposed && runningCommandContext != null) {
+            doWithScrollingAware {
+              updateCommandOutput(output)
+            }
+          }
+        }
       }
     }, disposable, useExtendedDelayOnce = true)
   }
 
-  private fun updateEditorContent(output: StyledCommandOutput) {
-    // Can not use invokeAndWait here because deadlock may happen. TerminalTextBuffer is locked at this place,
-    // and EDT can be frozen now trying to acquire this lock
-    invokeLater(ModalityState.any()) {
-      if (!editor.isDisposed && runningCommandContext != null) {
-        doWithScrollingAware {
-          doUpdateEditorContent(output)
-        }
-      }
-    }
-  }
-
-  private fun doUpdateEditorContent(output: StyledCommandOutput) {
+  @RequiresEdt(generateAssertion = false)
+  private fun updateCommandOutput(output: StyledCommandOutput): CommandBlock {
     val activeBlock = outputModel.getActiveBlock() ?: run {
       // If there is no active block, it means that it is the first content update. Create the new block here.
       blockCreationAlarm.cancelAllRequests()
@@ -189,6 +185,7 @@ class TerminalOutputController(
       createNewBlock(context)
     }
     updateBlock(activeBlock, toHighlightedCommandOutput(output, baseOffset = activeBlock.outputStartOffset))
+    return activeBlock
   }
 
   private fun createNewBlock(context: RunningCommandContext): CommandBlock {
@@ -248,10 +245,11 @@ class TerminalOutputController(
   /**
    * Scroll to bottom if we were at the bottom before executing the [action]
    */
-  private fun doWithScrollingAware(action: () -> Unit) {
+  @RequiresEdt(generateAssertion = false)
+  private fun <T> doWithScrollingAware(action: () -> T): T {
     val wasAtBottom = editor.scrollingModel.visibleArea.let { it.y + it.height } == editor.contentComponent.height
     try {
-      action()
+      return action()
     }
     finally {
       if (wasAtBottom) {
