@@ -71,39 +71,19 @@ internal suspend fun startSystemHealthMonitor() {
   startDiskSpaceMonitoring()
 }
 
-private interface LibC : Library {
-  interface Handler : Callback {
-    fun callback(sig: Int)
-
-    companion object {
-      // ref: java.lang.Terminator
-      @JvmField
-      val TERMINATE: Handler = object : Handler {
-        override fun callback(sig: Int) = exitProcess(128 + sig)
-      }
-    }
-  }
-
-  fun sigaction(sig: Int, action: Pointer?, oldAction: Pointer?): Int
-  fun signal(sig: Int, handler: Handler?): Pointer?
-
-  companion object {
-    @JvmField
-    val SIG_IGN = Pointer(1L)
-  }
-}
-
 private val LOG = logger<Application>()
 
-private class MyNotification(content: @NlsContexts.NotificationContent String,
-                             type: NotificationType,
-                             displayId: String?) : Notification(NOTIFICATION_GROUP_ID, content, type), NotificationFullContent {
+private const val NOTIFICATION_GROUP_ID = "System Health"
+
+private class MyNotification(
+  content: @NlsContexts.NotificationContent String,
+  type: NotificationType,
+  displayId: String?
+) : Notification(NOTIFICATION_GROUP_ID, content, type), NotificationFullContent {
   init {
     displayId?.let { setDisplayId(it) }
   }
 }
-
-private const val NOTIFICATION_GROUP_ID = "System Health"
 
 private fun checkInstallationIntegrity() {
   if (!SystemInfoRt.isUnix || SystemInfoRt.isMac) {
@@ -273,8 +253,8 @@ private fun checkSignalBlocking() {
   }
 
   try {
-    val sa = Memory(256)
     val libC = Native.load("c", LibC::class.java)
+    val sa = Memory(256)
     if (libC.sigaction(UnixProcessManager.SIGINT, Pointer.NULL, sa) == 0 && LibC.SIG_IGN == sa.getPointer(0)) {
       libC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE)
       LOG.info("restored ignored INT handler")
@@ -282,6 +262,28 @@ private fun checkSignalBlocking() {
   }
   catch (e: Throwable) {
     LOG.warn(e)
+  }
+}
+
+private interface LibC : Library {
+  interface Handler : Callback {
+    fun callback(sig: Int)
+
+    companion object {
+      /** ref: [java.lang.Terminator] */
+      @JvmField
+      val TERMINATE: Handler = object : Handler {
+        override fun callback(sig: Int) = exitProcess(128 + sig)
+      }
+    }
+  }
+
+  fun sigaction(sig: Int, action: Pointer?, oldAction: Pointer?): Int
+  fun signal(sig: Int, handler: Handler?): Pointer?
+
+  companion object {
+    @JvmField
+    val SIG_IGN = Pointer(1L)
   }
 }
 
@@ -325,10 +327,12 @@ private fun checkAncientOs() {
   }
 }
 
-private fun showNotification(key: @PropertyKey(resourceBundle = "messages.IdeBundle") String?,
-                             suppressable: Boolean,
-                             action: NotificationAction?,
-                             vararg params: Any) {
+private fun showNotification(
+  key: @PropertyKey(resourceBundle = "messages.IdeBundle") String?,
+  suppressable: Boolean,
+  action: NotificationAction?,
+  vararg params: Any
+) {
   if (suppressable) {
     val ignored = PropertiesComponent.getInstance().isValueSet("ignore.$key")
     LOG.warn("issue detected: ${key}${if (ignored) " (ignored)" else ""}")
