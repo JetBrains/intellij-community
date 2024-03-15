@@ -224,7 +224,7 @@ class CtrlMouseHandler2(
       DumbServiceImpl.getInstance(project).showDumbModeNotificationForFunctionalityWithCoalescing(
         CodeInsightBundle.message("notification.element.information.is.not.available.during.index.update"),
         DumbModeBlockedFunctionality.CtrlMouseHandler,
-        Pair(request.action, request.editor)
+        Pair(request.action.javaClass.name, request.editor.virtualFile?.path)
       )
       null
     }
