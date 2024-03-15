@@ -2,6 +2,7 @@
 package com.intellij.analysis.logging.resolve
 
 import com.intellij.codeInspection.logging.*
+import com.intellij.codeInspection.logging.PlaceholderLoggerType.*
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.model.psi.PsiSymbolReference
@@ -9,9 +10,7 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.codeInspection.logging.PlaceholderLoggerType.*
 import org.jetbrains.uast.*
 
 class JvmLoggerSymbolReferenceProvider : PsiSymbolReferenceProvider {
@@ -56,7 +55,7 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
 
   val loggerReferenceList = rangeWithParameterList.map { (range, parameter) ->
     if (range == null) return null
-    val alignedRange = range.shiftTextRange(offset)
+    val alignedRange = range.shiftRight(offset)
     val parameterPsi = parameter.sourcePsi ?: return null
     JvmLoggerArgumentSymbolReference(psiLiteralExpression, alignedRange, parameterPsi)
   }
@@ -71,8 +70,6 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
     else -> null
   }
 }
-
-private fun TextRange.shiftTextRange(shift: Int): TextRange = TextRange(this.startOffset + shift, this.endOffset + shift)
 
 private fun getOffsetInText(expression: PsiElement, value: String): Int? {
   val text = expression.text
