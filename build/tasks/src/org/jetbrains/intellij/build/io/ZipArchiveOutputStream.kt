@@ -482,7 +482,9 @@ internal class ZipArchiveOutputStream(
     // file name length
     buffer.putShort(headerOffset + 28, (name.size and 0xffff).toShort())
     // external file attributes
-    buffer.putInt(headerOffset + 38, 0x81a40000L.toInt())
+    val isDir = name.lastOrNull() == '/'.code.toByte()
+    val unixAttributes = if (isDir) 0x41ed0000L else 0x81a40000L
+    buffer.putInt(headerOffset + 38, unixAttributes.toInt())
     // relative offset of local file header
     buffer.putInt(headerOffset + 42, (offset and 0xffffffffL).toInt())
     // file name
