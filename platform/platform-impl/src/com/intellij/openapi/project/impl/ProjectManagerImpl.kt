@@ -395,7 +395,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
     app.runWriteAction {
       removeFromOpened(project)
-      @Suppress("GrazieInspection")
       if (project is ProjectImpl) {
         // ignore a dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
         project.disposeEarlyDisposable()
@@ -897,7 +896,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun checkExistingProjectOnOpen(projectToClose: Project, options: OpenProjectTask, projectDir: Path): Boolean {
     val isValidProject = ProjectUtilCore.isValidProjectPath(projectDir)
-    if (ProjectAttachProcessor.canAttachToProject() && !isDataSpell() && (!isValidProject || GeneralSettings.getInstance().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
+    if (ProjectAttachProcessor.canAttachToProject() &&
+        !isDataSpell() &&
+        (!isValidProject || GeneralSettings.getInstance().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
       when (withContext(Dispatchers.EDT) { ProjectUtil.confirmOpenOrAttachProject() }) {
         -1 -> {
           return true
@@ -916,7 +917,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     else {
       val mode = GeneralSettings.getInstance().confirmOpenNewProject
-      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH && attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, callback = options.callback)) {
+      if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH &&
+          attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, callback = options.callback)) {
         return true
       }
 
