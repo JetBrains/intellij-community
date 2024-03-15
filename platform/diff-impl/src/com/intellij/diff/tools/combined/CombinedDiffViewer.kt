@@ -153,20 +153,20 @@ class CombinedDiffViewer(
   }
 
   internal fun updateBlockContent(newContent: CombinedDiffBlockContent) {
-    val createDiffBlock = createDiffBlock(newContent)
-    createDiffBlock.updateBlockContent(newContent)
+    val newDiffBlock = createDiffBlock(newContent)
+    newDiffBlock.updateBlockContent(newContent)
     val newViewer = newContent.viewer
     configureEditorForCombinedDiff(newViewer)
     scrollSupport.setupEditorsScrollingListener(newViewer)
     installCombinedDiffViewer(newViewer, this)
 
     val blockId = newContent.blockId
-    diffBlocks[blockId] = createDiffBlock
+    diffBlocks[blockId] = newDiffBlock
     runPreservingViewportContent(scrollPane, blocksPanel) {
       diffViewers.remove(blockId)?.also(Disposer::dispose)
       diffViewers[blockId] = newViewer
-      blocksPanel.setContent(blockId, createDiffBlock.component)
-      createDiffBlock.component.validate()
+      blocksPanel.setContent(blockId, newDiffBlock.component)
+      newDiffBlock.component.validate()
       newViewer.init()
 
       updateDiffInfo(blockState.currentBlock)
