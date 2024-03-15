@@ -1,9 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
@@ -112,6 +109,9 @@ internal fun takeScreenshotOfAllWindowsBlocking(childFolder: String? = null) {
 }
 
 internal fun takeFullScreenshot(childFolder: String? = null): String {
+  // don't try to take a screenshot when IDE in a headless mode
+  if (ApplicationManager.getApplication().isHeadlessEnvironment) return ""
+
   var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
   screenshotPath = getNextFolder(screenshotPath)
   val screenshotPathWithFile = screenshotPath.resolve("full_screen.png")
@@ -120,6 +120,9 @@ internal fun takeFullScreenshot(childFolder: String? = null): String {
 }
 
 internal suspend fun takeScreenshotOfAllWindows(childFolder: String? = null) {
+  // don't try to take a screenshot when IDE in a headless mode
+  if (ApplicationManager.getApplication().isHeadlessEnvironment) return
+
   val projects = ProjectManager.getInstance().openProjects
   var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
   screenshotPath = getNextFolder(screenshotPath)
