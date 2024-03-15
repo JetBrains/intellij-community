@@ -1,15 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.highlighting
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang.highlighting;
 
-import com.intellij.testFramework.LightProjectDescriptor
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
-import org.jetbrains.plugins.groovy.lang.GroovyVersionBasedTest
-import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors;
+import org.jetbrains.plugins.groovy.lang.GroovyVersionBasedTest;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-@CompileStatic
-class GroovyPre30HighlightingTest extends GroovyVersionBasedTest {
+public class GroovyPre30HighlightingTest extends GroovyVersionBasedTest {
+  @Override
+  public final @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return GroovyProjectDescriptors.GROOVY_2_5_REAL_JDK;
+  }
 
-  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_5_REAL_JDK
-  final String basePath = TestUtils.testDataPath + 'highlighting/pre30/'
+  @Override
+  public final String getBasePath() {
+    return TestUtils.getTestDataPath() + "highlighting/pre30/";
+  }
 }

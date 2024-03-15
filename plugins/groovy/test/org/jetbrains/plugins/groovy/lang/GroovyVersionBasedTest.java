@@ -1,40 +1,37 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang;
 
-import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.util.HighlightingTest
+import org.jetbrains.plugins.groovy.LightGroovyTestCase;
+import org.jetbrains.plugins.groovy.util.HighlightingTest;
 
-@CompileStatic
-abstract class GroovyVersionBasedTest extends LightGroovyTestCase implements HighlightingTest {
+public abstract class GroovyVersionBasedTest extends LightGroovyTestCase implements HighlightingTest {
+  public void testIdentityOperators() { fileHighlightingTest(); }
 
-  void 'test identity operators'() { fileHighlightingTest() }
+  public void testElvisAssignment() { fileHighlightingTest(); }
 
-  void 'test elvis assignment'() { fileHighlightingTest() }
+  public void testSafeIndexAccess() { fileHighlightingTest(); }
 
-  void 'test safe index access'() { fileHighlightingTest() }
+  public void testNegatedIn() { fileHighlightingTest(); }
 
-  void 'test negated in'() { fileHighlightingTest() }
+  public void testNegatedInstanceof() { fileHighlightingTest(); }
 
-  void 'test negated instanceof'() { fileHighlightingTest() }
+  public void testMethodReference() { fileHighlightingTest(); }
 
-  void 'test method reference'() { fileHighlightingTest() }
+  public void testDoWhile() { fileHighlightingTest(); }
 
-  void 'test do while'() { fileHighlightingTest() }
+  public void testFor() { fileHighlightingTest(); }
 
-  void 'test for'() { fileHighlightingTest() }
+  public void testTryResources() { fileHighlightingTest(); }
 
-  void 'test try resources'() { fileHighlightingTest() }
+  public void testArrayInitializers() { fileHighlightingTest(); }
 
-  void 'test array initializers'() { fileHighlightingTest() }
+  public void testLambdas() { fileHighlightingTest(); }
 
-  void 'test lambdas'() { fileHighlightingTest() }
+  public void testAmbiguousCodeBlock() { fileHighlightingTest(); }
 
-  void 'test ambiguous code block'() { fileHighlightingTest() }
+  public void testTypeAnnotations() { fileHighlightingTest(); }
 
-  void 'test type annotations'() { fileHighlightingTest() }
+  public void testApplicationTupleInitializer() { fileHighlightingTest(); }
 
-  void 'test application tuple initializer'() { fileHighlightingTest() }
-
-  void 'test tuple multiple assignment'() { fileHighlightingTest() }
+  public void testTupleMultipleAssignment() { fileHighlightingTest(); }
 }
