@@ -287,8 +287,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                        boolean canRemove) {
     final VirtualFile file = position.getFile();
     final int line = position.getLine();
-    // FIXME[inline-bp]: it seems to work as good as editor.getCaretModel().getOffset() and in case of folding even better?
-    //                   think about it a bit more
     final int caretOffset = position.getOffset();
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
 
@@ -302,7 +300,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                               types.stream().flatMap(t -> breakpointManager.findBreakpointsAtLine(t, file, line).stream()),
                                                               variants.stream()).iterator(),
                                                             o ->
-                                                              // FIXME[inline-bp]: introduce HasHighlightRange interface?
                                                               o instanceof XLineBreakpoint b
                                                               ? b.getType().getHighlightRange(b)
                                                               : ((XLineBreakpointType.XLineBreakpointVariant)o).getHighlightRange());
@@ -322,7 +319,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         LOG.error("Unexpected breakpoint toggle state, any variant would be considered as the best one");
         return null;
       });
-      // FIXME[inline-bp]: review code below, I was able to loose something non-trivial there
     }
 
     for (XLineBreakpointType type : types) {
