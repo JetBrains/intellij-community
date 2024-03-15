@@ -3,6 +3,10 @@ package com.intellij.codeInspection.logging
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.logging.LoggingUtil.Companion
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.LOG_MATCHERS
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.countPlaceHolders
+import com.intellij.codeInspection.logging.LoggingUtil.Companion.isGuarded
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
@@ -12,10 +16,6 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.uast.UastHintedVisitorAdapter
-import com.intellij.codeInspection.logging.LoggingUtil.Companion
-import com.intellij.codeInspection.logging.LoggingUtil.Companion.LOG_MATCHERS
-import com.intellij.codeInspection.logging.LoggingUtil.Companion.countPlaceHolders
-import com.intellij.codeInspection.logging.LoggingUtil.Companion.isGuarded
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.generate.getUastElementFactory

@@ -12,13 +12,13 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 class LoggingUtil {
   companion object {
-    const val SLF4J_LOGGER = "org.slf4j.Logger"
+    internal const val SLF4J_LOGGER = "org.slf4j.Logger"
 
-    const val LOG4J_LOGGER = "org.apache.logging.log4j.Logger"
+    internal const val LOG4J_LOGGER = "org.apache.logging.log4j.Logger"
 
-    const val LOG4J_LOG_BUILDER = "org.apache.logging.log4j.LogBuilder"
+    internal const val LOG4J_LOG_BUILDER = "org.apache.logging.log4j.LogBuilder"
 
-    const val SLF4J_EVENT_BUILDER = "org.slf4j.spi.LoggingEventBuilder"
+    internal const val SLF4J_EVENT_BUILDER = "org.slf4j.spi.LoggingEventBuilder"
 
     private const val LEGACY_LOG4J_LOGGER = "org.apache.log4j.Logger"
     private const val LEGACY_CATEGORY_LOGGER = "org.apache.log4j.Category"
@@ -27,7 +27,7 @@ class LoggingUtil {
 
     internal const val AKKA_LOGGING = "akka.event.LoggingAdapter"
 
-    const val IDEA_LOGGER = "com.intellij.openapi.diagnostic.Logger"
+    internal const val IDEA_LOGGER = "com.intellij.openapi.diagnostic.Logger"
 
     private val LOGGER_CLASSES = setOf(SLF4J_LOGGER, LOG4J_LOGGER)
     private val LEGACY_LOGGER_CLASSES = setOf(LEGACY_LOG4J_LOGGER, LEGACY_CATEGORY_LOGGER,
@@ -39,29 +39,29 @@ class LoggingUtil {
     private val LOG4J_BUILDER_MATCHER: CallMatcher.Simple = CallMatcher.instanceCall(LOG4J_LOG_BUILDER, "log")
     private val SLF4J_BUILDER_MATCHER: CallMatcher.Simple = CallMatcher.instanceCall(SLF4J_EVENT_BUILDER, "log")
 
-    val LOG_MATCHERS: CallMatcher = CallMatcher.anyOf(
+    internal val LOG_MATCHERS: CallMatcher = CallMatcher.anyOf(
       SLF4J_MATCHER,
       LOG4J_MATCHER,
       LOG4J_BUILDER_MATCHER,
       SLF4J_BUILDER_MATCHER,
     )
 
-    val LOG_MATCHERS_WITHOUT_BUILDERS: CallMatcher = CallMatcher.anyOf(
+    internal val LOG_MATCHERS_WITHOUT_BUILDERS: CallMatcher = CallMatcher.anyOf(
       SLF4J_MATCHER,
       LOG4J_MATCHER,
     )
 
     internal val FORMATTED_LOG4J: CallMatcher = CallMatcher.staticCall("org.apache.logging.log4j.LogManager", "getFormatterLogger")
 
-    const val LOG_4_J_LOGGER = "org.apache.logging.slf4j.Log4jLogger"
+    internal const val LOG_4_J_LOGGER = "org.apache.logging.slf4j.Log4jLogger"
 
-   val LEGACY_LOG_MATCHERS: CallMatcher = CallMatcher.anyOf(
-     CallMatcher.instanceCall(LEGACY_LOG4J_LOGGER, "trace", "debug", "info", "warn", "error", "fatal", "log", "l7dlog"),
-     CallMatcher.instanceCall(LEGACY_CATEGORY_LOGGER, "debug", "info", "warn", "error", "fatal", "log", "l7dlog"),
-     CallMatcher.instanceCall(LEGACY_APACHE_COMMON_LOGGER, "trace", "debug", "info", "warn", "error", "fatal"),
-     CallMatcher.instanceCall(LEGACY_JAVA_LOGGER, "fine", "log", "finer", "finest", "logp", "logrb", "info", "severe", "warning", "config")
+    internal val LEGACY_LOG_MATCHERS: CallMatcher = CallMatcher.anyOf(
+      CallMatcher.instanceCall(LEGACY_LOG4J_LOGGER, "trace", "debug", "info", "warn", "error", "fatal", "log", "l7dlog"),
+      CallMatcher.instanceCall(LEGACY_CATEGORY_LOGGER, "debug", "info", "warn", "error", "fatal", "log", "l7dlog"),
+      CallMatcher.instanceCall(LEGACY_APACHE_COMMON_LOGGER, "trace", "debug", "info", "warn", "error", "fatal"),
+      CallMatcher.instanceCall(LEGACY_JAVA_LOGGER, "fine", "log", "finer", "finest", "logp", "logrb", "info", "severe", "warning", "config")
     )
-    val IDEA_LOG_MATCHER: CallMatcher = CallMatcher.anyOf(
+    internal val IDEA_LOG_MATCHER: CallMatcher = CallMatcher.anyOf(
       CallMatcher.instanceCall(IDEA_LOGGER, "trace", "debug", "info", "warn", "error"),
     )
 
@@ -73,7 +73,7 @@ class LoggingUtil {
     private val LEVEL_CLASSES = setOf("org.apache.logging.log4j.Level", "org.slf4j.event.Level")
     private val LEGACY_LEVEL_CLASSES = setOf("org.apache.logging.log4j.Level", "org.apache.log4j.Priority", "java.util.logging.Level")
 
-    fun skipAccordingLevel(node: UCallExpression, myLimitLevelType: LimitLevelType): Boolean {
+    internal fun skipAccordingLevel(node: UCallExpression, myLimitLevelType: LimitLevelType): Boolean {
       if (myLimitLevelType != LimitLevelType.ALL) {
         val loggerLevel = getLoggerLevel(node)
         if (loggerLevel == null) return true
@@ -92,7 +92,7 @@ class LoggingUtil {
       }
     }
 
-    fun getLoggerType(uCall: UCallExpression?): LoggerType? {
+    internal fun getLoggerType(uCall: UCallExpression?): LoggerType? {
       return if (SLF4J_MATCHER.uCallMatches(uCall)) {
         LoggerType.SLF4J_LOGGER_TYPE
       }
@@ -110,22 +110,22 @@ class LoggingUtil {
       }
     }
 
-    fun isGuarded(call: UCallExpression): Boolean {
+    internal fun isGuarded(call: UCallExpression): Boolean {
       val loggerLevel = getLoggerLevel(call) ?: return false
       val guardedCondition = getGuardedCondition(call) ?: return false
       val levelFromCondition = getLevelFromCondition(guardedCondition) ?: return false
       return isGuardedIn(levelFromCondition, loggerLevel)
     }
 
-    fun isGuardedIn(levelFromCondition: LevelType, loggerLevel: LevelType): Boolean {
+    internal fun isGuardedIn(levelFromCondition: LevelType, loggerLevel: LevelType): Boolean {
       return levelFromCondition == loggerLevel
     }
 
-    fun isLegacyGuardedIn(levelFromCondition: LegacyLevelType, loggerLevel: LegacyLevelType): Boolean {
+    internal fun isLegacyGuardedIn(levelFromCondition: LegacyLevelType, loggerLevel: LegacyLevelType): Boolean {
       return levelFromCondition == loggerLevel
     }
 
-    fun getLegacyLevelFromCondition(condition: UExpression): LegacyLevelType? {
+    internal fun getLegacyLevelFromCondition(condition: UExpression): LegacyLevelType? {
       if (condition is UCallExpression) {
         val methodName = condition.methodName ?: return null
         if ("isEnabledFor" == methodName || "isLoggable" == methodName) {
@@ -143,7 +143,7 @@ class LoggingUtil {
       return null
     }
 
-    fun getLevelFromCondition(condition: UExpression): LevelType? {
+    internal fun getLevelFromCondition(condition: UExpression): LevelType? {
       if (condition is UCallExpression) {
         val methodName = condition.methodName ?: return null
         if ("isEnabled" == methodName || "isEnabledForLevel" == methodName) {
@@ -161,7 +161,7 @@ class LoggingUtil {
       return null
     }
 
-     fun getGuardedCondition(call: UCallExpression?): UExpression? {
+    internal fun getGuardedCondition(call: UCallExpression?): UExpression? {
       if (call == null) return null
       val loggerSource = getLoggerQualifier(call) ?: return null
       var ifExpression: UIfExpression? = call.getParentOfType<UIfExpression>() ?: return null
@@ -271,7 +271,7 @@ class LoggingUtil {
       return null
     }
 
-     fun getLegacyLoggerLevel(uCall: UCallExpression?): LegacyLevelType? {
+    internal fun getLegacyLoggerLevel(uCall: UCallExpression?): LegacyLevelType? {
       if (uCall == null) {
         return null
       }
@@ -288,7 +288,7 @@ class LoggingUtil {
       return findLevelTypeByName(methodName, LEGACY_LEVEL_MAP)
     }
 
-     fun getLoggerLevel(uCall: UCallExpression?, isLog: Boolean = false): LevelType? {
+    internal fun getLoggerLevel(uCall: UCallExpression?, isLog: Boolean = false): LevelType? {
       if (uCall == null) {
         return null
       }
@@ -357,7 +357,7 @@ class LoggingUtil {
       return null
     }
 
-     fun countPlaceHolders(text: String, loggerType: LoggerType?): Int {
+    internal fun countPlaceHolders(text: String, loggerType: LoggerType?): Int {
       var count = 0
       var placeHolder = false
       var escaped = false
@@ -385,7 +385,7 @@ class LoggingUtil {
       return count
     }
 
-    fun getLoggerCalls(guardedCondition: UExpression): List<UCallExpression> {
+    internal fun getLoggerCalls(guardedCondition: UExpression): List<UCallExpression> {
       val sourcePsi = guardedCondition.sourcePsi ?: return emptyList()
       return CachedValuesManager.getManager(sourcePsi.project).getCachedValue(sourcePsi, CachedValueProvider {
         val emptyResult = CachedValueProvider.Result.create(listOf<UCallExpression>(), PsiModificationTracker.MODIFICATION_COUNT)
@@ -420,27 +420,27 @@ class LoggingUtil {
       })
     }
 
-    fun hasBridgeFromSlf4jToLog4j2(element: UElement): Boolean {
+    internal fun hasBridgeFromSlf4jToLog4j2(element: UElement): Boolean {
       val file = element.getContainingUFile() ?: return true
       val sourcePsi = file.sourcePsi
       val project = sourcePsi.project
       return JavaLibraryUtil.hasLibraryClass(project, LOG_4_J_LOGGER)
     }
 
-    enum class LoggerType {
+    internal enum class LoggerType {
       SLF4J_LOGGER_TYPE, SLF4J_BUILDER_TYPE, LOG4J_LOGGER_TYPE, LOG4J_BUILDER_TYPE
     }
 
-    enum class LevelType {
+    internal enum class LevelType {
       FATAL, ERROR, WARN, INFO, DEBUG, TRACE
     }
 
     @Suppress("unused")
-    enum class LegacyLevelType {
+    internal enum class LegacyLevelType {
       FATAL, ERROR, SEVERE, WARN, WARNING, INFO, DEBUG, TRACE, CONFIG, FINE, FINER, FINEST
     }
 
-     val GUARD_MAP = mapOf(
+    val GUARD_MAP = mapOf(
       Pair("isTraceEnabled", "trace"),
       Pair("isDebugEnabled", "debug"),
       Pair("isInfoEnabled", "info"),

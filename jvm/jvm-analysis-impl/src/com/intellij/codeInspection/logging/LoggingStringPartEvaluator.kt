@@ -10,19 +10,19 @@ import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
-class LoggingStringPartEvaluator {
+internal class LoggingStringPartEvaluator {
 
   /**
    * @param text       - null if it is a literal, which is not String or Character
    * @param isConstant - it is a constant
    */
-  data class PartHolder(val text: String?, val isConstant: Boolean, val callPart: CallPart? = null)
+  internal data class PartHolder(val text: String?, val isConstant: Boolean, val callPart: CallPart? = null)
 
-  data class CallPart(val stringArguments: List<String>)
+  internal data class CallPart(val stringArguments: List<String>)
 
   private data class Context(val depth: Int, val maxParts: Int)
   companion object {
-    fun calculateValue(expression: UExpression): List<PartHolder>? {
+    internal fun calculateValue(expression: UExpression): List<PartHolder>? {
       if (!isString(expression)) return null
       val sourcePsi = expression.sourcePsi ?: return null
       val project = sourcePsi.project
