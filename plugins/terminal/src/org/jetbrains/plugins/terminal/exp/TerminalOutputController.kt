@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -37,10 +36,8 @@ class TerminalOutputController(
   private var runningCommandContext: RunningCommandContext? = null
   private var caretPainter: TerminalCaretPainter? = null
 
-  @Volatile
   private var keyEventsListenerDisposable: Disposable? = null
 
-  @Volatile
   private var mouseAndContentListenersDisposable: Disposable? = null
   private val hyperlinkHighlighter: TerminalHyperlinkHighlighter = TerminalHyperlinkHighlighter(project, outputModel, session)
 
@@ -81,6 +78,7 @@ class TerminalOutputController(
     blockCreationAlarm.addRequest(createBlockRequest, 200)
   }
 
+  @RequiresEdt(generateAssertion = false)
   private fun installRunningCommandListeners() {
     val mouseAndContentDisposable = Disposer.newDisposable().also { Disposer.register(session, it) }
     mouseAndContentListenersDisposable = mouseAndContentDisposable
@@ -97,22 +95,19 @@ class TerminalOutputController(
     Disposer.register(keyEventsDisposable, caretPainter!!)
   }
 
+  @RequiresEdt(generateAssertion = false)
   private fun disposeRunningCommandListeners() {
     mouseAndContentListenersDisposable?.let { Disposer.dispose(it) }
     mouseAndContentListenersDisposable = null
-    runInEdt {
-      // Dispose at EDT, because there can be a race when focus listener trying to install TerminalEventDispatcher on EDT,
-      // and this disposable is disposed on BGT. The dispatcher won't be removed as a result.
-      keyEventsListenerDisposable?.let { Disposer.dispose(it) }
-      keyEventsListenerDisposable = null
-      caretPainter = null
-    }
+    keyEventsListenerDisposable?.let { Disposer.dispose(it) }
+    keyEventsListenerDisposable = null
+    caretPainter = null
   }
 
   fun finishCommandBlock(exitCode: Int) {
-    disposeRunningCommandListeners()
     updateEditorContent(scraper.scrapeOutput())
     invokeLater {
+      disposeRunningCommandListeners()
       val block = outputModel.getActiveBlock() ?: error("No active block")
       val document = editor.document
       val lastLineInd = document.getLineNumber(block.endOffset)
@@ -155,7 +150,8 @@ class TerminalOutputController(
     }
   }
 
-  override fun onAlternateBufferChanged(enabled: Boolean) {
+  @RequiresEdt(generateAssertion = false)
+  internal fun alternateBufferStateChanged(enabled: Boolean) {
     if (enabled) {
       // stop updating the block content, because alternate buffer application will be shown in a separate component
       disposeRunningCommandListeners()
