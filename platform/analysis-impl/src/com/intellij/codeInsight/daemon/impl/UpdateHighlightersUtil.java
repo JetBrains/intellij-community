@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
@@ -145,12 +145,8 @@ public final class UpdateHighlightersUtil {
         psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
       }
     }
-    DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     if (psiFile != null) {
-      codeAnalyzer.cleanFileLevelHighlights(group, psiFile);
-    }
-
-    if (psiFile != null) {
+      DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(group, psiFile);
       HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session -> {
         setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session);
       });
