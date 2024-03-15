@@ -96,11 +96,12 @@ public final class GradleModelProviderUtil {
     @NotNull GradleModelConsumer consumer
   ) {
     @NotNull BasicGradleProject root = buildModel.getRootProject();
-    GradleTreeTraverserUtil.traverseTree(root, BasicGradleProject::getChildren, (gradleProject) -> {
+    GradleTreeTraverserUtil.breadthFirstTraverseTree(root, (gradleProject) -> {
       M model = controller.findModel(gradleProject, modelClass);
       if (model != null) {
         consumer.consumeProjectModel(gradleProject, model, modelClass);
       }
+      return gradleProject.getChildren();
     });
   }
 

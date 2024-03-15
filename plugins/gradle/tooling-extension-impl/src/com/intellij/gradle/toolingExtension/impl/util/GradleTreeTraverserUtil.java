@@ -10,21 +10,37 @@ import java.util.function.Function;
 public final class GradleTreeTraverserUtil {
 
   /**
-   * Traverses a tree from root to leaf.
+   * Traverses a tree from root to leaves (Depth first).
    */
-  public static <T> void traverseTree(
+  public static <T> void depthFirstTraverseTree(
     @NotNull T root,
-    @NotNull Function<T, Iterable<? extends T>> getChildren,
-    @NotNull Consumer<T> action
+    @NotNull Function<T, Collection<? extends T>> action
   ) {
-    Queue<T> queue = new ArrayDeque<>();
-    action.accept(root);
-    queue.add(root);
+    Deque<T> stack = new ArrayDeque<>();
+    stack.addFirst(root);
+    while (!stack.isEmpty()) {
+      T parent = stack.removeFirst();
+      List<? extends T> children = new ArrayList<>(action.apply(parent));
+      for (int i = children.size() - 1; i >= 0; i--) {
+        stack.addFirst(children.get(i));
+      }
+    }
+  }
+
+  /**
+   * Traverses a tree from root to leaves (Breadth first).
+   */
+  public static <T> void breadthFirstTraverseTree(
+    @NotNull T root,
+    @NotNull Function<T, Collection<? extends T>> action
+  ) {
+    Deque<T> queue = new ArrayDeque<>();
+    queue.addLast(root);
     while (!queue.isEmpty()) {
-      T parent = queue.remove();
-      for (T child : getChildren.apply(parent)) {
-        action.accept(child);
-        queue.add(child);
+      T parent = queue.removeFirst();
+      Collection<? extends T> children = action.apply(parent);
+      for (T child : children) {
+        queue.addLast(child);
       }
     }
   }
@@ -40,18 +56,18 @@ public final class GradleTreeTraverserUtil {
     T previous = root;
 
     Deque<T> stack = new ArrayDeque<>();
-    stack.push(root);
+    stack.addFirst(root);
     while (!stack.isEmpty()) {
-      T current = stack.peek();
+      T current = stack.peekFirst();
       List<? extends T> children = new ArrayList<>(getChildren.apply(current));
       if (children.isEmpty() || children.get(children.size() - 1) == previous) {
-        current = stack.pop();
+        current = stack.removeFirst();
         action.accept(current);
         previous = current;
       }
       else {
         for (int i = children.size() - 1; i >= 0; i--) {
-          stack.push(children.get(i));
+          stack.addFirst(children.get(i));
         }
       }
     }
