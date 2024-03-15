@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.CompilerTestUtil;
@@ -380,8 +380,9 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   @Override
   protected void printOutput(@NotNull String text, boolean stdOut) {
-    if (text.contains("This is scheduled to be removed in Gradle")) {
-      deprecationTextLineCount = 15;
+    if (text.contains("This is scheduled to be removed in Gradle")
+    || text.contains("Deprecated Gradle features were used in this build")) {
+      deprecationTextLineCount = 30;
     }
     if (deprecationTextLineCount > 0) {
       deprecationTextBuilder.append(text);
