@@ -24,6 +24,19 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveConver
         )
     }
 
+    private fun JKStatement.occursImmediatelyAfterDeclarationInBlock(declaration: JKDeclaration): Boolean {
+        val parent = this.parent.safeAs<JKBlockImpl>() ?: return false
+        if (parent != declaration.parent?.parent) return false
+        val statements = parent.statements
+        val declarationIndex =
+            statements.indexOfFirst { it is JKDeclarationStatement && it.declaredStatements.singleOrNull() == declaration }
+        if (declarationIndex < 0 || declarationIndex == statements.lastIndex) return false
+        val expressionIndex = statements.indexOf(this)
+        if (expressionIndex < declarationIndex) return false
+        if (declarationIndex + 1 == expressionIndex) return true
+        return statements.subList(declarationIndex + 1, expressionIndex).all { it.isEmpty() }
+    }
+
     // If this is a null assertion like `assert s1 != null`, replace it with `checkNotNull(s1),
     // otherwise convert it to a regular Kotlin assert statement
     private fun convertAssert(element: JKJavaAssertStatement): JKStatement {
@@ -44,11 +57,13 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveConver
         if (referencedVariable != null && element.occursImmediatelyAfterDeclarationInBlock(referencedVariable)) {
             // If the assertion occurs immediately after the variable declaration, merge them by wrapping the initializer in checkNotNull
             val initializerType = referencedVariable.initializer.calculateType(typeFactory)
+
             val arguments = listOfNotNull(referencedVariable.initializer.copyTreeAndDetach(), messageExpression).toArgumentList()
             referencedVariable.initializer = JKCallExpressionImpl(
                 checkNotNullSymbol,
                 arguments,
-                expressionType = initializerType?.updateNullability(NotNull)
+                expressionType = initializerType?.updateNullability(NotNull),
+                canExtractLastArgumentIfLambda = true
             )
 
             // effectively delete the original statement, since the assertion was merged into the variable declaration above
@@ -58,21 +73,9 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveConver
         // Otherwise, leave the variable declaration untouched and do an inplace replacement of the assertion
         return JKCallExpressionImpl(
             checkNotNullSymbol,
-            arguments = listOfNotNull(expressionComparedToNull.detached(assertion), messageExpression).toArgumentList()
+            arguments = listOfNotNull(expressionComparedToNull.detached(assertion), messageExpression).toArgumentList(),
+            canExtractLastArgumentIfLambda = true
         ).asStatement().withFormattingFrom(element)
-    }
-
-    private fun JKStatement.occursImmediatelyAfterDeclarationInBlock(declaration: JKDeclaration): Boolean {
-        val parent = this.parent.safeAs<JKBlockImpl>() ?: return false
-        if (parent != declaration.parent?.parent) return false
-        val statements = parent.statements
-        val declarationIndex =
-            statements.indexOfFirst { it is JKDeclarationStatement && it.declaredStatements.singleOrNull() == declaration }
-        if (declarationIndex < 0 || declarationIndex == statements.lastIndex) return false
-        val expressionIndex = statements.indexOf(this)
-        if (expressionIndex < declarationIndex) return false
-        if (declarationIndex + 1 == expressionIndex) return true
-        return statements.subList(declarationIndex + 1, expressionIndex).all { it.isEmpty() }
     }
 
     private fun JKExpression.expressionComparedToNull(): JKExpression? {
@@ -93,7 +96,8 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveConver
         return JKExpressionStatement(
             JKCallExpressionImpl(
                 symbolProvider.provideMethodSymbol("kotlin.synchronized"),
-                JKArgumentList(element.lockExpression, lambdaBody)
+                JKArgumentList(element.lockExpression, lambdaBody),
+                canExtractLastArgumentIfLambda = true
             ).withFormattingFrom(element)
         )
     }

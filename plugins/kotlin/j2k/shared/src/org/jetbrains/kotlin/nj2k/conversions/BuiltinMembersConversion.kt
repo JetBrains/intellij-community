@@ -105,7 +105,8 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
     private inner class MethodBuilder(
         private val fqName: String,
         private val parameterTypesFqNames: List<String>?,
-        private val argumentsProvider: (JKArgumentList) -> JKArgumentList
+        private val argumentsProvider: (JKArgumentList) -> JKArgumentList,
+        private val canExtractLastArgumentIfLambda: Boolean = false
     ) : ResultBuilder {
         context(KtAnalysisSession)
         override fun build(from: JKExpression): JKExpression {
@@ -119,7 +120,8 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
                     JKCallExpressionImpl(
                         methodSymbol,
                         argumentsProvider(from::arguments.detached()),
-                        from::typeArgumentList.detached()
+                        from::typeArgumentList.detached(),
+                        canExtractLastArgumentIfLambda = canExtractLastArgumentIfLambda
                     )
                 }
 
@@ -135,7 +137,8 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
                     JKCallExpressionImpl(
                         methodSymbol,
                         argumentsProvider(from::arguments.detached()),
-                        JKTypeArgumentList()
+                        JKTypeArgumentList(),
+                        canExtractLastArgumentIfLambda = canExtractLastArgumentIfLambda
                     )
 
                 else -> error("Bad conversion")
@@ -234,7 +237,7 @@ private interface SymbolInfo : Info {
     infix fun convertTo(to: Info): Conversion = Conversion(this, to)
 }
 
-private data class Method(override val fqName: String, val parameterTypesFqNames: List<String>? = null) : SymbolInfo
+private data class Method(override val fqName: String, val parameterTypesFqNames: List<String>? = null, val canExtractLastArgumentIfLambda: Boolean = false) : SymbolInfo
 
 private data class NewExpression(override val fqName: String) : SymbolInfo
 
@@ -555,14 +558,15 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                                 symbolProvider.provideMethodSymbol("kotlin.text.isEmpty")
                             ).asStatement()
                         )
-                    )
+                    ),
+                    canExtractLastArgumentIfLambda = true
                 )
             } else {
                 expression
             }.castToTypedArray()
         },
 
-        Method("java.lang.String.trim") convertTo Method("kotlin.text.trim") withArgumentsProvider {
+        Method("java.lang.String.trim") convertTo Method("kotlin.text.trim", canExtractLastArgumentIfLambda = true) withArgumentsProvider {
             JKArgumentList(
                 JKLambdaExpression(
                     JKExpressionStatement(

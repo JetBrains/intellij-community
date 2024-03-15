@@ -200,6 +200,7 @@ class JKCallExpressionImpl(
     arguments: JKArgumentList = JKArgumentList(),
     typeArgumentList: JKTypeArgumentList = JKTypeArgumentList(),
     override val expressionType: JKType? = null,
+    val canExtractLastArgumentIfLambda: Boolean = false
 ) : JKCallExpression() {
     override var typeArgumentList by child(typeArgumentList)
     override var arguments by child(arguments)
@@ -213,6 +214,7 @@ class JKNewExpression(
     classBody: JKClassBody = JKClassBody(),
     val isAnonymousClass: Boolean = false,
     override val expressionType: JKType? = null,
+    val canExtractLastArgumentIfLambda: Boolean = false
 ) : JKExpression() {
     var typeArgumentList by child(typeArgumentList)
     var arguments by child(arguments)

@@ -53,7 +53,7 @@ class Java8Class {
 
         checkNotNull("s") { "that's strange" }
 
-        val base: Base = Base("Base") { "base" }
+        val base = Base("Base") { "base" }
 
         vararg("first", { "f" })
 

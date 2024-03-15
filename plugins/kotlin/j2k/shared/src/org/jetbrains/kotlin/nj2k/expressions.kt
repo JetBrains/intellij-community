@@ -113,14 +113,14 @@ fun useExpression(
     val useSymbol = symbolProvider.provideMethodSymbol("kotlin.io.use")
     val lambdaParameter = if (variableIdentifier != null) JKParameter(JKTypeElement(JKNoType), variableIdentifier) else null
     val lambda = JKLambdaExpression(body, listOfNotNull(lambdaParameter))
-    val methodCall = JKCallExpressionImpl(useSymbol, listOf(lambda).toArgumentList())
+    val methodCall = JKCallExpressionImpl(useSymbol, listOf(lambda).toArgumentList(), canExtractLastArgumentIfLambda = true)
     return JKQualifiedExpression(receiver, methodCall)
 }
 
 fun kotlinAssert(assertion: JKExpression, message: JKExpression?, symbolProvider: JKSymbolProvider): JKCallExpressionImpl =
     JKCallExpressionImpl(
         symbolProvider.provideMethodSymbol("kotlin.assert"),
-        listOfNotNull(assertion, message).toArgumentList()
+        listOfNotNull(assertion, message).toArgumentList(), canExtractLastArgumentIfLambda = true
     )
 
 fun jvmAnnotation(name: String, symbolProvider: JKSymbolProvider): JKAnnotation =
@@ -235,7 +235,11 @@ fun JKClass.getOrCreateCompanionObject(): JKClass =
 
 fun runExpression(body: JKStatement, symbolProvider: JKSymbolProvider): JKExpression {
     val lambda = JKLambdaExpression(body)
-    return JKCallExpressionImpl(symbolProvider.provideMethodSymbol("kotlin.run"), JKArgumentList(lambda))
+    return JKCallExpressionImpl(
+        symbolProvider.provideMethodSymbol("kotlin.run"),
+        JKArgumentList(lambda),
+        canExtractLastArgumentIfLambda = true
+    )
 }
 
 fun assignmentStatement(target: JKVariable, expression: JKExpression, symbolProvider: JKSymbolProvider): JKKtAssignmentStatement =
@@ -302,8 +306,8 @@ fun JKExpression.asLiteralTextWithPrefix(): String? = when {
 
 fun JKClass.primaryConstructor(): JKKtPrimaryConstructor? = classBody.declarations.firstIsInstanceOrNull()
 
-fun List<JKExpression>.toArgumentList(): JKArgumentList =
-    JKArgumentList(map { JKArgumentImpl(it) })
+fun List<JKExpression>.toArgumentList(hasTrailingComma: Boolean = false): JKArgumentList =
+    JKArgumentList(map { JKArgumentImpl(it) }, hasTrailingComma = hasTrailingComma)
 
 fun JKExpression.asStatement(): JKExpressionStatement =
     JKExpressionStatement(this)
@@ -320,13 +324,27 @@ fun JKExpression.qualified(qualifier: JKExpression?) =
 fun JKExpression.callOn(
     symbol: JKMethodSymbol,
     arguments: List<JKExpression> = emptyList(),
-    typeArguments: List<JKTypeElement> = emptyList()
+    typeArguments: List<JKTypeElement> = emptyList(),
+    canExtractLastArgumentIfLambda: Boolean = false
+): JKQualifiedExpression = this.callOn(
+    symbol,
+    JKArgumentList(arguments.map { JKArgumentImpl(it) }),
+    typeArguments,
+    canExtractLastArgumentIfLambda
+)
+
+fun JKExpression.callOn(
+    symbol: JKMethodSymbol,
+    argumentList: JKArgumentList,
+    typeArguments: List<JKTypeElement> = emptyList(),
+    canExtractLastArgumentIfLambda: Boolean = false
 ) = JKQualifiedExpression(
     this,
     JKCallExpressionImpl(
         symbol,
-        JKArgumentList(arguments.map { JKArgumentImpl(it) }),
-        JKTypeArgumentList(typeArguments)
+        argumentList,
+        JKTypeArgumentList(typeArguments),
+        canExtractLastArgumentIfLambda = canExtractLastArgumentIfLambda
     )
 )
 

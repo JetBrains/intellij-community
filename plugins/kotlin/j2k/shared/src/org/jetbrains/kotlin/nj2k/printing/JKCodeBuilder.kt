@@ -5,10 +5,14 @@ package org.jetbrains.kotlin.nj2k.printing
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiType
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.printing.JKPrinterBase.ParenthesisKind
+import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedMethod
 import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
@@ -18,7 +22,11 @@ import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import java.util.function.Predicate
+import java.util.function.Consumer
 
 class JKCodeBuilder(context: NewJ2kConverterContext) {
     private val elementInfoStorage = context.elementsInfoStorage
@@ -461,8 +469,12 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             val parent = argumentList.parent
             val lastArgument = arguments.lastOrNull()
             val lastArgumentValue = lastArgument?.value
-            if (lastArgumentValue !is JKLambdaExpression || lastArgumentValue.functionalType.present() || (parent !is JKCallExpressionImpl && parent !is JKNewExpression)) {
+            if (lastArgumentValue !is JKLambdaExpression || (lastArgumentValue.functionalType.present()) || (parent !is JKCallExpressionImpl && parent !is JKNewExpression)) {
                 return renderArgumentList(argumentList.arguments, argumentList.hasTrailingComma)
+            }
+
+            if ((parent is JKCallExpressionImpl && parent.canExtractLastArgumentIfLambda) || (parent is JKNewExpression && parent.canExtractLastArgumentIfLambda)) {
+                return renderArgumentListWithLastLambdaOutsideParentheses(arguments)
             }
 
             val parentPsi = parent.psi
@@ -474,23 +486,48 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
                     return renderArgumentList(argumentList.arguments, argumentList.hasTrailingComma)
             }
 
-            val canExtractLastLambdaArg =
-                (methodDefinition is KtNamedFunction && methodDefinition.valueParameters.size == arguments.size &&
-                        methodDefinition.valueParameters.none { it.isVarArg } && methodDefinition.valueParameters.lastOrNull()?.isLambdaParameter == true) ||
-                        (methodDefinition is PsiMethod && methodDefinition.parameterList.parametersCount == arguments.size &&
-                                methodDefinition.parameterList.parameters.none { it.isVarArgs } && methodDefinition.parameterList.parameters.lastOrNull()?.type?.isKotlinFunctionalType == true) ||
-                        (methodDefinition is JKMethod && methodDefinition.parameters.size == arguments.size && !methodDefinition.parameters.last().isVarArgs)
-            if (!canExtractLastLambdaArg) {
+            if (!(methodDefinition is KtNamedFunction && methodDefinition.valueParameters.size == arguments.size &&
+                        methodDefinition.valueParameters.none { it.isVarArg } && methodDefinition.valueParameters.lastOrNull()
+                    ?.hasFunctionalType() == true) &&
+                !(methodDefinition is PsiMethod && methodDefinition.parameterList.parametersCount == arguments.size &&
+                        methodDefinition.parameterList.parameters.none { it.isVarArgs } && methodDefinition.parameterList.parameters.lastOrNull()?.type?.isFunctionalType() == true) &&
+                !(methodDefinition is JKMethod && methodDefinition.parameters.size == arguments.size && !methodDefinition.parameters.last().isVarArgs)
+            ) {
                 return renderArgumentList(argumentList.arguments, argumentList.hasTrailingComma)
             }
 
+            renderArgumentListWithLastLambdaOutsideParentheses(arguments)
+        }
+
+        private fun renderArgumentListWithLastLambdaOutsideParentheses(arguments: List<JKArgument>) {
             if (arguments.size > 1) {
                 renderArgumentList(arguments.subList(0, arguments.lastIndex), false)
             }
             printer.print(" ")
-            lastArgument.accept(this)
+            arguments.last().accept(this)
             printer.print(" ")
         }
+
+        private val javaFunctionalTypes = setOf(
+            "java.util.function.Function",
+            "java.util.function.BiFunction",
+            "java.util.function.BiConsumer",
+            "java.util.function.Consumer",
+            "java.util.function.Predicate",
+            "java.util.function.UnaryOperator",
+            "java.util.function.BinaryOperator",
+            "java.util.function.Supplier"
+        )
+
+        private fun PsiType.isFunctionalType(): Boolean {
+            if (isKotlinFunctionalType) return true
+            val fqn = canonicalText.substringBefore("<")
+            return fqn in javaFunctionalTypes
+        }
+
+        private fun KtParameter.hasFunctionalType(): Boolean =
+            isLambdaParameter || isFunctionTypeParameter || ") -> " in typeReference?.text.orEmpty()
+
 
         private fun renderArgumentList(arguments: List<JKArgument>, hasTrailingComma: Boolean) {
             printer.par {
@@ -836,20 +873,20 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitAssignmentChainAlsoLinkRaw(assignmentChainAlsoLink: JKAssignmentChainAlsoLink) {
             assignmentChainAlsoLink.receiver.accept(this)
-            printer.print(".also({ ")
+            printer.print(".also { ")
             assignmentChainAlsoLink.assignmentStatement.accept(this)
             printer.print(" ")
-            printer.print("})")
+            printer.print("}")
         }
 
         override fun visitAssignmentChainLetLinkRaw(assignmentChainLetLink: JKAssignmentChainLetLink) {
             assignmentChainLetLink.receiver.accept(this)
-            printer.print(".let({ ")
+            printer.print(".let { ")
             assignmentChainLetLink.assignmentStatement.accept(this)
             printer.print("; ")
             assignmentChainLetLink.field.accept(this)
             printer.print(" ")
-            printer.print("})")
+            printer.print("}")
         }
 
         override fun visitKtWhenBlockRaw(ktWhenBlock: JKKtWhenBlock) {
