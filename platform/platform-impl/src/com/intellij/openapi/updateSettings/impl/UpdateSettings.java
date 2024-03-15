@@ -8,11 +8,9 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -103,15 +101,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   }
 
   public @NotNull List<String> getPluginHosts() {
-    List<String> hosts = new ArrayList<>(myState.getPluginHosts());
-    String pluginHosts = System.getProperty("idea.plugin.hosts");
-    if (pluginHosts != null) {
-      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
-    }
-
-    hosts.addAll(UpdateSettingsProvider.getRepositoriesFromProviders());
-    ContainerUtil.removeDuplicates(hosts);
-    return hosts;
+    return myState.getPluginHosts();
   }
 
   public void forceCheckForUpdateAfterRestart() {
