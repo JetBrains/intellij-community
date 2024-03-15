@@ -713,7 +713,7 @@ public class IdeTooltipManager implements Disposable {
 
     JBHtmlPaneStyleConfiguration styleConfiguration = new JBHtmlPaneStyleConfiguration();
     JBHtmlPaneConfiguration paneConfiguration = JBHtmlPaneConfiguration.builder()
-      .customStyleSheetProvider(color -> StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}"))
+      .customStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}")
       .build();
 
 

@@ -28,7 +28,6 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -68,7 +67,7 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
         .imageResolverFactory(component -> new DocumentationImageProvider(component, imageResolver))
         .iconResolver(name -> iconResolver.apply(name))
         .customStyleSheetProvider(bg -> getDocumentationPaneAdditionalCssRules())
-        .extensions(Collections.singletonList(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES))
+        .extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
         .build()
     );
     setBackground(BACKGROUND_COLOR);

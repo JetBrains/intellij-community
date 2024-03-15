@@ -193,8 +193,8 @@ open class JBHtmlPane(
     val background = background
     newStyleSheet.addStyleSheet(service.getDefaultStyleSheet(background, myStyleConfiguration))
     newStyleSheet.addStyleSheet(service.getEditorColorsSchemeStyleSheet(myStyleConfiguration.colorScheme))
-    myPaneConfiguration.customStyleSheetProvider(background)?.let {
-      newStyleSheet.addStyleSheet(it)
+    myPaneConfiguration.customStyleSheetProviders.forEach {
+      newStyleSheet.addStyleSheet(it(background))
     }
     editorStyleSheet.addStyleSheet(newStyleSheet)
   }

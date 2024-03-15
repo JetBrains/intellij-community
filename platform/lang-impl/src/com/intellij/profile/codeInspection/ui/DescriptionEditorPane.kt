@@ -25,7 +25,7 @@ import javax.swing.JEditorPane
 open class DescriptionEditorPane : JBHtmlPane(
   JBHtmlPaneStyleConfiguration(),
   JBHtmlPaneConfiguration {
-    customStyleSheetProvider { StyleSheetUtil.loadStyleSheet("pre {white-space: pre-wrap;} code, pre, a {overflow-wrap: anywhere;}") }
+    customStyleSheet("pre {white-space: pre-wrap;} code, pre, a {overflow-wrap: anywhere;}")
   }) {
 
   init {
