@@ -285,15 +285,10 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                     modelsProvider.findIdeModule(data)?.name
                 }
 
-                if (kotlinSourceSet.isTestModule) {
-                    testOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputDir
-                        ?: (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
-                    productionOutputPath = null
-                } else {
-                    productionOutputPath = (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputDir
-                        ?: (kotlinSourceSet.compilerArguments as? K2JSCompilerArguments)?.outputFile
-                    testOutputPath = null
-                }
+                testOutputPath = (compilerArguments as? K2JSCompilerArguments)?.outputDir
+                    ?: (compilerArguments as? K2JSCompilerArguments)?.outputFile
+                productionOutputPath = (compilerArguments as? K2JSCompilerArguments)?.outputDir
+                    ?: (compilerArguments as? K2JSCompilerArguments)?.outputFile
             }
 
             return kotlinFacet

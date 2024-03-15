@@ -72,8 +72,8 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         kotlinSettingsEntity.implementedModuleNames = kotlinFacetSettings.implementedModuleNames.toMutableList()
         kotlinSettingsEntity.dependsOnModuleNames = kotlinFacetSettings.dependsOnModuleNames.toMutableList()
         kotlinSettingsEntity.additionalVisibleModuleNames = kotlinFacetSettings.additionalVisibleModuleNames.toMutableSet()
-        kotlinSettingsEntity.productionOutputPath = kotlinFacetSettings.productionOutputPath ?: ""
-        kotlinSettingsEntity.testOutputPath = kotlinFacetSettings.testOutputPath ?: ""
+        kotlinSettingsEntity.productionOutputPath = kotlinFacetSettings.productionOutputPath
+        kotlinSettingsEntity.testOutputPath = kotlinFacetSettings.testOutputPath
         kotlinSettingsEntity.sourceSetNames = kotlinFacetSettings.sourceSetNames.toMutableList()
         kotlinSettingsEntity.isTestModule = kotlinFacetSettings.isTestModule
         kotlinSettingsEntity.targetPlatform = kotlinFacetSettings.targetPlatform?.serializeComponentPlatforms() ?: ""
@@ -113,27 +113,19 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
                 if (entity.compilerArguments.isEmpty()) null else CompilerArgumentsSerializer.deserializeFromString(entity.compilerArguments)
 
             val compilerSettingsFromEntity = entity.compilerSettings
-            val isCompilerSettingsChanged =
-                CompilerSettings().let {
-                    it.additionalArguments != compilerSettingsFromEntity.additionalArguments ||
-                            it.scriptTemplates != compilerSettingsFromEntity.scriptTemplates ||
-                            it.scriptTemplatesClasspath != compilerSettingsFromEntity.scriptTemplatesClasspath ||
-                            it.copyJsLibraryFiles != compilerSettingsFromEntity.copyJsLibraryFiles ||
-                            it.outputDirectoryForJsLibraryFiles != compilerSettingsFromEntity.outputDirectoryForJsLibraryFiles
-                }
-            compilerSettings = if (isCompilerSettingsChanged) CompilerSettings().apply {
+            compilerSettings = CompilerSettings().apply {
                 additionalArguments = compilerSettingsFromEntity.additionalArguments
                 scriptTemplates = compilerSettingsFromEntity.scriptTemplates
                 scriptTemplatesClasspath = compilerSettingsFromEntity.scriptTemplatesClasspath
                 copyJsLibraryFiles = compilerSettingsFromEntity.copyJsLibraryFiles
                 outputDirectoryForJsLibraryFiles = compilerSettingsFromEntity.outputDirectoryForJsLibraryFiles
-            } else null
+            }
 
             implementedModuleNames = entity.implementedModuleNames
             dependsOnModuleNames = entity.dependsOnModuleNames
             additionalVisibleModuleNames = entity.additionalVisibleModuleNames
-            productionOutputPath = entity.productionOutputPath.ifEmpty { null }
-            testOutputPath = entity.testOutputPath.ifEmpty { null }
+            productionOutputPath = entity.productionOutputPath?.ifEmpty { null }
+            testOutputPath = entity.testOutputPath?.ifEmpty { null }
             kind = entity.kind
             sourceSetNames = entity.sourceSetNames
             isTestModule = entity.isTestModule
