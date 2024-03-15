@@ -33,12 +33,6 @@ import java.util.*
 @JvmField
 internal val LOG: Logger = logger<Binding>()
 
-abstract class Converter<T> {
-  abstract fun fromString(value: String): T?
-
-  abstract fun toString(value: T): String?
-}
-
 private val PROPERTY_COLLECTOR = XmlSerializerPropertyCollector(MyPropertyCollectorConfiguration())
 private val EMPTY_BINDINGS = arrayOf<NestedBinding>()
 
