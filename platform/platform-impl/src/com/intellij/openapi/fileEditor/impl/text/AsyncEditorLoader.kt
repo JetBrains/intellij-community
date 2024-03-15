@@ -67,7 +67,9 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     private fun findTextEditor(editor: Editor): TextEditor? {
       val project = editor.project
       val virtualFile = editor.virtualFile
-      if (project == null || virtualFile == null) return null
+      if (project == null || virtualFile == null) {
+        return null
+      }
       return FileEditorManager.getInstance(project).getAllEditors(virtualFile).find { f -> f is TextEditor } as TextEditor?
     }
 
@@ -96,7 +98,9 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     @JvmStatic
     fun isEditorLoaded(editor: Editor): Boolean {
       val textEditor = findTextEditor(editor)
-      if (textEditor !is TextEditorImpl) return true
+      if (textEditor !is TextEditorImpl) {
+        return true
+      }
       return textEditor.isLoaded()
     }
   }
@@ -104,9 +108,8 @@ class AsyncEditorLoader internal constructor(private val project: Project,
   @RequiresEdt
   private fun performWhenLoaded(runnable: Runnable) {
     val toRunLater = captureThreadContext(runnable)
-    val newActions = delayedActions.updateAndGet { oldActions: List<Runnable> ->
-      if (oldActions == LOADED || oldActions.contains(toRunLater)) oldActions
-      else oldActions + toRunLater
+    val newActions = delayedActions.updateAndGet { oldActions ->
+      if (oldActions == LOADED || oldActions.contains(toRunLater)) oldActions else oldActions + toRunLater
     }
     if (!newActions.contains(toRunLater)) {
       runnable.run()
