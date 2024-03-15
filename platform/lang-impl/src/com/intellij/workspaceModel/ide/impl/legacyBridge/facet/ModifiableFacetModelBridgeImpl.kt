@@ -11,6 +11,7 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.Ref
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
@@ -59,17 +60,33 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
         moduleSource.internalSource
       else -> moduleSource
     }
-    if (facet is FacetBridge<*>) {
+    if (facet is FacetBridge<*, *>) {
       facet.addToStorage(diff, moduleEntity, source)
     } else {
       val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       val underlyingEntity = facet.underlyingFacet?.let { diff.facetMapping().getEntities(it).single() as FacetEntity }
       val facetTypeId = if (facet !is InvalidFacet) facet.type.stringId else facet.configuration.facetState.facetType
-      val entity = diff addEntity FacetEntity(facet.name, moduleEntity.symbolicId, FacetEntityTypeId(facetTypeId), source) {
-        configurationXmlTag = facetConfigurationXml
-        module = moduleEntity
-        underlyingFacet = underlyingEntity
+      val ref = Ref.create<FacetEntity>()
+      diff.modifyEntity(moduleEntity) module@{
+        if (underlyingEntity != null) {
+          diff.modifyEntity(underlyingEntity) facet@{
+            val newFacet = diff addEntity FacetEntity(facet.name, moduleEntity.symbolicId, FacetEntityTypeId(facetTypeId), source) {
+              configurationXmlTag = facetConfigurationXml
+              module = this@module
+              underlyingFacet = this@facet
+            }
+            ref.set(newFacet)
+          }
+        }
+        else {
+          val newFacet = diff addEntity FacetEntity(facet.name, moduleEntity.symbolicId, FacetEntityTypeId(facetTypeId), source) {
+            configurationXmlTag = facetConfigurationXml
+            module = this@module
+          }
+          ref.set(newFacet)
+        }
       }
+      val entity = ref.get()!!
       diff.mutableFacetMapping().addMapping(entity, facet)
       facet.externalSource = externalSource
     }
@@ -78,7 +95,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
 
   override fun removeFacet(facet: Facet<*>?) {
     if (facet == null) return
-    if (facet is FacetBridge<*>) {
+    if (facet is FacetBridge<*, *>) {
       facet.removeFromStorage(diff)
     } else {
       val facetEntity = diff.facetMapping().getEntities(facet).singleOrNull() as? FacetEntity ?: return
@@ -103,7 +120,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   }
 
   override fun rename(facet: Facet<*>, newName: String) {
-    if (facet is FacetBridge<*>) {
+    if (facet is FacetBridge<*, *>) {
       facet.rename(diff, newName)
     } else {
       val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
@@ -152,9 +169,9 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       diff.mutableFacetMapping().removeMapping(facetEntity)
       diff.mutableFacetMapping().addMapping(newEntity, facet)
     }
-    val (facetBridges, commonFacets) = allFacets.partition { it is FacetBridge<*> }
+    val (facetBridges, commonFacets) = allFacets.partition { it is FacetBridge<*, *> }
       facetBridges.forEach { facet ->
-        facet as FacetBridge<*>
+        facet as FacetBridge<*, *>
         facet.updateInStorage(diff)
       }
     commonFacets.forEach { facet ->

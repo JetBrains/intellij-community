@@ -67,20 +67,20 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       LibraryId(existsName, tableId) in modifiableModel.diff
     }
 
-    val libraryEntity = modifiableModel.diff addEntity LibraryEntity(name = libraryEntityName,
-                                                                     tableId = tableId,
-                                                                     roots = emptyList(),
-                                                                     entitySource = modifiableModel.moduleEntity.entitySource) {
+    val libraryEntityBuilder = LibraryEntity(name = libraryEntityName,
+                                             tableId = tableId,
+                                             roots = emptyList(),
+                                             entitySource = modifiableModel.moduleEntity.entitySource){
       this.typeId = type?.kindId?.let { LibraryTypeId(it) }
     }
-
     if (type != null) {
-      modifiableModel.diff addEntity LibraryPropertiesEntity(libraryEntity.entitySource) {
-        library = libraryEntity
+      LibraryPropertiesEntity(entitySource = libraryEntityBuilder.entitySource) {
+        library = libraryEntityBuilder
         propertiesXmlTag = LegacyBridgeModifiableBase.serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG,
                                                                                  type.createDefaultProperties())
       }
     }
+    val libraryEntity = modifiableModel.diff addEntity libraryEntityBuilder
 
     return createAndAddLibrary(libraryEntity, false, DependencyScope.COMPILE)
   }
@@ -112,22 +112,25 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       LibraryId(existsName, tableId) in modifiableModel.diff
     }
     val originalEntity = original.librarySnapshot.libraryEntity
-    val libraryEntity = modifiableModel.diff addEntity LibraryEntity(name = libraryEntityName,
-                                                                     tableId = tableId,
-                                                                     roots = originalEntity.roots,
-                                                                     entitySource = modifiableModel.moduleEntity.entitySource
+
+
+    val libraryEntityBuilder = LibraryEntity(name = libraryEntityName,
+                                             tableId = tableId,
+                                             roots = originalEntity.roots,
+                                             entitySource = modifiableModel.moduleEntity.entitySource
     ) {
       typeId = originalEntity.typeId
-      excludedRoots = originalEntity.excludedRoots
+      excludedRoots = originalEntity.excludedRoots.map { ExcludeUrlEntity(it.url, it.entitySource) }
     }
 
     val originalProperties = originalEntity.libraryProperties
     if (originalProperties != null) {
-      modifiableModel.diff addEntity LibraryPropertiesEntity(entitySource = libraryEntity.entitySource) {
-        library = libraryEntity
+      libraryEntityBuilder.libraryProperties = LibraryPropertiesEntity(
+                                                                       entitySource = libraryEntityBuilder.entitySource) {
         propertiesXmlTag = originalProperties.propertiesXmlTag
       }
     }
+    val libraryEntity = modifiableModel.diff addEntity libraryEntityBuilder
     return createAndAddLibrary(libraryEntity, exported, scope)
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.configurationStore.serialize
@@ -6,6 +6,7 @@ import com.intellij.externalSystem.ImportedLibraryProperties
 import com.intellij.externalSystem.ImportedLibraryType
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
@@ -85,8 +86,10 @@ internal class WorkspaceModuleImporter(
     val moduleEntity = builder addEntity ModuleEntity(moduleName, dependencies, entitySource) {
       this.type = JAVA_MODULE_ENTITY_TYPE_ID
     }
-    builder addEntity ExternalSystemModuleOptionsEntity(entitySource) {
-      ExternalSystemData(moduleEntity, mavenProject.file.path, mavenModuleType).write(this)
+    builder.modifyEntity(moduleEntity) {
+      this.exModuleOptions = ExternalSystemModuleOptionsEntity(entitySource) {
+        ExternalSystemData(moduleEntity, mavenProject.file.path, mavenModuleType).write(this)
+      }
     }
     return moduleEntity
 
@@ -237,10 +240,9 @@ internal class WorkspaceModuleImporter(
     val xmlTag = JDOMUtil.writeElement(libPropertiesElement)
     builder.modifyEntity(libraryEntity) {
       this.typeId = LibraryTypeId(libraryKind.kindId)
-    }
-    builder addEntity LibraryPropertiesEntity(libraryEntity.entitySource) {
-      library = libraryEntity
-      propertiesXmlTag = xmlTag
+      this.libraryProperties = LibraryPropertiesEntity(libraryEntity.entitySource) {
+        propertiesXmlTag = xmlTag
+      }
     }
   }
 
@@ -283,12 +285,13 @@ internal class WorkspaceModuleImporter(
 
     val manifestAttributes = mavenProject.getManifestAttributes()
 
-    builder addEntity JavaModuleSettingsEntity(inheritCompilerOutput, false, moduleEntity.entitySource) {
-      this.module = moduleEntity
-      this.compilerOutput = compilerOutputUrl
-      this.compilerOutputForTests = compilerOutputUrlForTests
-      this.languageLevelId = languageLevel.name
-      this.manifestAttributes = manifestAttributes
+    builder.modifyEntity(moduleEntity) {
+      this.javaSettings = JavaModuleSettingsEntity(inheritCompilerOutput, false, moduleEntity.entitySource) {
+        this.compilerOutput = compilerOutputUrl
+        this.compilerOutputForTests = compilerOutputUrlForTests
+        this.languageLevelId = languageLevel.name
+        this.manifestAttributes = manifestAttributes
+      }
     }
   }
 
@@ -301,7 +304,6 @@ internal class WorkspaceModuleImporter(
   class ExternalSystemData(val moduleEntity: ModuleEntity, val mavenProjectFilePath: String, val mavenModuleType: StandardMavenModuleType) {
     fun write(entity: ExternalSystemModuleOptionsEntity.Builder) {
       entity.externalSystemModuleVersion = VERSION
-      entity.module = moduleEntity
       entity.externalSystem = EXTERNAL_SOURCE_ID
       // Can't use 'entity.linkedProjectPath' since it implies directory (and used to set working dir for Run Configurations).
       entity.linkedProjectId = FileUtil.toSystemIndependentName(mavenProjectFilePath)

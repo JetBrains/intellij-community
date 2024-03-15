@@ -9,10 +9,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
-import com.intellij.platform.workspace.jps.entities.SdkEntity
-import com.intellij.platform.workspace.jps.entities.SdkRoot
-import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -120,7 +117,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkEntity.Builder,
     // Update only entity existing in the storage
     val existingEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(originalSdk) as? SdkEntity
     existingEntity?.let { entity ->
-      globalWorkspaceModel.updateModel("Modifying SDK ${originalEntity.symbolicId}") {
+      globalWorkspaceModel.updateModel("Modifying SDK ${SdkId(originalEntity.name, originalEntity.type)}") {
         it.modifyEntity(entity) {
           this.applyChangesFrom(modifiedSdkEntity)
         }

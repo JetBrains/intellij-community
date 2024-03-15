@@ -100,30 +100,29 @@ object SourceRootPropertiesHelper {
 
   }
 
-  internal fun <P : JpsElement> addPropertiesEntity(diff: MutableEntityStorage,
-                                                    sourceRootEntity: SourceRootEntity,
+  internal fun <P : JpsElement> addPropertiesEntity(sourceRootEntity: SourceRootEntity.Builder,
                                                     properties: P,
                                                     serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
     when (serializer.typeId) {
-      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> diff addEntity JavaSourceRootPropertiesEntity(
-        generated = (properties as JavaSourceRootProperties).isForGeneratedSources,
-        packagePrefix = properties.packagePrefix,
-        entitySource = sourceRootEntity.entitySource) {
-        sourceRoot = sourceRootEntity
+      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> {
+        sourceRootEntity.javaSourceRoots += JavaSourceRootPropertiesEntity(
+          generated = (properties as JavaSourceRootProperties).isForGeneratedSources,
+          packagePrefix = properties.packagePrefix,
+          entitySource = sourceRootEntity.entitySource)
       }
 
-      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> diff addEntity JavaResourceRootPropertiesEntity(
-        generated = (properties as JavaResourceRootProperties).isForGeneratedSources,
-        relativeOutputPath = properties.relativeOutputPath,
-        entitySource = sourceRootEntity.entitySource) {
-        sourceRoot = sourceRootEntity
+      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> {
+        sourceRootEntity.javaResourceRoots += JavaResourceRootPropertiesEntity(
+          generated = (properties as JavaResourceRootProperties).isForGeneratedSources,
+          relativeOutputPath = properties.relativeOutputPath,
+          entitySource = sourceRootEntity.entitySource)
       }
 
       else -> if (properties !is JpsDummyElement) {
-        diff addEntity CustomSourceRootPropertiesEntity(propertiesXmlTag = savePropertiesToString(serializer, properties),
-                                                        entitySource = sourceRootEntity.entitySource) {
-          sourceRoot = sourceRootEntity
-        }
+        sourceRootEntity.customSourceRootProperties = CustomSourceRootPropertiesEntity(
+          propertiesXmlTag = savePropertiesToString(serializer, properties),
+          entitySource = sourceRootEntity.entitySource
+        )
       }
     }
   }

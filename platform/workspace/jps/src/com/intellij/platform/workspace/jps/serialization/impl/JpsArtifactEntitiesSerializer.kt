@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.java.workspace.entities.*
@@ -177,7 +177,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
           val rootElement = loadPackagingElement(state.rootElement, entitySource)
           val artifactEntity = ArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, entitySource) {
             this.outputUrl = outputUrl
-            this.rootElement = rootElement as CompositePackagingElementEntity
+            this.rootElement = rootElement as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
           }
           for (propertiesState in state.propertiesList) {
             ArtifactPropertiesEntity(propertiesState.id, entitySource) {
@@ -202,7 +202,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
                                     orphanage: MutableEntityStorage,
                                     newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
     if (preserveOrder) {
-      val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ArtifactsOrderEntity
+      val order = newEntities[ArtifactsOrderEntity::class.java]?.singleOrNull() as? ArtifactsOrderEntity.Builder
       if (order != null) {
         val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
         if (entity != null) {
@@ -228,7 +228,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   }
 
   private fun loadPackagingElement(element: Element,
-                                   source: EntitySource): PackagingElementEntity {
+                                   source: EntitySource): PackagingElementEntity.Builder<out PackagingElementEntity> {
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)

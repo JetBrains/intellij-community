@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.workspaceModel
 
 import com.intellij.compiler.artifacts.ArtifactsTestCase
@@ -34,13 +34,11 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
     val fileVirtualUrl = virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(file.path))
     runWriteAction {
       workspaceModel.updateProjectModel {
-        val fileCopy = it addEntity FileCopyPackagingElementEntity(fileVirtualUrl, MySource)
-        val rootElement = it addEntity ArtifactRootElementEntity(MySource) {
-          children = listOf(fileCopy)
-        }
         it addEntity ArtifactEntity("MyArtifact", PlainArtifactType.ID, false, MySource) {
           outputUrl = outputVirtualUrl
-          this.rootElement = rootElement
+          this.rootElement = ArtifactRootElementEntity(MySource) {
+            children = listOf(FileCopyPackagingElementEntity(fileVirtualUrl, MySource))
+          }
         }
       }
     }

@@ -1,9 +1,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
-import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
-import com.intellij.java.workspace.entities.asJavaResourceRoot
-import com.intellij.java.workspace.entities.asJavaSourceRoot
-import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ExcludeFolder
@@ -13,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -89,8 +87,8 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
       if (javaResourceRoot != null) return
 
       updater { diff ->
-        diff addEntity JavaSourceRootPropertiesEntity(false, packagePrefix, sourceRootEntity.entitySource) {
-          sourceRoot = sourceRootEntity
+        diff.modifyEntity(sourceRootEntity) {
+          this.javaSourceRoots += JavaSourceRootPropertiesEntity(false, packagePrefix, sourceRootEntity.entitySource)
         }
       }
     }

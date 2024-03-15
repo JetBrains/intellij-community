@@ -221,11 +221,10 @@ class ModifiableRootModelBridgeImpl(
       return existingEntry
     }
 
-    diff addEntity ContentRootEntity(url = virtualFileUrl,
-                                     excludedPatterns = emptyList<@NlsSafe String>(),
-                                     entitySource = entitySource
-    ) {
-      module = moduleEntity
+    diff.modifyEntity(moduleEntity) {
+      this.contentRoots += ContentRootEntity(url = virtualFileUrl,
+                                             excludedPatterns = emptyList<@NlsSafe String>(),
+                                             entitySource = entitySource)
     }
 
     // TODO It's N^2 operations since we need to recreate contentEntries every time
@@ -521,11 +520,12 @@ class ModifiableRootModelBridgeImpl(
 
       if (customImlDataEntity?.rootManagerTagCustomData != elementAsString) {
         when {
-          customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> diff addEntity ModuleCustomImlDataEntity(HashMap(),
-                                                                                                                moduleEntity.entitySource
-          ) {
-            rootManagerTagCustomData = elementAsString
-            module = moduleEntity
+          customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> {
+            diff.modifyEntity(moduleEntity) {
+              this.customImlData = ModuleCustomImlDataEntity(HashMap(), moduleEntity.entitySource) {
+                rootManagerTagCustomData = elementAsString
+              }
+            }
           }
 
           customImlDataEntity == null && JDOMUtil.isEmpty(element) -> Unit

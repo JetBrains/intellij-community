@@ -41,7 +41,7 @@ interface CustomModuleRootsSerializer {
                 internalModuleListSerializer: JpsModuleListSerializer?,
                 errorReporter: ErrorReporter,
                 virtualFileManager: VirtualFileUrlManager,
-                moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>)
+                moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder>)
 
   fun saveRoots(module: ModuleEntity,
                 entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,

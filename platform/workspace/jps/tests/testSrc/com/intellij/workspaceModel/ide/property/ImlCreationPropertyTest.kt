@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.property
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -13,6 +13,7 @@ import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializersImpl
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -194,8 +195,8 @@ class ImlCreationPropertyTest {
 
       val path = configLocation.baseDirectoryUrl.toPath().resolve(contentRootPath).createDirectories()
 
-      storage addEntity ContentRootEntity(virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(path.toString())), emptyList(), moduleEntity.entitySource) {
-        this.module = moduleEntity
+      storage.modifyEntity(moduleEntity) {
+        this.contentRoots += ContentRootEntity(virtualFileManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(path.toString())), emptyList(), moduleEntity.entitySource)
       }
     }
   }

@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
@@ -59,22 +58,17 @@ class ReplaceBySourceTest {
     val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
 
 
-    val moduleEntity = builder addEntity ModuleEntity("name", emptyList(), source)
-    val contentRootEntity = builder addEntity ContentRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl), emptyList<@NlsSafe String>(),
-                                                                moduleEntity.entitySource) {
-      module = moduleEntity
-    }
-    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl2), DEFAULT_SOURCE_ROOT_TYPE_ID, source) {
-      contentRoot = contentRootEntity
-    }
-    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl3), DEFAULT_SOURCE_ROOT_TYPE_ID, source) {
-      contentRoot = contentRootEntity
-    }
-    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl4), DEFAULT_SOURCE_ROOT_TYPE_ID, source) {
-      contentRoot = contentRootEntity
-    }
-    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl5), DEFAULT_SOURCE_ROOT_TYPE_ID, source) {
-      contentRoot = contentRootEntity
+    builder addEntity ModuleEntity("name", emptyList(), source) {
+      this.contentRoots = listOf(
+        ContentRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl), emptyList(), source) {
+          this.sourceRoots = listOf(
+            SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl2), DEFAULT_SOURCE_ROOT_TYPE_ID, source),
+            SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl3), DEFAULT_SOURCE_ROOT_TYPE_ID, source),
+            SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl4), DEFAULT_SOURCE_ROOT_TYPE_ID, source),
+            SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl5), DEFAULT_SOURCE_ROOT_TYPE_ID, source),
+          )
+        }
+      )
     }
     return builder
   }

@@ -347,6 +347,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
         IndexingTestEntity entityWithExcludedRoot = SequencesKt.first(builder.entities(IndexingTestEntity.class),
                                                                       entity -> !entity.getExcludedRoots().isEmpty());
         builder.removeEntity(entityWithExcludedRoot);
+        return Unit.INSTANCE;
       });
     }, () -> {
       return INSTANCE.createExternalEntityIterators(otherEntity.createPointer(),
@@ -362,14 +363,14 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
       for (IndexingTestEntity testEntity : entities) {
         builder.removeEntity(testEntity);
       }
+      return Unit.INSTANCE;
     });
   }
 
   @NotNull
   static IndexingTestEntity createAndRegisterEntity(List<VirtualFileUrl> roots, List<VirtualFileUrl> excludedRoots, Project project) {
-    IndexingTestEntity entity = IndexingTestEntity.create(roots, excludedRoots, ENTITY_SOURCE);
-    editWorkspaceModel(project, builder -> builder.addEntity(entity));
-    return entity;
+    IndexingTestEntity.Builder entity = IndexingTestEntity.create(roots, excludedRoots, ENTITY_SOURCE);
+    return editWorkspaceModel(project, builder -> builder.addEntity(entity));
   }
 
   static void editSingleWorkspaceEntity(@NotNull Project project,
@@ -380,18 +381,20 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
         modification.accept(entityBuilder);
         return Unit.INSTANCE;
       });
+      return Unit.INSTANCE;
     });
   }
 
-  static void editWorkspaceModel(@NotNull Project project, @NotNull Consumer<MutableEntityStorage> consumer) {
+  static <T> T editWorkspaceModel(@NotNull Project project, @NotNull Function<MutableEntityStorage, T> consumer) {
     WorkspaceModel workspaceModel = WorkspaceModel.getInstance(project);
     EntityStorage entityStorage = workspaceModel.getCurrentSnapshot();
     MutableEntityStorage preliminaryBuilder = EntityStorageKt.toBuilder(EntityStorageKt.toSnapshot(entityStorage));
-    consumer.accept(preliminaryBuilder);
+    var res = consumer.apply(preliminaryBuilder);
     workspaceModel.updateProjectModel("EntityIndexingServiceTest", storage -> {
       storage.applyChangesFrom(preliminaryBuilder);
       return Unit.INSTANCE;
     });
+    return res;
   }
 
   protected <T> void doTest(ThrowableComputable<? extends T, ? extends Exception> generator,

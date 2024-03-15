@@ -1,9 +1,7 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
-import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
-import com.intellij.java.workspace.entities.asJavaSourceRoot
-import com.intellij.java.workspace.entities.modifyEntity
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
@@ -110,23 +108,20 @@ class JpsProjectSaveAfterChangesTest {
       val builder = if (unloadedHolder.isUnloaded("newModule")) unloadedEntitiesBuilder else mainBuilder
       val source = JpsProjectFileEntitySource.FileInDirectory(configLocation.baseDirectoryUrl, configLocation)
       val dependencies = listOf(InheritedSdkDependency, ModuleSourceDependency)
-      val module = builder addEntity ModuleEntity("newModule", dependencies, source)
-      builder.modifyEntity(module) {
-        type =  JAVA_MODULE_ENTITY_TYPE_ID
-      }
-      val contentRootEntity = builder addEntity ContentRootEntity(configLocation.baseDirectoryUrl.append("new"),
-                                                                  emptyList<@NlsSafe String>(), module.entitySource) {
-        this@ContentRootEntity.module = module
-      }
-      val sourceRootEntity = builder addEntity SourceRootEntity(configLocation.baseDirectoryUrl.append("new"),
-                                                                JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, source) {
-        contentRoot = contentRootEntity
-      }
-      builder addEntity JavaSourceRootPropertiesEntity(false, "", sourceRootEntity.entitySource) {
-        sourceRoot = sourceRootEntity
-      }
-      builder addEntity JavaModuleSettingsEntity(true, true, source) {
-        this.module = module
+      builder addEntity ModuleEntity("newModule", dependencies, source) {
+        this.type =  JAVA_MODULE_ENTITY_TYPE_ID
+        this.contentRoots = listOf(
+          ContentRootEntity(configLocation.baseDirectoryUrl.append("new"), emptyList<@NlsSafe String>(), source) {
+            this.sourceRoots = listOf(
+              SourceRootEntity(configLocation.baseDirectoryUrl.append("new"), JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, source) {
+                this.javaSourceRoots = listOf(
+                  JavaSourceRootPropertiesEntity(false, "", source)
+                )
+              }
+            )
+          }
+        )
+        this.javaSettings = JavaModuleSettingsEntity(true, true, source)
       }
     }
   }
@@ -183,8 +178,8 @@ class JpsProjectSaveAfterChangesTest {
   fun `set group for the module`() {
     checkSaveProjectAfterChange("directoryBased/addModuleGroup", "fileBased/addModuleGroup") { builder, _, _, _ ->
       val utilModule = builder.entities(ModuleEntity::class.java).first { it.name == "util" }
-      builder addEntity ModuleGroupPathEntity(listOf("group"), utilModule.entitySource) {
-        this.module = utilModule
+      builder.modifyEntity(utilModule) {
+        this.groupPath = ModuleGroupPathEntity(listOf("group"), utilModule.entitySource)
       }
     }
   }

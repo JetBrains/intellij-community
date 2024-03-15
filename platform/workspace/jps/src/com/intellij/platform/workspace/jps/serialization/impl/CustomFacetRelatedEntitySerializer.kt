@@ -47,7 +47,7 @@ interface CustomFacetRelatedEntitySerializer<T: ModuleSettingsBase> {
    * @param evaluateEntitySource function which should be invoked to get [com.intellij.platform.workspace.storage.EntitySource]
    * for your entities and externalSystemId which should be stored somewhere in your entities
    */
-  fun loadEntitiesFromFacetState(moduleEntity: ModuleEntity, facetState: FacetState, evaluateEntitySource: (FacetState) -> EntitySource)
+  fun loadEntitiesFromFacetState(moduleEntity: ModuleEntity.Builder, facetState: FacetState, evaluateEntitySource: (FacetState) -> EntitySource)
 
   /**
    * Create intermediate representation from entities of declared at [rootEntityType] type which will be used for serialization on disk.

@@ -98,8 +98,8 @@ class ModuleBridgesTest {
 
       WorkspaceModel.getInstance(project).updateProjectModel {
         val moduleEntity = module.findModuleEntity(it)!!
-        it addEntity ContentRootEntity(contentRootUrl, emptyList<@NlsSafe String>(), moduleEntity.entitySource) {
-          this@ContentRootEntity.module = moduleEntity
+        it.modifyEntity(moduleEntity) {
+          this.contentRoots += ContentRootEntity(contentRootUrl, emptyList<@NlsSafe String>(), moduleEntity.entitySource)
         }
       }
 
@@ -386,14 +386,16 @@ class ModuleBridgesTest {
       val projectLocation = getJpsProjectConfigLocation(project)!!
       val virtualFileUrl = dir.toVirtualFileUrl(virtualFileManager)
       projectModel.updateProjectModel {
-        val moduleEntity = it addEntity ModuleEntity("name", emptyList(),
-                                                     JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
-        val contentRootEntity = it addEntity ContentRootEntity(virtualFileUrl, emptyList<@NlsSafe String>(), moduleEntity.entitySource) {
-          module = moduleEntity
-        }
-        it addEntity SourceRootEntity(virtualFileUrl, DEFAULT_SOURCE_ROOT_TYPE_ID,
-                                      JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation)) {
-          contentRoot = contentRootEntity
+        val entitySource = JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation)
+        it addEntity ModuleEntity("name", emptyList(),
+                                  entitySource) {
+          this.contentRoots = listOf(
+            ContentRootEntity(virtualFileUrl, emptyList<@NlsSafe String>(), entitySource) {
+              this.sourceRoots = listOf(
+                SourceRootEntity(virtualFileUrl, DEFAULT_SOURCE_ROOT_TYPE_ID, JpsProjectFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
+              )
+            }
+          )
         }
       }
 

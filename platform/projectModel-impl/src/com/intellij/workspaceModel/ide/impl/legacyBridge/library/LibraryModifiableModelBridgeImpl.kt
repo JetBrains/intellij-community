@@ -147,10 +147,11 @@ internal class LibraryModifiableModelBridgeImpl(
       }
     }
     else if (properties == null) {
-      diff.addEntity(LibraryPropertiesEntity(entity.entitySource) {
-        library = entity
-        if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
-      })
+      diff.modifyEntity(currentLibrary.libraryEntity) {
+        this.libraryProperties = LibraryPropertiesEntity(entity.entitySource) {
+          if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
+        }
+      }
     }
     else {
       diff.modifyEntity(properties) {

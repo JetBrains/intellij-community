@@ -50,7 +50,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     return Pair(options, options["externalSystem"])
   }
 
-  override fun loadExternalSystemOptions(module: ModuleEntity,
+  override fun loadExternalSystemOptions(module: ModuleEntity.Builder,
                                          reader: JpsFileContentReader,
                                          externalSystemOptions: Map<String?, String?>,
                                          externalSystemId: String?,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.openapi.externalSystem.project.PackagingModel
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.platform.workspace.jps.entities.LibraryDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.ArrayUtil
 import org.jetbrains.idea.maven.execution.MavenRunner
@@ -45,7 +46,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             }.asSequence().asStream()
     }
 
-    private fun createWorkspaceEntity(module: ModuleEntity): KotlinSettingsEntity =
+    private fun createWorkspaceEntity(module: ModuleEntity): KotlinSettingsEntity.Builder =
         KotlinSettingsEntity(
             KotlinFacetType.INSTANCE.presentableName,
             module.symbolicId,
@@ -70,9 +71,7 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             KotlinFacetSettings.CURRENT_VERSION,
             false,
             module.entitySource
-        ) {
-            this.module = module
-        }
+        )
 
     override fun preProcess(
         storage: MutableEntityStorage,
@@ -82,7 +81,9 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
         artifactModel: ModifiableArtifactModel
     ) {
         if (!isMigratedToConfigurator) return
-        storage.addEntity(createWorkspaceEntity(module))
+        storage.modifyEntity(module) {
+            this.kotlinSettings += createWorkspaceEntity(module)
+        }
 
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
         val currentVersion = mavenPlugin.compilerVersion

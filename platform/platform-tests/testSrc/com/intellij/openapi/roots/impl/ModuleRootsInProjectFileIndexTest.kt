@@ -21,6 +21,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -398,13 +399,14 @@ class ModuleRootsInProjectFileIndexTest {
     runWriteActionAndWait {
       workspaceModel.updateProjectModel {
         val module = it.resolve(ModuleId(module.name))!!
-        it addEntity ContentRootEntity(urlManager.getOrCreateFromUrl(rootUrl),
-                                       emptyList<@NlsSafe String>(),
-                                       module.entitySource) {
-          excludedUrls = listOf(urlManager.getOrCreateFromUrl(excludedUrl)).map {
-            ExcludeUrlEntity(it, module.entitySource)
+        it.modifyEntity(module) {
+          this.contentRoots += ContentRootEntity(urlManager.getOrCreateFromUrl(rootUrl),
+                                                 emptyList<@NlsSafe String>(),
+                                                 module.entitySource) {
+            excludedUrls = listOf(urlManager.getOrCreateFromUrl(excludedUrl)).map {
+              ExcludeUrlEntity(it, module.entitySource)
+            }
           }
-          this.module = module
         }
       }
     }

@@ -41,7 +41,7 @@ internal object JavaSettingsSerializer {
 
   fun loadJavaModuleSettings(rootManagerElement: Element,
                              context: SerializationContext,
-                             contentRotEntitySource: EntitySource ): JavaModuleSettingsEntity? {
+                             contentRotEntitySource: EntitySource ): JavaModuleSettingsEntity.Builder? {
     val inheritedCompilerOutput = rootManagerElement.getAttributeAndDetach(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)
     val languageLevel = rootManagerElement.getAttributeAndDetach(MODULE_LANGUAGE_LEVEL_ATTRIBUTE)
     val excludeOutput = rootManagerElement.getChildAndDetach(EXCLUDE_OUTPUT_TAG)

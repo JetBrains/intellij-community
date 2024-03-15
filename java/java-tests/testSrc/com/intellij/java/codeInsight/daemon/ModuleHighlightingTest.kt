@@ -11,12 +11,14 @@ import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixt
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.psi.JavaCompilerConfigurationProxy
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
@@ -687,11 +689,11 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(myFixture.project).updateProjectModel { storage ->
         val moduleEntity = storage.resolve(ModuleId(moduleName)) ?: return@updateProjectModel
-        val javaSettings = JavaModuleSettingsEntity(false, false, moduleEntity.entitySource) {
-          module = moduleEntity
-          manifestAttributes = attributes
+        storage.modifyEntity(moduleEntity) {
+          this.javaSettings = JavaModuleSettingsEntity(false, false, moduleEntity.entitySource) {
+            manifestAttributes = attributes
+          }
         }
-        storage.addEntity(javaSettings)
       }
     }
   }

@@ -160,8 +160,8 @@ internal class ModuleBridgeImpl(
         val customImlData = entity.customImlData
         if (customImlData == null) {
           if (value != null) {
-            diff addEntity ModuleCustomImlDataEntity(HashMap(mapOf(key to value)), entity.entitySource) {
-              module = entity
+            diff.modifyEntity(entity) {
+              this.customImlData = ModuleCustomImlDataEntity(HashMap(mapOf(key to value)), entity.entitySource)
             }
           }
         }

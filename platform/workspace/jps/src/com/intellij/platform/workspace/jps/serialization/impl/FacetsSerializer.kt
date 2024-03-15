@@ -25,7 +25,7 @@ internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private 
    * This function should return void (Unit)
    * The current result value is a temporal solution to find the root cause of https://ea.jetbrains.com/browser/ea_problems/239676
    */
-  internal fun loadFacetEntities(moduleEntity: ModuleEntity, reader: JpsFileContentReader) {
+  internal fun loadFacetEntities(moduleEntity: ModuleEntity.Builder, reader: JpsFileContentReader) {
     val facetManagerTag = reader.loadComponent(imlFileUrl.url, componentName, baseModuleDirPath) ?: return
     val facetManagerState = XmlSerializer.deserialize(facetManagerTag, FacetManagerState::class.java)
     val orderOfFacets = ArrayList<String>()
@@ -43,7 +43,7 @@ internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private 
     }
   }
 
-  private fun loadFacetEntities(facetStates: List<FacetState>, moduleEntity: ModuleEntity, orderOfFacets: MutableList<String>) {
+  private fun loadFacetEntities(facetStates: List<FacetState>, moduleEntity: ModuleEntity.Builder, orderOfFacets: MutableList<String>) {
 
     fun evaluateEntitySource(facetState: FacetState): EntitySource {
       val externalSystemId = facetState.externalSystemId ?: facetState.externalSystemIdInInternalStorage

@@ -12,17 +12,12 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.Ref
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsMetrics
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
-import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.orderToRemoveReplaceAdd
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.*
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
@@ -215,16 +210,25 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
       val rootElement = serializer.serializeIntoXml(rootEntity)
 
       val moduleEntity = event.storageAfter.resolve(ModuleId(facet.module.name))!!
-      val facetConfigurationElement = if (facet is FacetBridge<*>)
-        serializer.serializeIntoXml(facet.config.getEntity(moduleEntity))
-      else
+      val facetConfigurationElement = if (facet is FacetBridge<*, *>) {
+        val builder = event.storageAfter.toBuilder()
+        builder.removeEntity(rootEntity)
+        val thief = Ref.create<ModuleEntity.Builder>()
+        builder.modifyEntity(moduleEntity) {
+          thief.set(this)
+        }
+        val entityBuilder: WorkspaceEntity.Builder<out ModuleSettingsBase> = facet.config.getEntityBuilder(thief.get()!!)
+        val added = builder.addEntity(entityBuilder)
+        serializer.serializeIntoXml(added)
+      } else {
         FacetUtil.saveFacetConfiguration(facet)
+      }
       val facetConfigurationXml = facetConfigurationElement?.let { JDOMUtil.write(it) }
       // If this change is performed in FacetManagerBridge.facetConfigurationChanged,
       // FacetConfiguration is already updated and there is no need to update it again
       if (facetConfigurationXml != JDOMUtil.write(rootElement)) {
         @Suppress("UNCHECKED_CAST")
-        (facet as? FacetBridge<ModuleSettingsBase>)?.updateFacetConfiguration(rootEntity)
+        (facet as? FacetBridge<ModuleSettingsBase, *>)?.updateFacetConfiguration(rootEntity)
         ?: FacetUtil.loadFacetConfiguration(facet.configuration, rootElement)
         publisher.fireFacetConfigurationChanged(facet)
       }

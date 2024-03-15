@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -15,7 +16,6 @@ import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -101,11 +101,11 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
     VirtualFileUrlManager fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
     Objects.requireNonNull(this.myFilePath, "filePath is not specified");
@@ -114,7 +114,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
 
     ExtractedDirectoryPackagingElementEntity addedEntity = diff.addEntity(ExtractedDirectoryPackagingElementEntity.create(fileUrl, this.myPathInJar, source));
     diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
-    return addedEntity;
+    return getBuilder(diff, addedEntity);
   }
 
   @Nullable

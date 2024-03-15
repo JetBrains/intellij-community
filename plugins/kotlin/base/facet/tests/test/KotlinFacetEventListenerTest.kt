@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetManagerListener
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.testFramework.*
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
@@ -107,7 +108,9 @@ class KotlinFacetEventListenerTest {
                     val workspaceModel = WorkspaceModel.getInstance(project)
                     val moduleEntity = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).first()
                     workspaceModel.updateProjectModel("add kotlin setting entity") {
-                        it.addEntity(createEmptyEntity(moduleEntity))
+                        it.modifyEntity(moduleEntity) {
+                            this.kotlinSettings += createEmptyEntity()
+                        }
                     }
 
                     val module = moduleManager.modules[0]
@@ -155,7 +158,9 @@ class KotlinFacetEventListenerTest {
                     val workspaceModel = WorkspaceModel.getInstance(project)
                     val moduleEntity = workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).first()
                     workspaceModel.updateProjectModel("add Kotlin setting entity") {
-                        it.addEntity(createEmptyEntity(moduleEntity))
+                        it.modifyEntity(moduleEntity) {
+                            this.kotlinSettings += createEmptyEntity()
+                        }
                     }
 
                     val module = moduleManager.modules[0]
@@ -234,7 +239,7 @@ class KotlinFacetEventListenerTest {
         return@runBlocking listener.events
     }
 
-    private fun createEmptyEntity(moduleEntity: ModuleEntity) =
+    private fun createEmptyEntity() =
         KotlinSettingsEntity(name = KotlinFacetType.INSTANCE.presentableName,
                              moduleId = ModuleId(""),
                              sourceRoots = emptyList(),
@@ -257,9 +262,7 @@ class KotlinFacetEventListenerTest {
                              externalSystemRunTasks = emptyList(),
                              version = KotlinFacetSettings.CURRENT_VERSION,
                              flushNeeded = false,
-                             entitySource = object : EntitySource {}) {
-            module = moduleEntity
-        }
+                             entitySource = object : EntitySource {})
 
     private class MyFacetManagerListener : FacetManagerListener {
         private val myEvents = StringBuilder()

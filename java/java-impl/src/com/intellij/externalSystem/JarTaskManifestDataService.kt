@@ -14,6 +14,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.WorkspaceDataS
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.serialization.PropertyMapping
 
@@ -47,11 +48,12 @@ internal class JarTaskManifestDataService : WorkspaceDataService<JarTaskManifest
       }
     }
     else {
-      mutableStorage addEntity JavaModuleSettingsEntity(inheritedCompilerOutput = true,
-                                                        excludeOutput = true,
-                                                        entitySource = moduleEntity.entitySource) {
-        this.manifestAttributes = manifestAttributes
-        this.module = moduleEntity
+      mutableStorage.modifyEntity(moduleEntity) {
+        this.javaSettings = JavaModuleSettingsEntity(inheritedCompilerOutput = true,
+                                                     excludeOutput = true,
+                                                     entitySource = moduleEntity.entitySource) {
+          this.manifestAttributes = manifestAttributes
+        }
       }
     }
   }

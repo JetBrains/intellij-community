@@ -1,15 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.serialization.impl.CustomFacetRelatedEntitySerializer
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.util.descriptors.ConfigFileItemSerializer
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -28,13 +28,13 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         get() = KotlinFacetType.INSTANCE.stringId
 
     override fun loadEntitiesFromFacetState(
-        moduleEntity: ModuleEntity,
+        moduleEntity: ModuleEntity.Builder,
         facetState: FacetState,
         evaluateEntitySource: (FacetState) -> EntitySource
     ) {
         val entitySource = evaluateEntitySource(facetState)
         val kotlinSettingsEntity = KotlinSettingsEntity(
-            facetState.name, moduleEntity.symbolicId,
+            facetState.name, ModuleId(moduleEntity.name),
             emptyList(),
             emptyList(),
             true,
@@ -58,7 +58,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
             entitySource
         ) {
             module = moduleEntity
-        } as KotlinSettingsEntity.Builder
+        }
 
         val facetConfiguration = facetState.configuration
         if (facetConfiguration == null) {

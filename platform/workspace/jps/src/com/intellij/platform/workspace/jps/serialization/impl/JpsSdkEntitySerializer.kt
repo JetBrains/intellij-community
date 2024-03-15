@@ -72,7 +72,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     return LoadingResult(mapOf(SdkEntity::class.java to sdkEntities))
   }
 
-  fun loadSdkEntity(sdkElement: Element, virtualFileManager: VirtualFileUrlManager ): SdkEntity {
+  fun loadSdkEntity(sdkElement: Element, virtualFileManager: VirtualFileUrlManager ): SdkEntity.Builder {
     val sdkName = sdkElement.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE)
     val sdkType = sdkElement.getChild(ELEMENT_TYPE).getAttributeValue(ATTRIBUTE_VALUE)
 
@@ -138,39 +138,64 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
   }
 
   fun saveSdkEntity(sdkRootElement: Element, sdkEntity: SdkEntity) {
+    saveSdkEntity(sdkRootElement,
+                  sdkEntity.name,
+                  sdkEntity.type,
+                  sdkEntity.version,
+                  sdkEntity.homePath,
+                  sdkEntity.roots,
+                  sdkEntity.additionalData)
+  }
+
+  fun saveSdkEntity(sdkRootElement: Element, sdkEntity: SdkEntity.Builder) {
+    saveSdkEntity(sdkRootElement,
+                  sdkEntity.name,
+                  sdkEntity.type,
+                  sdkEntity.version,
+                  sdkEntity.homePath,
+                  sdkEntity.roots,
+                  sdkEntity.additionalData)
+  }
+
+  private fun saveSdkEntity(sdkRootElement: Element,
+                            sdkName: String,
+                            sdkType: String,
+                            sdkVersion: String?,
+                            sdkHomePath: VirtualFileUrl?,
+                            sdkRoots: List<SdkRoot>,
+                            sdkAdditionalData: String) {
     sdkRootElement.setAttribute(ELEMENT_VERSION, "2")
 
     val name = Element(ELEMENT_NAME)
-    name.setAttribute(ATTRIBUTE_VALUE, sdkEntity.name)
+    name.setAttribute(ATTRIBUTE_VALUE, sdkName)
     sdkRootElement.addContent(name)
 
-    sdkEntity.type?.let {
-      val sdkType = Element(ELEMENT_TYPE)
-      sdkType.setAttribute(ATTRIBUTE_VALUE, it)
-      sdkRootElement.addContent(sdkType)
+    sdkType.let {
+      val mySdkType = Element(ELEMENT_TYPE)
+      mySdkType.setAttribute(ATTRIBUTE_VALUE, it)
+      sdkRootElement.addContent(mySdkType)
     }
 
-    sdkEntity.version?.let {
+    sdkVersion?.let {
       val version = Element(ELEMENT_VERSION)
       version.setAttribute(ATTRIBUTE_VALUE, it)
       sdkRootElement.addContent(version)
     }
 
     val home = Element(ELEMENT_HOMEPATH)
-    home.setAttribute(ATTRIBUTE_VALUE, sdkEntity.homePath?.url)
+    home.setAttribute(ATTRIBUTE_VALUE, sdkHomePath?.url)
     sdkRootElement.addContent(home)
 
-    val sortedRoots = sdkEntity.roots.groupBy { it.type.name }.toSortedMap()
+    val sortedRoots = sdkRoots.groupBy { it.type.name }.toSortedMap()
     val rootsElement = Element(ELEMENT_ROOTS)
     sortedRootTypes.forEach { rootType ->
-      val sdkRoots = sortedRoots[rootType] ?: emptyList()
-      rootsElement.addContent(writeRoots(rootType, sdkRoots))
+      val mySdkRoots = sortedRoots[rootType] ?: emptyList()
+      rootsElement.addContent(writeRoots(rootType, mySdkRoots))
     }
     sdkRootElement.addContent(rootsElement)
 
-    val additionalData = sdkEntity.additionalData
-    if (additionalData.isNotBlank()) {
-      sdkRootElement.addContent(JDOMUtil.load(additionalData))
+    if (sdkAdditionalData.isNotBlank()) {
+      sdkRootElement.addContent(JDOMUtil.load(sdkAdditionalData))
     }
   }
 

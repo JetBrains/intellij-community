@@ -16,6 +16,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
@@ -245,12 +246,14 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
         val genSourceRoot = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.sourceRoot ?: run {
           val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
           val javaSourceRoot = sourceRoot.javaSourceRoots.first()
-          val result = storage.addEntity(SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager),
-                                                          sourceRoot.rootTypeId, sourceRoot.entitySource) {
-              contentRoot = sourceRoot.contentRoot
+          val updatedContentRoot = storage.modifyEntity(sourceRoot.contentRoot) {
+            this.sourceRoots += SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager),
+                                                 sourceRoot.rootTypeId, sourceRoot.entitySource) {
               javaSourceRoots = listOf(
                 JavaSourceRootPropertiesEntity(true, javaSourceRoot.packagePrefix, javaSourceRoot.entitySource))
-            })
+            }
+          }
+          val result = updatedContentRoot.sourceRoots.last()
           storageChanged = true
           result
         }

@@ -6,6 +6,7 @@ import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.workspace.storage.*;
@@ -59,11 +60,11 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   /**
    * This method gets an entity from the diff mappings and create a new one for the current element
    */
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
     S state = this.getState();
     String xmlTag = "";
@@ -71,11 +72,10 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
       xmlTag = JDOMUtil.write(XmlSerializer.serialize(state));
     }
 
-    List<PackagingElementEntity> children = new ArrayList<>();
+    List<PackagingElementEntity.Builder<? extends PackagingElementEntity>> children = new ArrayList<>();
     if (this instanceof CompositePackagingElement<?>) {
       children.addAll(
-        ContainerUtil.map(((CompositePackagingElement<Object>)this).getChildren(),
-                          o -> (PackagingElementEntity)o.getOrAddEntity(diff, source, project))
+        ContainerUtil.map(((CompositePackagingElement<?>)this).getChildren(), o -> o.getOrAddEntityBuilder(diff, source, project))
       );
     }
 
@@ -86,12 +86,21 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
       }));
 
     diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
-    return addedEntity;
+    return getBuilder(diff, addedEntity);
   }
 
   protected @Nullable WorkspaceEntity getExistingEntity(MutableEntityStorage diff) {
     ExternalEntityMapping<PackagingElement<?>> mapping = diff.getExternalMapping(PackagingExternalMapping.key);
     return mapping.getFirstEntity(this);
+  }
+
+  protected PackagingElementEntity.Builder<PackagingElementEntity> getBuilder(MutableEntityStorage diff, PackagingElementEntity entity) {
+    Ref<PackagingElementEntity.Builder<PackagingElementEntity>> ref = new Ref<>();
+    diff.modifyEntity(PackagingElementEntity.Builder.class, entity, o -> {
+      ref.set(o);
+      return Unit.INSTANCE;
+    });
+    return ref.get();
   }
 
   public void setStorage(@NotNull VersionedEntityStorage storage, @NotNull Project project, Set<PackagingElement<?>> elementsWithDiff,

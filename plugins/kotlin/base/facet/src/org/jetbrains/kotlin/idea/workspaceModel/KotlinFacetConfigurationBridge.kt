@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.serialization.KotlinFacetSettingsWorkspaceModel
 
-class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurationBridge<KotlinSettingsEntity> {
+class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurationBridge<KotlinSettingsEntity, KotlinSettingsEntity.Builder> {
     override val settings: IKotlinFacetSettings by lazy { KotlinFacetSettingsWorkspaceModel(kotlinSettingsEntity) }
 
     private val kotlinSettingsEntity: KotlinSettingsEntity.Builder
@@ -45,7 +45,7 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
                                      externalSystemRunTasks = emptyList(),
                                      version = KotlinFacetSettings.CURRENT_VERSION,
                                      flushNeeded = false,
-                                     entitySource = object : EntitySource {}) as KotlinSettingsEntity.Builder
+                                     entitySource = object : EntitySource {})
             )
 
     constructor(originKotlinSettingsEntity: KotlinSettingsEntity) :
@@ -74,7 +74,7 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
                 originKotlinSettingsEntity.flushNeeded,
                 originKotlinSettingsEntity.entitySource
             ) {
-            } as KotlinSettingsEntity.Builder) {
+            }) {
     }
 
     override fun init(moduleEntity: ModuleEntity, entitySource: EntitySource) {
@@ -86,7 +86,7 @@ class KotlinFacetConfigurationBridge : KotlinFacetConfiguration, FacetConfigurat
         kotlinSettingsEntity.name = newName
     }
 
-    override fun getEntity(moduleEntity: ModuleEntity): KotlinSettingsEntity {
+    override fun getEntityBuilder(moduleEntity: ModuleEntity.Builder): KotlinSettingsEntity.Builder {
         return KotlinSettingsEntity(
             kotlinSettingsEntity.name,
             kotlinSettingsEntity.moduleId,

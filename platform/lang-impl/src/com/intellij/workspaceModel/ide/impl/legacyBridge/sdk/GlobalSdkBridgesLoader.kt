@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.application.ApplicationManager
@@ -41,7 +41,10 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
     val sdks = mutableStorage
       .entities(SdkEntity::class.java)
       .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
-      .map { sdkEntity -> sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntity as SdkEntity.Builder)) }
+      .map { sdkEntity ->
+        val sdkEntityBuilder = sdkEntity.createEntityTreeCopy(false) as SdkEntity.Builder
+        sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntityBuilder))
+      }
       .toList()
     thisLogger().debug("Initial load of SDKs")
 

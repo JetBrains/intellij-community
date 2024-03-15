@@ -351,10 +351,10 @@ class GlobalWorkspaceModel : Disposable {
 
 private fun VirtualFileUrl.createCopyAtManager(manager: VirtualFileUrlManager): VirtualFileUrl = manager.getOrCreateFromUrl(url)
 
-private fun ExcludeUrlEntity.copy(entitySource: EntitySource, manager: VirtualFileUrlManager): ExcludeUrlEntity =
+private fun ExcludeUrlEntity.copy(entitySource: EntitySource, manager: VirtualFileUrlManager): ExcludeUrlEntity.Builder =
   ExcludeUrlEntity(url.createCopyAtManager(manager), entitySource)
 
-private fun LibraryPropertiesEntity.copy(entitySource: EntitySource): LibraryPropertiesEntity {
+private fun LibraryPropertiesEntity.copy(entitySource: EntitySource): LibraryPropertiesEntity.Builder {
   val originalPropertiesXmlTag = propertiesXmlTag
   return LibraryPropertiesEntity(entitySource) {
     this.propertiesXmlTag = originalPropertiesXmlTag

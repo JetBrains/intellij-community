@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.configurationStore.serialize
@@ -173,7 +173,7 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
     for (artifact in artifacts) {
       val source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForArtifact(project, artifact.externalSource)
       val rootElement = artifact.rootElement
-      val rootElementEntity = rootElement.getOrAddEntity(storage, source, project) as CompositePackagingElementEntity
+      val rootElementEntity = rootElement.getOrAddEntityBuilder(storage, source, project) as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
 
       val artifactEntity = storage addEntity ArtifactEntity(artifact.name, artifact.artifactType.id, false, source) {
         this.outputUrl = artifact.getOutputUrl()
@@ -185,11 +185,8 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
         val properties = artifact.getProperties(provider)
 
         if (properties == null) {
-          val (toBeRemoved, filtered) = artifactEntity.customProperties.partition { it.providerType == provider.id }
+          val (toBeRemoved, _) = artifactEntity.customProperties.partition { it.providerType == provider.id }
           if (toBeRemoved.isNotEmpty()) {
-            storage.modifyEntity(artifactEntity) {
-              this.customProperties = filtered
-            }
             toBeRemoved.forEach { storage.removeEntity(it) }
           }
         }
@@ -199,9 +196,10 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
           val existingProperty = artifactEntity.customProperties.find { it.providerType == provider.id }
 
           if (existingProperty == null) {
-            storage addEntity ArtifactPropertiesEntity(provider.id, artifactEntity.entitySource) {
-              this.artifact = artifactEntity
-              this.propertiesXmlTag = tag
+            storage.modifyEntity(artifactEntity) {
+              this.customProperties += ArtifactPropertiesEntity(provider.id, artifactEntity.entitySource) {
+                this.propertiesXmlTag = tag
+              }
             }
           }
           else {

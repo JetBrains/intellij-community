@@ -1,15 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil
 import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.javaResourceRoots
+import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.FileCollectionFactory
@@ -53,14 +52,16 @@ internal class WorkspaceFolderImporter(
     for (root in ContentRootCollector.collect(allFolders)) {
       val excludes = root.excludeFolders
         .map { exclude -> virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(exclude.path)) }
-        .map { builder addEntity ExcludeUrlEntity(it, module.entitySource) }
-      val contentRootEntity = builder addEntity ContentRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(root.path)),
-                                                                  emptyList(), module.entitySource) {
+        .map { ExcludeUrlEntity(it, module.entitySource) }
+      val newContentRootEntity = ContentRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(root.path)),
+                                                   emptyList(), module.entitySource) {
         this.excludedUrls = excludes
-        this.module = module
       }
       root.sourceFolders.forEach { folder ->
-        registerSourceRootFolder(contentRootEntity, folder)
+        registerSourceRootFolder(newContentRootEntity, folder)
+      }
+      val updatedModule = builder.modifyEntity(module) {
+        this.contentRoots += newContentRootEntity
       }
     }
 
@@ -99,7 +100,7 @@ internal class WorkspaceFolderImporter(
                       })
   }
 
-  private fun registerSourceRootFolder(contentRootEntity: ContentRootEntity,
+  private fun registerSourceRootFolder(contentRootEntity: ContentRootEntity.Builder,
                                        folder: ContentRootCollector.SourceFolderResult) {
     val rootTypeId = when (folder.type) {
       JavaSourceRootType.SOURCE -> JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
@@ -109,24 +110,20 @@ internal class WorkspaceFolderImporter(
       else -> error("${folder.type} doesn't  match to maven root item")
     }
 
-    val sourceRootEntity = builder addEntity SourceRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(folder.path)), rootTypeId,
-                                                              contentRootEntity.entitySource) {
-      this.contentRoot = contentRootEntity
-    }
+    val sourceRootEntity = SourceRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(folder.path)), rootTypeId,
+                                                              contentRootEntity.entitySource)
 
     val isResource = JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID == rootTypeId
                      || JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID == rootTypeId
 
     if (isResource) {
-      builder addEntity JavaResourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource) {
-        this.sourceRoot = sourceRootEntity
-      }
+      sourceRootEntity.javaResourceRoots += JavaResourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource)
     }
     else {
-      builder addEntity JavaSourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource) {
-        this.sourceRoot = sourceRootEntity
-      }
+      sourceRootEntity.javaSourceRoots += JavaSourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource)
     }
+
+    contentRootEntity.sourceRoots += sourceRootEntity
   }
 
   private fun collectMavenFolders(mavenProject: MavenProject, stats: WorkspaceImportStats): CachedProjectFolders {

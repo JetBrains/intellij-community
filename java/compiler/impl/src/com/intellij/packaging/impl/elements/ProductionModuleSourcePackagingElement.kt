@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.elements
 
 import com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity
+import com.intellij.java.workspace.entities.PackagingElementEntity
 import com.intellij.openapi.module.ModulePointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -15,7 +16,6 @@ import com.intellij.packaging.ui.PackagingElementPresentation
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
@@ -40,9 +40,9 @@ class ProductionModuleSourcePackagingElement : ModulePackagingElementBase {
 
   override fun getFilesKind(context: PackagingElementResolvingContext) = PackagingElementOutputKind.OTHER
 
-  override fun getOrAddEntity(diff: MutableEntityStorage, source: EntitySource, project: Project): WorkspaceEntity {
-    val existingEntity = getExistingEntity(diff)
-    if (existingEntity != null) return existingEntity
+  override fun getOrAddEntityBuilder(diff: MutableEntityStorage, source: EntitySource, project: Project): PackagingElementEntity.Builder<out PackagingElementEntity> {
+    val existingEntity: PackagingElementEntity? = getExistingEntity(diff) as PackagingElementEntity?
+    if (existingEntity != null) return getBuilder(diff, existingEntity)
 
     val moduleName = this.moduleName
     val addedEntity = if (moduleName != null) {
@@ -54,7 +54,7 @@ class ProductionModuleSourcePackagingElement : ModulePackagingElementBase {
       diff addEntity ModuleSourcePackagingElementEntity(source)
     }
     diff.mutableElements.addMapping(addedEntity, this)
-    return addedEntity
+    return getBuilder(diff, addedEntity)
   }
 
   @NonNls

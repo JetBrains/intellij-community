@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.propertybased
 
 import com.intellij.java.workspace.entities.*
@@ -294,7 +294,7 @@ class ArtifactsPropertyTest {
 
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          val rootElement = createCompositeElementEntity(env, it)
+          val rootElement = createCompositeElementEntity(env)
           val (_, id, _) = selectArtifactType(env)
           it addEntity ArtifactEntity(artifactName, id, true, TestEntitySource) {
             this.rootElement = rootElement
@@ -736,9 +736,8 @@ class ArtifactsPropertyTest {
     return element to elementName
   }
 
-  private fun createCompositeElementEntity(env: ImperativeCommand.Environment,
-                                           builder: MutableEntityStorage): CompositePackagingElementEntity {
-    return builder addEntity ArtifactRootElementEntity(TestEntitySource)
+  private fun createCompositeElementEntity(env: ImperativeCommand.Environment): ArtifactRootElementEntity.Builder {
+    return ArtifactRootElementEntity(TestEntitySource)
   }
 
   private fun chooseSomeElementFromTree(env: ImperativeCommand.Environment,

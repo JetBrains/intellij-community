@@ -165,7 +165,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
     sdkEntity.applyChangesFrom(sdkEntityBuilder)
   }
 
-  fun getEntity(): SdkEntity = sdkEntityBuilder
+  fun getEntityBuilder(): SdkEntity.Builder = sdkEntityBuilder
 
   override fun toString(): String {
     return "$name Version:$versionString Path:($homePath)"
@@ -215,6 +215,18 @@ val OrderRootType.customName: String
       return name()
     }
   }
+
+@ApiStatus.Internal
+fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity.Builder) {
+  name = fromSdk.name
+  type = fromSdk.type
+  version = fromSdk.version
+  homePath = fromSdk.homePath
+  val sdkRoots = fromSdk.roots.mapTo(mutableListOf()) { SdkRoot(it.url, it.type) }
+  roots = sdkRoots
+  additionalData = fromSdk.additionalData
+  entitySource = fromSdk.entitySource
+}
 
 @ApiStatus.Internal
 fun SdkEntity.Builder.applyChangesFrom(fromSdk: SdkEntity) {

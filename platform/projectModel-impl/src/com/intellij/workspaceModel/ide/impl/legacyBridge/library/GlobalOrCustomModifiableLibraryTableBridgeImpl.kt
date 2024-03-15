@@ -37,7 +37,7 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
     if (name.isNullOrBlank()) error("${libraryTableId.level} library must have a name")
     assertModelIsLive()
 
-    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(), entitySource) {
+    val libraryEntity = LibraryEntity(name, libraryTableId, emptyList(), entitySource) {
       this.typeId = type?.kindId?.let { LibraryTypeId(it) }
     }
 
@@ -47,6 +47,8 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
         propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG,
                                                       type.createDefaultProperties())
       }
+    } else {
+      diff addEntity libraryEntity
     }
 
     val library = LibraryBridgeImpl(

@@ -104,7 +104,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     val originalSdkBridge = originalSdk.delegate as SdkBridgeImpl
     globalWorkspaceModel.updateModel("Updating SDK ${originalSdk.name} ${originalSdk.sdkType.name}") {
       it.modifyEntity(sdkEntity) {
-        this.applyChangesFrom(modifiedSdkBridge.getEntity())
+        this.applyChangesFrom(modifiedSdkBridge.getEntityBuilder())
       }
       originalSdkBridge.applyChangesFrom(modifiedSdkBridge)
     }

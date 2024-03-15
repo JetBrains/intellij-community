@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
@@ -15,11 +16,11 @@ import org.jetbrains.annotations.ApiStatus
  * Most often, its implementation comes together with a corresponding [FacetConfigurationBridge] implementation.
  */
 @ApiStatus.Internal
-interface FacetBridge<T : ModuleSettingsBase> {
+interface FacetBridge<T : ModuleSettingsBase, M : ModuleSettingsBase.Builder<T>> {
   /**
    * Facet configuration
    */
-  val config: FacetConfigurationBridge<T>
+  val config: FacetConfigurationBridge<T, M>
 
   /**
    * Add root entity which [FacetBridge] uses under the hood, to [mutableStorage]
@@ -29,9 +30,11 @@ interface FacetBridge<T : ModuleSettingsBase> {
    */
   fun addToStorage(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity, entitySource: EntitySource) {
     config.init(moduleEntity, entitySource)
-    val settingsEntity = config.getEntity(moduleEntity)
-    mutableStorage.addEntity(settingsEntity)
-    mutableStorage.mutableFacetMapping().addMapping(settingsEntity, this as Facet<*>)
+    mutableStorage.modifyEntity(moduleEntity) module@{
+      val settingsEntity = config.getEntityBuilder(this@module)
+      mutableStorage.addEntity(settingsEntity)
+      mutableStorage.mutableFacetMapping().addMapping(settingsEntity, this@FacetBridge as Facet<*>)
+    }
   }
 
   /**
@@ -84,7 +87,7 @@ interface FacetBridge<T : ModuleSettingsBase> {
  * Most often, its implementation comes together with a corresponding [FacetBridge] implementation.
  */
 @ApiStatus.Internal
-interface FacetConfigurationBridge<T : ModuleSettingsBase> {
+interface FacetConfigurationBridge<T : ModuleSettingsBase, M : ModuleSettingsBase.Builder<T>> {
   /**
    * Initializes this config settings with [moduleEntity] and [entitySource]
    */
@@ -103,5 +106,5 @@ interface FacetConfigurationBridge<T : ModuleSettingsBase> {
   /**
    * Returns the entity holding current configuration
    */
-  fun getEntity(moduleEntity: ModuleEntity): T
+  fun getEntityBuilder(moduleEntity: ModuleEntity.Builder): M
 }

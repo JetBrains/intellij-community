@@ -424,8 +424,10 @@ internal open class WorkspaceProjectImporter(
           // Move source root if it doesn't exist already
           from.sourceRoots.forEach {
             if (to.sourceRoots.none { root -> root.url == it.url }) {
-              currentStorage.modifyEntity(it) {
-                this.contentRoot = to
+              currentStorage.modifyEntity(it) sourceRoot@{
+                currentStorage.modifyEntity(to) contentRoot@{
+                  this@sourceRoot.contentRoot = this@contentRoot
+                }
               }
             }
           }
@@ -433,8 +435,10 @@ internal open class WorkspaceProjectImporter(
           // Move exclude if it doesn't exist already
           from.excludedUrls.forEach {
             if (to.excludedUrls.none { root -> root.url == it.url }) {
-              currentStorage.modifyEntity(it) {
-                this.contentRoot = to
+              currentStorage.modifyEntity(it) sourceRoot@{
+                currentStorage.modifyEntity(to) contentRoot@{
+                  this@sourceRoot.contentRoot = this@contentRoot
+                }
               }
             }
           }

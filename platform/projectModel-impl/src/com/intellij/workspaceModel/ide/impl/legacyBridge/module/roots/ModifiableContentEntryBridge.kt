@@ -62,14 +62,16 @@ internal class ModifiableContentEntryBridge(
                                                                    "Module source root type $type is not registered as JpsModelSerializerExtension")
 
     val contentRootEntity = currentContentEntry.value.entity
-    val sourceRootEntity = diff addEntity SourceRootEntity(url = sourceFolderUrl,
-                                                           rootTypeId = SourceRootTypeId(serializer.typeId),
-                                                           entitySource = folderEntitySource
-    ) {
-      contentRoot = contentRootEntity
+    val sourceRootEntity = SourceRootEntity(url = sourceFolderUrl,
+                                            rootTypeId = SourceRootTypeId(serializer.typeId),
+                                            entitySource = folderEntitySource)
+
+    SourceRootPropertiesHelper.addPropertiesEntity(sourceRootEntity, properties, serializer)
+
+    diff.modifyEntity(contentRootEntity) {
+      this.sourceRoots += sourceRootEntity
     }
 
-    SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, properties, serializer)
 
     return currentContentEntry.value.sourceFolders.firstOrNull {
       it.url == sourceFolderUrl.url && it.rootType == type
@@ -166,10 +168,7 @@ internal class ModifiableContentEntryBridge(
     if (!excludedUrls.contains(virtualFileUrl)) return false
 
     val contentRootEntity = currentContentEntry.value.entity
-    val (new, toRemove) = contentRootEntity.excludedUrls.partition { excludedUrl -> excludedUrl.url != virtualFileUrl }
-    updateContentEntry {
-      this.excludedUrls = new
-    }
+    val (_, toRemove) = contentRootEntity.excludedUrls.partition { excludedUrl -> excludedUrl.url != virtualFileUrl }
     toRemove.forEach { diff.removeEntity(it) }
 
     return true

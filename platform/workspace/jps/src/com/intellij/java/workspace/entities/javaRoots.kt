@@ -111,4 +111,5 @@ val SourceRootEntity.javaResourceRoots: List<@Child JavaResourceRootPropertiesEn
   by WorkspaceEntity.extension()
 
 fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootPropertiesEntity? = javaSourceRoots.firstOrNull()
+fun SourceRootEntity.Builder.asJavaSourceRoot(): JavaSourceRootPropertiesEntity.Builder? = javaSourceRoots.firstOrNull()
 fun SourceRootEntity.asJavaResourceRoot(): JavaResourceRootPropertiesEntity? = javaResourceRoots.firstOrNull()

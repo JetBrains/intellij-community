@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
@@ -16,7 +17,6 @@ import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.platform.workspace.jps.entities.ModuleId;
 import com.intellij.platform.workspace.storage.EntitySource;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
-import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,11 +56,11 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
     String moduleName = this.getModuleName();
     ModuleOutputPackagingElementEntity addedEntity;
@@ -74,6 +74,6 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
       addedEntity = diff.addEntity(ModuleOutputPackagingElementEntity.create(source));
     }
     diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
-    return addedEntity;
+    return getBuilder(diff, addedEntity);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.diagnostic.debug
@@ -160,12 +160,13 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
                                     orphanage: MutableEntityStorage,
                                     newEntities: Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>) {
-    val libraries = (newEntities[LibraryEntity::class.java] as? List<LibraryEntity>) ?: emptyList()
+    val libraries = (newEntities[LibraryEntity::class.java] as? List<LibraryEntity.Builder>) ?: emptyList()
     libraries.forEach {
-      if (it.symbolicId in builder) {
+      val symbolicId = LibraryId(it.name, it.tableId)
+      if (symbolicId in builder) {
         thisLogger().error("""Error during entities loading
             |Entity with this library id already exists.
-            |Library id: ${it.symbolicId}
+            |Library id: ${symbolicId}
             |fileUrl: ${fileUrl.presentableUrl}
             |library table id: ${it.tableId}
             |internal entity source: ${internalEntitySource}
@@ -258,7 +259,7 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
     }
 
     fun loadLibrary(name: String, libraryElement: Element, libraryTableId: LibraryTableId, source: EntitySource,
-                    virtualFileManager: VirtualFileUrlManager): LibraryEntity {
+                    virtualFileManager: VirtualFileUrlManager): LibraryEntity.Builder {
       val roots = ArrayList<LibraryRoot>()
       val excludedRoots = ArrayList<VirtualFileUrl>()
       val jarDirectories = libraryElement.getChildren(JAR_DIRECTORY_TAG).associateBy(

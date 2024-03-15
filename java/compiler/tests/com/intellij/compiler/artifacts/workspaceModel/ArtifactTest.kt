@@ -87,9 +87,8 @@ class ArtifactTest : ArtifactsTestCase() {
 
     // Add via model
     workspaceModel.updateProjectModel {
-      val root = it addEntity ArtifactRootElementEntity(MySource)
       it addEntity ArtifactEntity("MyName", PlainArtifactType.ID, true, MySource) {
-        rootElement = root
+        rootElement = ArtifactRootElementEntity(MySource)
       }
     }
 
@@ -109,9 +108,8 @@ class ArtifactTest : ArtifactsTestCase() {
 
     // Add via model
     workspaceModel.updateProjectModel {
-      val root = it addEntity ArtifactRootElementEntity(MySource)
       it addEntity ArtifactEntity("MyName", PlainArtifactType.ID, true, MySource) {
-        rootElement = root
+        rootElement = ArtifactRootElementEntity(MySource)
       }
     }
 
@@ -265,9 +263,8 @@ class ArtifactTest : ArtifactsTestCase() {
 
     // Add via model
     workspaceModel.updateProjectModel {
-      val root = it addEntity ArtifactRootElementEntity(MySource)
       it addEntity ArtifactEntity("MyName", PlainArtifactType.ID, true, MySource) {
-        rootElement = root
+        rootElement = ArtifactRootElementEntity(MySource)
       }
     }
 
@@ -292,9 +289,8 @@ class ArtifactTest : ArtifactsTestCase() {
 
     // Add via model
     workspaceModel.updateProjectModel {
-      val root = it addEntity ArtifactRootElementEntity(MySource)
       it addEntity ArtifactEntity("MyName", PlainArtifactType.ID, true, MySource) {
-        rootElement = root
+        rootElement = ArtifactRootElementEntity(MySource)
       }
     }
 
@@ -404,14 +400,13 @@ class ArtifactTest : ArtifactsTestCase() {
 
     val workspaceModel = WorkspaceModel.getInstance(project)
     workspaceModel.updateProjectModel {
-      val customElement = it addEntity CustomPackagingElementEntity("Custom-element", "<CustomPackagingElementState>\n" +
-                                                                                      "  <option name=\"data\" value=\"Name-2\" />\n" +
-                                                                                      "</CustomPackagingElementState>", MySource)
-      val rootElement = it addEntity ArtifactRootElementEntity(MySource) {
-        children = listOf(customElement)
-      }
+      val customElement = CustomPackagingElementEntity("Custom-element", "<CustomPackagingElementState>\n" +
+                                                                         "  <option name=\"data\" value=\"Name-2\" />\n" +
+                                                                         "</CustomPackagingElementState>", MySource)
       it addEntity ArtifactEntity("MyArtifact", PlainArtifactType.ID, false, MySource) {
-        this@ArtifactEntity.rootElement = rootElement
+        this@ArtifactEntity.rootElement = ArtifactRootElementEntity(MySource) {
+          children = listOf(customElement)
+        }
       }
     }
 
@@ -424,10 +419,10 @@ class ArtifactTest : ArtifactsTestCase() {
     ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable, {})
     val workspaceModel = WorkspaceModel.getInstance(project)
     workspaceModel.updateProjectModel {
-      val customElement = it addEntity CustomPackagingElementEntity("Custom-element", "<CustomPackagingElementState>\n" +
+      val customElement = CustomPackagingElementEntity("Custom-element", "<CustomPackagingElementState>\n" +
                                                                                       "  <option name=\"data\" value=\"Name-2\" />\n" +
                                                                                       "</CustomPackagingElementState>", MySource)
-      val rootElement = it addEntity ArtifactRootElementEntity(MySource) {
+      val rootElement = ArtifactRootElementEntity(MySource) {
         children = listOf(customElement)
       }
       it addEntity ArtifactEntity("MyArtifact", PlainArtifactType.ID, false, MySource) {
@@ -442,7 +437,7 @@ class ArtifactTest : ArtifactsTestCase() {
   fun `test add root via model and get via bridge`() = runWriteAction {
     val workspaceModel = WorkspaceModel.getInstance(project)
     workspaceModel.updateProjectModel {
-      val rootElement = it addEntity ArtifactRootElementEntity(MySource) {
+      val rootElement = ArtifactRootElementEntity(MySource) {
         children = listOf()
       }
       it addEntity ArtifactEntity("MyArtifact", PlainArtifactType.ID, false, MySource) {
@@ -611,11 +606,8 @@ class ArtifactTest : ArtifactsTestCase() {
       repeat(10) { counter ->
         runWriteAction {
           workspaceModel.updateProjectModel {
-            val rootElementEntity = it addEntity ArtifactRootElementEntity(MySource) {
-              children = emptyList()
-            }
             it addEntity ArtifactEntity("Artifact-$counter", PlainArtifactType.ID, false, MySource) {
-                    rootElement = rootElementEntity
+              rootElement = ArtifactRootElementEntity(MySource)
             }
           }
         }
@@ -724,9 +716,8 @@ class ArtifactTest : ArtifactsTestCase() {
 
   fun `test work with removed artifact via bridge`() = runWriteAction {
     WorkspaceModel.getInstance(project).updateProjectModel {
-      val element = it addEntity ArtifactRootElementEntity(MySource)
       it addEntity ArtifactEntity("MyArtifact", PlainArtifactType.getInstance().id, true, MySource) {
-        rootElement = element
+        rootElement = ArtifactRootElementEntity(MySource)
       }
     }
     val artifactEntity = WorkspaceModel.getInstance(project).currentSnapshot.entities(ArtifactEntity::class.java).single()
@@ -744,10 +735,10 @@ class ArtifactTest : ArtifactsTestCase() {
     ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(testRootDisposable, {})
     val workspaceModel = WorkspaceModel.getInstance(project)
     workspaceModel.updateProjectModel {
-      val customElement = it addEntity CustomPackagingElementEntity("Custom-element", "<CustomPackagingElementState>\n" +
+      val customElement = CustomPackagingElementEntity("Custom-element", "<CustomPackagingElementState>\n" +
                                                                                       "  <option name=\"data\" value=\"Name-2\" />\n" +
                                                                                       "</CustomPackagingElementState>", MySource)
-      val rootElement = it addEntity ArtifactRootElementEntity(MySource) {
+      val rootElement = ArtifactRootElementEntity(MySource) {
         children = listOf(customElement)
       }
       it addEntity ArtifactEntity("MyArtifact", PlainArtifactType.ID, false, MySource) {

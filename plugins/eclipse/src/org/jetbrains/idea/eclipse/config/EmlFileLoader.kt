@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
@@ -28,9 +28,9 @@ internal class EmlFileLoader(
   private val module: ModuleEntity.Builder,
   private val expandMacroToPathMap: ExpandMacroToPathMap,
   private val virtualFileManager: VirtualFileUrlManager,
-  private val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity>,
+  private val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity.Builder>,
 ) {
-  fun loadEml(emlTag: Element, contentRoot: ContentRootEntity) {
+  fun loadEml(emlTag: Element, contentRoot: ContentRootEntity.Builder) {
     loadCustomJavaSettings(emlTag)
     loadContentEntries(emlTag, contentRoot)
     loadJdkSettings(emlTag)
@@ -79,7 +79,7 @@ internal class EmlFileLoader(
     } ?: DependencyScope.COMPILE
   }
 
-  private fun loadModuleLibrary(libTag: Element, library: LibraryEntity) {
+  private fun loadModuleLibrary(libTag: Element, library: LibraryEntity.Builder) {
     val eclipseSrcRoot = library.roots.firstOrNull { it.type.name == OrderRootType.SOURCES.name() }
     val rootsToRemove = HashSet<LibraryRoot>()
     val rootsToAdd = ArrayList<LibraryRoot>()
@@ -114,7 +114,7 @@ internal class EmlFileLoader(
     updateRoots(IdeaSpecificSettings.RELATIVE_MODULE_CLS, OrderRootType.CLASSES.name())
     updateRoots(IdeaSpecificSettings.RELATIVE_MODULE_JAVADOC, "JAVADOC")
     if (rootsToAdd.isNotEmpty() || rootsToRemove.isNotEmpty()) {
-      (library as LibraryEntity.Builder).apply {
+      library.apply {
         roots.removeAll(rootsToRemove)
         roots.addAll(rootsToAdd)
       }
@@ -152,7 +152,7 @@ internal class EmlFileLoader(
     val javaSettings = module.javaSettings ?: JavaModuleSettingsEntity(true, true, module.entitySource) {
       this.module = module
     }
-    (javaSettings as JavaModuleSettingsEntity.Builder).apply {
+    javaSettings.apply {
       val testOutputElement = emlTag.getChild(IdeaXml.OUTPUT_TEST_TAG)
       if (testOutputElement != null) {
         compilerOutputForTests = testOutputElement.getAttributeValue(IdeaXml.URL_ATTR)?.let { virtualFileManager.getOrCreateFromUrl(it) }
@@ -169,7 +169,7 @@ internal class EmlFileLoader(
     }
   }
 
-  private fun loadContentEntries(emlTag: Element, contentRoot: ContentRootEntity) {
+  private fun loadContentEntries(emlTag: Element, contentRoot: ContentRootEntity.Builder) {
     val entryElements = emlTag.getChildren(IdeaXml.CONTENT_ENTRY_TAG)
     if (entryElements.isNotEmpty()) {
       entryElements.forEach { entryTag ->
@@ -186,7 +186,7 @@ internal class EmlFileLoader(
     }
   }
 
-  private fun loadContentEntry(contentEntryTag: Element, entity: ContentRootEntity) {
+  private fun loadContentEntry(contentEntryTag: Element, entity: ContentRootEntity.Builder) {
     val testSourceFolders = contentEntryTag.getChildren(IdeaXml.TEST_FOLDER_TAG).mapTo(HashSet()) {
       it.getAttributeValue(IdeaXml.URL_ATTR)
     }
@@ -199,14 +199,14 @@ internal class EmlFileLoader(
       val isForTests = url in testSourceFolders
       val rootTypeId = if (isForTests) JAVA_TEST_ROOT_ENTITY_TYPE_ID else JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
       if (rootTypeId != sourceRoot.rootTypeId) {
-        (sourceRoot as SourceRootEntity.Builder).rootTypeId = rootTypeId
+        sourceRoot.rootTypeId = rootTypeId
       }
 
       val packagePrefix = packagePrefixes[url]
       if (packagePrefix != null) {
         val javaRootProperties = sourceRoot.asJavaSourceRoot()
         if (javaRootProperties != null) {
-          (javaRootProperties as JavaSourceRootPropertiesEntity.Builder).packagePrefix = packagePrefix
+          javaRootProperties.packagePrefix = packagePrefix
         }
         else {
           JavaSourceRootPropertiesEntity(false, packagePrefix, sourceRoot.entitySource) {
@@ -221,7 +221,7 @@ internal class EmlFileLoader(
       .filter { FileUtil.isAncestor(entity.url.toPath().toFile(), JpsPathUtil.urlToFile(it), false) }
       .map { virtualFileManager.getOrCreateFromUrl(it) }
     if (excludedUrls.isNotEmpty()) {
-      (entity as ContentRootEntity.Builder).excludedUrls += excludedUrls.map { ExcludeUrlEntity(it, entity.entitySource) }
+      entity.excludedUrls += excludedUrls.map { ExcludeUrlEntity(it, entity.entitySource) }
     }
   }
 }

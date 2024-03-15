@@ -195,7 +195,7 @@ open class ArtifactBridge(
 
   override fun setRootElement(root: CompositePackagingElement<*>) {
     val entity = diff.get(artifactId)
-    val rootEntity = root.getOrAddEntity(diff, entity.entitySource, project) as CompositePackagingElementEntity
+    val rootEntity = root.getOrAddEntityBuilder(diff, entity.entitySource, project) as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
 
     root.forThisAndFullTree {
       it.setStorage(this.entityStorage, this.project, elementsWithDiff, PackagingElementInitializer)
@@ -223,11 +223,8 @@ open class ArtifactBridge(
   override fun setProperties(provider: ArtifactPropertiesProvider, properties: ArtifactProperties<*>?) {
     if (properties == null) {
       val entity = diff.get(artifactId)
-      val (toBeRemoved, filtered) = entity.customProperties.partition { it.providerType == provider.id }
+      val (toBeRemoved, _) = entity.customProperties.partition { it.providerType == provider.id }
       if (toBeRemoved.isNotEmpty()) {
-        diff.modifyEntity(entity) {
-          this.customProperties = filtered
-        }
         toBeRemoved.forEach { diff.removeEntity(it) }
       }
     }
@@ -239,9 +236,10 @@ open class ArtifactBridge(
       val existingProperty = entity.customProperties.find { it.providerType == provider.id }
 
       if (existingProperty == null) {
-        diff addEntity ArtifactPropertiesEntity(provider.id, entity.entitySource) {
-          artifact = entity
-          propertiesXmlTag = tag
+        diff.modifyEntity(entity) {
+          this.customProperties += ArtifactPropertiesEntity(provider.id, entity.entitySource) {
+            this.propertiesXmlTag = tag
+          }
         }
       }
       else {

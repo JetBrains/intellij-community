@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.openapi.application.PathMacros
@@ -31,7 +31,7 @@ import java.io.File
 private val LOG = logger<EclipseModuleRootsSerializer>()
 
 internal fun convertToJavadocUrl(originalPath: String,
-                                 moduleEntity: ModuleEntity,
+                                 moduleEntity: ModuleEntity.Builder,
                                  relativePathResolver: ModuleRelativePathResolver,
                                  virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl {
   val javadocPath = if (!SystemInfo.isWindows) {
@@ -160,7 +160,7 @@ internal fun convertVariablePathToUrl(pathMap: ExpandMacroToPathMap,
 }
 
 internal fun convertRelativePathToUrl(path: String,
-                                      contentRootEntity: ContentRootEntity,
+                                      contentRootEntity: ContentRootEntity.Builder,
                                       pathResolver: ModuleRelativePathResolver,
                                       virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl {
   if (!File(path).exists()) {
@@ -186,7 +186,7 @@ internal fun convertRelativePathToUrl(path: String,
 }
 
 private fun findFileUnderContentRoot(path: String,
-                                     contentRootEntity: ContentRootEntity,
+                                     contentRootEntity: ContentRootEntity.Builder,
                                      virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl? {
   val root = contentRootEntity.url.toPath().toFile()
   val mainRoot = if (root.exists()) root
@@ -197,6 +197,11 @@ private fun findFileUnderContentRoot(path: String,
   val file = File(mainRoot, path)
   return if (file.exists()) convertToRootUrl(file.absolutePath, virtualUrlManager) else null
 }
+
+internal val ModuleEntity.Builder.mainContentRoot: ContentRootEntity.Builder?
+  get() = contentRoots.firstOrNull {
+    VirtualFileManager.getInstance().findFileByUrl(it.url.url)?.findChild(EclipseXml.PROJECT_FILE) != null
+  }
 
 internal val ModuleEntity.mainContentRoot: ContentRootEntity?
   get() = contentRoots.firstOrNull {

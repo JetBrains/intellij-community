@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
 import com.intellij.facet.FacetManager
@@ -76,12 +76,10 @@ class SaveFacetsTest {
       JpsProjectFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))
     runWriteActionAndWait {
       workspaceModel.updateProjectModel {
-        val moduleEntity = it addEntity ModuleEntity("foo", listOf(ModuleSourceDependency), source)
-        it addEntity ModuleCustomImlDataEntity(HashMap(mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to SampleCustomModuleRootsSerializer.ID)),
-                                               source) {
-          module = moduleEntity
+        it addEntity ModuleEntity("foo", listOf(ModuleSourceDependency), source) {
+          this.customImlData = ModuleCustomImlDataEntity(HashMap(mapOf(JpsProjectLoader.CLASSPATH_ATTRIBUTE to SampleCustomModuleRootsSerializer.ID)),
+                                                         source)
         }
-        moduleEntity
       }
     }
     val module = projectModel.moduleManager.findModuleByName("foo")!!

@@ -131,7 +131,7 @@ class ArtifactModifiableModelBridge(
 
     val source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForArtifact(project, externalSource)
 
-    val rootElementEntity = rootElement.getOrAddEntity(diff, source, project) as CompositePackagingElementEntity
+    val rootElementEntity = rootElement.getOrAddEntityBuilder(diff, source, project) as CompositePackagingElementEntity.Builder<out CompositePackagingElementEntity>
     rootElement.forThisAndFullTree {
       if (!it.hasStorage()) {
         it.setStorage(versionedOnBuilder, project, elementsWithDiff, PackagingElementInitializer)
