@@ -159,6 +159,20 @@ object TerminalSessionTestUtil {
     this.sendCommandlineToExecuteWithoutAddingToHistory(commandline)
   }
 
+  fun List<String>.toCommandLine(session: BlockTerminalSession, preventAddingToHistory: Boolean = true): String {
+    return when (session.shellIntegration.shellType) {
+      ShellType.POWERSHELL -> {
+        // saving command history is disabled for PowerShell in [disableSavingHistory]
+        toPowerShellCommandLine(this)
+      }
+      else -> {
+        val commandLine = toPosixShellCommandLine(this)
+        // prefix with a space to prevent adding it to history for Zsh/Bash/fish (works by default)
+        if (preventAddingToHistory) " $commandLine" else commandLine
+      }
+    }
+  }
+
   fun BlockTerminalSession.sendCommandlineToExecuteWithoutAddingToHistory(shellCommandline: String) {
     if (this.shellIntegration.shellType == ShellType.POWERSHELL) {
       // saving command history is disabled for PowerShell in [disableSavingHistory]
