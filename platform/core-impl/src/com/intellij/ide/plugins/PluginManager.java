@@ -174,10 +174,8 @@ public final class PluginManager {
   @ApiStatus.Internal
   public static <T extends PluginDescriptor> @NotNull Stream<@NotNull T> filterVisiblePlugins(@NotNull Collection<@NotNull T> plugins,
                                                                                               boolean showImplementationDetails) {
-    ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
     return plugins
       .stream()
-      .filter(descriptor -> !applicationInfo.isEssentialPlugin(descriptor.getPluginId()))
       .filter(descriptor -> showImplementationDetails || !descriptor.isImplementationDetail());
   }
 }
