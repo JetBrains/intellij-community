@@ -6,7 +6,7 @@ import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
-class JvmLoggerArgumentSymbolReference(
+class LoggingArgumentSymbolReference(
   private val literalExpression: PsiElement,
   private val literalRange: TextRange,
   private val externalReference: PsiElement,
@@ -15,5 +15,5 @@ class JvmLoggerArgumentSymbolReference(
 
   override fun getRangeInElement(): TextRange = literalRange
 
-  override fun resolveReference(): Collection<Symbol> = listOf(JvmLoggerArgumentSymbol(externalReference))
+  override fun resolveReference(): Collection<Symbol> = listOf(LoggingArgumentSymbol(externalReference))
 }

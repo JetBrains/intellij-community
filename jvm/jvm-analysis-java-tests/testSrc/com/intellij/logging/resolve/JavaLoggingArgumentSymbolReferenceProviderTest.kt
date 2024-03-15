@@ -1,6 +1,6 @@
 package com.intellij.logging.resolve
 
-import com.intellij.analysis.logging.resolve.JvmLoggerArgumentSymbol
+import com.intellij.analysis.logging.resolve.LoggingArgumentSymbol
 import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingArgumentSymbolReferenceProviderTestBase
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolReferenceService
@@ -37,8 +37,8 @@ class JavaLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRefe
       val symbols = ref.resolveReference()
       assertEquals(bindings.size, symbols.size)
       val symbol = symbols.single()
-      assertTrue(symbol is JvmLoggerArgumentSymbol)
-      val formatSymbol = symbol as JvmLoggerArgumentSymbol
+      assertTrue(symbol is LoggingArgumentSymbol)
+      val formatSymbol = symbol as LoggingArgumentSymbol
       assertTrue(formatSymbol.getPlaceholderString() is ULiteralExpression)
       val expressionText = formatSymbol.expression.text
       assertEquals(bindings[ref.rangeInElement], expressionText)

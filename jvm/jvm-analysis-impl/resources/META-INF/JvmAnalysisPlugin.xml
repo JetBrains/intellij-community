@@ -185,10 +185,10 @@
       hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
       hostLanguage="UAST"
       implementationClass="com.intellij.analysis.logging.resolve.JvmLoggerSymbolReferenceProvider"
-      targetClass="com.intellij.analysis.logging.resolve.JvmLoggerArgumentSymbol"/>
+      targetClass="com.intellij.analysis.logging.resolve.LoggingArgumentSymbol"/>
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
-              implementationClass="com.intellij.analysis.logging.resolve.JvmLoggerUsageSearcher"/>
+              implementationClass="com.intellij.analysis.logging.resolve.LoggingArgumentUsageSearcher"/>
 
     <!--console filter-->
     <colorSettingsPage implementation="com.intellij.analysis.customization.console.ClassFinderConsoleColorsPage"/>

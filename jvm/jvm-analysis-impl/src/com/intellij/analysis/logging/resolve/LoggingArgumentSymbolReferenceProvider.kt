@@ -22,11 +22,11 @@ class JvmLoggerSymbolReferenceProvider : PsiSymbolReferenceProvider {
   }
 
   private fun hintsCheck(hints: PsiSymbolReferenceHints): Boolean {
-    if (!hints.referenceClass.isAssignableFrom(JvmLoggerArgumentSymbolReference::class.java)) return false
+    if (!hints.referenceClass.isAssignableFrom(LoggingArgumentSymbolReference::class.java)) return false
     val targetClass = hints.targetClass
-    if (targetClass != null && !targetClass.isAssignableFrom(JvmLoggerArgumentSymbol::class.java)) return false
+    if (targetClass != null && !targetClass.isAssignableFrom(LoggingArgumentSymbol::class.java)) return false
     val target = hints.target
-    return target == null || target is JvmLoggerArgumentSymbol
+    return target == null || target is LoggingArgumentSymbol
   }
 
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> {
@@ -57,7 +57,7 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
     if (range == null) return null
     val alignedRange = range.shiftRight(offset)
     val parameterPsi = parameter.sourcePsi ?: return null
-    JvmLoggerArgumentSymbolReference(psiLiteralExpression, alignedRange, parameterPsi)
+    LoggingArgumentSymbolReference(psiLiteralExpression, alignedRange, parameterPsi)
   }
 
   return when (context.loggerType) {

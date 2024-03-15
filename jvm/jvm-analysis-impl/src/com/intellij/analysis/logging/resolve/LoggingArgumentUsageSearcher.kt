@@ -8,10 +8,10 @@ import com.intellij.find.usages.api.UsageSearcher
 import com.intellij.model.psi.PsiSymbolReference
 import com.siyeh.ig.format.DefUsage
 
-class JvmLoggerUsageSearcher : UsageSearcher {
+class LoggingArgumentUsageSearcher : UsageSearcher {
   override fun collectImmediateResults(parameters: UsageSearchParameters): Collection<Usage> {
     val target = parameters.target
-    if (target !is JvmLoggerArgumentSymbol) return emptyList()
+    if (target !is LoggingArgumentSymbol) return emptyList()
     val uLiteralExpression = target.getPlaceholderString() ?: return emptyList()
     return getLogArgumentReferences(uLiteralExpression)?.let {
       it.filter { ref: PsiSymbolReference -> ref.resolvesTo(target) }

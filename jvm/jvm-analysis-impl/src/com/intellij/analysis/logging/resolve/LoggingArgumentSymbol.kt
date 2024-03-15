@@ -21,7 +21,7 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.toUElementOfType
 
-class JvmLoggerArgumentSymbol(val expression: PsiElement) : Symbol, NavigatableSymbol, SearchTarget {
+class LoggingArgumentSymbol(val expression: PsiElement) : Symbol, NavigatableSymbol, SearchTarget {
   override val usageHandler: UsageHandler = UsageHandler.createEmptyUsageHandler(expression.text)
 
   fun getPlaceholderString(): UExpression? {
@@ -33,8 +33,8 @@ class JvmLoggerArgumentSymbol(val expression: PsiElement) : Symbol, NavigatableS
     return getPlaceholderContext(logMethod, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j)?.logStringArgument
   }
 
-  override fun createPointer(): Pointer<JvmLoggerArgumentSymbol> {
-    return Pointer.delegatingPointer(SmartPointerManager.createPointer(expression), ::JvmLoggerArgumentSymbol)
+  override fun createPointer(): Pointer<LoggingArgumentSymbol> {
+    return Pointer.delegatingPointer(SmartPointerManager.createPointer(expression), ::LoggingArgumentSymbol)
   }
 
   override fun presentation(): TargetPresentation = TargetPresentation.builder(expression.text).presentation()
@@ -42,7 +42,7 @@ class JvmLoggerArgumentSymbol(val expression: PsiElement) : Symbol, NavigatableS
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> = listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(expression))
 
   override fun equals(other: Any?): Boolean {
-    if (other !is JvmLoggerArgumentSymbol) return false
+    if (other !is LoggingArgumentSymbol) return false
     return other.expression == this.expression
   }
 
