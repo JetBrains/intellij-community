@@ -56,16 +56,17 @@ public final class TextBlockJoinLinesHandler implements JoinRawLinesHandlerDeleg
     boolean fromStartTillEnd = atStartLine && tokenType.equals(JavaTokenType.TEXT_BLOCK_LITERAL) && 
                                doc.getLineNumber(tokenRange.getEndOffset()) == lineNumber + 1 &&
                                token.getText().endsWith("\"\"\"");
+    int endOffset = tokenRange.getEndOffset();
     if (singleSlash || atEmptyStartLine) {
       doc.deleteString(start, end);
-      end = start;
+      endOffset += start - end;
     } else {
       doc.replaceString(start, end, "\\n");
-      end = start + 2;
+      endOffset += start - end + 2;
     }
     if (fromStartTillEnd) {
-      doc.replaceString(tokenRange.getStartOffset(), end + 3, 
-                        convertToRegular(doc.getText().substring(tokenRange.getStartOffset(), end + 3)));
+      doc.replaceString(tokenRange.getStartOffset(), endOffset, 
+                        convertToRegular(doc.getText().substring(tokenRange.getStartOffset(), endOffset)));
     }
     return start;
   }

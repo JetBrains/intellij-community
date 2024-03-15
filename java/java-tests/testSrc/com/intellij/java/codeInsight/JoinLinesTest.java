@@ -303,6 +303,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testJoinTextBlockAtStartLineNonEmpty() {doTest();}
   public void testJoinTextBlockAtStartLineFinalStep() {doTest();}
   public void testJoinTextBlockAtStartLineComplete() {doTest();}
+  public void testJoinTextBlockAtStartLineComplete2() {doTest();}
   public void testJoinTextBlockAtStartLineCompleteWithEscapes() {doTest();}
   public void testJoinTextBlockBackSlash() {doTest();}
   public void testJoinTextBlockBackSlash2() {doTest();}
