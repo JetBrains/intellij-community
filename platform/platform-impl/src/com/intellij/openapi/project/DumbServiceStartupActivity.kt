@@ -2,14 +2,10 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.startup.InitProjectActivity
 
 private class DumbServiceStartupActivity : InitProjectActivity {
   override suspend fun run(project: Project) {
-    val dumbServiceImpl = project.serviceAsync<DumbService>() as DumbServiceImpl
-    blockingContext {
-      dumbServiceImpl.queueStartupActivitiesRequiredForSmartMode()
-    }
+    (project.serviceAsync<DumbService>() as DumbServiceImpl).queueStartupActivitiesRequiredForSmartMode()
   }
 }
