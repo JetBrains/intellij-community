@@ -50,12 +50,18 @@ class BlockTerminalController(
       promptController.reset()
       outputController.insertEmptyLine()
     }
-    else startCommand(command)
+    else {
+      session.commandManager.sendCommandToExecute(command)
+      outputController.doWhenNextBlockCanBeStarted {
+        startCommandBlock(command)
+      }
+    }
     // report event even if it is an empty command, because it will be reported as a separate command type
     TerminalUsageTriggerCollector.triggerCommandExecuted(project, command, isBlockTerminal = true)
   }
 
-  private fun startCommand(command: String) {
+  @RequiresEdt(generateAssertion = false)
+  private fun startCommandBlock(command: String) {
     outputController.startCommandBlock(command, promptController.promptRenderingInfo)
     // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
     // If the command is finished very fast, the prompt will be shown back before repainting.
@@ -67,7 +73,6 @@ class BlockTerminalController(
         Disposer.dispose(disposable)
       }
     }, disposable)
-    session.commandManager.sendCommandToExecute(command)
     session.model.isCommandRunning = true
   }
 

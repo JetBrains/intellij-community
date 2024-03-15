@@ -15,6 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TextStyle
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.IS_OUTPUT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.exp.hyperlinks.TerminalHyperlinkHighlighter
+import java.util.*
 
 class TerminalOutputController(
   project: Project,
@@ -36,6 +37,8 @@ class TerminalOutputController(
   private var runningCommandInteractivity: RunningCommandInteractivity? = null
 
   private val hyperlinkHighlighter: TerminalHyperlinkHighlighter = TerminalHyperlinkHighlighter(project, outputModel, session)
+
+  private val nextBlockCanBeStartedQueue: Queue<() -> Unit> = LinkedList()
 
   init {
     editor.putUserData(IS_OUTPUT_EDITOR_KEY, true)
@@ -112,6 +115,7 @@ class TerminalOutputController(
         outputModel.finalizeBlock(block)
       }
       runningCommandContext = null
+      nextBlockCanBeStartedQueue.poll()?.invoke()
     }
   }
 
@@ -271,6 +275,16 @@ class TerminalOutputController(
       editor.document.addDocumentListener(listener, disposable)
     }
     else editor.document.addDocumentListener(listener)
+  }
+
+  @RequiresEdt
+  fun doWhenNextBlockCanBeStarted(callback: () -> Unit) {
+    if (runningCommandContext == null && outputModel.getActiveBlock() == null) {
+      callback()
+    }
+    else {
+      nextBlockCanBeStartedQueue.offer(callback)
+    }
   }
 
   private data class CommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
