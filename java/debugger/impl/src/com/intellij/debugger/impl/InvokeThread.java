@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -133,7 +134,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
             final WorkerThreadRequest currentRequest = getCurrentRequest();
             if (currentRequest != threadRequest) {
               String message = "Expected " + threadRequest + " instead of " + currentRequest + " closed=" + myEvents.isClosed();
-              reportCommandError(new IllegalStateException(message));
+              LOG.error(message, new IllegalStateException(message), ThreadDumper.dumpThreadsToString());
               break; // ensure events are processed by one thread at a time
             }
 
