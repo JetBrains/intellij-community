@@ -31,6 +31,7 @@ import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScan
 import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilterScanningHandler;
 import com.intellij.util.indexing.FilesScanningTaskBase.IndexingProgressReporter.IndexingSubTaskProgressReporter;
 import com.intellij.util.indexing.PerProjectIndexingQueue.PerProviderSink;
+import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService;
 import com.intellij.util.indexing.dependencies.FutureScanningRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.dependencies.ScanningRequestToken;
@@ -92,7 +93,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   private final Project myProject;
   private final boolean myStartSuspended;
   private final boolean myOnProjectOpen;
-  private final boolean myAllowSkippingFilterFilling;
+  private final boolean myIsIndexingFilesFilterUpToDate;
   private final String myIndexingReason;
   private final ScanningType myScanningType;
   private final Future<Object> myStartCondition;
@@ -125,7 +126,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
   public UnindexedFilesScanner(@NotNull Project project,
                                boolean startSuspended,
                                boolean onProjectOpen,
-                               boolean allowSkippingFilterFilling,
+                               boolean isIndexingFilesFilterUpToDate,
                                @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
                                @Nullable StatusMark mark,
                                @Nullable String indexingReason,
@@ -135,7 +136,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myProject = project;
     myStartSuspended = startSuspended;
     myOnProjectOpen = onProjectOpen;
-    myAllowSkippingFilterFilling = allowSkippingFilterFilling;
+    myIsIndexingFilesFilterUpToDate = isIndexingFilesFilterUpToDate;
     myIndexingReason = (indexingReason != null) ? indexingReason : "<unknown>";
     myScanningType = scanningType;
     myStartCondition = startCondition;
@@ -447,7 +448,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken);
 
     ProjectIndexableFilesFilterHolder filterHolder = myIndex.getIndexableFilesFilterHolder();
-    FilesFilterScanningHandler filterHandler = isIndexableFilesFilterUpToDate(project, filterHolder, scanningRequest, projectIndexingDependenciesService)
+    FilesFilterScanningHandler filterHandler = myIsIndexingFilesFilterUpToDate
                                                ? new IdleFilesFilterScanningHandler(filterHolder)
                                                : new UpdatingFilesFilterScanningHandler(filterHolder);
     filterHandler.scanningStarted(project, isFullIndexUpdate());
@@ -555,13 +556,12 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     }
   }
 
-  private boolean isIndexableFilesFilterUpToDate(@NotNull Project project,
-                                                 @NotNull ProjectIndexableFilesFilterHolder filterHolder,
-                                                 @NotNull ScanningRequestToken scanningRequest,
-                                                 @NotNull ProjectIndexingDependenciesService service) {
-    return myOnProjectOpen && myAllowSkippingFilterFilling && usePersistentFilesFilter() &&
-           filterHolder.wasDataLoadedFromDisk(project) &&
-           scanningRequest.getAppIndexingRequestId().toInt() == service.getAppIndexingRequestIdOfLastScanning();
+  private static boolean isIndexableFilesFilterUpToDate(@NotNull Project project,
+                                                        @NotNull ProjectIndexableFilesFilterHolder filterHolder,
+                                                        @NotNull ProjectIndexingDependenciesService service) {
+    return service.isScanningCompleted() &&
+           usePersistentFilesFilter() && filterHolder.wasDataLoadedFromDisk(project) &&
+           ApplicationManager.getApplication().getService(AppIndexingDependenciesService.class).getCurrent().toInt() == service.getAppIndexingRequestIdOfLastScanning();
   }
 
   @Override
@@ -637,6 +637,8 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       }
       return null;
     });
+    ProjectIndexingDependenciesService dependenciesService = project.getService(ProjectIndexingDependenciesService.class);
+    boolean isFilterUpToDate = isIndexableFilesFilterUpToDate(project, fileBasedIndex.getIndexableFilesFilterHolder(), dependenciesService);
     if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
       LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
       List<IndexableFilesIterator> iterators = collectProviders(project, fileBasedIndex).getFirst();
@@ -648,8 +650,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
       project.putUserData(CONTENT_SCANNED, true);
     }
     else {
-      boolean allowSkippingFilterFilling = project.getService(ProjectIndexingDependenciesService.class).isScanningCompleted();
-      new UnindexedFilesScanner(project, startSuspended, true, allowSkippingFilterFilling, null, null, indexingReason,
+      new UnindexedFilesScanner(project, startSuspended, true, isFilterUpToDate, null, null, indexingReason,
                                 ScanningType.FULL_ON_PROJECT_OPEN, dirtyFileIndexesCleanupFuture)
         .queue();
     }
