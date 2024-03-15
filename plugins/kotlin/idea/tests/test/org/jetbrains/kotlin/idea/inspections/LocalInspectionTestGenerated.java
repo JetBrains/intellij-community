@@ -591,6 +591,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiverInApply.kt");
             }
 
+            @TestMetadata("implicitReceiverIsNotLeftMostReceiver.kt")
+            public void testImplicitReceiverIsNotLeftMostReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/implicitReceiverIsNotLeftMostReceiver.kt");
+            }
+
             @TestMetadata("isCheckSimple.kt")
             public void testIsCheckSimple() throws Exception {
                 runTest("testData/inspectionsLocal/branched/ifThenToSafeAccess/isCheckSimple.kt");
