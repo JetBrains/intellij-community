@@ -39,7 +39,9 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
   val uCallExpression = literalExpression.getParentOfType<UCallExpression>() ?: return null
   val log4jHasImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
 
-  val context = getPlaceholderContext(uCallExpression, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j) ?: return null
+  val logMethod = detectLoggerMethod(uCallExpression) ?: return null
+
+  val context = getPlaceholderContext(logMethod, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j) ?: return null
   if (literalExpression != context.logStringArgument || context.partHolderList.size > 1) return null
 
   val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, context.partHolderList)

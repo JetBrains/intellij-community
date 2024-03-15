@@ -189,7 +189,17 @@ fun getLogStringIndex(parameters: List<UParameter>): Int? {
   }
 }
 
-fun detectLoggerBuilderMethod(uCallExpression: UCallExpression): UCallExpression? {
+fun detectLoggerMethod(uCallExpression: UCallExpression): UCallExpression? {
+  val name = uCallExpression.methodName
+  return if (name == ADD_ARGUMENT_METHOD_NAME || name == SET_MESSAGE_METHOD_NAME) {
+    detectLoggerBuilderMethod(uCallExpression) ?: return null
+  }
+  else {
+    uCallExpression
+  }
+}
+
+private fun detectLoggerBuilderMethod(uCallExpression: UCallExpression): UCallExpression? {
   val uQualifiedReferenceExpression = uCallExpression.getOutermostQualified() ?: return null
   val selector = uQualifiedReferenceExpression.selector as? UCallExpression ?: return null
   if (LOGGER_BUILDER_LOG_TYPE_SEARCHERS.mapFirst(selector) == null) return null
