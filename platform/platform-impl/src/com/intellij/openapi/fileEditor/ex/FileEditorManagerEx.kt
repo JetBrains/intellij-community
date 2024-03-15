@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.ide.impl.DataValidators
@@ -213,7 +213,13 @@ abstract class FileEditorManagerEx : FileEditorManager() {
   abstract fun notifyPublisher(runnable: Runnable)
 
   override fun runWhenLoaded(editor: Editor, runnable: Runnable) {
-    performWhenLoaded(editor, runnable)
+    val textEditor = editor.virtualFile?.let { virtualFile -> getAllEditors(virtualFile).firstOrNull { it is TextEditor } as TextEditor? }
+    if (textEditor == null) {
+      runnable.run()
+    }
+    else {
+      performWhenLoaded(textEditor, runnable)
+    }
   }
 
   open fun addSelectionRecord(file: VirtualFile, window: EditorWindow) {}

@@ -85,8 +85,19 @@ class AsyncEditorLoader internal constructor(private val project: Project,
       }
     }
 
-    internal suspend fun waitForLoaded(editor: Editor) {
-      if (!isEditorLoaded(editor)) {
+    @RequiresEdt
+    fun performWhenLoaded(textEditor: TextEditor, runnable: Runnable) {
+      val asyncLoader = (textEditor as? TextEditorImpl)?.asyncLoader
+      if (asyncLoader == null) {
+        runnable.run()
+      }
+      else {
+        asyncLoader.performWhenLoaded(runnable)
+      }
+    }
+
+    internal suspend fun waitForLoaded(editor: TextEditorImpl) {
+      if (!editor.isLoaded()) {
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           suspendCancellableCoroutine {
             performWhenLoaded(editor) { it.resume(Unit) }
@@ -98,10 +109,11 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     @JvmStatic
     fun isEditorLoaded(editor: Editor): Boolean {
       val textEditor = findTextEditor(editor)
-      if (textEditor !is TextEditorImpl) {
-        return true
-      }
-      return textEditor.isLoaded()
+      return if (textEditor is TextEditorImpl) textEditor.isLoaded() else true
+    }
+
+    fun isEditorLoaded(textEditor: TextEditor): Boolean {
+      return if (textEditor is TextEditorImpl) textEditor.isLoaded() else true
     }
   }
 
@@ -171,14 +183,14 @@ class AsyncEditorLoader internal constructor(private val project: Project,
   }
 
   @RequiresEdt
-  fun setEditorState(state: TextEditorState, exactState: Boolean, editor: EditorEx) {
-    provider.setStateImpl(project = project, editor = editor, state = state, exactState = exactState)
+  fun setEditorState(state: TextEditorState, exactState: Boolean, textEditor: TextEditor) {
+    provider.setStateImpl(project = project, editor = textEditor.editor, textEditor = textEditor, state = state, exactState = exactState)
 
-    if (!isEditorLoaded(editor)) {
+    if (!isEditorLoaded(textEditor)) {
       delayedScrollState.set(DelayedScrollState(relativeCaretPosition = state.relativeCaretPosition, exactState = exactState))
       coroutineScope.launch(Dispatchers.EDT) {
         val delayedScrollState = delayedScrollState.getAndSet(null) ?: return@launch
-        restoreCaretPosition(editor = editor, delayedScrollState = delayedScrollState, coroutineScope = coroutineScope)
+        restoreCaretPosition(editor = textEditor.editor as EditorEx, delayedScrollState = delayedScrollState, coroutineScope = coroutineScope)
       }
     }
   }

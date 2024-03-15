@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl.text
@@ -179,7 +179,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
   }
 
   @RequiresEdt
-  open fun setStateImpl(project: Project?, editor: Editor, state: TextEditorState, exactState: Boolean) {
+  open fun setStateImpl(project: Project?, editor: Editor, textEditor: TextEditor?, state: TextEditorState, exactState: Boolean) {
     val carets = state.CARETS
     if (carets.isNotEmpty()) {
       val states = ArrayList<CaretState>(carets.size)
@@ -193,7 +193,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     }
 
     val relativeCaretPosition = state.relativeCaretPosition
-    if (AsyncEditorLoader.isEditorLoaded(editor) || ApplicationManager.getApplication().isUnitTestMode) {
+    if (textEditor == null || AsyncEditorLoader.isEditorLoaded(textEditor) || ApplicationManager.getApplication().isUnitTestMode) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         scrollToCaret(editor = editor, exactState = exactState, relativeCaretPosition = relativeCaretPosition)
       }
@@ -240,7 +240,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     }
 
     override fun setState(state: FileEditorState, exactState: Boolean) {
-      setStateImpl(project = null, editor = editor, state = state as TextEditorState, exactState = exactState)
+      setStateImpl(project = null, editor = editor, textEditor = this, state = state as TextEditorState, exactState = exactState)
     }
 
     override fun isModified(): Boolean = false

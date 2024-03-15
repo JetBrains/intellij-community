@@ -420,14 +420,14 @@ private suspend fun postOpenEditors(deferredProjectFrameHelper: Deferred<Project
 
 private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   val composite = editorComponent.currentWindow?.selectedComposite ?: return
-  val editor = (composite.selectedEditor as? TextEditor)?.editor
-  if (editor == null) {
+  val textEditor = composite.selectedEditor as? TextEditor
+  if (textEditor == null) {
     FUSProjectHotStartUpMeasurer.firstOpenedUnknownEditor(composite.file, System.nanoTime())
     composite.preferredFocusedComponent?.requestFocusInWindow()
   }
   else {
     blockingContext {
-      AsyncEditorLoader.performWhenLoaded(editor) {
+      AsyncEditorLoader.performWhenLoaded(textEditor) {
         FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file)
         composite.preferredFocusedComponent?.requestFocusInWindow()
       }

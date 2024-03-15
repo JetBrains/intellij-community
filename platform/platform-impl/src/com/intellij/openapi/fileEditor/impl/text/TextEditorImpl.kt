@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -46,11 +46,13 @@ import kotlin.coroutines.EmptyCoroutineContext
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
 
 open class TextEditorImpl
-@Internal @JvmOverloads constructor(@JvmField protected val project: Project,
-                                    @JvmField protected val file: VirtualFile,
-                                    provider: TextEditorProvider,
-                                    editor: EditorImpl,
-                                    internal val asyncLoader: AsyncEditorLoader = createAsyncEditorLoader(provider, project, editor, file)) : UserDataHolderBase(), TextEditor {
+@Internal @JvmOverloads constructor(
+  @JvmField protected val project: Project,
+  @JvmField protected val file: VirtualFile,
+  provider: TextEditorProvider,
+  editor: EditorImpl,
+  @JvmField internal val asyncLoader: AsyncEditorLoader = createAsyncEditorLoader(provider, project, editor, file),
+) : UserDataHolderBase(), TextEditor {
   @Suppress("LeakingThis")
   private val changeSupport = PropertyChangeSupport(this)
   private val component: TextEditorComponent
@@ -75,12 +77,20 @@ open class TextEditorImpl
 
   // don't pollute global scope
   companion object {
-    fun createAsyncEditorLoader(provider: TextEditorProvider, project: Project, editor: EditorImpl, virtualFile: VirtualFile, task: Deferred<Unit>? = null): AsyncEditorLoader {
+    fun createAsyncEditorLoader(
+      provider: TextEditorProvider,
+      project: Project,
+      editor: EditorImpl,
+      virtualFile: VirtualFile,
+      task: Deferred<Unit>? = null,
+    ): AsyncEditorLoader {
       return AsyncEditorLoader(
         project = project,
         provider = provider,
         coroutineScope = editorLoaderScope(project),
-        editor, virtualFile, task
+        editor = editor,
+        virtualFile = virtualFile,
+        task = task
       )
     }
 
@@ -115,10 +125,7 @@ open class TextEditorImpl
       return factory.createMainEditor(document!!, project, file, null)
     }
 
-    internal suspend fun setHighlighterToEditor(project: Project,
-                                                file: VirtualFile,
-                                                document: Document,
-                                                editor: EditorImpl) {
+    internal suspend fun setHighlighterToEditor(project: Project, file: VirtualFile, document: Document, editor: EditorImpl) {
       val scheme = serviceAsync<EditorColorsManager>().globalScheme
       val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
       val highlighter = readAction {
@@ -137,7 +144,7 @@ open class TextEditorImpl
   }
 
   protected open fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {
-    return TextEditorComponent(project, file, this, editor)
+    return TextEditorComponent(project = project, file = file, textEditor = this, editorImpl = editor)
   }
 
   override fun dispose() {
@@ -165,7 +172,7 @@ open class TextEditorImpl
 
   override fun setState(state: FileEditorState, exactState: Boolean) {
     if (state is TextEditorState) {
-      asyncLoader.setEditorState(state = state, exactState = exactState, editor)
+      asyncLoader.setEditorState(state = state, exactState = exactState, textEditor = this)
     }
   }
 

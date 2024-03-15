@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
@@ -185,13 +185,13 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     return state
   }
 
-  override fun setStateImpl(project: Project?, editor: Editor, state: TextEditorState, exactState: Boolean) {
-    super.setStateImpl(project = project, editor = editor, state = state, exactState = exactState)
+  override fun setStateImpl(project: Project?, editor: Editor, textEditor: TextEditor?, state: TextEditorState, exactState: Boolean) {
+    super.setStateImpl(project = project, editor = editor, textEditor = textEditor, state = state, exactState = exactState)
 
     // folding
     val foldState = state.foldingState
     // folding state is restored by PsiAwareTextEditorImpl.loadEditorInBackground, that's why here we check isEditorLoaded
-    if (project != null && foldState != null && isEditorLoaded(editor)) {
+    if (project != null && foldState != null && (textEditor == null || isEditorLoaded(textEditor))) {
       val psiDocumentManager = PsiDocumentManager.getInstance(project)
       if (!psiDocumentManager.isCommitted(editor.document)) {
         psiDocumentManager.commitDocument(editor.document)
