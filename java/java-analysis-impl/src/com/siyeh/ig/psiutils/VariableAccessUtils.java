@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -493,8 +492,7 @@ public final class VariableAccessUtils {
     final PsiType variableType = variable.getType();
     final PsiType initializationType = initialization.getType();
     final boolean sameType = Comparing.equal(variableType, initializationType);
-    for (PsiReference ref : ReferencesSearch.search(variable, new LocalSearchScope(containingScope))) {
-      final PsiElement refElement = ref.getElement();
+    for (PsiReferenceExpression refElement : getVariableReferences(variable)) {
       if (finalVariableIntroduction || canCaptureThis) {
         final PsiElement element = PsiTreeUtil.getParentOfType(refElement, PsiClass.class, PsiLambdaExpression.class);
         if (element != null && PsiTreeUtil.isAncestor(containingScope, element, true)) {
@@ -506,15 +504,8 @@ public final class VariableAccessUtils {
         return false;
       }
 
-      if (!sameType) {
-        final PsiElement parent = refElement.getParent();
-        if (parent instanceof PsiReferenceExpression) {
-          final PsiElement resolve = ((PsiReferenceExpression)parent).resolve();
-          if (resolve instanceof PsiMember &&
-              ((PsiMember)resolve).hasModifierProperty(PsiModifier.PRIVATE)) {
-            return false;
-          }
-        }
+      if (!sameType && !InstanceOfUtils.isVariableTypeChangeSafeForReference(initializationType, refElement)) {
+        return false;
       }
     }
 
