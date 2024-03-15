@@ -161,10 +161,10 @@ class CombinedDiffViewer(
     installCombinedDiffViewer(newViewer, this)
 
     val blockId = newContent.blockId
-    diffBlocks[blockId] = newDiffBlock
     runPreservingViewportContent(scrollPane, blocksPanel) {
-      diffViewers.remove(blockId)?.also(Disposer::dispose)
-      diffViewers[blockId] = newViewer
+      disposeDiffBlockIfPresent(blockId)
+      registerNewDiffBlock(blockId, newDiffBlock, newViewer)
+
       blocksPanel.setContent(blockId, newDiffBlock.component)
       newDiffBlock.component.validate()
       newViewer.init()
@@ -184,13 +184,10 @@ class CombinedDiffViewer(
 
   internal fun replaceBlockWithPlaceholder(blockId: CombinedBlockId) {
     runPreservingViewportContent(scrollPane, blocksPanel) {
-      val viewer = diffViewers.remove(blockId)
+      val viewer = diffViewers[blockId]
       val size = viewer?.component?.size?.height
-      val block = diffBlocks[blockId]
-      if (block != null) {
-        Disposer.dispose(block)
-      }
       blocksPanel.setPlaceholder(blockId, size)
+      disposeDiffBlockIfPresent(blockId)
     }
   }
 
@@ -199,18 +196,28 @@ class CombinedDiffViewer(
     if (!viewer.isEditorBased) {
       focusListener.register(viewer.component, this)
     }
-
     val diffBlockFactory = CombinedSimpleDiffBlockFactory()
+    return diffBlockFactory.createBlock(project, content)
+  }
 
-    val diffBlock = diffBlockFactory.createBlock(project, content)
-    val blockId = diffBlock.id
-    Disposer.register(diffBlock, Disposable {
+  private fun registerNewDiffBlock(blockId: CombinedBlockId,
+                                   newBlock: CombinedDiffBlock<*>,
+                                   newViewer: DiffViewer) {
+    Disposer.register(newBlock, Disposable {
       diffBlocks.remove(blockId)
       diffViewers.remove(blockId)?.also(Disposer::dispose)
     })
-    Disposer.register(this, diffBlock)
+    Disposer.register(this, newBlock)
 
-    return diffBlock
+    diffBlocks[blockId] = newBlock
+    diffViewers[blockId] = newViewer
+  }
+
+  private fun disposeDiffBlockIfPresent(blockId: CombinedBlockId) {
+    val oldDiffBlock = diffBlocks[blockId]
+    if (oldDiffBlock != null) {
+      Disposer.dispose(oldDiffBlock)
+    }
   }
 
   val component get(): JComponent = contentPanel
