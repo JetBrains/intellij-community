@@ -43,10 +43,9 @@ fun getLogArgumentReferences(literalExpression: UExpression): List<PsiSymbolRefe
   if (literalExpression != context.logStringArgument || context.partHolderList.size > 1) return null
 
   val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, context.partHolderList)
-  if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY || placeholderCountResult.placeholderRangesInPartHolderList.size != 1) return null
+  if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY) return null
 
-  val placeholderRanges = placeholderCountResult.placeholderRangesInPartHolderList.single()
-  val rangeWithParameterList = placeholderRanges.rangeList.zip(context.placeholderParameters)
+  val rangeWithParameterList = placeholderCountResult.placeholderRangeList.zip(context.placeholderParameters)
   val psiLiteralExpression = literalExpression.sourcePsi ?: return null
   val value = literalExpression.evaluateString() ?: return null
 

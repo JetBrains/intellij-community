@@ -133,16 +133,11 @@ class LoggerContext(val log4jAsImplementationForSlf4j: Boolean)
  * @property placeholderRangesInPartHolderList   The list of [PlaceholderRangesInPartHolder] instances.
  * @property status                              The status of the placeholders ranges extraction.
  *
- * @see countPlaceholders
+ * @see countBracesPlaceholders
  */
-data class PlaceholderCountResult(val placeholderRangesInPartHolderList: List<PlaceholderRangesInPartHolder>, val status: PlaceholdersStatus) {
-  val count = placeholderRangesInPartHolderList.sumOf { it.rangeList.size }
+data class PlaceholderCountResult(val placeholderRangeList: List<TextRange?>, val status: PlaceholdersStatus) {
+  val count = placeholderRangeList.size
 }
-
-/**
- * A data class representing ranges of placeholders ({}, or %s) within the [LoggingStringPartEvaluator.PartHolder].
- */
-data class PlaceholderRangesInPartHolder(val rangeList: List<TextRange?>)
 
 /**
  * A data class representing the context for a placeholder of the logger.
@@ -279,44 +274,65 @@ fun findAdditionalArgumentCount(node: UCallExpression,
   return null
 }
 
-fun solvePlaceholderCount(loggerType: PlaceholderLoggerType,
-                          argumentCount: Int,
-                          holders: List<LoggingStringPartEvaluator.PartHolder>): PlaceholderCountResult {
+
+/**
+ * This function solves the count of placeholders for different logger types.
+ *
+ * @param loggerType The type of the logger used.
+ * @param argumentCount The number of arguments that the logger is expected to handle.
+ * @param holders The list of PartHolder objects representing logging string parts.
+ *
+ * @return PlaceholderCountResult returns the result of either countFormattedPlaceholders or countBracesPlaceholders based on the type of the logger.
+ */
+fun solvePlaceholderCount(
+  loggerType: PlaceholderLoggerType,
+  argumentCount: Int,
+  holders: List<LoggingStringPartEvaluator.PartHolder>,
+): PlaceholderCountResult {
   return if (loggerType == PlaceholderLoggerType.LOG4J_FORMATTED_STYLE) {
-    val prefix = StringBuilder()
-    var full = true
-    for (holder in holders) {
-      if (holder.isConstant && holder.text != null) {
-        prefix.append(holder.text)
-      }
-      else {
-        full = false
-        break
-      }
-    }
-    if (prefix.isEmpty()) {
-      return PlaceholderCountResult(emptyList(), PlaceholdersStatus.EMPTY)
-    }
-    val validators = try {
-      if (full) {
-        FormatDecode.decode(prefix.toString(), argumentCount)
-      }
-      else {
-        FormatDecode.decodePrefix(prefix.toString(), argumentCount)
-      }
-    }
-    catch (e: FormatDecode.IllegalFormatException) {
-      return PlaceholderCountResult(emptyList(), PlaceholdersStatus.ERROR_TO_PARSE_STRING)
-    }
-    PlaceholderCountResult(listOf(
-      PlaceholderRangesInPartHolder(validators.map {
-        it.range
-      })
-    ), if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
+    countFormattedPlaceholders(holders, argumentCount)
   }
   else {
-    countPlaceholders(holders, loggerType)
+    countBracesPlaceholders(holders, loggerType)
   }
+}
+
+private fun countFormattedPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>,
+                                       argumentCount: Int): PlaceholderCountResult {
+  val prefix = StringBuilder()
+  var full = true
+  for (holder in holders) {
+    if (holder.isConstant && holder.text != null) {
+      prefix.append(holder.text)
+    }
+    else {
+      full = false
+      break
+    }
+  }
+  if (prefix.isEmpty()) {
+    return PlaceholderCountResult(emptyList(), PlaceholdersStatus.EMPTY)
+  }
+  val validators = try {
+    val formatString = prefix.toString()
+    if (full) {
+      FormatDecode.decode(formatString, argumentCount)
+      FormatDecode.decodeNoVerify(formatString, argumentCount)
+    }
+    else {
+      FormatDecode.decodePrefix(formatString, argumentCount)
+    }
+  }
+  catch (e: FormatDecode.IllegalFormatException) {
+    return PlaceholderCountResult(emptyList(), PlaceholdersStatus.ERROR_TO_PARSE_STRING)
+  }
+
+  val placeholderRangeList = validators.map { it.range }
+  if (placeholderRangeList.size != validators.size) {
+    return PlaceholderCountResult(emptyList(), PlaceholdersStatus.ERROR_TO_PARSE_STRING)
+  }
+
+  return PlaceholderCountResult(placeholderRangeList, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
 }
 
 fun getPlaceholderContext(
@@ -388,10 +404,10 @@ fun hasThrowableType(lastArgument: UExpression): Boolean {
   return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_THROWABLE)
 }
 
-private fun countPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>, loggerType: PlaceholderLoggerType): PlaceholderCountResult {
+private fun countBracesPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolder>, loggerType: PlaceholderLoggerType): PlaceholderCountResult {
   var count = 0
   var full = true
-  val partHolderPlaceholderList = mutableListOf<PlaceholderRangesInPartHolder>()
+  val placeholderRangeList: MutableList<TextRange> = mutableListOf()
   for (holderIndex in holders.indices) {
     val partHolder = holders[holderIndex]
     if (!partHolder.isConstant) {
@@ -402,7 +418,6 @@ private fun countPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolde
     val length = string.length
     var escaped = false
     var lastPlaceholderIndex = -1
-    val placeholderRanges = mutableListOf<TextRange>()
     for (i in 0 until length) {
       val c = string[i]
       if (c == '\\' &&
@@ -420,7 +435,7 @@ private fun countPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolde
       else if (c == '}') {
         if (lastPlaceholderIndex != -1) {
           count++
-          placeholderRanges.add(TextRange(lastPlaceholderIndex, lastPlaceholderIndex + 2))
+          placeholderRangeList.add(TextRange(lastPlaceholderIndex, lastPlaceholderIndex + 2))
           lastPlaceholderIndex = -1
         }
       }
@@ -429,9 +444,8 @@ private fun countPlaceholders(holders: List<LoggingStringPartEvaluator.PartHolde
         lastPlaceholderIndex = -1
       }
     }
-    partHolderPlaceholderList.add(PlaceholderRangesInPartHolder(placeholderRanges))
   }
-  return PlaceholderCountResult(partHolderPlaceholderList, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
+  return PlaceholderCountResult(placeholderRangeList, if (full) PlaceholdersStatus.EXACTLY else PlaceholdersStatus.PARTIAL)
 }
 
 
