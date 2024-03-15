@@ -145,7 +145,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     final ExternalSystemNode<?>[] cached = currentNode.getCached();
     if (cached == null) {
       //noinspection unchecked
-      currentNode.mergeWith(newNode);
+      currentNode.setFrom(newNode);
       return;
     }
     final List<Object> duplicates = new ArrayList<>();
@@ -158,7 +158,9 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
       }
     }
 
+    // new data comparing to old node
     Map<Object, ExternalSystemNode<?>> newDataMap = new LinkedHashMap<>();
+    // old nodes that exist in the old node as well as in the new node
     Map<Object, ExternalSystemNode<?>> unchangedNewDataMap = new LinkedHashMap<>();
     for (ExternalSystemNode<?> node : newNode.getChildren()) {
       Object key = node.getData() != null ? node.getData() : node.getName();
@@ -186,7 +188,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
 
     updateFrom(currentNode);
     //noinspection unchecked
-    currentNode.mergeWith(newNode);
+    currentNode.setFrom(newNode);
     currentNode.addAll(newDataMap.values());
   }
 

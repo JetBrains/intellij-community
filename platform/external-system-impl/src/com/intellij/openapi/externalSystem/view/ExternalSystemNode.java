@@ -424,7 +424,8 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return StringUtil.compare(this.getName(), node.getName(), true);
   }
 
-  public void mergeWith(ExternalSystemNode<T> node) {
-    setDataNode(node.myDataNode);
+  public void setFrom(@NotNull ExternalSystemNode<T> newNode) {
+    setDataNode(newNode.myDataNode);
+    setParent(newNode.myParent);
   }
 }

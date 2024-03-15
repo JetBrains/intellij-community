@@ -116,11 +116,10 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
   }
 
   @Override
-  public void mergeWith(ExternalSystemNode<ModuleData> node) {
-    super.mergeWith(node);
-    ModuleNode moduleNode = node instanceof ModuleNode ? ((ModuleNode)node) : null;
-    if (moduleNode != null) {
-      myAllModules  = moduleNode.myAllModules;
+  public void setFrom(@NotNull ExternalSystemNode<ModuleData> node) {
+    super.setFrom(node);
+    if (node instanceof ModuleNode moduleNode) {
+      myAllModules = moduleNode.myAllModules;
     }
   }
 }
