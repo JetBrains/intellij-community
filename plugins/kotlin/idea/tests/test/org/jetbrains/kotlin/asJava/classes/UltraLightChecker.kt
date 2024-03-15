@@ -11,7 +11,6 @@ import com.intellij.util.ref.DebugReflectionUtil
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.asJava.PsiClassRenderer
 import org.jetbrains.kotlin.idea.asJava.renderClass
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -35,7 +34,6 @@ object UltraLightChecker {
     fun checkByJavaFile(testDataPath: String, lightClasses: List<PsiClass>) {
         val expectedTextFile = getJavaFileForTest(testDataPath)
         val renderedResult = renderLightClasses(
-            testDataPath,
             lightClasses.sortedBy { it.qualifiedName ?: it.name.toString() },
         )
 
@@ -53,14 +51,8 @@ object UltraLightChecker {
 
     fun getJavaFileForTest(testDataPath: String): File = getJavaFileForTest(File(testDataPath))
 
-    fun renderLightClasses(testDataPath: String, lightClasses: List<PsiClass>): String {
-        val extendedTypeRendererOld = PsiClassRenderer.extendedTypeRenderer
-        return try {
-            PsiClassRenderer.extendedTypeRenderer = testDataPath.endsWith("typeAnnotations.kt")
-            lightClasses.sortedBy { it.name }.joinToString("\n\n") { it.renderClass() }
-        } finally {
-            PsiClassRenderer.extendedTypeRenderer = extendedTypeRendererOld
-        }
+    fun renderLightClasses(lightClasses: List<PsiClass>): String {
+        return lightClasses.sortedBy { it.name }.joinToString("\n\n") { it.renderClass() }
     }
 
     fun checkClassEquivalence(ktClass: KtClassOrObject): PsiClass? {
