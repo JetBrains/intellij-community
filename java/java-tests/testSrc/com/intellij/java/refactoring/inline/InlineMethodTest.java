@@ -579,6 +579,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testSplitIfAndCollapseBack() { doTest(); }
   
   public void testThisVariableName() { doTest(); }
+  
+  public void testRenameLocalClass() { doTest(); }
+  
+  public void testRenameLocalClassDoubleConflict() { doTest(); }
 
   @Override
   protected Sdk getProjectJDK() {

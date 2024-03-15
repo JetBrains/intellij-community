@@ -1,0 +1,13 @@
+class TestCase{
+  public void main() {
+    class T {
+      public T() {}
+    }
+    /*]*//*[*/
+      class T1 {
+        T1 t;
+        public T1() {}
+      }
+  }
+
+}

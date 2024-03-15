@@ -30,11 +30,13 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.text.NameUtilCore;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -78,7 +80,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
         }
       }
     }
-    solveVariableNameConflicts(initializer, ref, initializer);
+    solveLocalNameConflicts(initializer, ref, initializer);
 
     ChangeContextUtil.encodeContextInfo(initializer, false);
     PsiExpression expr = (PsiExpression)replaceDiamondWithInferredTypesIfNeeded(initializer, ref);
@@ -299,31 +301,60 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     return ref != initializer ? ref.replace(initializer) : initializer;
   }
 
-  public static void solveVariableNameConflicts(final PsiElement scope,
-                                                final PsiElement placeToInsert,
-                                                final PsiElement renameScope) throws IncorrectOperationException {
-    if (scope instanceof PsiVariable var) {
-      String name = var.getName();
-      String oldName = name;
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(scope.getProject());
-      while (true) {
-        String newName = codeStyleManager.suggestUniqueVariableName(name, placeToInsert, true);
-        if (newName.equals(name)) break;
-        name = newName;
-        newName = codeStyleManager.suggestUniqueVariableName(name, var, true);
-        if (newName.equals(name)) break;
-        name = newName;
-      }
-      if (!name.equals(oldName)) {
-        RefactoringUtil.renameVariableReferences(var, name, new LocalSearchScope(renameScope), true);
-        var.getNameIdentifier().replace(JavaPsiFacade.getElementFactory(scope.getProject()).createIdentifier(name));
+  public static void solveLocalNameConflicts(final PsiElement scope, 
+                                             final PsiElement placeToInsert,
+                                             final PsiElement renameScope) {
+    if (scope instanceof PsiVariable || scope instanceof PsiClass) {
+      PsiNameIdentifierOwner named = (PsiNameIdentifierOwner)scope;
+      String name = named.getName();
+      PsiElement identifier = named.getNameIdentifier();
+      if (name != null && identifier != null) {
+        String oldName = name;
+        Project project = scope.getProject();
+        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+        BiFunction<PsiElement, String, String> suggester =
+          scope instanceof PsiVariable ?
+          (place, curName) -> codeStyleManager.suggestUniqueVariableName(curName, place, true) :
+          (place, curName) -> suggestClassName(place, curName);
+        while (true) {
+          String newName = suggester.apply(placeToInsert, name);
+          if (newName.equals(name)) break;
+          name = newName;
+          newName = suggester.apply(named, name);
+          if (newName.equals(name)) break;
+          name = newName;
+        }
+        if (!name.equals(oldName)) {
+          for (PsiReference reference : ReferencesSearch.search(named, new LocalSearchScope(renameScope), true)) {
+            reference.handleElementRename(name);
+          }
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(scope.getProject());
+          if (named instanceof PsiClass cls) {
+            for (PsiMethod constructor : cls.getConstructors()) {
+              if (!(constructor instanceof SyntheticElement) && constructor.getName().equals(oldName)) {
+                Objects.requireNonNull(constructor.getNameIdentifier()).replace(factory.createIdentifier(name));
+              }
+            }
+          }
+          Objects.requireNonNull(named.getNameIdentifier()).replace(factory.createIdentifier(name));
+        }
       }
     }
 
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
-      solveVariableNameConflicts(child, placeToInsert, renameScope);
+      solveLocalNameConflicts(child, placeToInsert, renameScope);
     }
+  }
+
+  private static @NotNull String suggestClassName(@NotNull PsiElement place, @NotNull String name) {
+    PsiResolveHelper helper = PsiResolveHelper.getInstance(place.getProject());
+    return NameUtilCore.uniqName(
+      name,
+      n -> helper.resolveReferencedClass(n, place) != null ||
+           place instanceof PsiClass && place.getParent() instanceof PsiDeclarationStatement decl &&
+           decl.getParent() instanceof PsiCodeBlock block &&
+           SyntaxTraverser.psiTraverser(block).filter(PsiClass.class).find(cls -> n.equals(cls.getName())) != null);
   }
 
   public static boolean isChainingConstructor(PsiMethod constructor) {
