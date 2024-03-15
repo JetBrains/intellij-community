@@ -56,6 +56,10 @@ abstract class IndexDataInitializer<T>(private val name: String) : Callable<T?> 
       return scope.submitGenesisTask(action)
     }
 
+    fun <T> submitGenesisTask(action: suspend () -> T): Deferred<T> {
+      return scope.async(dispatcher) { action() }
+    }
+
     @JvmStatic
     fun <T> CoroutineScope.submitGenesisTask(action: Callable<T>): Future<T> {
       return async(dispatcher) { action.call() }.asCompletableFuture()

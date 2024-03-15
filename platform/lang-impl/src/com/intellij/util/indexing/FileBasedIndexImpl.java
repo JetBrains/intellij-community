@@ -31,7 +31,6 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.GentleFlusherBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
@@ -60,7 +59,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.FileIndexesValuesApplier.ApplicationMode;
@@ -85,6 +83,8 @@ import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlinx.coroutines.CoroutineScope;
@@ -887,41 +887,28 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void ensureDirtyFileIndexesDeleted(@NotNull Project project) {
+  @NotNull
+  IntList ensureDirtyFileIndexesDeleted() {
     synchronized (myDirtyFilesIds) {
-      if (myDirtyFilesIds.isEmpty()) return;
       try {
-        ProgressManager.getInstance().executeNonCancelableSection(() -> {
-          Collection<ID<?, ?>> indexIDs = myRegisteredIndexes.getState().getIndexIDs();
-          for (int fileId : myDirtyFilesIds) {
-            removeFileDataFromIndices(indexIDs, fileId, null);
-          }
-        });
-
-        ReadAction.run(() -> {
-          ManagingFS fs = ManagingFS.getInstance();
-          // add dirty files to myFilesToUpdateCollector, so they are visible for callers while scanning is still in smart mode
-          // but we should keep number of files under threshold to not trigger dumb mode (it'll be triggered by scanning)
-          int dumbModeThreshold = Registry.intValue("scanning.dumb.mode.threshold", 20);
-          JBIterable.from(myDirtyFilesIds)
-            .map(fileId -> {
-              VirtualFile file = fs.findFileById(fileId);
-              if (file != null && getContainingProjects(file).contains(project)) {
-                return file;
-              }
-              return null;
-            })
-            .filterNotNull()
-            .take(dumbModeThreshold - 1)
-            .forEach(file -> {
-              myFilesToUpdateCollector.scheduleForUpdate(FileIndexingRequest.updateRequest(file), Collections.emptyList());
-            });
-        });
+        return ensureDirtyFileIndexesDeleted(myDirtyFilesIds);
       }
       finally {
         myDirtyFilesIds.clear();
       }
     }
+  }
+
+  @NotNull
+  IntList ensureDirtyFileIndexesDeleted(@NotNull IntSet dirtyFiles) {
+    if (dirtyFiles.isEmpty()) return new IntArrayList();
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      Collection<ID<?, ?>> indexIDs = myRegisteredIndexes.getState().getIndexIDs();
+      for (int fileId : dirtyFiles) {
+        removeFileDataFromIndices(indexIDs, fileId, null);
+      }
+    });
+    return new IntArrayList(dirtyFiles);
   }
 
   @Override

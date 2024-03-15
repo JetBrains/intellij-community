@@ -14,6 +14,8 @@ import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.scanAndIndexProjectAfterOpen;
+
 final class ProjectFileBasedIndexStartupActivity implements StartupActivity.RequiredForSmartMode {
   private final ConcurrentList<Project> myOpenProjects = ContainerUtil.createConcurrentList();
 
@@ -46,7 +48,7 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
 
     // schedule dumb mode start after the read action we're currently in
     boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
-    UnindexedFilesScanner.scanAndIndexProjectAfterOpen(project, suspended, "On project open");
+    scanAndIndexProjectAfterOpen(project, suspended, "On project open");
 
     // done mostly for tests. In real life this is no-op, because the set was removed on project closing
     Disposer.register(project, () -> onProjectClosing(project));
