@@ -10,6 +10,7 @@
                         overrides="true"/>
 
     <projectServiceContainerInitializedListener
+      id="moduleBridgeLoaderService"
       implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService" order="first"/>
     <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader"
                     serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloaderImpl" overrides="true"/>

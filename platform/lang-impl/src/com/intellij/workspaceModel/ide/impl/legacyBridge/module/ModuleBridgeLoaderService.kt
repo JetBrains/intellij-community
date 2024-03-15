@@ -53,7 +53,7 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
 }
 
 private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedListener {
-  override suspend fun execute(project: Project) {
+  override suspend fun execute(project: Project, workspaceIndexReady: () -> Unit) {
     coroutineScope {
       val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
       val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
@@ -117,6 +117,9 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
           // IDEA-345082 There is a chance that the index was not initialized due to the broken cache.
           WorkspaceModelCacheImpl.invalidateCaches()
           throw RuntimeException(e)
+        }
+        finally {
+          workspaceIndexReady()
         }
       }
 

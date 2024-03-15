@@ -133,7 +133,6 @@ private class FrameAllocatorProjectInitObserver(
       }
 
       launch {
-        rawProjectDeferred.join()
         span("project frame assigning") {
           frameHelper.setProject(project)
         }
@@ -174,13 +173,13 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
       val projectInitObserver = FrameAllocatorProjectInitObserver(coroutineScope = loadingScope,
                                                                   deferredProjectFrameHelper = deferredProjectFrameHelper)
 
-      val rawProjectDeferred = projectInitObserver.rawProjectDeferred
       async(CoroutineName("project frame creating")) {
         createFrameManager(loadingScope = loadingScope, deferredProjectFrameHelper = deferredProjectFrameHelper)
       }
 
       val startOfWaitingForReadyFrame = AtomicLong(-1)
 
+      val rawProjectDeferred = projectInitObserver.rawProjectDeferred
       val reopeningEditorJob = outOfLoadingScope.launch {
         val project = rawProjectDeferred.await()
         span("restoreEditors") {

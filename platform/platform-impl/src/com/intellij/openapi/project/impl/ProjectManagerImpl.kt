@@ -681,7 +681,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           try {
             try {
               // cancel async preloading of services as soon as possible
-              (project as ComponentManagerEx).getCoroutineScope().coroutineContext.job.cancelAndJoin()
+              (project as ProjectImpl).getCoroutineScope().coroutineContext.job.cancelAndJoin()
             }
             catch (secondException: Throwable) {
               e.addSuppressed(secondException)
@@ -1226,15 +1226,19 @@ private suspend fun initProject(file: Path,
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
       val beforeComponentCreation = projectInitObserver?.beforeInitRawProject(project)
+      val workspaceIndexReady = CompletableDeferred<Unit>()
+      launch {
+        workspaceIndexReady.join()
+        projectInitObserver?.rawProjectDeferred?.complete(project)
+        if (preloadServices) {
+          schedulePreloadServices(project)
+        }
+      }
       projectInitListeners {
-        it.execute(project)
+        it.execute(project = project, workspaceIndexReady = { workspaceIndexReady.complete(Unit) })
       }
 
-      projectInitObserver?.rawProjectDeferred?.complete(project)
-
-      if (preloadServices) {
-        schedulePreloadServices(project)
-      }
+      workspaceIndexReady.complete(Unit)
 
       launch {
         beforeComponentCreation?.join()
@@ -1263,8 +1267,7 @@ private suspend fun initProject(file: Path,
 }
 
 internal suspend inline fun projectInitListeners(crossinline executor: suspend (ProjectServiceContainerInitializedListener) -> Unit) {
-  val extensionArea = ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl
-  val ep = extensionArea
+  val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
     .getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")
   for (adapter in ep.sortedAdapters) {
     val pluginDescriptor = adapter.pluginDescriptor
@@ -1272,7 +1275,7 @@ internal suspend inline fun projectInitListeners(crossinline executor: suspend (
         !(pluginDescriptor.pluginId.idString == "com.jetbrains.codeWithMe"
           && adapter.assignableToClassName == "com.jetbrains.rdserver.unattendedHost.UnattendedHostManager\$ProjectAttachActivity")
         && !(pluginDescriptor.pluginId.idString == "intellij.rider.plugins.cwm"
-          && adapter.assignableToClassName == "com.jetbrains.rdserver.unattendedHost.UnattendedHostManager\$ProjectAttachActivity")) {
+             && adapter.assignableToClassName == "com.jetbrains.rdserver.unattendedHost.UnattendedHostManager\$ProjectAttachActivity")) {
       LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
       continue
     }
@@ -1287,7 +1290,7 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
     return GeneralSettings.OPEN_PROJECT_NEW_WINDOW
   }
 
-  var mode = GeneralSettings.getInstance().confirmOpenNewProject
+  var mode = serviceAsync<GeneralSettings>().confirmOpenNewProject
   if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
     val ideUICustomization = serviceAsync<IdeUICustomization>()
     val message = if (options.projectName == null) {
@@ -1345,7 +1348,7 @@ interface ProjectServiceContainerInitializedListener {
   /**
    * Invoked after container configured.
    */
-  suspend fun execute(project: Project)
+  suspend fun execute(project: Project, workspaceIndexReady: () -> Unit)
 }
 
 @TestOnly

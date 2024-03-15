@@ -13,7 +13,7 @@ import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListe
 import kotlinx.coroutines.launch
 
 private class ProjectRunConfigurationInitializer : ProjectServiceContainerInitializedListener {
-  override suspend fun execute(project: Project) {
+  override suspend fun execute(project: Project, workspaceIndexReady: () -> Unit) {
     val coroutineTracer = CoroutineTracerShim.coroutineTracer
     @Suppress("UsagesOfObsoleteApi")
     (project as ComponentManagerEx).getCoroutineScope().launch(coroutineTracer.rootTrace()) {
