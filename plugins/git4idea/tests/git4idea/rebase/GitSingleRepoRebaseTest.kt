@@ -325,6 +325,8 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.abort(project, EmptyProgressIndicator())
 
+    updateChangeListManager()
+
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
     assertSuccessfulNotification("Abort rebase succeeded")
