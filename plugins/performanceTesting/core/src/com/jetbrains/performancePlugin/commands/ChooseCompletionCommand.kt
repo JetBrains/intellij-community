@@ -9,7 +9,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.jetbrains.performancePlugin.commands.IdeEditorKeyCommand.pressKey
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import kotlin.time.Duration.Companion.seconds
@@ -29,21 +28,12 @@ class ChooseCompletionCommand(text: String, line: Int) : PlaybackCommandCoroutin
       withTimeout(5.seconds) {
         var selected = false
         while (!selected) {
-          val itemsCount = getLookup(context)?.items?.size ?: 0
-          for (i in 0..<itemsCount) {
-            val lookup = getLookup(context)!!
-            //we need to get lookup every time because otherwise currentItem is not updated
-            if (getDefaultPresentation(lookup.currentItem!!).itemText!! != completionName) {
+          val lookup = getLookup(context)
+          lookup?.items?.firstOrNull { getDefaultPresentation(it).itemText!! == completionName }?.also {
+            withContext(Dispatchers.EDT) {
               ApplicationManager.getApplication().invokeAndWait {
-                pressKey(IdeEditorKeyCommand.EditorKey.ARROW_DOWN, context.project)
-              }
-            }
-            else {
-              withContext(Dispatchers.EDT) {
-                ApplicationManager.getApplication().invokeAndWait {
-                  lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR)
-                  selected = true
-                }
+                lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR, it)
+                selected = true
               }
             }
           }
