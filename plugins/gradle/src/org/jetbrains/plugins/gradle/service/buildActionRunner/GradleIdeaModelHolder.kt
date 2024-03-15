@@ -11,7 +11,7 @@ import org.gradle.tooling.model.ProjectModel
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.Build
-import org.jetbrains.plugins.gradle.util.ReflectionTraverser
+import org.jetbrains.plugins.gradle.util.GradleObjectTraverser
 import org.jetbrains.plugins.gradle.util.telemetry.GradleOpenTelemetryTraceService
 import java.io.File
 
@@ -160,7 +160,7 @@ class GradleIdeaModelHolder(
 
   private fun convertModelPathsInPlace(model: Any) {
     if (pathMapper == null) return
-    ReflectionTraverser.traverse(model, listOf(String::class.java), listOf(File::class.java)) { remoteFile ->
+    GradleObjectTraverser.traverse(model, setOf(String::class.java), setOf(Object::class.java, File::class.java)) { remoteFile ->
       if (remoteFile is File) {
         val remotePath = remoteFile.path
         if (pathMapper.canReplaceRemote(remotePath)) {
