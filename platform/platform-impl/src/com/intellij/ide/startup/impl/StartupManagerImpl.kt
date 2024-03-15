@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("OVERRIDE_DEPRECATION")
 
 package com.intellij.ide.startup.impl
@@ -218,14 +218,11 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       }
 
       val activity = adapter.createInstance<InitProjectActivity>(project) ?: continue
-      val startTime = System.nanoTime()
-      withContext(tracer.span("run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString))) {
-        if (project !is LightEditCompatible || activity is LightEditCompatible) {
+      if (project !is LightEditCompatible || activity is LightEditCompatible) {
+        withContext(tracer.span("run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString))) {
           activity.run(project)
         }
       }
-
-      addCompletedActivity(startTime = startTime, runnableClass = activity.javaClass, pluginId = pluginId)
     }
   }
 
@@ -454,16 +451,6 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
       LOG.error(e)
     }
   }
-}
-
-private fun addCompletedActivity(startTime: Long, runnableClass: Class<*>, pluginId: PluginId): Long {
-  return StartUpMeasurer.addCompletedActivity(
-    startTime,
-    runnableClass,
-    ActivityCategory.POST_STARTUP_ACTIVITY,
-    pluginId.idString,
-    StartUpMeasurer.MEASURE_THRESHOLD,
-  )
 }
 
 private fun launchActivity(activity: ProjectActivity, project: Project, pluginId: PluginId) {
