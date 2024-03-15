@@ -486,7 +486,7 @@ public final class UpdateHighlightersUtil {
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
       if (TextRange.areSegmentsEqual(range, highlighter)) {
         var highlightInfo = HighlightInfo.fromRangeHighlighter(highlighter);
-        if (highlightInfo != null && !inspectionToolId.equals(highlightInfo.getInspectionToolId())) {
+        if(highlightInfo == null || !inspectionToolId.equals(highlightInfo.getInspectionToolId())) {
           continue;
         }
         model.removeHighlighter(highlighter);
