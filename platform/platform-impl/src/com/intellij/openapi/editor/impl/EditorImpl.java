@@ -313,6 +313,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myCurrentDragIsSubstantial;
   private boolean myForcePushHappened;
 
+  private @Nullable VisualPosition mySuppressedByBreakpointsLastPressPosition;
+
   private CaretImpl myPrimaryCaret;
 
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
@@ -2611,6 +2613,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (!myMouseDragStarted) {
         return;
       }
+
+      if (mySuppressedByBreakpointsLastPressPosition != null) {
+        getCaretModel().removeSecondaryCarets();
+        getCaretModel().moveToVisualPosition(mySuppressedByBreakpointsLastPressPosition);
+        mySuppressedByBreakpointsLastPressPosition = null;
+      }
     }
 
     EditorMouseEventArea eventArea = getMouseEventArea(e);
@@ -4378,19 +4386,32 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (e.getClickCount() == 1) {
         myLastPressCreatedCaret = false;
       }
-      myLastPressWasAtBlockInlay = eventArea == EditorMouseEventArea.EDITING_AREA && hasBlockInlay(e.getPoint());
+      myLastPressWasAtBlockInlay =
+        eventArea == EditorMouseEventArea.EDITING_AREA && hasBlockInlay(e.getPoint());
+      boolean clickOnBreakpointOverLineNumbers =
+        eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && ExperimentalUI.isNewUI() && EditorUtil.isBreakPointsOnLineNumbers();
       // Don't move the caret when the mouse is pressed in the gutter line markers area
       // (a place where breakpoints, 'override'/'implements' and other icons are drawn) or in the "annotations" area.
       //
       // For example, we don't want to change the caret position
       // when the user sets a new breakpoint by clicking at the 'line markers' area.
       // Also, don't move the caret when the context menu for an inlay is invoked.
-      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) ||
+      //
+      // Also, don't move the caret too early if mouse pressed over line numbers area,
+      // the user might just set a new breakpoint and not selecting lines.
+      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && !clickOnBreakpointOverLineNumbers) ||
                           isInsideGutterWhitespaceArea(e) ||
                           eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
-      if (moveCaret) {
-        // We don't know which caret we want to work with yet
-        VisualPosition visualPosition = getTargetPosition(x, y, true, null);
+      assert !(moveCaret && clickOnBreakpointOverLineNumbers);
+      // We don't know which caret we want to work with yet
+      VisualPosition visualPosition = getTargetPosition(x, y, true, null);
+      if (clickOnBreakpointOverLineNumbers) {
+        // However, we should save the information about the first position to correctly initiate drag,
+        // if the user needs it instead of breakpoint setting.
+        mySuppressedByBreakpointsLastPressPosition = visualPosition;
+      }
+      else if (moveCaret) {
+        mySuppressedByBreakpointsLastPressPosition = null;
         LogicalPosition pos = visualToLogicalPosition(visualPosition);
         if (toggleCaret) {
           Caret caret = getCaretModel().getCaretAt(visualPosition);
@@ -4448,8 +4469,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                      SwingUtilities.isRightMouseButton(e));
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
-      if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-        if (ExperimentalUI.isNewUI() && EditorUtil.isBreakPointsOnLineNumbers()) {
+      if (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
+        if (clickOnBreakpointOverLineNumbers) {
           //do nothing here and set/unset a breakpoint if possible in XLineBreakpointManager
           return false;
         }
