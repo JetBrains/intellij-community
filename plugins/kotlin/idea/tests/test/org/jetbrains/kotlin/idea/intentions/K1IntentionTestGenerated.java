@@ -3489,6 +3489,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("flattenWithComments.kt")
+                public void testFlattenWithComments() throws Exception {
+                    runTest("testData/intentions/branched/when/flatten/flattenWithComments.kt");
+                }
+
                 @TestMetadata("flattenWithSubject.kt")
                 public void testFlattenWithSubject() throws Exception {
                     runTest("testData/intentions/branched/when/flatten/flattenWithSubject.kt");

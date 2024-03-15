@@ -7038,6 +7038,34 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/branched/when/flatten")
+    public static class Flatten extends AbstractK2IntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("flattenWithComments.kt")
+        public void testFlattenWithComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/flatten/flattenWithComments.kt");
+        }
+
+        @TestMetadata("flattenWithSubject.kt")
+        public void testFlattenWithSubject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/flatten/flattenWithSubject.kt");
+        }
+
+        @TestMetadata("flattenWithUnmatchedSubjects.kt")
+        public void testFlattenWithUnmatchedSubjects() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/flatten/flattenWithUnmatchedSubjects.kt");
+        }
+
+        @TestMetadata("flattenWithoutSubject.kt")
+        public void testFlattenWithoutSubject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/flatten/flattenWithoutSubject.kt");
+        }
+    }
+
 
 
 

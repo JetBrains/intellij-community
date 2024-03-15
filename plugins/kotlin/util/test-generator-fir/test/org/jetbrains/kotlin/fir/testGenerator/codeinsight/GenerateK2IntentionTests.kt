@@ -128,6 +128,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/removeExplicitSuperQualifier", pattern = pattern, isIgnored = true)
             model("${idea}intentions/mergeElseIf", pattern = pattern, isIgnored = true)
             model("${idea}intentions/branched/ifWhen/ifToWhen", pattern = pattern)
+            model("${idea}intentions/branched/when/flatten", pattern = pattern)
 
             //model("${idea}intentions/loopToCallChain", pattern = pattern, isIgnored = true)
             //model("${idea}intentions/loopToCallChain/forEach", pattern = pattern, isIgnored = true)

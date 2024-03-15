@@ -231,7 +231,7 @@ fun KtExpression.hasCandidateNameReferenceExpression(checkConstants: Boolean): B
 }
 
 context(KtAnalysisSession)
-private fun KtExpression?.matches(right: KtExpression?): Boolean {
+fun KtExpression?.matches(right: KtExpression?): Boolean {
     if (this == null && right == null) return true
 
     if (this != null && right != null) {
