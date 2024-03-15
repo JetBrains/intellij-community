@@ -22,7 +22,6 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
@@ -68,9 +67,6 @@ import static com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilt
 public class UnindexedFilesScanner extends FilesScanningTaskBase {
 
   private static final int DELAY_IN_TESTS_MS = SystemProperties.getIntProperty("scanning.delay.before.start.in.tests.ms", 0);
-
-  @VisibleForTesting
-  public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
 
   static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);
 
@@ -145,8 +141,7 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
     LOG.assertTrue(myPredefinedIndexableFilesIterators == null || !myPredefinedIndexableFilesIterators.isEmpty());
     LOG.assertTrue(!myOnProjectOpen ||
-                   myPredefinedIndexableFilesIterators == null ||
-                   TestModeFlags.get(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY) == Boolean.TRUE,
+                   myPredefinedIndexableFilesIterators == null,
                    "Should request full scanning on project open");
     myFutureScanningRequestToken = project.getService(ProjectIndexingDependenciesService.class).newFutureScanningToken();
 
@@ -639,21 +634,9 @@ public class UnindexedFilesScanner extends FilesScanningTaskBase {
     });
     ProjectIndexingDependenciesService dependenciesService = project.getService(ProjectIndexingDependenciesService.class);
     boolean isFilterUpToDate = isIndexableFilesFilterUpToDate(project, fileBasedIndex.getIndexableFilesFilterHolder(), dependenciesService);
-    if (TestModeFlags.is(INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY)) {
-      LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
-      List<IndexableFilesIterator> iterators = collectProviders(project, fileBasedIndex).getFirst();
-      for (IndexableFilesIterator iterator : iterators) {
-        new UnindexedFilesScanner(project, startSuspended, true, false, List.of(iterator), null, indexingReason,
-                                  ScanningType.FULL_ON_PROJECT_OPEN, dirtyFileIndexesCleanupFuture)
-          .queue();
-      }
-      project.putUserData(CONTENT_SCANNED, true);
-    }
-    else {
-      new UnindexedFilesScanner(project, startSuspended, true, isFilterUpToDate, null, null, indexingReason,
-                                ScanningType.FULL_ON_PROJECT_OPEN, dirtyFileIndexesCleanupFuture)
-        .queue();
-    }
+    new UnindexedFilesScanner(project, startSuspended, true, isFilterUpToDate, null, null, indexingReason,
+                              ScanningType.FULL_ON_PROJECT_OPEN, dirtyFileIndexesCleanupFuture)
+      .queue();
   }
 
   public void queue() {
