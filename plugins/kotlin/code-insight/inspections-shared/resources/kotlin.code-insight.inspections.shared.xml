@@ -313,7 +313,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
                      level="WARNING"
                      language="kotlin"
-                     key="print.should.be.replaced.with.logging" bundle="messages.KotlinBundle"/>
+                     key="print.should.be.replaced.with.logging.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ControlFlowWithEmptyBodyInspection"
                      groupPath="Kotlin"
