@@ -78,4 +78,35 @@ class GradleGroovyScriptRunConfigurationProducerTest : GradleGroovyScriptRunConf
     val expectedTaskNames = declaredWithMethods.map(DeclarationWithMethod::taskName).toSet()
     assertAllTasksHaveConfiguration(expectedTaskNames, taskDataMap)
   }
+
+  @Test
+  @TargetVersions("5.0+")
+  fun `test tasks named`() {
+    val declaredWithMethods = listOf(
+      DeclarationWithMethod(methodCall = "tasks.named", taskName = "taskForNamed"),
+      DeclarationWithMethod(methodCall = "getTasks().named", taskName = "taskForNamed"),
+      DeclarationWithMethod(methodCall = "project.tasks.named", taskName = "taskForNamed"),
+      DeclarationWithMethod(methodCall = "myProject.getTasks().named", taskName = "taskForNamed"),
+      DeclarationWithMethod(methodCall = "myTasks.named", taskName = "taskForNamed"),
+    )
+
+    val buildFile = createBuildFile {
+      withPostfix {
+        code("def myProject = getProject()")
+        code("def myTasks = myProject.getTasks()")
+        withTask("taskForNamed")
+        for ((methodCall, taskName) in declaredWithMethods) {
+          call(methodCall, taskName) {
+            call("doFirst") {
+              call("println", "$taskName task configured with $methodCall")
+            }
+          }
+        }
+      }
+    }
+    importProject()
+    val taskDataMap = getTaskData(buildFile)
+    val expectedTaskNames = declaredWithMethods.map(DeclarationWithMethod::taskName).toSet()
+    assertAllTasksHaveConfiguration(expectedTaskNames, taskDataMap)
+  }
 }

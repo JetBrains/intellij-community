@@ -24,8 +24,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.text.Strings.isEmpty;
 import static com.intellij.psi.util.InheritanceUtil.isInheritor;
-import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT;
-import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER;
+import static org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_DQ;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.STRING_SQ;
 
@@ -85,6 +84,7 @@ public final class GradleGroovyRunnerUtil {
 
     String methodName = resolvedMethod.getName();
     if (declaresTaskFromTaskContainer(methodName, containingClass)
+      || declaresTaskFromTaskCollection(methodName, containingClass)
       || declaresTaskFromProject(methodName, containingClass)
     ) {
       return taskNameCandidate;
@@ -96,6 +96,11 @@ public final class GradleGroovyRunnerUtil {
   private static boolean declaresTaskFromTaskContainer(String methodName, PsiClass containingClass) {
     return isInheritor(containingClass, GRADLE_API_TASK_CONTAINER)
            && ("create".equals(methodName) || "register".equals(methodName));
+  }
+
+  private static boolean declaresTaskFromTaskCollection(String methodName, PsiClass containingClass) {
+    return isInheritor(containingClass, GRADLE_API_TASK_COLLECTION)
+           && "named".equals(methodName);
   }
 
   private static boolean declaresTaskFromProject(String methodName, PsiClass containingClass) {
