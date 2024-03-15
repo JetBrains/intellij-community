@@ -112,7 +112,7 @@ fun loadDescriptorFromDir(
       moduleName = null,
       useCoreClassLoader = useCoreClassLoader,
     )
-    context.debugData?.recordDescriptorPath(pluginDescriptor = descriptor, rawPluginDescriptor = raw, path = descriptorRelativePath)
+    context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = descriptorRelativePath)
     descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = false, dataLoader = dataLoader)
     descriptor.jarFiles = Collections.singletonList(dir)
     return descriptor

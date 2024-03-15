@@ -39,12 +39,14 @@ internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String {
 }
 
 @ApiStatus.Internal
-class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
-                               @JvmField val path: Path,
-                               private val isBundled: Boolean,
-                               id: PluginId?,
-                               @JvmField val moduleName: String?,
-                               @JvmField val useCoreClassLoader: Boolean = false) : IdeaPluginDescriptor {
+class IdeaPluginDescriptorImpl(
+  raw: RawPluginDescriptor,
+  @JvmField val path: Path,
+  private val isBundled: Boolean,
+  id: PluginId?,
+  @JvmField val moduleName: String?,
+  @JvmField val useCoreClassLoader: Boolean = false,
+) : IdeaPluginDescriptor {
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name = raw.name ?: id?.idString ?: raw.id
 
@@ -54,22 +56,28 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   // only for sub descriptors
-  @JvmField internal var descriptorPath: String? = null
-  @Volatile private var description: String? = null
+  @JvmField
+  internal var descriptorPath: String? = null
+  @Volatile
+  private var description: String? = null
   private val productCode = raw.productCode
   private var releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
   private val releaseVersion = raw.releaseVersion
   private val isLicenseOptional = raw.isLicenseOptional
-  @NonNls private var resourceBundleBaseName: String? = null
+  @NonNls
+  private var resourceBundleBaseName: String? = null
   private val changeNotes = raw.changeNotes
   private var version: String? = raw.version
   private var vendor = raw.vendor
   private val vendorEmail = raw.vendorEmail
   private val vendorUrl = raw.vendorUrl
   private var category: String? = raw.category
-  @JvmField internal val url: String? = raw.url
-  @JvmField val pluginDependencies: List<PluginDependency>
-  @JvmField val incompatibilities: List<PluginId> = raw.incompatibilities ?: Java11Shim.INSTANCE.listOf()
+  @JvmField
+  internal val url: String? = raw.url
+  @JvmField
+  val pluginDependencies: List<PluginDependency>
+  @JvmField
+  val incompatibilities: List<PluginId> = raw.incompatibilities ?: Java11Shim.INSTANCE.listOf()
 
   init {
     // https://youtrack.jetbrains.com/issue/IDEA-206274
@@ -95,13 +103,17 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
   }
 
-  @Transient @JvmField var jarFiles: List<Path>? = null
+  @Transient
+  @JvmField
+  var jarFiles: List<Path>? = null
   private var _pluginClassLoader: ClassLoader? = null
 
-  @JvmField val actions: List<RawPluginDescriptor.ActionDescriptor> = raw.actions ?: Java11Shim.INSTANCE.listOf()
+  @JvmField
+  val actions: List<RawPluginDescriptor.ActionDescriptor> = raw.actions ?: Java11Shim.INSTANCE.listOf()
 
   // extension point name -> list of extension descriptors
-  @JvmField val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.epNameToExtensions.let { rawMap ->
+  @JvmField
+  val epNameToExtensions: Map<String, List<ExtensionDescriptor>> = raw.epNameToExtensions.let { rawMap ->
     if (rawMap == null) {
       Java11Shim.INSTANCE.mapOf()
     }
@@ -126,23 +138,34 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
   }
 
-  @JvmField val appContainerDescriptor: ContainerDescriptor = raw.appContainerDescriptor
-  @JvmField val projectContainerDescriptor: ContainerDescriptor = raw.projectContainerDescriptor
-  @JvmField val moduleContainerDescriptor: ContainerDescriptor = raw.moduleContainerDescriptor
+  @JvmField
+  val appContainerDescriptor: ContainerDescriptor = raw.appContainerDescriptor
+  @JvmField
+  val projectContainerDescriptor: ContainerDescriptor = raw.projectContainerDescriptor
+  @JvmField
+  val moduleContainerDescriptor: ContainerDescriptor = raw.moduleContainerDescriptor
 
-  @JvmField val content: PluginContentDescriptor = raw.contentModules.takeIf { !it.isNullOrEmpty() }?.let { PluginContentDescriptor(it) }
-                                                   ?: PluginContentDescriptor.EMPTY
+  @JvmField
+  val content: PluginContentDescriptor = raw.contentModules.takeIf { !it.isNullOrEmpty() }?.let { PluginContentDescriptor(it) }
+                                         ?: PluginContentDescriptor.EMPTY
 
-  @JvmField val dependencies: ModuleDependenciesDescriptor = raw.dependencies
-  @JvmField var modules: List<PluginId> = raw.modules ?: Java11Shim.INSTANCE.listOf()
+  @JvmField
+  val dependencies: ModuleDependenciesDescriptor = raw.dependencies
+  @JvmField
+  var modules: List<PluginId> = raw.modules ?: Java11Shim.INSTANCE.listOf()
 
   private val descriptionChildText = raw.description
 
-  @JvmField val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
-  @JvmField val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
-  @JvmField internal val implementationDetail: Boolean = raw.implementationDetail
-  @JvmField internal val isRestartRequired: Boolean = raw.isRestartRequired
-  @JvmField val packagePrefix: String? = raw.`package`
+  @JvmField
+  val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+  @JvmField
+  val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
+  @JvmField
+  internal val implementationDetail: Boolean = raw.implementationDetail
+  @JvmField
+  internal val isRestartRequired: Boolean = raw.isRestartRequired
+  @JvmField
+  val packagePrefix: String? = raw.`package`
 
   private val sinceBuild = raw.sinceBuild
   private val untilBuild = raw.untilBuild
@@ -150,7 +173,8 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   var isDeleted: Boolean = false
 
-  @JvmField internal var isIncomplete: PluginLoadingError? = null
+  @JvmField
+  internal var isIncomplete: PluginLoadingError? = null
 
   override fun getDescriptorPath(): String? = descriptorPath
 
@@ -158,20 +182,24 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   override fun getPluginPath(): Path = path
 
-  private fun createSub(raw: RawPluginDescriptor,
-                        descriptorPath: String,
-                        pathResolver: PathResolver,
-                        context: DescriptorListLoadingContext,
-                        dataLoader: DataLoader,
-                        moduleName: String?): IdeaPluginDescriptorImpl {
+  private fun createSub(
+    raw: RawPluginDescriptor,
+    descriptorPath: String,
+    pathResolver: PathResolver,
+    context: DescriptorListLoadingContext,
+    dataLoader: DataLoader,
+    moduleName: String?,
+  ): IdeaPluginDescriptorImpl {
     raw.name = name
-    val result = IdeaPluginDescriptorImpl(raw = raw,
-                                          path = path,
-                                          isBundled = isBundled,
-                                          id = id,
-                                          moduleName = moduleName,
-                                          useCoreClassLoader = useCoreClassLoader)
-    context.debugData?.recordDescriptorPath(result, raw, descriptorPath)
+    val result = IdeaPluginDescriptorImpl(
+      raw = raw,
+      path = path,
+      isBundled = isBundled,
+      id = id,
+      moduleName = moduleName,
+      useCoreClassLoader = useCoreClassLoader,
+    )
+    context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
     result.descriptorPath = descriptorPath
     result.vendor = vendor
     result.version = version
@@ -232,7 +260,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       if (id == PluginManagerCore.CORE_ID) {
         modules = modules + IdeaPluginOsRequirement.getHostOsModuleIds()
         if (!AppMode.isRemoteDevHost()) {
-          /* dependency on this ID may be used to enable some functionality in local IDE and in JetBrains Client, but disable it in product 
+          /* dependency on this ID may be used to enable some functionality in local IDE and in JetBrains Client, but disable it in product
              running in backend mode; this is needed because the backend process currently doesn't use module-based loader and therefore cannot
              use marker modules from ProductModes. */
           modules = modules + PluginId.getId("com.intellij.platform.experimental.frontend")
@@ -312,15 +340,17 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
         visitedFiles = context.visitedFiles
       }
 
-      checkCycle(descriptor, configFile, visitedFiles)
+      checkCycle(descriptor = descriptor, configFile = configFile, visitedFiles = visitedFiles)
 
       visitedFiles.add(configFile)
-      val subDescriptor = descriptor.createSub(raw = raw,
-                                               descriptorPath = configFile,
-                                               pathResolver = pathResolver,
-                                               context = context,
-                                               dataLoader = dataLoader,
-                                               moduleName = null)
+      val subDescriptor = descriptor.createSub(
+        raw = raw,
+        descriptorPath = configFile,
+        pathResolver = pathResolver,
+        context = context,
+        dataLoader = dataLoader,
+        moduleName = null,
+      )
       dependency.subDescriptor = subDescriptor
       visitedFiles.clear()
     }
