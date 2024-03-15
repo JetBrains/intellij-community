@@ -51,9 +51,9 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     buffer.clear()
     buffer.putInt(0x04034b50)
     // Version needed to extract (minimum)
-    buffer.putShort(0)
+    buffer.putShort(0x0014)
     // General purpose bit flag
-    buffer.putShort(0)
+    buffer.putShort(0x0800)
     // Compression method
     buffer.putShort(ZipEntry.STORED.toShort())
     // File last modification time
@@ -415,6 +415,12 @@ Android Studio: b/233762164 */  addDirEntry(dirName)
 
     val headerOffset = buffer.position()
     buffer.putInt(headerOffset, 0x02014b50)
+    // version made by
+    buffer.putShort(headerOffset + 4, 0x0314)
+    // version needed to extract (minimum)
+    buffer.putShort(headerOffset + 6, 0x0014)
+    // general purpose bit flag
+    buffer.putShort(headerOffset + 8, 0x0800)
     // compression method
     buffer.putShort(headerOffset + 10, method.toShort())
     // CRC-32 of uncompressed data
@@ -431,6 +437,8 @@ Android Studio: b/233762164 */  addDirEntry(dirName)
 
     // file name length
     buffer.putShort(headerOffset + 28, (name.size and 0xffff).toShort())
+    // external file attributes
+    buffer.putInt(headerOffset + 38, 0x81a40000L.toInt())
     // relative offset of local file header
     buffer.putInt(headerOffset + 42, (offset and 0xffffffffL).toInt())
     // file name
@@ -448,9 +456,9 @@ Android Studio: b/233762164 */  addDirEntry(dirName)
 internal fun writeLocalFileHeader(name: ByteArray, size: Int, compressedSize: Int, crc32: Long, method: Int, buffer: ByteBuffer): Int {
   buffer.putInt(0x04034b50)
   // Version needed to extract (minimum)
-  buffer.putShort(0)
+  buffer.putShort(0x0014)
   // General purpose bit flag
-  buffer.putShort(0)
+  buffer.putShort(0x0800)
   // Compression method
   buffer.putShort(method.toShort())
   // File last modification time
