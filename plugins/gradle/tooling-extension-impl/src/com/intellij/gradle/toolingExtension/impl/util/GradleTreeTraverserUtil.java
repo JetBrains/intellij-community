@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.util;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -71,5 +73,34 @@ public final class GradleTreeTraverserUtil {
         }
       }
     }
+  }
+
+  /**
+   * Traverses a tree from root to leaves (Depth first) with a path from root to current node.
+   *
+   * @param action consumes visiting node and collection of nodes from root to current.
+   */
+  public static <T> void depthFirstTraverseTreeWithPath(
+    @NotNull T root,
+    @NotNull BiFunction<? super List<? extends T>, T, Collection<? extends T>> action
+  ) {
+    List<T> treePath = new ArrayList<>();
+    depthFirstTraverseTree(new Pair<>(0, root), node -> {
+      T oldParent = treePath.isEmpty() ? null : treePath.get(treePath.size() - 1);
+      while (oldParent != null && treePath.size() > node.first) {
+        treePath.remove(treePath.size() - 1);
+        oldParent = treePath.isEmpty() ? null : treePath.get(treePath.size() - 1);
+      }
+
+      Collection<? extends T> children = action.apply(treePath, node.second);
+
+      treePath.add(node.second);
+
+      List<Pair<Integer, T>> childrenWithDepth = new ArrayList<>();
+      for (T child : children) {
+        childrenWithDepth.add(new Pair<>(node.first + 1, child));
+      }
+      return childrenWithDepth;
+    });
   }
 }
