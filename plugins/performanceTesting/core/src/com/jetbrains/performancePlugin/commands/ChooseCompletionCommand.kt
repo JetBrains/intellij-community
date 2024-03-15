@@ -37,6 +37,7 @@ class ChooseCompletionCommand(text: String, line: Int) : PlaybackCommandCoroutin
               }
             }
           }
+          yield()
         }
       }
     }
