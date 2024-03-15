@@ -122,6 +122,10 @@ public class EditorHighlighterUpdater {
   }
 
   public void updateHighlightersAsync() {
+    if (!AsyncEditorLoader.isEditorLoaded(editor)) {
+      return;
+    }
+
     ReadAction
       .nonBlocking(() -> createHighlighter(false))
       .expireWith(project)
