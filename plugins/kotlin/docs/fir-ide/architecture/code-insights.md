@@ -9,31 +9,31 @@ Intentions can be considered as small refactoring actions.
 - `kotlin.code-insight.intentions.k2`
 - `kotlin.code-insight.intentions.shared`
 
-Preferably, an intention should extend `AbstractKotlinApplicableModCommandIntention` or `AbstractKotlinModCommandWithContext`.
+Preferably, an intention should extend `KotlinPsiUpdateModCommandIntention` or `KotlinPsiUpdateModCommandIntentionWithContext`.
 It works over the ModCommand API (see `ModCommand`) that allows to perform analysis on a background thread.
 
-### `AbstractKotlinApplicableModCommandIntention`
+### `KotlinPsiUpdateModCommandIntention`
 The most important methods you need to implement:
+- `getApplicabilityRange()`
+    - Determines whether the tool is available in a range; see `ApplicabilityRanges`.
 - `isApplicableByPsi(element)`
     - Checks whether it is applicable to an element by PSI only.
     - Should not use the Analysis API due to performance concerns.
-- `getApplicabilityRange()`
-    - Determines whether the tool is available in a range; see `ApplicabilityRanges`.
 - `isApplicableByAnalyze(element)`
     - Checks whether it is applicable to an element by performing some resolution with the Analysis API.
 - `invoke(context, element, updater)`
     - Performs changes over a non-physical PSI.
-    - No Analysis API context is expected. Use `AbstractKotlinModCommandWithContext` when you need some Analysis API context.
+    - No Analysis API context is expected. Use `KotlinPsiUpdateModCommandIntentionWithContext` when you need some Analysis API context.
     - `context` is a ModCommand API action context.
     - Use `updater` (see `ModPsiUpdater`) to perform editor-like actions like moving caret or highlighting an element.
 
-### `AbstractKotlinModCommandWithContext`
-Very similar to `AbstractKotlinApplicableModCommandIntention` plus Analysis API context:
+### `KotlinPsiUpdateModCommandIntentionWithContext`
+Very similar to `KotlinPsiUpdateModCommandIntention` plus Analysis API context:
 - `prepareContext(element)`
     - Provides some context for `apply`.
     - If it is not applicable by analysis, functions should return `null`.
     - Guaranteed to be executed from a read action.
-- `apply(element, context, updater)`
+- `invoke(actionContext, element, preparedContext, updater)`
     - Performs changes over a non-physical PSI.
     - `context` contains both an Analysis API context and a ModCommand API action context.
 
