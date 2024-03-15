@@ -9,6 +9,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -117,15 +118,20 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance DUMB > SMART
   }
 
-  fun queueStartupActivitiesRequiredForSmartMode() {
-    queueTask(InitialDumbTaskRequiredForSmartMode(project))
+  internal suspend fun queueStartupActivitiesRequiredForSmartMode() {
+    val task = InitialDumbTaskRequiredForSmartMode(project)
+    blockingContext {
+      queueTask(task)
+    }
     if (isSynchronousTaskExecution) {
-      // This is the same side effects as produced by enterSmartModeIfDumb (except updating icons). We apply them synchronously, because
-      // invokeLaterWithDumbStartModality(this::enterSmartModeIfDumb) does not work well in synchronous environments (e.g. in unit tests):
+      // This is the same side effects as produced by enterSmartModeIfDumb (except updating icons). We apply them synchronously because
+      // invokeLaterWithDumbStartModality(this::enterSmartModeIfDumb) does not work well in synchronous environments (e.g., in unit tests):
       // code continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
-      application.invokeAndWait {
-        myState.update { it.incrementDumbCounter().decrementDumbCounter() }
-        publishDumbModeChangedEvent()
+      blockingContext {
+        ApplicationManager.getApplication().invokeAndWait {
+          myState.update { it.incrementDumbCounter().decrementDumbCounter() }
+          publishDumbModeChangedEvent()
+        }
       }
     }
   }
@@ -285,9 +291,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun queueTask(task: DumbModeTask) {
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Scheduling task $task")
-    }
+    LOG.debug { "Scheduling task $task" }
     if (myProject.isDefault) {
       LOG.error("No indexing tasks should be created for default project: $task")
     }
