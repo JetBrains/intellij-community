@@ -3,7 +3,6 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -51,7 +50,7 @@ class TerminalOutputController(
         // clear all blocks when command is finished and then remove listener
         session.addCommandListener(object : ShellCommandListener {
           override fun commandFinished(event: CommandFinishedEvent) {
-            invokeLater {
+            invokeLater(editor.getDisposed()) {
               outputModel.clearBlocks()
             }
             Disposer.dispose(disposable)
@@ -105,7 +104,7 @@ class TerminalOutputController(
 
   fun finishCommandBlock(exitCode: Int) {
     val output = scraper.scrapeOutput()
-    invokeLater {
+    invokeLater(editor.getDisposed()) {
       val block = doWithScrollingAware {
         updateCommandOutput(output)
       }
@@ -165,8 +164,8 @@ class TerminalOutputController(
   private fun setupContentListener(disposable: Disposable) {
     scraper.addListener(object : ShellCommandOutputListener {
       override fun commandOutputChanged(output: StyledCommandOutput) {
-        invokeLater {
-          if (!editor.isDisposed && runningCommandContext != null) {
+        invokeLater(editor.getDisposed()) {
+          if (runningCommandContext != null) {
             doWithScrollingAware {
               updateCommandOutput(output)
             }

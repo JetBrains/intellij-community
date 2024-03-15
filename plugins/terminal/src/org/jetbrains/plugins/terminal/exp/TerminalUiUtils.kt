@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -28,6 +29,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI
@@ -152,9 +154,9 @@ object TerminalUiUtils {
 
     Disposer.register(alarm) {
       if (!result.isDone) {
-        ApplicationManager.getApplication().invokeLater({
-                                                          result.completeExceptionally(IllegalStateException("parent disposed"))
-                                                        }, ModalityState.stateForComponent(component))
+        invokeLater(modalityState = ModalityState.stateForComponent(component)) {
+          result.completeExceptionally(IllegalStateException("parent disposed"))
+        }
       }
     }
     result.whenComplete { _, _ ->
@@ -228,3 +230,19 @@ object TerminalUiUtils {
   const val GREEN_COLOR_INDEX: Int = 2
   const val YELLOW_COLOR_INDEX: Int = 3
 }
+
+@RequiresBlockingContext
+fun invokeLater(expired: (() -> Boolean)? = null,
+                modalityState: ModalityState = ModalityState.defaultModalityState(),
+                runnable: Runnable) {
+  if (expired != null) {
+    ApplicationManager.getApplication().invokeLater(runnable, modalityState) {
+      expired()
+    }
+  }
+  else {
+    ApplicationManager.getApplication().invokeLater(runnable, modalityState)
+  }
+}
+
+fun Editor.getDisposed(): () -> Boolean = { this.isDisposed }

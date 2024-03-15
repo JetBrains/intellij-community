@@ -7,7 +7,6 @@ import com.intellij.find.FindUtil
 import com.intellij.find.SearchSession
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -86,7 +85,7 @@ class BlockTerminalController(
     val model = session.model
     model.isCommandRunning = false
 
-    invokeLater {
+    invokeLater(getDisposed()) {
       promptController.reset()
       promptController.promptIsVisible = true
     }
@@ -138,6 +137,8 @@ class BlockTerminalController(
       Disposer.register(disposable) { listeners.remove(listener) }
     }
   }
+
+  private fun getDisposed(): () -> Boolean = outputController.outputModel.editor.getDisposed()
 
   interface BlockTerminalControllerListener {
     fun searchSessionStarted(session: SearchSession) {}

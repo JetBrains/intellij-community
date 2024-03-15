@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import org.jetbrains.plugins.terminal.exp.TerminalCommandExecutor
+import org.jetbrains.plugins.terminal.exp.getDisposed
+import org.jetbrains.plugins.terminal.exp.invokeLater
 
 internal class CommandHistoryPresenter(private val project: Project,
                                        private val editor: Editor,
@@ -72,7 +74,7 @@ internal class CommandHistoryPresenter(private val project: Project,
     val commandToRestore = initialCommand
     if (commandToRestore != null) {
       initialCommand = null
-      invokeLater {
+      invokeLater(editor.getDisposed()) {
         runWriteAction {
           editor.document.setText(commandToRestore)
           editor.caretModel.moveToOffset(commandToRestore.length)
