@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.icons.CustomIconUtilKt;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
@@ -75,8 +76,8 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
         })) {
         @Override
         protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon) {
-          icon = paintHover(g, icon, myButton, 0, 0);
-          super.paintIcon(g, icon);
+          icon = paintHover(g, icon, myButton, CloseHoverBounds.x, CloseHoverBounds.y);
+          icon.paintIcon(this, g, CloseHoverBounds.x, CloseHoverBounds.y);
         }
 
         @Override
@@ -148,7 +149,8 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
           g2.setColor(JBUI.CurrentTheme.Notification.ICON_HOVER_BACKGROUND);
 
           float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
-          g2.fill(new RoundRectangle2D.Float(x, y, icon.getIconWidth(), icon.getIconHeight(), arc, arc));
+          float gap = JBUIScale.scale(2);
+          g2.fill(new RoundRectangle2D.Float(x - gap, y - gap, icon.getIconWidth() + 2 * gap, icon.getIconHeight() + 2 * gap, arc, arc));
         }
         finally {
           g2.dispose();
@@ -223,7 +225,13 @@ public final class NotificationBalloonActionProvider implements BalloonImpl.Acti
 
     if (myMoreButton != null) {
       Dimension size = myMoreButton.getPreferredSize();
-      myMoreButton.setBounds(x - size.width - myLayoutData.configuration.gearCloseSpace, y, size.width, size.height);
+      if (ExperimentalUI.isNewUI()) {
+        myMoreButton.setBounds(x - size.width - myLayoutData.configuration.gearCloseSpace - CloseHoverBounds.x, y - CloseHoverBounds.y,
+                               size.width + CloseHoverBounds.width, size.height + CloseHoverBounds.height);
+      }
+      else {
+        myMoreButton.setBounds(x - size.width - myLayoutData.configuration.gearCloseSpace, y, size.width, size.height);
+      }
     }
   }
 
