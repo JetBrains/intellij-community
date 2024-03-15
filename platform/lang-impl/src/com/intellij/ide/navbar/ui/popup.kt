@@ -1,22 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
 import com.intellij.ide.actions.OpenInRightSplitAction
-import com.intellij.ide.navbar.ide.NavBarVmItem
-import com.intellij.ide.navbar.impl.PsiNavBarItem
 import com.intellij.ide.navbar.vm.NavBarPopupItem
 import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navigationToolbar.NavBarListWrapper
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.popup.HintUpdateSupply
 import com.intellij.ui.speedSearch.ListWithFilter
-import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.event.MouseAdapter
@@ -25,12 +21,7 @@ import javax.swing.JComponent
 import javax.swing.JList
 
 internal fun createNavBarPopup(list: JList<out NavBarPopupItem>): LightweightHint {
-  // TODO implement async hint update supply
-  HintUpdateSupply.installHintUpdateSupply(list) { item ->
-    SlowOperations.allowSlowOperations(ThrowableComputable {
-      ((item as? NavBarVmItem)?.pointer?.dereference() as? PsiNavBarItem)?.data
-    })
-  }
+  HintUpdateSupply.installDataContextHintUpdateSupply(list)
   val popupComponent = list.withSpeedSearch()
   val popup = object : LightweightHint(popupComponent) {
     override fun onPopupCancel() {
