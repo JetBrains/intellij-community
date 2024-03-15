@@ -32,11 +32,9 @@ class TerminalOutputController(
   private val blockCreationAlarm: Alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, session)
 
   private var runningCommandContext: RunningCommandContext? = null
-  private var caretPainter: TerminalCaretPainter? = null
 
-  private var keyEventsListenerDisposable: Disposable? = null
+  private var runningCommandInteractivity: RunningCommandInteractivity? = null
 
-  private var mouseAndContentListenersDisposable: Disposable? = null
   private val hyperlinkHighlighter: TerminalHyperlinkHighlighter = TerminalHyperlinkHighlighter(project, outputModel, session)
 
   init {
@@ -63,7 +61,7 @@ class TerminalOutputController(
   @RequiresEdt
   fun startCommandBlock(command: String?, prompt: PromptRenderingInfo?) {
     scrollToBottom()
-    installRunningCommandListeners()
+    installRunningCommandInteractivity(command)
     runningCommandContext = RunningCommandContext(command, prompt)
 
     // Create a block forcefully in a timeout if there are no content updates. Command can output nothing for some time.
@@ -77,29 +75,16 @@ class TerminalOutputController(
   }
 
   @RequiresEdt(generateAssertion = false)
-  private fun installRunningCommandListeners() {
-    val mouseAndContentDisposable = Disposer.newDisposable().also { Disposer.register(session, it) }
-    mouseAndContentListenersDisposable = mouseAndContentDisposable
-    val keyEventsDisposable = Disposer.newDisposable().also { Disposer.register(session, it) }
-    keyEventsListenerDisposable = keyEventsDisposable
-
-    val eventsHandler = BlockTerminalEventsHandler(session, settings, this)
-    setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, keyEventsDisposable)
-    setupMouseListener(editor, settings, session.model, eventsHandler, mouseAndContentDisposable)
-    setupContentListener(mouseAndContentDisposable)
-
-    val caretModel = TerminalCaretModel(session, outputModel, editor, mouseAndContentDisposable)
-    caretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
-    Disposer.register(keyEventsDisposable, caretPainter!!)
+  private fun installRunningCommandInteractivity(command: String?) {
+    check(runningCommandInteractivity == null)
+    runningCommandInteractivity = RunningCommandInteractivity(command)
   }
 
   @RequiresEdt(generateAssertion = false)
-  private fun disposeRunningCommandListeners() {
-    mouseAndContentListenersDisposable?.let { Disposer.dispose(it) }
-    mouseAndContentListenersDisposable = null
-    keyEventsListenerDisposable?.let { Disposer.dispose(it) }
-    keyEventsListenerDisposable = null
-    caretPainter = null
+  private fun disposeRunningCommandInteractivity() {
+    check(runningCommandInteractivity != null)
+    Disposer.dispose(runningCommandInteractivity!!.disposable)
+    runningCommandInteractivity = null
   }
 
   fun finishCommandBlock(exitCode: Int) {
@@ -108,7 +93,7 @@ class TerminalOutputController(
       val block = doWithScrollingAware {
         updateCommandOutput(output)
       }
-      disposeRunningCommandListeners()
+      disposeRunningCommandInteractivity()
       val document = editor.document
       val lastLineInd = document.getLineNumber(block.endOffset)
       val lastLineStart = document.getLineStartOffset(lastLineInd)
@@ -153,11 +138,15 @@ class TerminalOutputController(
   @RequiresEdt(generateAssertion = false)
   internal fun alternateBufferStateChanged(enabled: Boolean) {
     if (enabled) {
-      // stop updating the block content, because alternate buffer application will be shown in a separate component
-      disposeRunningCommandListeners()
+      if (runningCommandInteractivity != null) {
+        // stop updating the block content, because alternate buffer application will be shown in a separate component
+        disposeRunningCommandInteractivity()
+      }
     }
     else {
-      installRunningCommandListeners()
+      outputModel.getActiveBlock().takeIf { runningCommandInteractivity == null }?.let {
+        installRunningCommandInteractivity(it.command)
+      }
     }
   }
 
@@ -238,7 +227,7 @@ class TerminalOutputController(
 
     // caret highlighter can be removed at this moment, because we replaced the text of the block
     // so, call repaint manually
-    caretPainter?.repaint()
+    runningCommandInteractivity?.caretPainter?.repaint()
   }
 
   /**
@@ -287,6 +276,20 @@ class TerminalOutputController(
   private data class CommandOutput(val text: String, val highlightings: List<HighlightingInfo>)
 
   private data class RunningCommandContext(val command: String?, val prompt: PromptRenderingInfo?)
+
+  private inner class RunningCommandInteractivity(command: String?) {
+    val disposable: Disposable = Disposer.newDisposable(session, "command $command")
+    val caretModel = TerminalCaretModel(session, outputModel, editor, disposable)
+    val caretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
+
+    init {
+      Disposer.register(disposable, caretPainter)
+      val eventsHandler = BlockTerminalEventsHandler(session, settings, this@TerminalOutputController)
+      setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable)
+      setupMouseListener(editor, settings, session.model, eventsHandler, disposable)
+      setupContentListener(disposable)
+    }
+  }
 
   companion object {
     val KEY: DataKey<TerminalOutputController> = DataKey.create("TerminalOutputController")
