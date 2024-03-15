@@ -108,7 +108,7 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
       ExternalSystemNode<?> projectNode = findNodeFor(projectPath);
 
       if (projectNode instanceof ProjectNode) {
-        doMergeChildrenChanges(projectNode, each, new ProjectNode(myExternalProjectsView, each));
+        doMergeChildrenChanges(projectNode, new ProjectNode(myExternalProjectsView, each));
       }
       else {
         ExternalSystemNode<?> node = myNodeMapping.remove(projectPath);
@@ -141,54 +141,53 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
-  private void doMergeChildrenChanges(ExternalSystemNode<?> currentNode, DataNode<?> newDataNode, ExternalSystemNode newNode) {
+  private void doMergeChildrenChanges(ExternalSystemNode<?> currentNode, ExternalSystemNode newNode) {
     final ExternalSystemNode<?>[] cached = currentNode.getCached();
     if (cached == null) {
       //noinspection unchecked
       currentNode.mergeWith(newNode);
+      return;
     }
-    else {
-      final List<Object> duplicates = new ArrayList<>();
-      final Map<Object, ExternalSystemNode<?>> oldDataMap = new LinkedHashMap<>();
-      for (ExternalSystemNode<?> node : cached) {
-        Object key = node.getData() != null ? node.getData() : node.getName();
-        final Object systemNode = oldDataMap.put(key, node);
-        if(systemNode != null) {
-          duplicates.add(key);
-        }
+    final List<Object> duplicates = new ArrayList<>();
+    final Map<Object, ExternalSystemNode<?>> oldDataMap = new LinkedHashMap<>();
+    for (ExternalSystemNode<?> node : cached) {
+      Object key = node.getData() != null ? node.getData() : node.getName();
+      final Object systemNode = oldDataMap.put(key, node);
+      if (systemNode != null) {
+        duplicates.add(key);
       }
-
-      Map<Object, ExternalSystemNode<?>> newDataMap = new LinkedHashMap<>();
-      Map<Object, ExternalSystemNode<?>> unchangedNewDataMap = new LinkedHashMap<>();
-      for (ExternalSystemNode<?> node : newNode.getChildren()) {
-        Object key = node.getData() != null ? node.getData() : node.getName();
-        if (oldDataMap.remove(key) == null) {
-          newDataMap.put(key, node);
-        }
-        else {
-          unchangedNewDataMap.put(key, node);
-        }
-      }
-
-      for (Object duplicate : duplicates) {
-        newDataMap.remove(duplicate);
-      }
-
-      currentNode.removeAll(oldDataMap.values());
-
-      for (ExternalSystemNode<?> node : currentNode.getChildren()) {
-        Object key = node.getData() != null ? node.getData() : node.getName();
-        final ExternalSystemNode<?> unchangedNewNode = unchangedNewDataMap.get(key);
-        if (unchangedNewNode != null) {
-          doMergeChildrenChanges(node, unchangedNewNode.myDataNode, unchangedNewNode);
-        }
-      }
-
-      updateFrom(currentNode);
-      //noinspection unchecked
-      currentNode.mergeWith(newNode);
-      currentNode.addAll(newDataMap.values());
     }
+
+    Map<Object, ExternalSystemNode<?>> newDataMap = new LinkedHashMap<>();
+    Map<Object, ExternalSystemNode<?>> unchangedNewDataMap = new LinkedHashMap<>();
+    for (ExternalSystemNode<?> node : newNode.getChildren()) {
+      Object key = node.getData() != null ? node.getData() : node.getName();
+      if (oldDataMap.remove(key) == null) {
+        newDataMap.put(key, node);
+      }
+      else {
+        unchangedNewDataMap.put(key, node);
+      }
+    }
+
+    for (Object duplicate : duplicates) {
+      newDataMap.remove(duplicate);
+    }
+
+    currentNode.removeAll(oldDataMap.values());
+
+    for (ExternalSystemNode<?> node : currentNode.getChildren()) {
+      Object key = node.getData() != null ? node.getData() : node.getName();
+      final ExternalSystemNode<?> unchangedNewNode = unchangedNewDataMap.get(key);
+      if (unchangedNewNode != null) {
+        doMergeChildrenChanges(node, unchangedNewNode);
+      }
+    }
+
+    updateFrom(currentNode);
+    //noinspection unchecked
+    currentNode.mergeWith(newNode);
+    currentNode.addAll(newDataMap.values());
   }
 
   private void doUpdateProject(ProjectNode node) {

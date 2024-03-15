@@ -199,12 +199,8 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   public final ExternalSystemNode<?> @NotNull [] getChildren() {
     if (myChildren == null) {
       myChildren = buildChildren();
-      onChildrenBuilt();
     }
     return myChildren;
-  }
-
-  private void onChildrenBuilt() {
   }
 
   private ExternalSystemNode<?> @NotNull [] buildChildren() {
