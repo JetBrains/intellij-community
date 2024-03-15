@@ -26,6 +26,7 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.VcsMappingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.trackActivity
@@ -320,6 +321,11 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     @JvmStatic
     fun getLogProviders(project: Project): Map<VirtualFile, VcsLogProvider> {
       return VcsLogManager.findLogProviders(ProjectLevelVcsManager.getInstance(project).allVcsRoots.toList(), project)
+    }
+
+    @JvmStatic
+    fun getSupportedVcs(project: Project): Set<VcsKey> {
+      return getLogProviders(project).values.mapTo(mutableSetOf()) { it.supportedVcs }
     }
 
     @JvmStatic
