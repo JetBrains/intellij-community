@@ -299,9 +299,9 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
       if (myProjectsTree == null) {
         myProjectsTree = new MavenProjectsTree(myProject);
+        applyStateToTree(myProjectsTree, this);
       }
 
-      applyStateToTree(myProjectsTree, this);
       myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
     }
     finally {
@@ -330,7 +330,11 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       @Override
       public void run() {
         try {
-          getProjectsTree().save(getProjectsTreeFile());
+          MavenProjectsTree tree = myProjectsTree;
+          if (tree == null) {
+            return;
+          }
+          tree.save(getProjectsTreeFile());
         }
         catch (IOException e) {
           MavenLog.LOG.info(e);
@@ -683,7 +687,8 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   protected abstract AsyncPromise<Void> doForceUpdateProjects(@NotNull Collection<@NotNull MavenProject> projects);
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
-    forceUpdateAllProjectsOrFindAllAvailablePomFiles(MavenSyncSpec.full("MavenProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles", true));
+    forceUpdateAllProjectsOrFindAllAvailablePomFiles(
+      MavenSyncSpec.full("MavenProjectsManager.forceUpdateAllProjectsOrFindAllAvailablePomFiles", true));
   }
 
   @ApiStatus.Internal
