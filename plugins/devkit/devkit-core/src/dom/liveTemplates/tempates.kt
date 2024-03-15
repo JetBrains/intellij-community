@@ -12,6 +12,7 @@ class TemplateSetDescription: DomFileDescription<TemplateSet>(TemplateSet::class
 interface TemplateSet: DomElement {
   val group: GenericAttributeValue<String>
   val templates: List<Template>
+  val replace: GenericAttributeValue<String>
 }
 
 @NameStrategy(JavaNameStrategy::class)
