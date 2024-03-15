@@ -32,23 +32,16 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.util.Objects;
 
-public class SplitButtonAction extends ActionGroup implements CustomComponentAction {
-  private final ActionGroup myActionGroup;
+public class SplitButtonAction extends ActionGroupWrapper implements CustomComponentAction {
   private static final Key<AnAction> FIRST_ACTION = Key.create("firstAction");
 
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
-    myActionGroup = actionGroup;
+    super(actionGroup);
     setPopup(true);
-    getTemplatePresentation().copyFrom(actionGroup.getTemplatePresentation());
   }
 
   public @NotNull ActionGroup getActionGroup() {
-    return myActionGroup;
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return myActionGroup.getActionUpdateThread();
+    return getDelegate();
   }
 
   @Override
@@ -56,7 +49,7 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
     Presentation presentation = e.getPresentation();
     SplitButton splitButton = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), SplitButton.class);
 
-    Presentation groupPresentation = e.getUpdateSession().presentation(myActionGroup);
+    Presentation groupPresentation = e.getUpdateSession().presentation(getDelegate());
     e.getPresentation().copyFrom(groupPresentation, splitButton);
 
     if (presentation.isVisible()) {
@@ -78,24 +71,14 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
 
   private @Nullable AnAction getFirstEnabledAction(@NotNull AnActionEvent e) {
     UpdateSession session = e.getUpdateSession();
-    var children = session.children(myActionGroup);
+    var children = session.children(getDelegate());
     var firstEnabled = ContainerUtil.find(children, a -> session.presentation(a).isEnabled());
     return firstEnabled != null ? firstEnabled : ContainerUtil.getFirstItem(children);
   }
 
   @Override
-  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    return myActionGroup.getChildren(e);
-  }
-
-  @Override
-  public boolean isDumbAware() {
-    return myActionGroup.isDumbAware();
-  }
-
-  @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    return new SplitButton(this, presentation, place, myActionGroup);
+    return new SplitButton(this, presentation, place, getDelegate());
   }
 
   private static final class SplitButton extends ActionButton {
