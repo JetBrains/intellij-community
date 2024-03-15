@@ -30,8 +30,6 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -114,8 +112,6 @@ import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.ContainerEvent;
-import java.awt.event.ContainerListener;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -464,44 +460,6 @@ public final class DiffUtil {
     action.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
 
-  public static void keepToolbarActionsPromoted(@NotNull ActionToolbar toolbar) {
-    JComponent toolbarTargetComponent = toolbar.getTargetComponent();
-    if (toolbarTargetComponent == null) {
-      throw new AssertionError("Toolbar target component is not set");
-    }
-    ContainerListener listener = new ContainerListener() {
-      @Nullable
-      AnAction getAction(@NotNull ContainerEvent e) {
-        Component child = e.getChild();
-        return child instanceof ActionButton ab ? ab.getAction() :
-               ClientProperty.get(child, CustomComponentAction.ACTION_KEY);
-      }
-
-      @Override
-      public void componentAdded(@NotNull ContainerEvent e) {
-        AnAction action = getAction(e);
-        if (action != null) {
-          action.registerCustomShortcutSet(toolbarTargetComponent, null);
-        }
-      }
-
-      @Override
-      public void componentRemoved(@NotNull ContainerEvent e) {
-        AnAction action = getAction(e);
-        if (action != null) {
-          action.unregisterCustomShortcutSet(toolbarTargetComponent);
-        }
-      }
-    };
-    JComponent toolbarComponent = toolbar.getComponent();
-    for (Component child : toolbarComponent.getComponents()) {
-      listener.componentAdded(new ContainerEvent(toolbarComponent, ContainerEvent.COMPONENT_ADDED, child));
-    }
-    toolbarComponent.addContainerListener(listener);
-  }
-
-  /** @deprecated Use {@link #keepToolbarActionsPromoted(ActionToolbar)} instead */
-  @Deprecated(forRemoval = true)
   public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
                                                   @NotNull JComponent component,
                                                   @Nullable Disposable parentDisposable) {

@@ -81,6 +81,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
@@ -186,9 +187,6 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, myRightToolbarGroup, true);
     myRightToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     myRightToolbar.setTargetComponent(myMainPanel);
-
-    DiffUtil.keepToolbarActionsPromoted(myToolbar);
-    DiffUtil.keepToolbarActionsPromoted(myRightToolbar);
 
     myRightToolbarWrapper = new Wrapper(JBUI.Panels.simplePanel(myRightToolbar.getComponent()));
 
@@ -630,11 +628,13 @@ public abstract class DiffRequestProcessor implements DiffEditorViewer, CheckedD
     collectToolbarActions(viewerActions);
 
     ((ActionToolbarImpl)myToolbar).reset(); // do not leak previous DiffViewer via caches
-    myToolbar.updateActionsAsync();
+    myToolbar.updateActionsImmediately();
+    recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
 
     if (myIsNewToolbar) {
       ((ActionToolbarImpl)myRightToolbar).reset();
-      myRightToolbar.updateActionsAsync();
+      myRightToolbar.updateActionsImmediately();
+      recursiveRegisterShortcutSet(myRightToolbarGroup, myMainPanel, null);
     }
   }
 

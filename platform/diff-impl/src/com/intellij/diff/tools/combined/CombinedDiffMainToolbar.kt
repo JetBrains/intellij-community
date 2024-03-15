@@ -68,8 +68,6 @@ internal class CombinedDiffMainToolbar(
     rightToolbar.component.border = JBUI.Borders.empty()
     rightToolbarPanel = Centerizer(rightToolbar.component, Centerizer.TYPE.VERTICAL)
 
-    DiffUtil.keepToolbarActionsPromoted(leftToolbar)
-    DiffUtil.keepToolbarActionsPromoted(rightToolbar)
     GuiUtils.installVisibilityReferent(topPanel, leftToolbar.component)
     GuiUtils.installVisibilityReferent(topPanel, rightToolbar.component)
     configureTopPanelForActionsMode()
@@ -145,9 +143,12 @@ internal class CombinedDiffMainToolbar(
   fun updateToolbar(blockState: BlockState, toolbarActions: List<AnAction>?) {
     collectToolbarActions(blockState, toolbarActions)
     (leftToolbar as ActionToolbarImpl).reset()
-    leftToolbar.updateActionsAsync()
+    leftToolbar.updateActionsImmediately()
+    DiffUtil.recursiveRegisterShortcutSet(leftToolbarGroup, targetComponent, null)
     (rightToolbar as ActionToolbarImpl).reset()
-    rightToolbar.updateActionsAsync()
+    rightToolbar.updateActionsImmediately()
+
+    DiffUtil.recursiveRegisterShortcutSet(rightToolbarGroup, targetComponent, null)
   }
 
   private fun collectToolbarActions(blockState: BlockState, viewerActions: List<AnAction?>?) {
