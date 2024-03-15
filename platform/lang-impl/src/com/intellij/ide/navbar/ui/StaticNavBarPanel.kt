@@ -1,10 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
-import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.ide.*
 import com.intellij.ide.navbar.vm.NavBarVm
-import com.intellij.model.Pointer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.attachAsChildTo
@@ -29,7 +27,7 @@ fun staticNavBarPanel(
   project: Project,
   cs: CoroutineScope,
   updateRequests: Flow<Any>,
-  requestNavigation: (Pointer<out NavBarItem>) -> Unit,
+  requestNavigation: (NavBarVmItem) -> Unit,
 ): JComponent {
 
   val staticNavBarVm: MutableStateFlow<NavBarVm?> = MutableStateFlow(null)

@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.actions
 
+import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.ide.navbar.NavBarItem
+import com.intellij.ide.navbar.ide.IdeNavBarVmItem
+import com.intellij.ide.navbar.ide.NavBarVmItem
 import com.intellij.ide.navbar.impl.DefaultNavBarItem
 import com.intellij.ide.navbar.impl.ModuleNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
@@ -38,6 +41,22 @@ private fun extensionData(dataId: String, provider: DataProvider): Any? {
     if (data != null) return data
   }
   return provider.getData(dataId)
+}
+
+internal class BgtDataRule : GetDataRule {
+
+  override fun getData(dataProvider: DataProvider): Any? {
+    val project = CommonDataKeys.PROJECT.getData(dataProvider)
+                  ?: return null
+    val selection = NavBarVmItem.SELECTED_ITEMS.getData(dataProvider)
+                    ?: return null
+    val pointers = selection.map {
+      (it as IdeNavBarVmItem).pointer
+    }
+    return DataProvider {
+      getBgData(project, pointers, it)
+    }
+  }
 }
 
 internal fun getBgData(project: Project, selection: List<Pointer<out NavBarItem>>, dataId: String): Any? {

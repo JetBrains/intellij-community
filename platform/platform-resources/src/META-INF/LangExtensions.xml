@@ -705,6 +705,9 @@
                  implementationClass="com.intellij.ide.navbar.actions.DefaultNavBarItemDataRule"
                  type="context"
                  order="last"/>
+    <getDataRule key="bgtDataProvider"
+                 implementationClass="com.intellij.ide.navbar.actions.BgtDataRule"
+                 type="provider"/>
 
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>
 

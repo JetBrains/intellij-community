@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
 import com.intellij.codeInsight.navigation.actions.navigateRequest
@@ -11,7 +11,6 @@ import com.intellij.ide.navbar.ui.showHint
 import com.intellij.ide.navbar.ui.staticNavBarPanel
 import com.intellij.ide.ui.UISettings
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
-import com.intellij.model.Pointer
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
@@ -107,21 +106,16 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
     }
   }
 
-  private fun requestNavigation(pointer: Pointer<out NavBarItem>) {
+  private fun requestNavigation(item: NavBarVmItem) {
     cs.launch {
-      navigateTo(pointer)
+      val navigationRequest = readAction {
+        (item as IdeNavBarVmItem).pointer.dereference()?.navigationRequest()
+      } ?: return@launch
+      withContext(Dispatchers.EDT) {
+        navigateRequest(project, navigationRequest)
+      }
       updateRequests.emit(Unit)
     }
-  }
-
-  private suspend fun navigateTo(pointer: Pointer<out NavBarItem>) {
-    val navigationRequest = readAction {
-      pointer.dereference()?.navigationRequest()
-    } ?: return
-    withContext(Dispatchers.EDT) {
-      navigateRequest(project, navigationRequest)
-    }
-    updateRequests.emit(Unit)
   }
 }
 

@@ -1,11 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.model.Pointer
+import com.intellij.openapi.actionSystem.DataKey
 
 interface NavBarVmItem {
+
+  companion object {
+    @JvmField
+    val SELECTED_ITEMS: DataKey<List<NavBarVmItem>> = DataKey.create("nav.bar.selection")
+  }
 
   override fun equals(other: Any?): Boolean
 

@@ -1,26 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.CopyPasteDelegator
 import com.intellij.ide.CopyPasteSupport
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER
 import com.intellij.ide.navbar.actions.NavBarActionHandlerImpl
 import com.intellij.ide.navbar.actions.extensionData
-import com.intellij.ide.navbar.actions.getBgData
 import com.intellij.ide.navbar.ide.LOG
+import com.intellij.ide.navbar.ide.NavBarVmItem.Companion.SELECTED_ITEMS
 import com.intellij.ide.navbar.ui.NavBarItemComponent.Companion.isItemComponentFocusable
 import com.intellij.ide.navbar.vm.NavBarItemVm
 import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.NavBarShowPopup
-import com.intellij.model.Pointer
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.BGT_DATA_PROVIDER
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.PlatformDataKeys.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -241,12 +238,7 @@ class NewNavBarPanel(
     CUT_PROVIDER.name -> extensionData(dataId) ?: getCopyPasteDelegator(this).cutProvider
     COPY_PROVIDER.name -> extensionData(dataId) ?: getCopyPasteDelegator(this).copyProvider
     PASTE_PROVIDER.name -> extensionData(dataId) ?: getCopyPasteDelegator(this).pasteProvider
-    BGT_DATA_PROVIDER.name -> {
-      val selection: List<Pointer<out NavBarItem>> = vm.selection()
-      DataProvider {
-        getBgData(project, selection, it)
-      }
-    }
+    SELECTED_ITEMS.name -> vm.selection()
     else -> null
   }
 

@@ -1,15 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
-import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navbar.vm.NavBarItemVm
 import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.navbar.vm.NavBarVm.SelectionShift
-import com.intellij.model.Pointer
 import com.intellij.platform.util.coroutines.flow.zipWithNext
-import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
@@ -36,7 +33,7 @@ class NavBarVmImpl(
 
   private val _popup: MutableStateFlow<NavBarPopupVmImpl<DefaultNavBarPopupItem>?> = MutableStateFlow(null)
 
-  private val _activationRequests: MutableSharedFlow<Pointer<out NavBarItem>> =
+  private val _activationRequests: MutableSharedFlow<NavBarVmItem> =
     MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
   init {
@@ -64,21 +61,20 @@ class NavBarVmImpl(
 
   override val popup: StateFlow<NavBarPopupVm<*>?> = _popup.asStateFlow()
 
-  override val activationRequests: Flow<Pointer<out NavBarItem>> = _activationRequests.asSharedFlow()
+  override val activationRequests: Flow<NavBarVmItem> = _activationRequests.asSharedFlow()
 
-  override fun selection(): List<Pointer<out NavBarItem>> {
-    EDT.assertIsEdt()
+  override fun selection(): List<NavBarVmItem> {
     val popup = _popup.value
     if (popup != null) {
       return popup.selectedItems.map {
-        it.item.pointer
+        it.item
       }
     }
     else {
       val selectedIndex = _selectedIndex.value
       val items = _items.value
       if (selectedIndex in items.indices) {
-        return listOf(items[selectedIndex].item.pointer)
+        return listOf(items[selectedIndex].item)
       }
     }
     return emptyList()
@@ -155,7 +151,7 @@ class NavBarVmImpl(
                        ?: return
     when (expandResult) {
       is ExpandResult.NavigateTo -> {
-        _activationRequests.tryEmit(expandResult.target.pointer)
+        _activationRequests.tryEmit(expandResult.target)
         return
       }
       is ExpandResult.NextPopup -> {
@@ -206,7 +202,7 @@ class NavBarVmImpl(
     }
 
     override fun activate() {
-      _activationRequests.tryEmit(item.pointer)
+      _activationRequests.tryEmit(item)
     }
   }
 }

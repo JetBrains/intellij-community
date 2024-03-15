@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem
@@ -91,9 +91,9 @@ internal class ServiceViewNavBarPanel(
     updateRequests.tryEmit(Unit)
   }
 
-  private fun requestNavigation(pointer: Pointer<out NavBarItem>) {
+  private fun requestNavigation(item: NavBarVmItem) {
     cs.launch(Dispatchers.EDT) {
-      (pointer as? ServiceViewNavBarItem)?.item?.let {
+      (item as? ServiceViewNavBarItem)?.item?.let {
         selector.select(it)
       }
     }
