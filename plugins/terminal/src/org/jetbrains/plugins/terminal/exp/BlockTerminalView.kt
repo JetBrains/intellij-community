@@ -6,7 +6,6 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -69,7 +68,7 @@ class BlockTerminalView(
     promptView.controller.addListener(object : PromptStateListener {
       override fun promptVisibilityChanged(visible: Boolean) {
         component.revalidate()
-        invokeLater {
+        invokeLater(getDisposed()) {
           // do not focus the terminal if something outside the terminal is focused now
           // it can be the case when long command is finished and prompt becomes shown
           if (focusModel.isActive) {
@@ -108,7 +107,7 @@ class BlockTerminalView(
 
     session.model.addTerminalListener(object : TerminalModel.TerminalListener {
       override fun onAlternateBufferChanged(enabled: Boolean) {
-        invokeLater {
+        invokeLater(getDisposed()) {
           alternateBufferStateChanged(enabled)
         }
       }
@@ -172,7 +171,7 @@ class BlockTerminalView(
     }
     outputView.controller.alternateBufferStateChanged(enabled)
     IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
-    invokeLater {
+    invokeLater(getDisposed()) {
       updateTerminalSize()
     }
   }
@@ -260,6 +259,8 @@ class BlockTerminalView(
   }
 
   override fun dispose() {}
+
+  private fun getDisposed(): () -> Boolean = outputView.controller.outputModel.editor.getDisposed()
 
   private inner class BlockTerminalPanel : JPanel(), DataProvider {
     init {
