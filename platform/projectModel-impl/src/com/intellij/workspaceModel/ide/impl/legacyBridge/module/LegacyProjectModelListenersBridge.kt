@@ -194,13 +194,7 @@ internal class LegacyProjectModelListenersBridge(
   private fun fireModuleAddedInWriteAction(module: ModuleEx) {
     ApplicationManager.getApplication().runWriteAction {
       if (!module.isLoaded) {
-        @Suppress("removal", "DEPRECATION")
-        val oldComponents = mutableListOf<com.intellij.openapi.module.ModuleComponent>()
-        module.moduleAdded(oldComponents)
-        for (oldComponent in oldComponents) {
-          @Suppress("DEPRECATION", "removal")
-          oldComponent.moduleAdded()
-        }
+        module.markAsLoaded()
         fireModulesAdded(project, listOf(module))
       }
     }
