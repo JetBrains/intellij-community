@@ -21,12 +21,12 @@ import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicReference
 
 @State(name = ProjectFacetManagerImpl.COMPONENT_NAME)
-class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetManager(), PersistentStateComponent<ProjectFacetManagerState> {
+internal class ProjectFacetManagerImpl(private val project: Project) : ProjectFacetManager(), PersistentStateComponent<ProjectFacetManagerState> {
   private var myState = ProjectFacetManagerState()
   private val myIndex = AtomicReference<MultiMap<FacetTypeId<*>, Module>>()
 
   init {
-    ProjectWideFacetListenersRegistry.getInstance(myProject).registerListener(object : ProjectWideFacetAdapter<Facet<*>>() {
+    ProjectWideFacetListenersRegistry.getInstance(project).registerListener(object : ProjectWideFacetAdapter<Facet<*>>() {
       override fun facetAdded(facet: Facet<*>) {
         myIndex.set(null)
       }
@@ -34,8 +34,8 @@ class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetMana
       override fun facetRemoved(facet: Facet<*>) {
         myIndex.set(null)
       }
-    }, myProject)
-    myProject.getMessageBus().connect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
+    }, project)
+    project.getMessageBus().simpleConnect().subscribe(ModuleListener.TOPIC, object : ModuleListener {
       override fun modulesAdded(project: Project, modules: List<Module>) {
         myIndex.set(null)
       }
@@ -62,7 +62,7 @@ class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetMana
 
   private fun createIndex(): MultiMap<FacetTypeId<*>, Module> {
     val index = MultiMap.createLinkedSet<FacetTypeId<*>, Module>()
-    WorkspaceModel.getInstance(myProject).currentSnapshot.facetMapping().forEach { _, facet ->
+    WorkspaceModel.getInstance(project).currentSnapshot.facetMapping().forEach { _, facet ->
       index.putValue(facet.typeId, facet.module)
     }
     return index
