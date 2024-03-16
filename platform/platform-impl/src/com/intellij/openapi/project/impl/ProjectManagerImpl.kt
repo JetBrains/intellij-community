@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LoggingSimilarMessage")
 
 package com.intellij.openapi.project.impl
 
@@ -35,6 +35,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -77,7 +78,7 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils.isDataSpell
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
@@ -191,13 +192,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
   override fun dispose() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
     // dispose manually, because TimedReference.dispose() can already be called (in Timed.disposeTimed()) and then default project resurrected
     Disposer.dispose(defaultProject)
   }
 
   override fun loadProject(path: Path): Project {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    ThreadingAssertions.assertBackgroundThread()
 
     val project = ProjectImpl(filePath = path, projectName = null, parent = ApplicationManager.getApplication() as ComponentManagerImpl)
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
@@ -326,13 +327,14 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       "Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful"
     }
 
-    app.assertWriteIntentLockAcquired()
+    ThreadingAssertions.assertWriteIntentReadAccess()
     @Suppress("TestOnlyProblems")
     if (isLight(project)) {
       // if we close the project at the end of the test, just mark it closed;
       // if we are shutting down the entire test framework, proceed to full dispose
       val projectImpl = project as ProjectImpl
       if (!projectImpl.isTemporarilyDisposed) {
+        @Suppress("ForbiddenInSuspectContextMethod")
         app.runWriteAction {
           projectImpl.disposeEarlyDisposable()
           projectImpl.setTemporarilyDisposed(true)
@@ -348,6 +350,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         if (project is ComponentManagerImpl) {
           project.stopServicePreloading()
         }
+        @Suppress("ForbiddenInSuspectContextMethod")
         app.runWriteAction {
           if (project is ProjectImpl) {
             project.disposeEarlyDisposable()
@@ -393,6 +396,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
+    @Suppress("ForbiddenInSuspectContextMethod")
     app.runWriteAction {
       removeFromOpened(project)
       if (project is ProjectImpl) {
@@ -469,14 +473,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override fun canClose(project: Project): Boolean {
-    if (LOG.isDebugEnabled) {
-      LOG.debug("enter: canClose()")
-    }
+    LOG.debug("enter: canClose()")
 
     for (handler in CLOSE_HANDLER_EP.lazySequence()) {
       try {
         if (!handler.canClose(project)) {
-          LOG.debug("close canceled by $handler")
+          LOG.debug { "close canceled by $handler" }
           return false
         }
       }
@@ -934,8 +936,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           perProcessSupport.openInChildProcess(projectDir)
 
           blockingContext {
-            application.invokeLater {
-              ApplicationManagerEx.getApplicationEx().exit(true, true)
+            val app = ApplicationManagerEx.getApplicationEx()
+            app.invokeLater {
+              app.exit(true, true)
             }
           }
 
@@ -1049,9 +1052,7 @@ private fun handleListenerError(e: Throwable, listener: ProjectManagerListener) 
 }
 
 private fun fireProjectClosing(project: Project) {
-  if (LOG.isDebugEnabled) {
-    LOG.debug("enter: fireProjectClosing()")
-  }
+  LOG.debug("enter: fireProjectClosing()")
   try {
     closePublisher.projectClosing(project)
     publisher.projectClosing(project)
@@ -1062,9 +1063,7 @@ private fun fireProjectClosing(project: Project) {
 }
 
 private fun fireProjectClosed(project: Project) {
-  if (LOG.isDebugEnabled) {
-    LOG.debug("projectClosed")
-  }
+  LOG.debug("projectClosed")
 
   LifecycleUsageTriggerCollector.onBeforeProjectClosed(project)
   closePublisher.projectClosed(project)
