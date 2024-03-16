@@ -13,7 +13,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.bindApplicationTitle
@@ -261,9 +260,7 @@ class BlockTerminalView(
 
   private inner class BlockTerminalPanel : JPanel(), DataProvider {
     init {
-      bindBackgroundToColorKey(BlockTerminalColors.DEFAULT_BACKGROUND,
-                               this@BlockTerminalView,
-                               outputView.controller.outputModel.editor)
+      background = TerminalUi.defaultBackground(outputView.controller.outputModel.editor)
     }
 
     override fun getData(dataId: String): Any? {

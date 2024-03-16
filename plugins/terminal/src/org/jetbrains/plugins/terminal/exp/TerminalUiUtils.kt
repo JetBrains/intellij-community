@@ -10,12 +10,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.colors.ColorKey
-import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
@@ -231,32 +227,4 @@ object TerminalUiUtils {
 
   const val GREEN_COLOR_INDEX: Int = 2
   const val YELLOW_COLOR_INDEX: Int = 3
-}
-
-fun Component.bindBackgroundToColorKey(colorKey: ColorKey, parentDisposable: Disposable, editor: Editor? = null) {
-  bindColorKey(colorKey, parentDisposable, editor) {
-    background = it
-  }
-}
-
-fun Component.bindForegroundToColorKey(colorKey: ColorKey, parentDisposable: Disposable, editor: Editor? = null) {
-  bindColorKey(colorKey, parentDisposable, editor) {
-    foreground = it
-  }
-}
-
-fun bindColorKey(colorKey: ColorKey, parentDisposable: Disposable, editor: Editor? = null, applier: (Color?) -> Unit) {
-  applier(getColor(editor, colorKey))
-  ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
-    applier(getColor(editor, colorKey))
-  })
-}
-
-private fun getColor(editor: Editor?, colorKey: ColorKey): Color? {
-  return if (editor != null) {
-    editor.colorsScheme.getColor(colorKey)
-  }
-  else {
-    EditorColorsManager.getInstance().globalScheme.getColor(colorKey)
-  }
 }
