@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
@@ -50,12 +49,15 @@ class RedundantElseInIfInspection : AbstractKotlinApplicableInspection<KtIfExpre
 
     override fun getActionFamilyName(): String = KotlinBundle.message("remove.redundant.else.fix.text")
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
-        object : KtVisitorVoid() {
-            override fun visitIfExpression(expression: KtIfExpression) {
-                visitTargetElement(expression, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitIfExpression(expression: KtIfExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
         }
+    }
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtIfExpression> = applicabilityRange {
         it.lastSingleElseKeyword()?.textRange?.shiftRight(-it.startOffset)

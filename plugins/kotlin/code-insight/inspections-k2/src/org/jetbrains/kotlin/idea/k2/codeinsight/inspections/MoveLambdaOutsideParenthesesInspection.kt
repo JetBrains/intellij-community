@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
@@ -36,12 +34,10 @@ class MoveLambdaOutsideParenthesesInspection : AbstractKotlinApplicableInspectio
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean,
-        session: LocalInspectionToolSession
-    ): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitCallExpression(expression: KtCallExpression) {
-                visitTargetElement(expression, holder, isOnTheFly)
-            }
+    ) = object : KtVisitorVoid() {
+
+        override fun visitCallExpression(expression: KtCallExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
         }
     }
 

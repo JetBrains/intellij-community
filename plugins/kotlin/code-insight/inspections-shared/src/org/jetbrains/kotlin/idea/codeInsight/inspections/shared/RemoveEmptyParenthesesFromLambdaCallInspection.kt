@@ -2,11 +2,9 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -21,13 +19,16 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 
 internal class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinApplicableInspection<KtValueArgumentList>(),
                                                                 CleanupLocalInspectionTool {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitValueArgumentList(list: KtValueArgumentList) {
-                visitTargetElement(list, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitValueArgumentList(list: KtValueArgumentList) {
+            visitTargetElement(list, holder, isOnTheFly)
         }
     }
+
     override fun getProblemDescription(element: KtValueArgumentList): String =
         KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.display.name")
 

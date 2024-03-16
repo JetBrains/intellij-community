@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtVisitor
 
 /**
  * [AbstractKotlinApplicableInspectionBase] is a base implementation for [AbstractKotlinApplicableInspection] and
@@ -64,5 +65,14 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : Loc
         }
     }
 
-    abstract override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor
+    abstract override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): KtVisitor<*, *>
+
+    final override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+        session: LocalInspectionToolSession,
+    ): PsiElementVisitor = super.buildVisitor(holder, isOnTheFly, session)
 }

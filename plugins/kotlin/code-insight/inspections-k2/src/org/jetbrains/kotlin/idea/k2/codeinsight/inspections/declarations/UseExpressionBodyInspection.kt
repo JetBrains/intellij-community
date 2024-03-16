@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
@@ -12,7 +11,6 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -39,15 +37,17 @@ class UseExpressionBodyInspection :
         element: KtDeclarationWithBody, context: Context
     ): @InspectionMessage String = KotlinBundle.message("use.expression.body.instead.of.0", context.subject)
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitNamedFunction(function: KtNamedFunction) {
-                visitTargetElement(function, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
 
-            override fun visitPropertyAccessor(accessor: KtPropertyAccessor) {
-                visitTargetElement(accessor, holder, isOnTheFly)
-            }
+        override fun visitNamedFunction(function: KtNamedFunction) {
+            visitTargetElement(function, holder, isOnTheFly)
+        }
+
+        override fun visitPropertyAccessor(accessor: KtPropertyAccessor) {
+            visitTargetElement(accessor, holder, isOnTheFly)
         }
     }
 

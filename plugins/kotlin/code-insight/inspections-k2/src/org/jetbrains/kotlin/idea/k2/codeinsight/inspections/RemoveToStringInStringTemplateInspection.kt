@@ -2,11 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
@@ -27,13 +25,16 @@ internal class RemoveToStringInStringTemplateInspection :
     AbstractKotlinApplicableInspection<KtDotQualifiedExpression>(),
     CleanupLocalInspectionTool {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
-                visitTargetElement(expression, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
         }
     }
+
     override fun getProblemDescription(element: KtDotQualifiedExpression): String = KotlinBundle.message("remove.to.string.fix.text")
     override fun getActionFamilyName(): String = KotlinBundle.message("remove.to.string.fix.text")
 

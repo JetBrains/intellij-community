@@ -2,11 +2,9 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
@@ -21,13 +19,17 @@ import org.jetbrains.kotlin.psi.*
 
 internal class UnusedVariableInspection
   : AbstractKotlinApplicableInspection<KtNamedDeclaration>(), AbstractKotlinApplicableDiagnosticInspection<KtNamedDeclaration, KtFirDiagnostic.UnusedVariable> {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-                visitTargetElement(declaration, holder, isOnTheFly)
-            }
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
+            visitTargetElement(declaration, holder, isOnTheFly)
         }
     }
+
     override fun getProblemDescription(element: KtNamedDeclaration): String =
         KotlinBundle.message("inspection.kotlin.unused.variable.display.name")
 

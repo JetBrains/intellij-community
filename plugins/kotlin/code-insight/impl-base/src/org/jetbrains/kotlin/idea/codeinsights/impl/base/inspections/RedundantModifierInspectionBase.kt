@@ -2,11 +2,9 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
@@ -23,11 +21,13 @@ abstract class RedundantModifierInspectionBase<DIAGNOSTIC : KtDiagnosticWithPsi<
 ) : AbstractKotlinApplicableDiagnosticInspectionWithContext<KtModifierListOwner, DIAGNOSTIC, RedundantModifierInspectionBase.ModifierContext>(),
     CleanupLocalInspectionTool {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitDeclaration(dcl: KtDeclaration) {
-                visitTargetElement(dcl, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitDeclaration(dcl: KtDeclaration) {
+            visitTargetElement(dcl, holder, isOnTheFly)
         }
     }
     class ModifierContext(val modifier: KtModifierKeywordToken)
