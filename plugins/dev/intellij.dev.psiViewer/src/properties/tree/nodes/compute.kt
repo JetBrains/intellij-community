@@ -19,7 +19,7 @@ private const val EMPTY_LIST_VALUE_WEIGHT = 200
 suspend fun methodReturnValuePsiViewerNode(
   value: Any?,
   methodName: String,
-  methodReturnType: Class<*>,
+  methodReturnType: PsiViewerApiMethod.ReturnType,
   factory: PsiViewerPropertyNode.Factory,
   context: PsiViewerPropertyNode.Context,
 ): PsiViewerPropertyNode? {
@@ -33,7 +33,7 @@ suspend fun methodReturnValuePsiViewerNode(
     ?.prependPresentation(methodNamePresentation(methodName))
 }
 
-private fun nullValueFromMethodNode(methodName: String, methodReturnType: Class<*>): PsiViewerPropertyNode {
+private fun nullValueFromMethodNode(methodName: String, methodReturnType: PsiViewerApiMethod.ReturnType): PsiViewerPropertyNode {
   return PsiViewerPropertyNodeImpl(methodNamePresentation(methodName), emptyList(), NULL_VALUE_WEIGHT)
     .appendPresentation(nullValuePresentation())
     .appendPresentation(methodReturnTypePresentation(methodReturnType))
@@ -49,7 +49,7 @@ private suspend fun computePsiViewerNodeByMethodCall(
     return methodReturnValuePsiViewerNode(
       value = psiViewerApiMethod.invoke(),
       psiViewerApiMethod.name,
-      returnType,
+      psiViewerApiMethod.returnType,
       matchedNodeFactory,
       nodeContext
     )
@@ -81,14 +81,14 @@ private suspend fun computePsiViewerNodeByMethodCall(
   val returnedListPresentation = PsiViewerPropertyNode.Presentation {
     val attributes = if (childrenNodes.isEmpty()) SimpleTextAttributes.GRAYED_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
     @Suppress("HardCodedStringLiteral")
-    it.append("List[${childrenNodes.size}]", attributes)
+    it.append("List<${returnedCollectionType.name}>[${childrenNodes.size}]", attributes)
   }
 
   val weight = if (childrenNodes.isEmpty()) EMPTY_LIST_VALUE_WEIGHT else NOT_EMPTY_LIST_VALUE_WEIGHT
 
   val node = PsiViewerPropertyNodeImpl(methodNamePresentation(psiViewerApiMethod.name), childrenNodes, weight)
     .appendPresentation(returnedListPresentation)
-    .appendPresentation(methodReturnTypePresentation(returnType))
+    .appendPresentation(methodReturnTypePresentation(psiViewerApiMethod.returnType))
 
   return if (childrenNodes.isNotEmpty() || nodeContext.showEmptyNodes) node else null
 }

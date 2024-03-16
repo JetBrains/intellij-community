@@ -1,7 +1,10 @@
 package com.intellij.dev.psiViewer.properties.tree.nodes
 
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
+import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethod
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.DarculaColors
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
@@ -17,9 +20,19 @@ fun methodNamePresentation(methodName: String): PsiViewerPropertyNode.Presentati
   }
 }
 
-fun methodReturnTypePresentation(returnType: Class<*>): PsiViewerPropertyNode.Presentation {
+fun psiViewerPsiTypeAttributes(): SimpleTextAttributes {
+  val color = EditorColorsManager.getInstance().globalScheme.getAttributes(DefaultLanguageHighlighterColors.CONSTANT).foregroundColor
+  return SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color)
+}
+
+fun methodReturnTypePresentation(returnType: PsiViewerApiMethod.ReturnType): PsiViewerPropertyNode.Presentation {
+  val text = if (returnType.returnedCollectionType != null && !returnType.returnType.isArray) {
+    "<${returnType.returnType.canonicalName}<${returnType.returnedCollectionType.canonicalName}>>"
+  } else {
+    "<${returnType.returnType.canonicalName}>"
+  }
   return PsiViewerPropertyNode.Presentation {
-    it.append("<${returnType.canonicalName}>", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    it.append(text, SimpleTextAttributes.GRAYED_ATTRIBUTES)
   }
 }
 
