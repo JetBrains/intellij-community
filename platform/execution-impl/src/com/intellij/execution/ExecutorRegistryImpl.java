@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.actions.*;
@@ -34,6 +34,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
@@ -339,6 +340,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
+      RunManager runManager = RunManager.getInstanceIfCreated(project);
+      if (runManager == null) {
+        presentation.setEnabled(false);
+        return;
+      }
+
       RunnerAndConfigurationSettings selectedSettings = getSelectedConfiguration(e);
       boolean enabled = false;
       ExecutorActionStatus actionStatus = null;
@@ -378,6 +385,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       }
       else {
         if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
+          // don't compute current file to run if editors are not yet loaded
+          if (!project.isDefault() && !StartupManager.getInstance(project).postStartupActivityPassed()) {
+            presentation.setEnabled(false);
+            return;
+          }
+
           RunCurrentFileActionStatus status = getRunCurrentFileActionStatus(e, false);
           for (RunnerAndConfigurationSettings config : status.myRunConfigs) {
             actionStatus = setupActionStatus(e, project, config, presentation);
