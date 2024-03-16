@@ -63,7 +63,7 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
         val javaHomePromise = if (config.homePath.isBlank()) {
           subject.promiseEnvironmentVariable("JAVA_HOME")
             .thenCompose { it.completeOrElse { subject.promiseExecuteScript(listOf("java", "-XshowSettings:properties", "-version"))
-              .handle { output, _ -> tryParseJavaHome(output.stdout) }}}
+              .handle { output, _ -> output?.stdout?.let { s -> tryParseJavaHome(s) } }}}
             .thenApply { acceptJavaHome(it) }
         }
         else {
