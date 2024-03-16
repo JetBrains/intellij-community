@@ -28,11 +28,11 @@ public final class TextMateSettings implements PersistentStateComponent<TextMate
                                          entry.getValue().getEnabled()));
       }
     }
-    TextMateBuiltinBundlesSettings builtinBundlesSettings = TextMateBuiltinBundlesSettings.getInstance();
+    TextMateBuiltinBundlesSettings builtinBundlesSettings = TextMateBuiltinBundlesSettings.Companion.getInstance();
     if (builtinBundlesSettings != null) {
       Set<String> turnedOffBundleNames = builtinBundlesSettings.getTurnedOffBundleNames();
       for (TextMateBundleToLoad bundle : TextMateServiceImplKt.discoverBuiltinBundles(builtinBundlesSettings)) {
-        bundles.add(new BundleConfigBean(bundle.getName(), bundle.getPath(), !turnedOffBundleNames.contains(bundle.getName())));
+        bundles.add(new BundleConfigBean(bundle.name, bundle.path, !turnedOffBundleNames.contains(bundle.name)));
       }
     }
     state.setBundles(bundles);

@@ -76,7 +76,7 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
       val newExtensionsMapping = ConcurrentHashMap<TextMateFileNameMatcher, CharSequence>()
 
       if (!builtinBundlesDisabled) {
-        val builtinBundlesSettings = TextMateBuiltinBundlesSettings.instance
+        val builtinBundlesSettings = TextMateBuiltinBundlesSettings.getInstance()
         if (builtinBundlesSettings != null) {
           val turnedOffBundleNames = builtinBundlesSettings.getTurnedOffBundleNames()
           val builtInBundles = discoverBuiltinBundles(builtinBundlesSettings)
@@ -95,7 +95,7 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
       }
 
       val userBundles = settings.bundles
-      val bundlesToLoad = this.getPluginBundles()
+      val bundlesToLoad = getPluginBundles()
       if (!userBundles.isEmpty()) {
         bundlesToLoad.addAll(userBundles.entries.mapNotNull { entry ->
           if (entry.value.enabled) TextMateBundleToLoad(entry.value.name, entry.key) else null
@@ -229,7 +229,10 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
     if (!isInitialized) {
       registrationLock.lock()
       try {
-        if (isInitialized) return
+        if (isInitialized) {
+          return
+        }
+
         registerBundles(fireEvents = false)
         isInitialized = true
       }
