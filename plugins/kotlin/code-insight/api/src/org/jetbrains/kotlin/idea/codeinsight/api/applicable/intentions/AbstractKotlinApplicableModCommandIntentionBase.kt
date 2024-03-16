@@ -17,8 +17,9 @@ import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
 abstract class AbstractKotlinApplicableModCommandIntentionBase<ELEMENT : KtElement>(
-    private val clazz: KClass<ELEMENT>
-) : PsiUpdateModCommandAction<ELEMENT>(clazz.java), KotlinApplicableToolBase<ELEMENT> {
+    clazz: KClass<ELEMENT>
+) : PsiUpdateModCommandAction<ELEMENT>(clazz.java),
+    KotlinApplicableToolBase<ELEMENT> {
 
     protected abstract fun getActionName(element: ELEMENT): @IntentionName String
 

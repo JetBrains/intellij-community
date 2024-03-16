@@ -6,14 +6,11 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
-import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
-import org.jetbrains.kotlin.idea.util.application.runWriteActionIfNeeded
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -72,27 +69,6 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : Loc
     }
 
     abstract override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor
-}
-
-internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtElement> : LocalQuickFix,
-                                                                                          ReportingClassSubstitutor {
-    abstract fun applyTo(element: ELEMENT)
-
-    abstract fun shouldApplyInWriteAction(): Boolean
-
-    abstract override fun getName(): String
-
-    final override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        @Suppress("UNCHECKED_CAST")
-        val element = descriptor.psiElement as ELEMENT
-        runWriteActionIfNeeded(shouldApplyInWriteAction() && element.isPhysical) {
-            applyTo(element)
-        }
-    }
-
-    final override fun startInWriteAction() = false
-
-    final override fun getElementToMakeWritable(currentFile: PsiFile) = currentFile
 }
 
 abstract class AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT : KtElement> : PsiUpdateModCommandQuickFix() {

@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
@@ -33,10 +32,6 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 
     override fun getActionName(element: ELEMENT, context: CONTEXT): @IntentionName String = getActionFamilyName()
-
-    final override fun apply(element: ELEMENT, context: CONTEXT, project: Project, editor: Editor?) {
-        throw UnsupportedOperationException("apply(ELEMENT, CONTEXT, Project, Editor?) should not be invoked")
-    }
 
     abstract fun apply(element: ELEMENT, context: CONTEXT, project: Project, updater: ModPsiUpdater)
 

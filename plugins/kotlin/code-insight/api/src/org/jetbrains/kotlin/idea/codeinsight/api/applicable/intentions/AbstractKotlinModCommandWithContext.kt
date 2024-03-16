@@ -6,8 +6,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -94,11 +92,6 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
      *
      */
     abstract fun apply(element: ELEMENT, context: AnalysisActionContext<CONTEXT>, updater: ModPsiUpdater)
-
-    final override fun apply(element: ELEMENT, context: CONTEXT, project: Project, editor: Editor?) {
-        throw UnsupportedOperationException("apply(ELEMENT, CONTEXT, Project, Editor?) should not be invoked")
-    }
-
 }
 
 data class AnalysisActionContext<C>(val analyzeContext: C, val actionContext: ActionContext)

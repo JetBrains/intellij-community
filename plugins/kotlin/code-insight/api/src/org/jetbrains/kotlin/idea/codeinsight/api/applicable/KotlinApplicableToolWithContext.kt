@@ -2,8 +2,6 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -39,13 +37,6 @@ interface KotlinApplicableToolWithContext<ELEMENT : KtElement, CONTEXT> : Kotlin
      */
     context(KtAnalysisSession)
     fun prepareContext(element: ELEMENT): CONTEXT?
-
-    /**
-     * Applies a fix to [element] using information from [context]. [apply] should not use the Analysis API due to performance concerns, as
-     * [apply] is usually executed on the EDT. Any information that needs to come from the Analysis API should be supplied via
-     * [prepareContext]. [apply] is executed in a write action if [element] is physical and [shouldApplyInWriteAction] returns `true`.
-     */
-    fun apply(element: ELEMENT, context: CONTEXT, project: Project, editor: Editor?)
 }
 
 internal fun <ELEMENT : KtElement, CONTEXT> KotlinApplicableToolWithContext<ELEMENT, CONTEXT>.prepareContextWithAnalyze(
