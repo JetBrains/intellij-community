@@ -1,2 +1,1 @@
-//class
 abstract interface I {}

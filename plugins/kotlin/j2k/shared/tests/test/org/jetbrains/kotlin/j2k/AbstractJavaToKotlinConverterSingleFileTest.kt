@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.regex.Pattern
 
-private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method|class)\n")
+private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method)\n")
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
     override fun setUp() {
@@ -106,11 +106,8 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             "expression" -> expressionToKotlin(javaCode, settings)
             "statement" -> statementToKotlin(javaCode, settings)
             "method" -> methodToKotlin(javaCode, settings)
-            "class" -> fileToKotlin(javaCode, settings)
             "file" -> fileToKotlin(javaCode, settings)
-            else -> throw IllegalStateException(
-                "Specify what is it: file, class, method, statement or expression using the first line of test data file"
-            )
+            else -> error("Specify what it is: method, statement or expression using the first line of test data file")
         }
 
     open fun fileToKotlin(text: String, settings: ConverterSettings): String {

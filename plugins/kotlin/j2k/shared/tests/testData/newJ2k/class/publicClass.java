@@ -1,2 +1,1 @@
-//class
 public class Test {}

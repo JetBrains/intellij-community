@@ -1,4 +1,3 @@
-//class
 abstract class A { 
   abstract void callme();
 

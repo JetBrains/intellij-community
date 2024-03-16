@@ -1,2 +1,1 @@
-//class
 final class Test {}
