@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
@@ -118,7 +117,7 @@ class TerminalWidgetImpl(private val project: Project,
 
     override val component: JComponent = object : JPanel() {
       init {
-        bindBackgroundToColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, this@TerminalPlaceholder)
+        background = TerminalUi.defaultBackground()
       }
     }
 
