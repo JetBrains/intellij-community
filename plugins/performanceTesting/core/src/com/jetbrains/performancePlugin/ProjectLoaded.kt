@@ -5,7 +5,6 @@ package com.jetbrains.performancePlugin
 import com.intellij.diagnostic.AbstractMessage
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.ThreadDumper
-import com.intellij.driver.impl.InvokerMBean
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.lightEdit.LightEditService
@@ -28,7 +27,6 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
@@ -47,7 +45,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -61,10 +58,10 @@ import kotlin.time.Duration.Companion.minutes
 private val LOG: Logger
   get() = Logger.getInstance("PerformancePlugin")
 
-private fun getTestFile(): File {
-  val file = File(ProjectLoaded.TEST_SCRIPT_FILE_PATH!!)
-  if (!file.isFile) {
-    System.err.println(PerformanceTestingBundle.message("startup.noscript", file.absolutePath))
+private fun getTestFile(): Path {
+  val file = Path.of(ProjectLoaded.TEST_SCRIPT_FILE_PATH!!)
+  if (!Files.isRegularFile(file)) {
+    System.err.println(PerformanceTestingBundle.message("startup.noscript", file.toAbsolutePath().toString()))
     ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
   }
   return file
@@ -93,8 +90,8 @@ private object ProjectLoadedService {
 
 private fun runOnProjectInit(project: Project) {
   if (System.getProperty("ide.performance.screenshot") != null) {
-    (ProjectLoadedService.registerScreenshotTaking(
-      System.getProperty("ide.performance.screenshot"), (project as ComponentManagerEx).getCoroutineScope()))
+    (ProjectLoadedService.registerScreenshotTaking(System.getProperty("ide.performance.screenshot"),
+                                                   (project as ComponentManagerEx).getCoroutineScope()))
     LOG.info("Option ide.performance.screenshot is initialized, screenshots will be captured")
   }
 
@@ -197,8 +194,7 @@ class ProjectLoaded : ApplicationInitializedListener {
           runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
             logStats("LightEditor")
           }
-          val project = LightEditService.getInstance().project!!
-          runOnProjectInit(project)
+          runOnProjectInit(LightEditService.getInstance().project!!)
         }
       })
     }
@@ -265,7 +261,7 @@ private const val INDEXING_PROFILER_PREFIX = "%%profileIndexing"
 
 private fun initializeProfilerSettingsForIndexing(): Pair<String, List<String>>? {
   try {
-    val lines = FileUtil.loadLines(getTestFile())
+    val lines = Files.readAllLines(getTestFile())
     for (line in lines) {
       if (line.startsWith(INDEXING_PROFILER_PREFIX)) {
         val command = line.substring(INDEXING_PROFILER_PREFIX.length).trim().split("\\s+".toRegex(), limit = 2)
@@ -365,7 +361,7 @@ private fun getNonEmptyThrowableMessage(throwable: Throwable): String {
 
 private fun runScriptFromFile(project: Project) {
   val playback = PlaybackRunnerExtended("%include " + getTestFile(), CommandLogger(), project)
-  playback.scriptDir = getTestFile().parentFile
+  playback.scriptDir = getTestFile().parent.toFile()
   if (SystemProperties.getBooleanProperty(ReporterCommandAsTelemetrySpan.USE_SPAN_WRAPPER_FOR_COMMAND, false)) {
     playback.setCommandStartStopProcessor(ReporterCommandAsTelemetrySpan())
   }
