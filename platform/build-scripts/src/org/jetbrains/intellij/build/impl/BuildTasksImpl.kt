@@ -175,8 +175,11 @@ suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildCont
 private fun localizeModules(context: BuildContext) {
   val localizationDir = getLocalizationDir(context)
   if (localizationDir != null) {
-    for (module in context.project.modules) {
-      localizeModule(module = module, context = context, localizationDir = localizationDir)
+    val modules = context.project.modules
+    spanBuilder("bundle localizations").setAttribute("moduleCount", modules.size.toLong()).use {
+      for (module in modules) {
+        localizeModule(module = module, context = context, localizationDir = localizationDir)
+      }
     }
   }
 }
