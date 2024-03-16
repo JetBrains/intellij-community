@@ -360,7 +360,7 @@ public final class TextMateServiceImpl extends TextMateService {
   @TestOnly
   public void disableBuiltinBundles(Disposable disposable) {
     ourBuiltinBundlesDisabled = true;
-    TextMateService.getInstance().reloadEnabledBundles();
+    reloadEnabledBundles();
     myInitialized = true;
     Disposer.register(disposable, () -> {
       ourBuiltinBundlesDisabled = false;
