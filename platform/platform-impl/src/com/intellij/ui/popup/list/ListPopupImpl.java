@@ -622,7 +622,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     if (updateEmptyModel) {
       selectFirstSelectableItem();
     }
-    pack(true, true);
+    resizePopupIfNeeded();
+  }
+
+  private void resizePopupIfNeeded() {
+    Dimension size = getSize();
+    if (size == null) return;
+
+    Dimension packedSize = calculateSizeForPack(true, true);
+    if (packedSize == null) return;
+
+    if (packedSize.width > size.width || packedSize.height > size.height) {
+      Dimension desiredSize = new Dimension(Math.max(size.width, packedSize.width), Math.max(size.height, packedSize.height));
+      setSize(desiredSize);
+    }
   }
 
   private enum ExtendMode {

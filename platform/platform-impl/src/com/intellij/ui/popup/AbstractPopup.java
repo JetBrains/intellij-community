@@ -1686,7 +1686,18 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void pack(boolean width, boolean height) {
-    if (!isVisible() || !width && !height || isBusy()) return;
+    Dimension size = calculateSizeForPack(width, height);
+    if (size == null) return;
+
+    final Window window = getContentWindow(myContent);
+    if (window != null && size != null) {
+      window.setSize(size);
+    }
+  }
+
+  @Nullable
+  protected Dimension calculateSizeForPack(boolean width, boolean height) {
+    if (!isVisible() || !width && !height || isBusy()) return null;
 
     Dimension size = getSize();
     Dimension prefSize = myContent.computePreferredSize();
@@ -1718,10 +1729,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         }
       }
     }
-    final Window window = getContentWindow(myContent);
-    if (window != null) {
-      window.setSize(size);
-    }
+
+    return size;
   }
 
   public JComponent getComponent() {
