@@ -1,6 +1,7 @@
 package com.intellij.dev.psiViewer.properties.tree.nodes
 
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
+import com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods.PsiViewerApiMethod
 import com.intellij.dev.psiViewer.properties.tree.withWeight
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiElement
@@ -34,7 +35,7 @@ class PsiViewerRootNode(
     val node = methodReturnValuePsiViewerNode(
       value = resolved,
       methodName = "getReference()?.resolve",
-      methodReturnType = PsiElement::class.java,
+      methodReturnType = PsiViewerApiMethod.ReturnType(PsiElement::class.java, returnedCollectionType = null),
       factory = PsiViewerPsiElementNode.Factory(),
       nodeContext
     ) ?: return null

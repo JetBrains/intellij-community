@@ -1,6 +1,9 @@
 package com.intellij.dev.psiViewer.properties.tree.nodes
 
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.ui.SimpleTextAttributes
 
 class PsiViewerPrimitiveNode(private val primitive: Any) : PsiViewerPropertyNode {
   class Factory : PsiViewerPropertyNode.Factory {
@@ -18,8 +21,19 @@ class PsiViewerPrimitiveNode(private val primitive: Any) : PsiViewerPropertyNode
 
   override val presentation: PsiViewerPropertyNode.Presentation
     get() = PsiViewerPropertyNode.Presentation {
-      @Suppress("HardCodedStringLiteral")
-      it.append(primitive.toString())
+      val colorKey = when(primitive) {
+        is String, is Char -> DefaultLanguageHighlighterColors.STRING
+        is Number, is Boolean -> DefaultLanguageHighlighterColors.NUMBER
+        is Enum<*> -> DefaultLanguageHighlighterColors.CONSTANT
+        else -> null
+      }
+      val color = colorKey?.let { EditorColorsManager.getInstance().globalScheme.getAttributes(it).foregroundColor }
+      @Suppress("HardCodedStringLiteral") val text = if (primitive is String) {
+        "\"${primitive}\""
+      } else {
+        primitive.toString()
+      }
+      it.append(text, SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color))
     }
 
   override val children = PsiViewerPropertyNode.Children.NoChildren
