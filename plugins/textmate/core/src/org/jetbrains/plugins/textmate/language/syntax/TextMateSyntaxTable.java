@@ -3,7 +3,6 @@ package org.jetbrains.plugins.textmate.language.syntax;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,20 +26,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class TextMateSyntaxTable {
   private static final LoggerRt LOG = LoggerRt.getInstance(TextMateSyntaxTable.class);
   private final Map<CharSequence, SyntaxNodeDescriptor> rulesMap = new ConcurrentHashMap<>();
-  private Object2IntMap<String> ruleIds; // guarded by this
+  @SuppressWarnings("SSBasedInspection")
+  private Object2IntOpenHashMap<String> ruleIds; // guarded by this
 
   public synchronized void compact() {
     ruleIds = null;
   }
 
   /**
-   * Append table with new syntax rules in order to support new language.
+   * Append table with new syntax rules to support new language.
    *
    * @param plist Plist represented syntax file (*.tmLanguage) of target language.
    * @return language scope root name
    */
-  @Nullable
-  public CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
+  public @Nullable CharSequence loadSyntax(Plist plist, @NotNull Interner<CharSequence> interner) {
     return loadRealNode(plist, null, interner).getScopeName();
   }
 
@@ -52,8 +51,7 @@ public final class TextMateSyntaxTable {
    * If tables don't contain syntax rule for given scope,
    * method returns {@link SyntaxNodeDescriptor#EMPTY_NODE}.
    */
-  @NotNull
-  public SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
+  public @NotNull SyntaxNodeDescriptor getSyntax(CharSequence scopeName) {
     SyntaxNodeDescriptor syntaxNodeDescriptor = rulesMap.get(scopeName);
     if (syntaxNodeDescriptor == null) {
       LOG.info("Can't find syntax node for scope: '" + scopeName + "'");
@@ -72,10 +70,9 @@ public final class TextMateSyntaxTable {
     return plist.contains(Constants.INCLUDE_KEY) ? loadProxyNode(plist, parentNode, interner) : loadRealNode(plist, parentNode, interner);
   }
 
-  @NotNull
-  private SyntaxNodeDescriptor loadRealNode(@NotNull Plist plist,
-                                            @Nullable SyntaxNodeDescriptor parentNode,
-                                            @NotNull Interner<CharSequence> interner) {
+  private @NotNull SyntaxNodeDescriptor loadRealNode(@NotNull Plist plist,
+                                                     @Nullable SyntaxNodeDescriptor parentNode,
+                                                     @NotNull Interner<CharSequence> interner) {
     PListValue scopeNameValue = plist.getPlistValue(Constants.StringKey.SCOPE_NAME.value);
     CharSequence scopeName = scopeNameValue != null ? interner.intern(scopeNameValue.getString()) : null;
     MutableSyntaxNodeDescriptor result = new SyntaxNodeDescriptorImpl(scopeName, parentNode);
@@ -114,11 +111,10 @@ public final class TextMateSyntaxTable {
     return result;
   }
 
-  @Nullable
   @SuppressWarnings("SSBasedInspection")
-  private TextMateCapture @Nullable [] loadCaptures(@NotNull Plist captures,
-                                                    @NotNull SyntaxNodeDescriptor parentNode,
-                                                    @NotNull Interner<CharSequence> interner) {
+  private @Nullable TextMateCapture @Nullable [] loadCaptures(@NotNull Plist captures,
+                                                              @NotNull SyntaxNodeDescriptor parentNode,
+                                                              @NotNull Interner<CharSequence> interner) {
     Int2ObjectOpenHashMap<TextMateCapture> map = new Int2ObjectOpenHashMap<>();
     int maxGroupIndex = -1;
     for (Map.Entry<String, PListValue> capture : captures.entries()) {

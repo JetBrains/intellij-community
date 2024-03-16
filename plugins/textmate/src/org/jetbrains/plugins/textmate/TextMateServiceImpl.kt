@@ -47,7 +47,7 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
   private var isInitialized = false
   private val registrationLock = ReentrantLock()
 
-  private val customHighlightingColors = HashMap<CharSequence, TextMateTextAttributesAdapter>()
+  private var customHighlightingColors: Map<CharSequence, TextMateTextAttributesAdapter> = java.util.Map.of()
   private var extensionMapping: Map<TextMateFileNameMatcher, CharSequence> = java.util.Map.of()
   private val syntaxTable = TextMateSyntaxTable()
   private val snippetRegistry = SnippetsRegistryImpl()
@@ -71,6 +71,7 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
     try {
       val oldExtensionsMapping = extensionMapping
       unregisterAllBundles()
+      val customHighlightingColors = ConcurrentHashMap<CharSequence, TextMateTextAttributesAdapter>()
 
       val settings = TextMateUserBundlesSettings.getInstance() ?: return
       val newExtensionsMapping = ConcurrentHashMap<TextMateFileNameMatcher, CharSequence>()
@@ -89,7 +90,13 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
           registerBundlesInParallel(
             scope = scope,
             bundlesToLoad = bundlesToEnable,
-            registrar = { registerBundle(Path.of(it.path), newExtensionsMapping) },
+            registrar = {
+              registerBundle(
+                directory = Path.of(it.path),
+                extensionMapping = newExtensionsMapping,
+                customHighlightingColors = customHighlightingColors,
+              )
+            },
           )
         }
       }
@@ -105,7 +112,9 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
         registerBundlesInParallel(
           scope = scope,
           bundlesToLoad = bundlesToLoad,
-          registrar = { registerBundle(Path.of(it.path), newExtensionsMapping) },
+          registrar = {
+            registerBundle(Path.of(it.path), newExtensionsMapping, customHighlightingColors)
+          },
           registrationFailed = { bundleToLoad ->
             val bundleName = bundleToLoad.name
             val errorMessage = TextMateBundle.message("textmate.cant.register.bundle", bundleName)
@@ -127,6 +136,8 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
       else {
         extensionMapping = java.util.Map.copyOf(newExtensionsMapping)
       }
+
+      this.customHighlightingColors = java.util.Map.copyOf(customHighlightingColors)
       syntaxTable.compact()
     }
     finally {
@@ -137,7 +148,7 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
   private fun unregisterAllBundles() {
     extensionMapping = java.util.Map.of()
     preferenceRegistry.clear()
-    customHighlightingColors.clear()
+    customHighlightingColors = java.util.Map.of()
     syntaxTable.clear()
     snippetRegistry.clear()
     shellVariablesRegistry.clear()
@@ -242,12 +253,16 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
     }
   }
 
-  private suspend fun registerBundle(directory: Path?, extensionMapping: MutableMap<TextMateFileNameMatcher, CharSequence>): Boolean {
+  private suspend fun registerBundle(
+    directory: Path?,
+    extensionMapping: MutableMap<TextMateFileNameMatcher, CharSequence>,
+    customHighlightingColors: MutableMap<CharSequence, TextMateTextAttributesAdapter>,
+  ): Boolean {
     val reader = withContext(Dispatchers.IO) {
       readBundle(directory)
     } ?: return false
     registerLanguageSupport(reader, extensionMapping)
-    registerPreferences(reader)
+    registerPreferences(reader, customHighlightingColors, interner)
     registerSnippets(reader)
     return true
   }
@@ -263,7 +278,11 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
     }
   }
 
-  private fun registerPreferences(reader: TextMateBundleReader) {
+  private fun registerPreferences(
+    reader: TextMateBundleReader,
+    customHighlightingColors: MutableMap<CharSequence, TextMateTextAttributesAdapter>,
+    interner: Interner<CharSequence>
+  ) {
     val preferencesIterator = reader.readPreferences().iterator()
     while (preferencesIterator.hasNext()) {
       val preferences = preferencesIterator.next()

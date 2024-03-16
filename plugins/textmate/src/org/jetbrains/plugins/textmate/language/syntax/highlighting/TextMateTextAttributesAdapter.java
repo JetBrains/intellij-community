@@ -13,7 +13,7 @@ import org.jetbrains.plugins.textmate.language.preferences.TextMateTextAttribute
 
 import java.awt.*;
 
-public class TextMateTextAttributesAdapter {
+public final class TextMateTextAttributesAdapter {
   private final TextAttributes myTextAttributes;
   private final double myForegroundAlpha;
   private final double myBackgroundAlpha;
