@@ -5,6 +5,7 @@
   Adds support for the Java language, including Java projects, language syntax highlighting, inspections, and all other coding assistance features.
 ]]></description>
   <vendor>JetBrains</vendor>
+  <category>Languages</category>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
   <depends>com.intellij.modules.platform</depends>
