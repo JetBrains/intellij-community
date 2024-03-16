@@ -1037,14 +1037,13 @@ abstract class ComponentManagerImpl(
 
         if (plugin.pluginId != PluginManagerCore.CORE_ID) {
           val impl = getServiceImplementation(service, this)
-          if (!servicePreloadingAllowListForNonCorePlugin.contains(impl)) {
-            val message = "`preload=true` must be used only for core services (service=$impl, plugin=${plugin.pluginId})"
-            if (service.preload == PreloadMode.AWAIT) {
-              LOG.error(PluginException(message, plugin.pluginId))
-            }
-            else {
-              LOG.warn(message)
-            }
+          val message = "`preload=${service.preload.name}` must be used only for core services (service=$impl, plugin=${plugin.pluginId})"
+          val isKnown = servicePreloadingAllowListForNonCorePlugin.contains(impl)
+          if (service.preload == PreloadMode.AWAIT && !isKnown) {
+            LOG.error(PluginException(message, plugin.pluginId))
+          }
+          else if (!isKnown || !impl.startsWith("com.intellij.")) {
+            LOG.warn(message)
           }
         }
 
@@ -1461,6 +1460,7 @@ private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescripto
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
 }
 
+// Ask Core team approve before changing this set
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SpellCheckingInspection")
 private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
   "com.android.tools.adtui.webp.WebpMetadata\$WebpMetadataRegistrar",
