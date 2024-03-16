@@ -18,6 +18,10 @@ import java.util.regex.Pattern
 
 private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method)\n")
 
+private const val JPA_ANNOTATIONS_DIRECTIVE = "ADD_JPA_ANNOTATIONS"
+private const val KOTLIN_API_DIRECTIVE = "ADD_KOTLIN_API"
+private const val JAVA_API_DIRECTIVE = "ADD_JAVA_API"
+
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
     override fun setUp() {
         super.setUp()
@@ -43,10 +47,12 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     }
 
     private fun doTest(javaFile: File, fileContents: String) {
-        addExternalFiles(javaFile)
-
         val (prefix, javaCode) = getPrefixAndJavaCode(fileContents)
         val directives = KotlinTestUtils.parseDirectives(javaCode)
+
+        addExternalFiles(javaFile)
+        addDependencies(directives)
+
         val settings = configureSettings(directives)
         val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
         val expectedFile = File(javaFile.path.replace(".java", ".kt"))
@@ -60,6 +66,12 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         }
 
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
+    }
+
+    private fun addDependencies(directives: Directives) {
+        if (directives.contains(JPA_ANNOTATIONS_DIRECTIVE)) addJpaColumnAnnotations()
+        if (directives.contains(KOTLIN_API_DIRECTIVE)) addFile("KotlinApi.kt", "kotlinApi")
+        if (directives.contains(JAVA_API_DIRECTIVE)) addFile("JavaApi.java", "javaApi")
     }
 
     private fun addExternalFiles(javaFile: File) {

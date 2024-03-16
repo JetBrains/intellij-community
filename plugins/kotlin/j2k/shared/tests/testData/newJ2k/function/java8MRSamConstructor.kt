@@ -1,3 +1,4 @@
+// !ADD_JAVA_API
 package test
 
 import javaApi.JFunction0

@@ -1,4 +1,4 @@
-
+// !ADD_KOTLIN_API
 import kotlinApi.KotlinClass;
 
 class C {

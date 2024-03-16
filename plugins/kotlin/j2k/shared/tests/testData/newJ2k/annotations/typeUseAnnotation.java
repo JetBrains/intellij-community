@@ -1,4 +1,5 @@
 // IGNORE_K2
+// !ADD_JAVA_API
 import javaApi.Anon5;
 import javaApi.TypeUseAnon1;
 import javaApi.TypeUseAnon2;

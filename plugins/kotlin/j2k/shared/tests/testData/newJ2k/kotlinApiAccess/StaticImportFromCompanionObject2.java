@@ -1,4 +1,5 @@
 // IGNORE_K2
+// !ADD_KOTLIN_API
 import static kotlinApi.KotlinClass.*;
 
 public class C {

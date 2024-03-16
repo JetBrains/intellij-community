@@ -1,5 +1,6 @@
 import kotlinApi.extensionFunction
 
+// !ADD_KOTLIN_API
 object J {
     fun adjust(name: String?, maxLen: Int) {
         (1 + 1).toString()

@@ -1,3 +1,4 @@
+// !ADD_KOTLIN_API
 import static kotlinApi.KotlinApiKt.extensionFunction;
 import static kotlinApi.KotlinApiKt.getExtensionProperty;
 import static kotlinApi.KotlinApiKt.setExtensionProperty;

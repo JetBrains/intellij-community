@@ -1,4 +1,5 @@
 // IGNORE_K2
+// !ADD_JAVA_API
 package test;
 
 import javaApi.*;
