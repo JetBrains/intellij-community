@@ -1290,23 +1290,24 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
 
   var mode = GeneralSettings.getInstance().confirmOpenNewProject
   if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
+    val ideUICustomization = serviceAsync<IdeUICustomization>()
     val message = if (options.projectName == null) {
-      IdeUICustomization.getInstance().projectMessage("prompt.open.project.in.new.frame")
+      ideUICustomization.projectMessage("prompt.open.project.in.new.frame")
     }
     else {
-      IdeUICustomization.getInstance().projectMessage("prompt.open.project.with.name.in.new.frame", options.projectName)
+      ideUICustomization.projectMessage("prompt.open.project.with.name.in.new.frame", options.projectName)
     }
 
     val openInExistingFrame = withContext(Dispatchers.EDT) {
       blockingContext {
         if (options.isNewProject)
-          MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.new.project"), message)
+          MessageDialogBuilder.yesNoCancel(ideUICustomization.projectMessage("title.new.project"), message)
             .yesText(IdeBundle.message("button.existing.frame"))
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(ProjectNewWindowDoNotAskOption())
             .guessWindowAndAsk()
         else
-          MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.open.project"), message)
+          MessageDialogBuilder.yesNoCancel(ideUICustomization.projectMessage("title.open.project"), message)
             .yesText(IdeBundle.message("button.existing.frame"))
             .noText(IdeBundle.message("button.new.frame"))
             .doNotAsk(ProjectNewWindowDoNotAskOption())
@@ -1378,7 +1379,7 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
   }
 
   // check if the project trusted state could be known from the previous IDE version
-  val metaInfo = RecentProjectsManagerBase.getInstanceEx().getProjectMetaInfo(projectStoreBaseDir)
+  val metaInfo = (serviceAsync<RecentProjectsManager>() as RecentProjectsManagerBase).getProjectMetaInfo(projectStoreBaseDir)
   val projectId = metaInfo?.projectWorkspaceId
   val productWorkspaceFile = PathManager.getConfigDir().resolve("workspace").resolve("$projectId.xml")
   if (projectId != null && Files.exists(productWorkspaceFile)) {
