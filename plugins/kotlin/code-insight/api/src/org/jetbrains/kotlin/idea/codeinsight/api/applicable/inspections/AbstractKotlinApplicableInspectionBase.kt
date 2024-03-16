@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.psi.KtElement
@@ -15,12 +14,6 @@ import org.jetbrains.kotlin.psi.KtVisitor
  */
 abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : LocalInspectionTool(),
                                                                              KotlinApplicableToolBase<ELEMENT> {
-
-    /**
-     * By default, a problem is registered for every [TextRange] produced by [getApplicabilityRange]. [getProblemRanges] can be overridden
-     * to customize this behavior, e.g. to register a problem only for the first [TextRange].
-     */
-    open fun getProblemRanges(ranges: List<TextRange>): List<TextRange> = ranges
 
     internal class ProblemInfo(
         val description: @InspectionMessage String,
@@ -43,15 +36,18 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : Loc
         if (!isOnTheFly && problemInfo.highlightType == ProblemHighlightType.INFORMATION) {
             return
         }
-        getProblemRanges(ranges).forEach { range ->
-            holder.registerProblem(
-                element,
-                problemInfo.description,
-                problemInfo.highlightType,
-                range,
-                problemInfo.quickFix,
-            )
-        }
+
+        ranges.asSequence()
+            .map { rangeInElement ->
+                holder.manager.createProblemDescriptor(
+                    /* psiElement = */ element,
+                    /* rangeInElement = */ rangeInElement,
+                    /* descriptionTemplate = */ problemInfo.description,
+                    /* highlightType = */ problemInfo.highlightType,
+                    /* onTheFly = */ isOnTheFly,
+                    /* ...fixes = */ problemInfo.quickFix,
+                )
+            }.forEach(holder::registerProblem)
     }
 
     abstract override fun buildVisitor(
