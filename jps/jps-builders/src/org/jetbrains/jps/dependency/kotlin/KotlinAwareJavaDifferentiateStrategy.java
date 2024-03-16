@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DifferentiateContext;
 import org.jetbrains.jps.dependency.Node;
+import org.jetbrains.jps.dependency.NodeSource;
+import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.*;
 
@@ -24,12 +26,17 @@ import static org.jetbrains.jps.javac.Iterators.*;
  */
 public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
   private static final TypeRepr.ClassType JVM_OVERLOADS_ANNOTATION = new TypeRepr.ClassType("kotlin/jvm/JvmOverloads");
+
+  @Override
+  public boolean processAddedClasses(DifferentiateContext context, Iterable<JvmClass> addedClasses, Utils future, Utils present) {
+    for (JvmNodeReferenceID sealedSuperClass : unique(map(filter(flat(map(addedClasses, added -> future.allDirectSupertypes(added))), KotlinAwareJavaDifferentiateStrategy::isSealed), cl -> cl.getReferenceID()))) {
+      affectSealedClass(context, sealedSuperClass, "Subclass of a sealed class was added, affecting ", future, true /*affectUsages*/  /*forceAffect*/);
+    }
+    return super.processAddedClasses(context, addedClasses, future, present);
+  }
+
   @Override
   public boolean processAddedClass(DifferentiateContext context, JvmClass addedClass, Utils future, Utils present) {
-    for (JvmClass superClass : filter(future.allDirectSupertypes(addedClass), KotlinAwareJavaDifferentiateStrategy::isSealed)) {
-      affectNodeSources(context, superClass.getReferenceID(), "Subclass of a sealed class was added, affecting ");
-    }
-
     if (!addedClass.isPrivate()) {
       // calls to newly added class' constructors may shadow calls to functions named similarly
       debug("Affecting lookup usages for added class ", addedClass.getName());
@@ -42,7 +49,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   @Override
   public boolean processRemovedClass(DifferentiateContext context, JvmClass removedClass, Utils future, Utils present) {
     for (JvmClass superClass : filter(future.allDirectSupertypes(removedClass), KotlinAwareJavaDifferentiateStrategy::isSealed)) {
-      affectNodeSources(context, superClass.getReferenceID(), "Subclass of a sealed class was removed, affecting ");
+      affectSealedClass(context, superClass.getReferenceID(), "Subclass of a sealed class was removed, affecting ", future, true /*affectUsages*/  /*forceAffect*/);
     }
 
     if (!removedClass.isInnerClass()) {
@@ -71,16 +78,35 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     Iterable<JvmField> addedNonPrivateFields = filter(diff.fields().added(), f -> !f.isPrivate());
     Iterable<JvmField> exposedFields = filter(map(diff.fields().changed(), ch -> ch.getDiff().accessExpanded()? ch.getPast() : null), Objects::nonNull);
 
-    if (isKotlinNode(changedClass) && (diff.superClassChanged() || !diff.interfaces().unchanged())) {
-      Difference.Specifier<JvmNodeReferenceID, ?> sealedDiff = Difference.diff(
-        map(filter(present.allDirectSupertypes(change.getPast()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID),
-        map(filter(future.allDirectSupertypes(change.getNow()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID)
-      );
-      for (JvmNodeReferenceID id : sealedDiff.added()) {
-        affectNodeSources(context, id, "Subclass of a sealed class was added, affecting ");
+    if (isKotlinNode(changedClass)) {
+      if (diff.superClassChanged() || !diff.interfaces().unchanged()) {
+        Difference.Specifier<JvmNodeReferenceID, ?> sealedDiff = Difference.diff(
+          map(filter(present.allDirectSupertypes(change.getPast()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID),
+          map(filter(future.allDirectSupertypes(change.getNow()), KotlinAwareJavaDifferentiateStrategy::isSealed), JVMClassNode::getReferenceID)
+        );
+        for (JvmNodeReferenceID id : sealedDiff.added()) {
+          affectSealedClass(context, id, "Subclass of a sealed class was added, affecting ", future, true /*affectUsages*/  /*forceAffect*/);
+        }
+        for (JvmNodeReferenceID id : sealedDiff.removed()) {
+          affectSealedClass(context, id, "Subclass of a sealed class was removed, affecting ", future, true /*affectUsages*/  /*forceAffect*/);
+        }
       }
-      for (JvmNodeReferenceID id : sealedDiff.removed()) {
-        affectNodeSources(context, id, "Subclass of a sealed class was removed, affecting ");
+      if (isSealed(change.getNow())) {
+        // for sealed classes check if the list of direct subclasses found by the graph is the same as in the class' metadata
+        KmClass kmClass = (KmClass)getDeclarationContainer(change.getNow());
+        assert  kmClass != null;
+        Difference.Specifier<String, ?> subclassesDiff = Difference.diff(
+          filter(map(future.directSubclasses(changedClass.getReferenceID()), subId -> subId instanceof JvmNodeReferenceID? getKotlinName((JvmNodeReferenceID)subId, future) : null), Objects::nonNull),
+          map(kmClass.getSealedSubclasses(), name -> name.replace('.', '/'))
+        );
+        if (!subclassesDiff.unchanged()) {
+          affectSealedClass(
+            context,
+            changedClass.getReferenceID(),
+            "Subclasses registered in the metadata of a sealed class differ from the list of subclasses found in the dependency graph. Recompiling the sealed class with its subclasses",
+            future, false /*affectUsages*/  /*forceAffect*/
+          );
+        }
       }
     }
 
@@ -136,7 +162,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
           // a function in kotlin code was replaced with a property, but at the bytecode level corresponding methods are preserved
           for (JvmClass subClass : filter(flat(map(future.allSubclasses(changedClass.getReferenceID()), id -> future.getNodes(id, JvmClass.class))), n -> isKotlinNode(n))) {
             if (find(subClass.getMethods(), m -> !m.isPrivate() && method.isSameByJavaRules(m)) != null) {
-              affectNodeSources(context, subClass.getReferenceID(), "Kotlin function " + removedFunction.getName() + " has been removed. Affecting corresponding method in subclasses: ");
+              affectNodeSources(context, subClass.getReferenceID(), "Kotlin function " + removedFunction.getName() + " has been removed. Affecting corresponding method in subclasses: ", future);
             }
           }
         }
@@ -156,7 +182,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
             // this will affect all usages from both java and kotlin code
             for (JvmMethod method : withJvmOverloads(changedClass, jvmMethod)) {
               for (Pair<JvmClass, JvmMethod> pair : future.getOverridingMethods(changedClass, method, method::isSameByJavaRules)) {
-                affectNodeSources(context, pair.getFirst().getReferenceID(), "Affect class where the function is overridden: ");
+                affectNodeSources(context, pair.getFirst().getReferenceID(), "Affect class where the function is overridden: ", future);
               }
               affectMemberUsages(context, changedClass.getReferenceID(), method, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), method));
             }
@@ -181,7 +207,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
           // property in kotlin code was replaced with a function(s), but at the bytecode level corresponding methods are preserved
           for (JvmClass subClass : filter(flat(map(future.allSubclasses(changedClass.getReferenceID()), id -> future.getNodes(id, JvmClass.class))), n -> isKotlinNode(n))) {
             if (find(subClass.getMethods(), m -> !m.isPrivate() && find(accessorMethods, m::isSameByJavaRules) != null) != null) {
-              affectNodeSources(context, subClass.getReferenceID(), "Kotlin property " + removedProp.getName() + " has been removed. Affecting corresponding accessor method(s) in subclasses: ");
+              affectNodeSources(context, subClass.getReferenceID(), "Kotlin property " + removedProp.getName() + " has been removed. Affecting corresponding accessor method(s) in subclasses: ", future);
             }
           }
         }
@@ -421,6 +447,27 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     }, constraint);
   }
 
+  private void affectSealedClass(DifferentiateContext context, JvmNodeReferenceID sealedClassId, String affectReason, Utils utils, boolean affectSubclassUsages) {
+    // for sealed classes all direct subclasses must be affected too
+    Function<ReferenceID, Iterable<? extends ReferenceID>> withSubclassesIfSealed =
+      id -> flat(map(utils.getNodes(id, JvmClass.class), n -> isSealed(n)? utils.directSubclasses(n.getReferenceID()) : Collections.emptyList()));
+    Set<NodeSource> sourcesToAffect = collect(flat(map(recurse(sealedClassId, withSubclassesIfSealed, true), id -> utils.getNodeSources(id))), new HashSet<>());
+    
+    if (find(sourcesToAffect, src -> !context.isCompiled(src)) != null) {
+      // only affect if at least one file in the set is not yet compiled in this session
+      affectSources(context, sourcesToAffect, affectReason, true);
+    }
+
+    if (affectSubclassUsages) { // to track uses in 'when' expressions
+      for (ReferenceID id : utils.directSubclasses(sealedClassId)) {
+        String nodeName = utils.getNodeName(id);
+        if (nodeName != null) {
+          context.affectUsage(new ClassUsage(nodeName));
+        }
+      }
+    }
+  }
+
   private static KmFunction getKmFunction(JvmClass cls, JvmMethod method) {
     JvmMethodSignature methodSignature = new JvmMethodSignature(method.getName(), method.getDescriptor());
     return find(allKmFunctions(cls), f -> methodSignature.equals(JvmExtensionsKt.getSignature(f)));
@@ -502,4 +549,13 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
     return node instanceof JVMClassNode? (KotlinMeta)find(((JVMClassNode<?, ?>)node).getMetadata(), mt -> mt instanceof KotlinMeta) : null;
   }
 
+  //@Override
+  //protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason, Utils utils, boolean forceAffect) {
+  //  // for sealed classes all direct subclasses must be affected too
+  //  Function<ReferenceID, Iterable<? extends ReferenceID>> withSubclassesIfSealed =
+  //    id -> flat(map(utils.getNodes(id, JvmClass.class), n -> isSealed(n)? utils.directSubclasses(n.getReferenceID()) : Collections.emptyList()));
+  //  for (ReferenceID id : recurse(clsId, withSubclassesIfSealed, true)) {
+  //    super.affectNodeSources(context, id, affectReason, utils, !id.equals(clsId) || forceAffect);
+  //  }
+  //}
 }

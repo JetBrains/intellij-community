@@ -81,7 +81,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
   protected void affectSubclasses(DifferentiateContext context, Utils utils, ReferenceID fromClass, boolean affectUsages) {
     debug("Affecting subclasses of class: ", fromClass, "; with usages affection: ", affectUsages);
     for (ReferenceID cl : utils.withAllSubclasses(fromClass)) {
-      affectNodeSources(context, cl, "Affecting source file: ");
+      affectNodeSources(context, cl, "Affecting source file: ", utils);
       if (affectUsages) {
         String nodeName = utils.getNodeName(cl);
         if (nodeName != null) {
@@ -92,14 +92,14 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
     }
   }
 
-  protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason) {
-    affectNodeSources(context, clsId, affectReason, false);
+  protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason, Utils utils) {
+    affectSources(context, utils.getNodeSources(clsId), affectReason, false);
   }
 
-  protected void affectNodeSources(DifferentiateContext context, ReferenceID clsId, String affectReason, boolean forceAffect) {
+  protected void affectSources(DifferentiateContext context, Iterable<NodeSource> sources, String affectReason, boolean forceAffect) {
     Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
     Predicate<? super NodeSource> affectionFilter = context.getParams().affectionFilter();
-    for (NodeSource source : filter(context.getGraph().getSources(clsId), affectionFilter::test)) {
+    for (NodeSource source : filter(sources, affectionFilter::test)) {
       if (forceAffect || !context.isCompiled(source) && !deletedSources.contains(source)) {
         context.affectNodeSource(source);
         debug(affectReason, source);

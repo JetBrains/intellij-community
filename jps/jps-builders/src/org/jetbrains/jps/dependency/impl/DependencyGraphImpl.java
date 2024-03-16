@@ -80,6 +80,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       private final Predicate<Node<?, ?>> ANY_CONSTRAINT = node -> true;
 
       final Set<NodeSource> compiledSources = deltaSources instanceof Set? (Set<NodeSource>)deltaSources : collect(deltaSources, new HashSet<>());
+      final Set<ReferenceID> deleted = collect(map(deletedNodes, n -> n.getReferenceID()), new HashSet<>());
       final Map<Usage, Predicate<Node<?, ?>>> affectedUsages = new HashMap<>();
       final Set<Predicate<Node<?, ?>>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
@@ -102,6 +103,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       @Override
       public boolean isCompiled(NodeSource src) {
         return compiledSources.contains(src);
+      }
+
+      @Override
+      public boolean isDeleted(ReferenceID id) {
+        return deleted.contains(id);
       }
 
       @Override

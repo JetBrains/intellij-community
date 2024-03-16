@@ -361,7 +361,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         if (!changedMethod.isPrivate() && !changedMethod.isConstructor() && !changedMethod.isStatic()) {
           if (!changedMethod.isFinal()) {
             for (JvmNodeReferenceID subClass : unique(map(future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules), p -> p.getFirst().getReferenceID()))) {
-              affectNodeSources(context, subClass, "Affect source file of a class which overrides the changed method: ");
+              affectNodeSources(context, subClass, "Affect source file of a class which overrides the changed method: ", future);
             }
           }
           for (JvmNodeReferenceID id : propagated) {
@@ -369,7 +369,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
               Iterable<Pair<JvmClass, JvmMethod>> overriddenInSubclass = filter(future.getOverriddenMethods(subClass, changedMethod::isSameByJavaRules), p -> !Objects.equals(p.getFirst().getReferenceID(), id));
               if (!isEmpty(overriddenInSubclass)) {
                 debug("Changed method is inherited in some subclass & overrides/implements some interface method which this subclass implements. ", subClass.getName());
-                affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ");
+                affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ", future);
                 break;
               }
             }
@@ -530,7 +530,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
       if (removedMethod.isOverridable()) {
         for (Pair<JvmClass, JvmMethod> overriding : future.getOverridingMethods(changedClass, removedMethod, removedMethod::isSameByJavaRules)) {
-          affectNodeSources(context, overriding.getFirst().getReferenceID(), "Affecting file by overriding: ");
+          affectNodeSources(context, overriding.getFirst().getReferenceID(), "Affecting file by overriding: ", future);
         }
       }
 
@@ -541,7 +541,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
             boolean allOverriddenAbstract = !isEmpty(overriddenForSubclass) && isEmpty(filter(overriddenForSubclass, p -> !p.getSecond().isAbstract()));
             if (allOverriddenAbstract || future.inheritsFromLibraryClass(subClass)) {
               debug("Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass ", subClass.getName());
-              affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ");
+              affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ", future);
               break;
             }
           }
@@ -628,7 +628,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
         if (overridingMethod.isSameByJavaRules(addedMethod)) {
           debug("Current method overrides the added method");
-          affectNodeSources(context, cls.getReferenceID(), "Affecting source ");
+          affectNodeSources(context, cls.getReferenceID(), "Affecting source ", future);
         }
         else {
           debug("Current method does not override the added method");
@@ -696,7 +696,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       }
 
       if (affectReason != null) {
-        affectNodeSources(context, subClass, affectReason);
+        affectNodeSources(context, subClass, affectReason, future);
       }
 
       if (!addedField.isPrivate() && addedField.isStatic()) {
@@ -957,7 +957,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
       debug("Root class: ", owner);
       for (ReferenceID id : proto instanceof JvmField? utils.collectSubclassesWithoutField(owner, ((JvmField)proto)) : utils.allSubclasses(owner)) {
-        affectNodeSources(context, id, "Adding ");
+        affectNodeSources(context, id, "Adding ", utils);
       }
     }
 
@@ -965,7 +965,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     debug("Softening non-incremental decision: adding all package classes for a recompilation");
     debug("Package name: ", packageName);
     for (ReferenceID nodeWithinPackage : filter(context.getGraph().getRegisteredNodes(), id -> id instanceof JvmNodeReferenceID && packageName.equals(JvmClass.getPackageName(((JvmNodeReferenceID)id).getNodeName())))) {
-      affectNodeSources(context, nodeWithinPackage, "Adding ");
+      affectNodeSources(context, nodeWithinPackage, "Adding ", utils);
     }
     
     return true;
