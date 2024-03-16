@@ -3,7 +3,7 @@
 package com.intellij.tools.ide.metrics.collector.telemetry
 
 import com.intellij.tools.ide.util.common.PrintFailuresMode
-import com.intellij.tools.ide.util.common.withRetry
+import com.intellij.tools.ide.util.common.withRetryBlocking
 import it.unimi.dsi.fastutil.objects.Object2ObjectFunction
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
@@ -33,7 +33,7 @@ private data class OpentelemetryJsonData(
 )
 
 private fun getSpans(file: Path): List<SpanData> {
-  val spanData = withRetry(
+  val spanData = withRetryBlocking(
     messageOnFailure = "Failure during spans extraction from OpenTelemetry json file",
     retries = 5,
     printFailuresMode = PrintFailuresMode.ONLY_LAST_FAILURE,
