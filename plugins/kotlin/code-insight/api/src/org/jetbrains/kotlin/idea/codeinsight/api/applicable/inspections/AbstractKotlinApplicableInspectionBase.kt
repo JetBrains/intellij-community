@@ -4,11 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.psi.KtElement
@@ -69,27 +65,4 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : Loc
     }
 
     abstract override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor
-}
-
-abstract class AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT : KtElement> : PsiUpdateModCommandQuickFix() {
-
-    abstract override fun getName(): String
-
-    abstract override fun getFamilyName(): @IntentionFamilyName String
-
-    final override fun applyFix(
-        project: Project,
-        element: PsiElement,
-        updater: ModPsiUpdater,
-    ) {
-        @Suppress("UNCHECKED_CAST")
-        val e = element as ELEMENT
-        applyFix(project, e, updater)
-    }
-
-    abstract fun applyFix(
-        project: Project,
-        element: ELEMENT,
-        updater: ModPsiUpdater,
-    )
 }

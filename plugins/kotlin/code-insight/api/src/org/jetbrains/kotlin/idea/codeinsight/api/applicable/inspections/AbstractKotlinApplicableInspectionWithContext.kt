@@ -39,7 +39,7 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
         val context = prepareContextWithAnalyze(element) ?: return null
         val name = getActionName(element, context)
 
-        val quickFix = object : AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT>(),
+        val quickFix = object : KotlinModCommandQuickFix<ELEMENT>(),
                                 ReportingClassSubstitutor {
 
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspectionWithContext.getActionFamilyName()

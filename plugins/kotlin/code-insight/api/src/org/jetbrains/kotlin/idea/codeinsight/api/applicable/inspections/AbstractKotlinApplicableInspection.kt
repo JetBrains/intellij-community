@@ -54,7 +54,7 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement> : Abstrac
 
         val elementPointer = element.createSmartPointer()
 
-        val quickFix = object : AbstractKotlinModCommandApplicableInspectionQuickFix<ELEMENT>(),
+        val quickFix = object : KotlinModCommandQuickFix<ELEMENT>(),
                                 ReportingClassSubstitutor {
 
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspection.getActionFamilyName()
