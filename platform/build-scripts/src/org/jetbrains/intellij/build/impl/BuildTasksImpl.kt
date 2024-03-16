@@ -60,12 +60,7 @@ import java.util.concurrent.TimeUnit
 import java.util.stream.Stream
 import java.util.zip.Deflater
 import kotlin.io.NoSuchFileException
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.exists
-import kotlin.io.path.extension
-import kotlin.io.path.name
-import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.walk
+import kotlin.io.path.*
 import kotlin.time.Duration.Companion.seconds
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
@@ -93,9 +88,7 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
                                                                        "intellij.tools.launcherGenerator"),
     )
 
-    context.project.modules.forEach { m ->
-      localizeModule(m, context)
-    }
+    localizeModules(context)
     buildProjectArtifacts(
       platform = distState.platform,
       enabledPluginModules = getEnabledPluginModules(pluginsToPublish = distState.pluginsToPublish,
@@ -177,6 +170,15 @@ suspend fun generateProjectStructureMapping(targetFile: Path, context: BuildCont
     file = targetFile,
     buildPaths = context.paths
   )
+}
+
+private fun localizeModules(context: BuildContext) {
+  val localizationDir = getLocalizationDir(context)
+  if (localizationDir != null) {
+    for (module in context.project.modules) {
+      localizeModule(module = module, context = context, localizationDir = localizationDir)
+    }
+  }
 }
 
 data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
@@ -613,9 +615,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       context.notifyArtifactBuilt(artifactPath = providedModuleFile)
       if (!productLayout.buildAllCompatiblePlugins) {
         val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
-        context.project.modules.forEach { m ->
-          localizeModule(m, context)
-        }
+        localizeModules(context)
         buildProjectArtifacts(platform = distState.platform,
                               enabledPluginModules = enabledPluginModules,
                               compilationTasks = compilationTasks,
@@ -639,9 +639,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
   compilationTasks.compileModules(distState.getModulesForPluginsToPublish())
 
-  context.project.modules.forEach { m ->
-    localizeModule(m, context)
-  }
+  localizeModules(context)
   buildProjectArtifacts(platform = distState.platform,
                         enabledPluginModules = enabledPluginModules,
                         compilationTasks = compilationTasks,
@@ -1408,16 +1406,19 @@ internal fun copyInspectScript(context: BuildContext, distBinDir: Path) {
   }
 }
 
-private fun localizeModule(module: JpsModule, buildContext: BuildContext) {
-  val localizationsDir = buildContext.paths.communityHomeDir.parent.resolve("localization")
-  if (!localizationsDir.exists()) {
+private fun getLocalizationDir(context: BuildContext): Path? {
+  val localizationDir = context.paths.communityHomeDir.parent.resolve("localization")
+  if (!Files.exists(localizationDir)) {
     Span.current().addEvent("unable to find 'localization' directory, skip localization bundling")
-    return
+    return null
   }
+  return localizationDir
+}
 
-  spanBuilder("bundle localization: ${module.name}").use {
-    module.buildInBundlePropertiesLocalization(buildContext, localizationsDir.resolve("properties"))
-    module.buildInInspectionsIntentionsLocalization(buildContext, localizationsDir.resolve("inspections_intentions"))
+private fun localizeModule(module: JpsModule, context: BuildContext, localizationDir: Path) {
+  spanBuilder("bundle localization").setAttribute("module", module.name).use {
+    module.buildInBundlePropertiesLocalization(context, localizationDir.resolve("properties"))
+    module.buildInInspectionsIntentionsLocalization(context, localizationDir.resolve("inspections_intentions"))
   }
 }
 
