@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
@@ -21,7 +22,8 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-internal class ConvertToStringTemplateInspection : AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
+internal class ConvertToStringTemplateInspection :
+    AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ConvertToStringTemplateInspection.Context>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -33,10 +35,23 @@ internal class ConvertToStringTemplateInspection : AbstractKotlinApplicableInspe
         }
     }
 
-    class Context(val replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
+    data class Context(val replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
 
-    override fun apply(element: KtBinaryExpression, context: Context, project: Project, updater: ModPsiUpdater) {
-        context.replacement.element?.let { element.replaced(it) }
+    override fun createQuickFix(
+        element: KtBinaryExpression,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("convert.concatenation.to.template")
+
+        override fun applyFix(
+            project: Project,
+            element: KtBinaryExpression,
+            updater: ModPsiUpdater,
+        ) {
+            context.replacement.element?.let { element.replaced(it) }
+        }
     }
 
     context(KtAnalysisSession)
@@ -54,6 +69,4 @@ internal class ConvertToStringTemplateInspection : AbstractKotlinApplicableInspe
 
     override fun getProblemDescription(element: KtBinaryExpression, context: Context): String =
         KotlinBundle.message("convert.concatenation.to.template.before.text")
-
-    override fun getActionFamilyName(): String = KotlinBundle.message("convert.concatenation.to.template")
 }

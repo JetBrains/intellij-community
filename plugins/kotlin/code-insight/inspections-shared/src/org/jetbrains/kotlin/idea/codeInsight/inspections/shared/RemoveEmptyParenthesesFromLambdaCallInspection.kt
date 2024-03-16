@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtSuccessCallInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.canRemoveByPsi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.removeArgumentList
@@ -32,8 +33,6 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinAp
     override fun getProblemDescription(element: KtValueArgumentList): String =
         KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.display.name")
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.action.name")
-
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtValueArgumentList> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtValueArgumentList): Boolean = canRemoveByPsi(element)
@@ -42,7 +41,17 @@ internal class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinAp
     override fun isApplicableByAnalyze(element: KtValueArgumentList): Boolean =
         (element.parent as? KtCallExpression)?.resolveCall() is KtSuccessCallInfo
 
-    override fun apply(element: KtValueArgumentList, project: Project, updater: ModPsiUpdater) {
-        removeArgumentList(element)
+    override fun createQuickFix(element: KtValueArgumentList) = object : KotlinModCommandQuickFix<KtValueArgumentList>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.action.name")
+
+        override fun applyFix(
+            project: Project,
+            element: KtValueArgumentList,
+            updater: ModPsiUpdater,
+        ) {
+            removeArgumentList(element)
+        }
     }
 }

@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.ReplaceGetOrSetInspectionUtils
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -40,15 +41,10 @@ internal class ReplaceGetOrSetInspection :
         }
     }
 
-    class Context(val calleeName: Name, val problemHighlightType: ProblemHighlightType)
+    data class Context(val calleeName: Name, val problemHighlightType: ProblemHighlightType)
 
     override fun getProblemDescription(element: KtDotQualifiedExpression, context: Context): String =
         KotlinBundle.message("explicit.0.call", context.calleeName)
-
-    override fun getActionFamilyName(): String = KotlinBundle.message("replace.get.or.set.call.with.indexing.operator")
-
-    override fun getActionName(element: KtDotQualifiedExpression, context: Context): String =
-        KotlinBundle.message("replace.0.call.with.indexing.operator", context.calleeName)
 
     override fun getApplicabilityRange() = applicabilityRange { dotQualifiedExpression: KtDotQualifiedExpression ->
         dotQualifiedExpression.getPossiblyQualifiedCallExpression()?.calleeExpression?.textRangeIn(dotQualifiedExpression)
@@ -79,11 +75,27 @@ internal class ReplaceGetOrSetInspection :
         return Context(functionSymbol.name, problemHighlightType)
     }
 
-    override fun apply(element: KtDotQualifiedExpression, context: Context, project: Project, updater: ModPsiUpdater) {
-        ReplaceGetOrSetInspectionUtils.replaceGetOrSetWithPropertyAccessor(
-            element,
-            isSet = context.calleeName == OperatorNameConventions.SET
-        ) { updater.moveCaretTo(it) }
+    override fun createQuickFix(
+        element: KtDotQualifiedExpression,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.get.or.set.call.with.indexing.operator")
+
+        override fun getName(): String =
+            KotlinBundle.message("replace.0.call.with.indexing.operator", context.calleeName)
+
+        override fun applyFix(
+            project: Project,
+            element: KtDotQualifiedExpression,
+            updater: ModPsiUpdater,
+        ) {
+            ReplaceGetOrSetInspectionUtils.replaceGetOrSetWithPropertyAccessor(
+                element,
+                isSet = context.calleeName == OperatorNameConventions.SET,
+            ) { updater.moveCaretTo(it) }
+        }
     }
 
     context(KtAnalysisSession)

@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.k2.refactoring.canMoveLambdaOutsideParentheses
@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class MoveLambdaOutsideParenthesesInspection : AbstractKotlinApplicableInspection<KtCallExpression>() {
+internal class MoveLambdaOutsideParenthesesInspection : AbstractKotlinApplicableInspection<KtCallExpression>() {
+
     override fun getProblemDescription(element: KtCallExpression): @InspectionMessage String {
         return KotlinBundle.message("lambda.argument.0.be.moved.out",
                              if (element.isComplexCallWithLambdaArgument()) 0 else 1)
@@ -43,8 +44,18 @@ class MoveLambdaOutsideParenthesesInspection : AbstractKotlinApplicableInspectio
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean = element.canMoveLambdaOutsideParentheses(skipComplexCalls = false)
 
-    override fun apply(element: KtCallExpression, project: Project, updater: ModPsiUpdater) {
-        element.moveFunctionLiteralOutsideParentheses(updater::moveCaretTo)
+    override fun createQuickFix(element: KtCallExpression) = object : KotlinModCommandQuickFix<KtCallExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("move.lambda.argument.out.of.parentheses")
+
+        override fun applyFix(
+            project: Project,
+            element: KtCallExpression,
+            updater: ModPsiUpdater,
+        ) {
+            element.moveFunctionLiteralOutsideParentheses(updater::moveCaretTo)
+        }
     }
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> {
@@ -53,9 +64,5 @@ class MoveLambdaOutsideParenthesesInspection : AbstractKotlinApplicableInspectio
                 ?.getStrictParentOfType<KtValueArgument>()?.asElement()
                 ?.textRangeIn(element)
         }
-    }
-
-    override fun getActionFamilyName(): @IntentionFamilyName String {
-        return KotlinBundle.message("move.lambda.argument.out.of.parentheses")
     }
 }

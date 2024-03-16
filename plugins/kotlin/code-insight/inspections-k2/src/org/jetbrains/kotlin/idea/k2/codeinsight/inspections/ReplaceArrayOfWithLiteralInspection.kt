@@ -8,38 +8,48 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.isArrayOfFunction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
-class ReplaceArrayOfWithLiteralInspection : AbstractKotlinApplicableInspection<KtCallExpression>() {
-    override fun apply(element: KtCallExpression, project: Project, updater: ModPsiUpdater) {
-        val valueArgument = element.getParentOfType<KtValueArgument>(false)
-        valueArgument?.getSpreadElement()?.delete()
+internal class ReplaceArrayOfWithLiteralInspection : AbstractKotlinApplicableInspection<KtCallExpression>() {
 
-        val arguments = element.valueArguments
-        val arrayLiteral = KtPsiFactory(project).buildExpression {
-            appendFixedText("[")
-            for ((index, argument) in arguments.withIndex()) {
-                appendExpression(argument.getArgumentExpression())
-                if (index != arguments.size - 1) {
-                    appendFixedText(", ")
+    override fun createQuickFix(element: KtCallExpression) = object : KotlinModCommandQuickFix<KtCallExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.with.array.literal.fix.family.name")
+
+        override fun applyFix(
+            project: Project,
+            element: KtCallExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val valueArgument = element.getParentOfType<KtValueArgument>(false)
+            valueArgument?.getSpreadElement()?.delete()
+
+            val arguments = element.valueArguments
+            val arrayLiteral = KtPsiFactory(project).buildExpression {
+                appendFixedText("[")
+                for ((index, argument) in arguments.withIndex()) {
+                    appendExpression(argument.getArgumentExpression())
+                    if (index != arguments.size - 1) {
+                        appendFixedText(", ")
+                    }
                 }
-            }
-            appendFixedText("]")
-        } as KtCollectionLiteralExpression
+                appendFixedText("]")
+            } as KtCollectionLiteralExpression
 
-        element.replace(arrayLiteral)
+            element.replace(arrayLiteral)
+        }
     }
 
     override fun getProblemDescription(element: KtCallExpression): String {
         val calleeExpression = element.calleeExpression as KtNameReferenceExpression
         return KotlinBundle.message("0.call.should.be.replaced.with.array.literal", calleeExpression.getReferencedName())
     }
-
-    override fun getActionFamilyName(): String = KotlinBundle.message("replace.with.array.literal.fix.family.name")
 
     override fun buildVisitor(
         holder: ProblemsHolder,

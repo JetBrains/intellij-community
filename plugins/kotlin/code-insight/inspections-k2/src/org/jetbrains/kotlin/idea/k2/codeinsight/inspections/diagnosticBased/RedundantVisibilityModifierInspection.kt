@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.RedundantModifierInspectionBase
@@ -16,9 +17,17 @@ import kotlin.reflect.KClass
 internal class RedundantVisibilityModifierInspection :
     RedundantModifierInspectionBase<KtFirDiagnostic.RedundantVisibilityModifier>(KtTokens.VISIBILITY_MODIFIERS) {
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("remove.redundant.visibility.modifier")
+    override fun createQuickFix(
+        element: KtModifierListOwner,
+        context: ModifierContext,
+    ): KotlinModCommandQuickFix<KtModifierListOwner> = object : RemoveRedundantModifierQuickFixBase(context) {
 
-    override fun getDiagnosticType(): KClass<KtFirDiagnostic.RedundantVisibilityModifier> = KtFirDiagnostic.RedundantVisibilityModifier::class
+        override fun getFamilyName(): String =
+            KotlinBundle.message("remove.redundant.visibility.modifier")
+    }
+
+    override fun getDiagnosticType(): KClass<KtFirDiagnostic.RedundantVisibilityModifier> =
+        KtFirDiagnostic.RedundantVisibilityModifier::class
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtModifierListOwner> = ApplicabilityRanges.VISIBILITY_MODIFIER
 

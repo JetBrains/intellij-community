@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
@@ -25,12 +26,10 @@ internal class RemoveSingleExpressionStringTemplateInspection :
         }
     }
 
-    class Context(val isString: Boolean)
+    data class Context(val isString: Boolean)
 
     override fun getProblemDescription(element: KtStringTemplateExpression, context: Context): String =
         KotlinBundle.message("remove.single.expression.string.template")
-
-    override fun getActionFamilyName(): String = KotlinBundle.message("remove.single.expression.string.template")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtStringTemplateExpression> = ApplicabilityRanges.SELF
 
@@ -46,20 +45,33 @@ internal class RemoveSingleExpressionStringTemplateInspection :
         return Context(type?.isString == true && !type.isMarkedNullable)
     }
 
-    override fun apply(element: KtStringTemplateExpression, context: Context, project: Project, updater: ModPsiUpdater) {
-        // Note that we do not reuse the result of `stringTemplateExpression.singleExpressionOrNull()`
-        // from `getInputProvider()` method because PsiElement may become invalidated between read actions
-        // e.g., it may be reparsed and recreated and old reference will become stale and invalid.
-        val expression = element.singleExpressionOrNull() ?: return
+    override fun createQuickFix(
+        element: KtStringTemplateExpression,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtStringTemplateExpression>() {
 
-        val newElement = if (context.isString) {
-            expression
-        } else {
-            KtPsiFactory(project).createExpressionByPattern(
-                pattern = "$0.$1()", expression, "toString"
-            )
+        override fun getFamilyName(): String =
+            KotlinBundle.message("remove.single.expression.string.template")
+
+        override fun applyFix(
+            project: Project,
+            element: KtStringTemplateExpression,
+            updater: ModPsiUpdater,
+        ) {
+            // Note that we do not reuse the result of `stringTemplateExpression.singleExpressionOrNull()`
+            // from `getInputProvider()` method because PsiElement may become invalidated between read actions
+            // e.g., it may be reparsed and recreated and old reference will become stale and invalid.
+            val expression = element.singleExpressionOrNull() ?: return
+
+            val newElement = if (context.isString) {
+                expression
+            } else {
+                KtPsiFactory(project).createExpressionByPattern(
+                    pattern = "$0.$1()", expression, "toString"
+                )
+            }
+            element.replace(newElement)
         }
-        element.replace(newElement)
     }
 
     private fun KtStringTemplateExpression.singleExpressionOrNull() = children.singleOrNull()?.children?.firstOrNull() as? KtExpression

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -40,8 +41,6 @@ internal class ReplaceCollectionCountWithSizeInspection : AbstractKotlinApplicab
     override fun getProblemDescription(element: KtCallExpression): String =
         KotlinBundle.message("inspection.replace.collection.count.with.size.display.name")
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("replace.collection.count.with.size.quick.fix.text")
-
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
@@ -54,8 +53,18 @@ internal class ReplaceCollectionCountWithSizeInspection : AbstractKotlinApplicab
         return functionSymbol.callableIdIfNonLocal == COLLECTION_COUNT_CALLABLE_ID && receiverClassId in COLLECTION_CLASS_IDS
     }
 
-    override fun apply(element: KtCallExpression, project: Project, updater: ModPsiUpdater) {
-        element.replace(KtPsiFactory(element.project).createExpression("size"))
+    override fun createQuickFix(element: KtCallExpression) = object : KotlinModCommandQuickFix<KtCallExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.collection.count.with.size.quick.fix.text")
+
+        override fun applyFix(
+            project: Project,
+            element: KtCallExpression,
+            updater: ModPsiUpdater,
+        ) {
+            element.replace(KtPsiFactory(element.project).createExpression("size"))
+        }
     }
 }
 

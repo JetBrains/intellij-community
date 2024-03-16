@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.psi.KtElement
  * [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionBase].
  */
 interface KotlinApplicableToolBase<ELEMENT : KtElement> {
+
     /**
      * The [KotlinApplicabilityRange] determines whether the tool is available in a range *after* [isApplicableByPsi] has been checked.
      *

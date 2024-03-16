@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.RedundantModifierInspectionBase
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -14,7 +15,14 @@ import org.jetbrains.kotlin.psi.psiUtil.modalityModifierType
 internal class RedundantModalityModifierInspection :
     RedundantModifierInspectionBase<KtFirDiagnostic.RedundantModalityModifier>(KtTokens.MODALITY_MODIFIERS) {
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("remove.redundant.modality.modifier")
+    override fun createQuickFix(
+        element: KtModifierListOwner,
+        context: ModifierContext,
+    ): KotlinModCommandQuickFix<KtModifierListOwner> = object : RemoveRedundantModifierQuickFixBase(context) {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("remove.redundant.modality.modifier")
+    }
 
     override fun getDiagnosticType() = KtFirDiagnostic.RedundantModalityModifier::class
 

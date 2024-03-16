@@ -3,10 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.codeInspection.util.IntentionName
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
-import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
 import org.jetbrains.kotlin.psi.KtElement
@@ -19,7 +15,10 @@ import org.jetbrains.kotlin.psi.KtElement
  * For more complex inspections that should either visit multiple kinds of elements or register multiple (or zero) problems, simply use
  * [LocalInspectionTool].
  */
-abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement, CONTEXT> : AbstractKotlinApplicableInspectionBase<ELEMENT>(), KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
+abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement, CONTEXT> :
+    AbstractKotlinApplicableInspectionBase<ELEMENT>(),
+    KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
+
     /**
      * @see com.intellij.codeInspection.CommonProblemDescriptor.getDescriptionTemplate
      */
@@ -31,34 +30,18 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
     open fun getProblemHighlightType(element: ELEMENT, context: CONTEXT): ProblemHighlightType =
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 
-    override fun getActionName(element: ELEMENT, context: CONTEXT): @IntentionName String = getActionFamilyName()
-
-    abstract fun apply(element: ELEMENT, context: CONTEXT, project: Project, updater: ModPsiUpdater)
+    abstract fun createQuickFix(
+        element: ELEMENT,
+        context: CONTEXT,
+    ): KotlinModCommandQuickFix<ELEMENT>
 
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {
         val context = prepareContextWithAnalyze(element) ?: return null
-        val name = getActionName(element, context)
 
-        val quickFix = object : KotlinModCommandQuickFix<ELEMENT>(),
-                                ReportingClassSubstitutor {
-
-            override fun getFamilyName(): String = this@AbstractKotlinApplicableInspectionWithContext.getActionFamilyName()
-
-            override fun applyFix(
-                project: Project,
-                element: ELEMENT,
-                updater: ModPsiUpdater,
-            ) {
-                apply(element, context, element.project, updater)
-            }
-
-            override fun getName(): String = name
-
-            override fun getSubstitutedClass(): Class<*> = this@AbstractKotlinApplicableInspectionWithContext.javaClass
-        }
-
-        val description = getProblemDescription(element, context)
-        val highlightType = getProblemHighlightType(element, context)
-        return ProblemInfo(description, highlightType, quickFix)
+        return ProblemInfo(
+            description = getProblemDescription(element, context),
+            highlightType = getProblemHighlightType(element, context),
+            quickFix = createQuickFix(element, context),
+        )
     }
 }

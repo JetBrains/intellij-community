@@ -6,19 +6,29 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 internal class InfixCallToOrdinaryInspection : AbstractKotlinApplicableInspection<KtBinaryExpression>() {
+
     override fun getProblemDescription(element: KtBinaryExpression) = KotlinBundle.message("replace.infix.call.with.ordinary.call")
 
-    override fun apply(element: KtBinaryExpression, project: Project, updater: ModPsiUpdater) {
-        convertInfixCallToOrdinary(element)
-    }
+    override fun createQuickFix(element: KtBinaryExpression) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
 
-    override fun getActionFamilyName() = KotlinBundle.message("replace.infix.call.with.ordinary.call")
+        override fun applyFix(
+            project: Project,
+            element: KtBinaryExpression,
+            updater: ModPsiUpdater,
+        ) {
+            convertInfixCallToOrdinary(element)
+        }
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.infix.call.with.ordinary.call")
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -26,8 +36,6 @@ internal class InfixCallToOrdinaryInspection : AbstractKotlinApplicableInspectio
     ) = binaryExpressionVisitor {
         visitTargetElement(it, holder, isOnTheFly)
     }
-
-    override fun getActionName(element: KtBinaryExpression): String = KotlinBundle.message("replace.infix.call.with.ordinary.call")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = applicabilityRange {
         it.operationReference.textRangeInParent

@@ -205,7 +205,7 @@ object CallableReturnTypeUpdaterUtils {
         return null
     }
 
-    class TypeInfo(
+    data class TypeInfo(
         val defaultType: Type,
         val otherTypes: List<Type> = emptyList(),
         val useTemplate: Boolean = false,

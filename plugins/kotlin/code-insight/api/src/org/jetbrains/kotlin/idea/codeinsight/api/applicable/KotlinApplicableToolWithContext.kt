@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 
-import com.intellij.codeInspection.util.IntentionName
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -13,13 +12,6 @@ import org.jetbrains.kotlin.psi.KtElement
  * and [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext].
  */
 interface KotlinApplicableToolWithContext<ELEMENT : KtElement, CONTEXT> : KotlinApplicableToolBase<ELEMENT> {
-    /**
-     * The text to be shown in the list of available fixes.
-     *
-     * @see com.intellij.codeInsight.intention.IntentionAction.getText
-     * @see com.intellij.codeInspection.QuickFix.getName
-     */
-    fun getActionName(element: ELEMENT, context: CONTEXT): @IntentionName String
 
     /**
      * Provides some context for [apply]. If the tool is not applicable (by analyze), [prepareContext] should return `null`. Guaranteed to

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.name.CallableId
@@ -36,7 +37,6 @@ internal class RemoveToStringInStringTemplateInspection :
     }
 
     override fun getProblemDescription(element: KtDotQualifiedExpression): String = KotlinBundle.message("remove.to.string.fix.text")
-    override fun getActionFamilyName(): String = KotlinBundle.message("remove.to.string.fix.text")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDotQualifiedExpression> =
         applicabilityRanges { dotQualifiedExpression: KtDotQualifiedExpression ->
@@ -59,17 +59,27 @@ internal class RemoveToStringInStringTemplateInspection :
         return allOverriddenSymbols.any { it.callableIdIfNonLocal == TO_STRING_CALLABLE_ID }
     }
 
-    override fun apply(element: KtDotQualifiedExpression, project: Project, updater: ModPsiUpdater) {
-        val receiverExpression = element.receiverExpression
-        val templateEntry = element.parent as? KtBlockStringTemplateEntry
-        if (receiverExpression is KtNameReferenceExpression &&
-            templateEntry != null &&
-            canPlaceAfterSimpleNameEntry(templateEntry.nextSibling)
+    override fun createQuickFix(element: KtDotQualifiedExpression) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("remove.to.string.fix.text")
+
+        override fun applyFix(
+            project: Project,
+            element: KtDotQualifiedExpression,
+            updater: ModPsiUpdater,
         ) {
-            val factory = KtPsiFactory(templateEntry.project)
-            templateEntry.replace(factory.createSimpleNameStringTemplateEntry(receiverExpression.getReferencedName()))
-        } else {
-            element.replace(receiverExpression)
+            val receiverExpression = element.receiverExpression
+            val templateEntry = element.parent as? KtBlockStringTemplateEntry
+            if (receiverExpression is KtNameReferenceExpression &&
+                templateEntry != null &&
+                canPlaceAfterSimpleNameEntry(templateEntry.nextSibling)
+            ) {
+                val factory = KtPsiFactory(templateEntry.project)
+                templateEntry.replace(factory.createSimpleNameStringTemplateEntry(receiverExpression.getReferencedName()))
+            } else {
+                element.replace(receiverExpression)
+            }
         }
     }
 }

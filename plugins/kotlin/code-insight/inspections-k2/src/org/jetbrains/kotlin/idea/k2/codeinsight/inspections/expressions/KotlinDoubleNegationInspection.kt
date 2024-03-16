@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,19 +31,28 @@ internal class KotlinDoubleNegationInspection : AbstractKotlinApplicableInspecti
     override fun getProblemDescription(element: KtPrefixExpression): String =
         KotlinBundle.message("inspection.kotlin.double.negation.display.name")
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.kotlin.double.negation.action.name")
-
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtPrefixExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtPrefixExpression): Boolean =
         element.operationToken == KtTokens.EXCL
-            && (element.parentThroughParenthesis as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
+                && (element.parentThroughParenthesis as? KtPrefixExpression)?.operationToken == KtTokens.EXCL
 
     context(KtAnalysisSession)
     override fun isApplicableByAnalyze(element: KtPrefixExpression): Boolean = element.getKtType()?.isBoolean == true
 
-    override fun apply(element: KtPrefixExpression, project: Project, updater: ModPsiUpdater) {
-        element.baseExpression?.let { element.parentThroughParenthesis.replace(it) }
+    override fun createQuickFix(element: KtPrefixExpression) = object : KotlinModCommandQuickFix<KtPrefixExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.kotlin.double.negation.action.name")
+
+        override fun applyFix(
+            project: Project,
+            element: KtPrefixExpression,
+            updater: ModPsiUpdater,
+        ) {
+            element.baseExpression?.let { element.parentThroughParenthesis.replace(it) }
+        }
+
     }
 }
 

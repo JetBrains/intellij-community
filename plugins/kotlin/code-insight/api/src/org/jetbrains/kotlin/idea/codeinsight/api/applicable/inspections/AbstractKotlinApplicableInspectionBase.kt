@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
@@ -14,18 +13,8 @@ import org.jetbrains.kotlin.psi.KtVisitor
  * [AbstractKotlinApplicableInspectionBase] is a base implementation for [AbstractKotlinApplicableInspection] and
  * [AbstractKotlinApplicableInspectionWithContext].
  */
-abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : LocalInspectionTool(), KotlinApplicableToolBase<ELEMENT> {
-    /**
-     * The action family name is an action name without any element-specific information. For example, the family name for an action
-     * "Replace 'get' call with indexing operator" would be "Replace 'get' or 'set' call with indexing operator".
-     *
-     * This is currently used as a fallback for when an element isn't available to build an action name, but may also be used in the future
-     * as a group name for multiple quick fixes, as [QuickFix.getFamilyName] intends. (Once the applicable inspections API supports
-     * multiple quick fixes.)
-     *
-     * @see com.intellij.codeInspection.QuickFix.getFamilyName
-     */
-    abstract fun getActionFamilyName(): @IntentionFamilyName String
+abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : LocalInspectionTool(),
+                                                                             KotlinApplicableToolBase<ELEMENT> {
 
     /**
      * By default, a problem is registered for every [TextRange] produced by [getApplicabilityRange]. [getProblemRanges] can be overridden

@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -15,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.isConvertableToExpressionBody
@@ -26,12 +26,10 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 
-class UseExpressionBodyInspection :
+internal class UseExpressionBodyInspection :
     AbstractKotlinApplicableInspectionWithContext<KtDeclarationWithBody, UseExpressionBodyInspection.Context>() {
 
     data class Context(val subject: String, val highlightType: ProblemHighlightType, val requireType: Boolean = false)
-
-    override fun getActionFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.to.expression.body.fix.text")
 
     override fun getProblemDescription(
         element: KtDeclarationWithBody, context: Context
@@ -127,22 +125,33 @@ class UseExpressionBodyInspection :
         else -> false
     }
 
-    override fun apply(
-        declaration: KtDeclarationWithBody, context: Context, project: Project, updater: ModPsiUpdater
-    ) {
-        val newBody = declaration.replaceWithExpressionBodyPreservingComments(context.requireType)
+    override fun createQuickFix(
+        element: KtDeclarationWithBody,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtDeclarationWithBody>() {
 
-        val namedFunction = newBody.parent as? KtNamedFunction
-        val typeReference = namedFunction?.typeReference
-        if (typeReference != null) {
-            val endOffset = typeReference.endOffset
-            val colon = namedFunction.colon
-            if (colon != null) {
-                updater.select(TextRange(colon.startOffset, endOffset))
-                updater.moveCaretTo(endOffset)
+        override fun getFamilyName(): String =
+            KotlinBundle.message("convert.to.expression.body.fix.text")
+
+        override fun applyFix(
+            project: Project,
+            element: KtDeclarationWithBody,
+            updater: ModPsiUpdater,
+        ) {
+            val newBody = element.replaceWithExpressionBodyPreservingComments(context.requireType)
+
+            val namedFunction = newBody.parent as? KtNamedFunction
+            val typeReference = namedFunction?.typeReference
+            if (typeReference != null) {
+                val endOffset = typeReference.endOffset
+                val colon = namedFunction.colon
+                if (colon != null) {
+                    updater.select(TextRange(colon.startOffset, endOffset))
+                    updater.moveCaretTo(endOffset)
+                }
+            } else {
+                updater.moveCaretTo(newBody.startOffset)
             }
-        } else {
-            updater.moveCaretTo(newBody.startOffset)
         }
     }
 }

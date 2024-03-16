@@ -3,17 +3,18 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.psi.getParentLambdaLabelName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.returnExpressionVisitor
 
@@ -26,15 +27,6 @@ internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection : Abstra
 
     override fun getProblemDescription(element: KtReturnExpression): @InspectionMessage String =
         KotlinBundle.message("inspection.redundant.labeled.return.on.last.expression.in.lambda.display.name")
-
-    override fun getActionFamilyName(): @IntentionFamilyName String =
-        KotlinBundle.message("remove.labeled.return.from.last.expression.in.a.lambda")
-
-    override fun getActionName(element: KtReturnExpression): @InspectionMessage String {
-        val labelName = element.getLabelName().orEmpty()
-
-        return KotlinBundle.message("remove.return.0", labelName)
-    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -59,16 +51,30 @@ internal class RedundantLabeledReturnOnLastExpressionInLambdaInspection : Abstra
         if (labelRange != null) keywordRange.union(labelRange) else null
     }
 
-    override fun apply(
-        element: KtReturnExpression,
-        project: Project,
-        updater: ModPsiUpdater
-    ) {
-        val returnedExpression = element.returnedExpression
-        if (returnedExpression == null) {
-            element.delete()
-        } else {
-            element.replace(returnedExpression)
+    override fun createQuickFix(element: KtReturnExpression): KotlinModCommandQuickFix<KtReturnExpression> {
+        val smartPointer = element.createSmartPointer()
+
+        return object : KotlinModCommandQuickFix<KtReturnExpression>() {
+
+            override fun getFamilyName(): String =
+                KotlinBundle.message("remove.labeled.return.from.last.expression.in.a.lambda")
+
+            override fun getName(): String = getName(smartPointer) {
+                KotlinBundle.message("remove.return.0", it.getLabelName().orEmpty())
+            }
+
+            override fun applyFix(
+                project: Project,
+                element: KtReturnExpression,
+                updater: ModPsiUpdater,
+            ) {
+                val returnedExpression = element.returnedExpression
+                if (returnedExpression == null) {
+                    element.delete()
+                } else {
+                    element.replace(returnedExpression)
+                }
+            }
         }
     }
 }

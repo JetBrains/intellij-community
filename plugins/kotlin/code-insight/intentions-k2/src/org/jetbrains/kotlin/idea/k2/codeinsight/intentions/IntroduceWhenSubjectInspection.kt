@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.getSubjectToIntroduce
@@ -17,7 +18,9 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-class IntroduceWhenSubjectInspection : AbstractKotlinApplicableInspectionWithContext<KtWhenExpression, IntroduceWhenSubjectInspection.Context>() {
+internal class IntroduceWhenSubjectInspection :
+    AbstractKotlinApplicableInspectionWithContext<KtWhenExpression, IntroduceWhenSubjectInspection.Context>() {
+
     data class Context(
         val subjectedExpression: KtWhenExpression,
         val commentSaver: CommentSaver,
@@ -27,12 +30,23 @@ class IntroduceWhenSubjectInspection : AbstractKotlinApplicableInspectionWithCon
     override fun getProblemDescription(element: KtWhenExpression, context: Context): String =
         KotlinBundle.message("introduce.0.as.subject.0.when", context.subject.text)
 
-    override fun apply(element: KtWhenExpression, context: Context, project: Project, updater: ModPsiUpdater) {
-        val result = element.replace(context.subjectedExpression)
-        context.commentSaver.restore(result)
-    }
+    override fun createQuickFix(
+        element: KtWhenExpression,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtWhenExpression>() {
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("introduce.when.subject")
+        override fun applyFix(
+            project: Project,
+            element: KtWhenExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val result = element.replace(context.subjectedExpression)
+            context.commentSaver.restore(result)
+        }
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("introduce.when.subject")
+    }
 
     override fun buildVisitor(
         holder: ProblemsHolder,

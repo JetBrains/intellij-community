@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -47,10 +48,19 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         return getReplacementIfApplicable(target)
     }
 
-    override fun apply(element: KtBinaryExpression, context: ReplacementInfo, project: Project, updater: ModPsiUpdater) {
-        val target = extractTargetExpressionFromPsi(element) as? KtDotQualifiedExpression
-        val replacedCheck = KtPsiFactory(project).createExpression(context.expressionString(target))
-        element.replace(replacedCheck)
+    protected abstract inner class ReplaceSizeCheckQuickFixBase(
+        private val context: ReplacementInfo,
+    ) : KotlinModCommandQuickFix<KtBinaryExpression>() {
+
+        override fun applyFix(
+            project: Project,
+            element: KtBinaryExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val target = extractTargetExpressionFromPsi(element) as? KtDotQualifiedExpression
+            val replacedCheck = KtPsiFactory(project).createExpression(context.expressionString(target))
+            element.replace(replacedCheck)
+        }
     }
 
     data class ReplacementInfo(val method: EmptinessCheckMethod, val negate: Boolean) {

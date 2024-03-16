@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -33,7 +34,6 @@ internal class RedundantElvisReturnNullInspection : AbstractKotlinApplicableInsp
     }
 
     override fun getProblemDescription(element: KtBinaryExpression): String = KotlinBundle.message("inspection.redundant.elvis.return.null.descriptor")
-    override fun getActionFamilyName(): String = KotlinBundle.message("remove.redundant.elvis.return.null.text")
 
     override fun getApplicabilityRange() = applicabilityRanges { binaryExpression: KtBinaryExpression ->
         val right =
@@ -58,8 +58,18 @@ internal class RedundantElvisReturnNullInspection : AbstractKotlinApplicableInsp
         return element.left?.getKtType()?.isMarkedNullable == true
     }
 
-    override fun apply(element: KtBinaryExpression, project: Project, updater: ModPsiUpdater) {
-        val left = element.left ?: return
-        element.replace(left)
+    override fun createQuickFix(element: KtBinaryExpression) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("remove.redundant.elvis.return.null.text")
+
+        override fun applyFix(
+            project: Project,
+            element: KtBinaryExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val left = element.left ?: return
+            element.replace(left)
+        }
     }
 }

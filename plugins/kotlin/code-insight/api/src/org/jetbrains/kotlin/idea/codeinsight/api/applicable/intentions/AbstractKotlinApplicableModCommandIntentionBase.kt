@@ -21,6 +21,9 @@ abstract class AbstractKotlinApplicableModCommandIntentionBase<ELEMENT : KtEleme
 ) : PsiUpdateModCommandAction<ELEMENT>(clazz.java),
     KotlinApplicableToolBase<ELEMENT> {
 
+    /**
+     * @see com.intellij.codeInsight.intention.IntentionAction.getText
+     */
     protected abstract fun getActionName(element: ELEMENT): @IntentionName String
 
     override fun isElementApplicable(element: ELEMENT, context: ActionContext): Boolean {

@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.codeInsight.FoldInitializerAndIfExpressionData
 import org.jetbrains.kotlin.idea.codeInsight.joinLines
 import org.jetbrains.kotlin.idea.codeInsight.prepareData
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -25,7 +26,7 @@ import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
-class FoldInitializerAndIfToElvisInspection :
+internal class FoldInitializerAndIfToElvisInspection :
     AbstractKotlinApplicableInspectionWithContext<KtIfExpression, FoldInitializerAndIfExpressionData>() {
 
     override fun getProblemHighlightType(element: KtIfExpression, context: FoldInitializerAndIfExpressionData): ProblemHighlightType {
@@ -40,23 +41,34 @@ class FoldInitializerAndIfToElvisInspection :
         return prepareData(element)
     }
 
-    override fun apply(element: KtIfExpression, context: FoldInitializerAndIfExpressionData, project: Project, updater: ModPsiUpdater) {
-        val elvis = joinLines(
-            element,
-            updater.getWritable<KtVariableDeclaration>(context.variableDeclaration),
-            updater.getWritable<KtExpression>(context.initializer),
-            updater.getWritable<KtExpression>(context.ifNullExpression),
-            updater.getWritable<KtTypeReference>(context.typeChecked),
-            context.variableTypeString
-        )
+    override fun createQuickFix(
+        element: KtIfExpression,
+        context: FoldInitializerAndIfExpressionData,
+    ) = object : KotlinModCommandQuickFix<KtIfExpression>() {
 
-        elvis.right?.textOffset?.let { updater.moveCaretTo(it) }
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.if.with.elvis.operator")
+
+        override fun applyFix(
+            project: Project,
+            element: KtIfExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val elvis = joinLines(
+                element,
+                updater.getWritable(context.variableDeclaration),
+                updater.getWritable(context.initializer),
+                updater.getWritable(context.ifNullExpression),
+                updater.getWritable<KtTypeReference>(context.typeChecked),
+                context.variableTypeString,
+            )
+
+            elvis.right?.textOffset?.let { updater.moveCaretTo(it) }
+        }
     }
 
     override fun getProblemDescription(element: KtIfExpression, context: FoldInitializerAndIfExpressionData) =
         KotlinBundle.message("if.null.return.break.foldable.to")
-
-    override fun getActionFamilyName() = KotlinBundle.message("replace.if.with.elvis.operator")
 
     override fun buildVisitor(
         holder: ProblemsHolder,

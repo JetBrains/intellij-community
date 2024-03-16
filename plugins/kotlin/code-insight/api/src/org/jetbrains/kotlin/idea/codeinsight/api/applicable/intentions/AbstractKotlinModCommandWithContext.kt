@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
@@ -21,6 +22,11 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
     clazz: KClass<ELEMENT>
 ) : PsiUpdateModCommandAction<ELEMENT>(clazz.java),
     KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
+
+    /**
+     * @see com.intellij.codeInsight.intention.IntentionAction.getText
+     */
+    protected abstract fun getActionName(element: ELEMENT, context: CONTEXT): @IntentionName String
 
     override fun stopSearchAt(element: PsiElement, context: ActionContext): Boolean = skipProcessingFurtherElementsAfter(element)
 

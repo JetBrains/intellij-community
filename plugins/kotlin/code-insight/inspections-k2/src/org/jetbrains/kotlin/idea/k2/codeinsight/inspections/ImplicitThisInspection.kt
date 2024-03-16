@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class ImplicitThisInspection :
-  AbstractKotlinApplicableInspectionWithContext<KtExpression, ImplicitReceiverInfo>() {
+    AbstractKotlinApplicableInspectionWithContext<KtExpression, ImplicitReceiverInfo>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -30,8 +31,6 @@ internal class ImplicitThisInspection :
     override fun getProblemDescription(element: KtExpression, context: ImplicitReceiverInfo): String =
         KotlinBundle.message("inspection.implicit.this.display.name")
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.implicit.this.action.name")
-
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtExpression): Boolean {
@@ -45,6 +44,7 @@ internal class ImplicitThisInspection :
                 if (parent is KtCallExpression && parent.isSelectorOfDotQualifiedExpression()) return false
                 true
             }
+
             is KtCallableReferenceExpression -> element.receiverExpression == null
             else -> false
         }
@@ -55,8 +55,21 @@ internal class ImplicitThisInspection :
         return element.getImplicitReceiverInfo()
     }
 
-    override fun apply(element: KtExpression, context: ImplicitReceiverInfo, project: Project, updater: ModPsiUpdater) {
-        element.addImplicitThis(context)
+    override fun createQuickFix(
+        element: KtExpression,
+        context: ImplicitReceiverInfo,
+    ) = object : KotlinModCommandQuickFix<KtExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.implicit.this.action.name")
+
+        override fun applyFix(
+            project: Project,
+            element: KtExpression,
+            updater: ModPsiUpdater,
+        ) {
+            element.addImplicitThis(context)
+        }
     }
 }
 
@@ -77,6 +90,7 @@ private fun KtExpression.addImplicitThis(input: ImplicitReceiverInfo) {
                     "$0::$1", thisExpressionText, this
                 )
             )
+
             else -> this.replace(factory.createExpressionByPattern("$0.$1", thisExpressionText, this))
         }
     }

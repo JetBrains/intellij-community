@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
@@ -45,19 +46,8 @@ internal class ReplaceCallWithBinaryOperatorInspection :
     @FileModifier.SafeTypeForPreview
     data class Context(val operation: KtSingleValueToken, val isFloatingPointEquals: Boolean)
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("replace.with.binary.operator")
-
     override fun getProblemDescription(element: KtDotQualifiedExpression, context: Context) =
         KotlinBundle.message("call.replaceable.with.binary.operator")
-
-    override fun getActionName(element: KtDotQualifiedExpression, context: Context): String {
-        // The `a == b` for Double/Float is IEEE 754 equality, so it might change the behavior.
-        // In this case, we show a different quick fix message with 'INFORMATION' highlight type.
-        if (context.isFloatingPointEquals) {
-            return KotlinBundle.message("replace.total.order.equality.with.ieee.754.equality")
-        }
-        return KotlinBundle.message("replace.with.0", context.operation.value)
-    }
 
     override fun getApplicabilityRange() = applicabilityTarget<KtDotQualifiedExpression> { element ->
         element.callExpression?.calleeExpression
@@ -94,15 +84,34 @@ internal class ReplaceCallWithBinaryOperatorInspection :
         }
     }
 
-    override fun apply(element: KtDotQualifiedExpression, context: Context, project: Project, updater: ModPsiUpdater) {
-        val receiver = element.receiverExpression
-        val argument = element.callExpression?.singleArgumentExpression() ?: return
+    override fun createQuickFix(
+        element: KtDotQualifiedExpression,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
 
-        val expressionToReplace = element.getReplacementTarget(context.operation) ?: return
-        val factory = KtPsiFactory(project)
-        val newExpression = factory.createExpressionByPattern("$0 ${context.operation.value} $1", receiver, argument, reformat = false)
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.with.binary.operator")
 
-        expressionToReplace.replace(newExpression)
+        // The `a == b` for Double/Float is IEEE 754 equality, so it might change the behavior.
+        // In this case, we show a different quick fix message with 'INFORMATION' highlight type.
+        override fun getName(): String =
+            if (context.isFloatingPointEquals) KotlinBundle.message("replace.total.order.equality.with.ieee.754.equality")
+            else KotlinBundle.message("replace.with.0", context.operation.value)
+
+        override fun applyFix(
+            project: Project,
+            element: KtDotQualifiedExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val receiver = element.receiverExpression
+            val argument = element.callExpression?.singleArgumentExpression() ?: return
+
+            val expressionToReplace = element.getReplacementTarget(context.operation) ?: return
+            val factory = KtPsiFactory(project)
+            val newExpression = factory.createExpressionByPattern("$0 ${context.operation.value} $1", receiver, argument, reformat = false)
+
+            expressionToReplace.replace(newExpression)
+        }
     }
 
     private fun KtDotQualifiedExpression.getReplacementTarget(operation: KtSingleValueToken): KtExpression? {

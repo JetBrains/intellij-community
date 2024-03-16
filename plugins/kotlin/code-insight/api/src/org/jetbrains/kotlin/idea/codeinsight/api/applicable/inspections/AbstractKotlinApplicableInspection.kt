@@ -3,13 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.codeInspection.util.IntentionName
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableTool
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableWithAnalyze
 import org.jetbrains.kotlin.psi.KtElement
@@ -21,7 +14,8 @@ import org.jetbrains.kotlin.psi.KtElement
  * For more complex inspections that should either visit multiple kinds of elements or register multiple (or zero) problems, simply use
  * [LocalInspectionTool].
  */
-abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement> : AbstractKotlinApplicableInspectionBase<ELEMENT>(), KotlinApplicableTool<ELEMENT> {
+abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement> : AbstractKotlinApplicableInspectionBase<ELEMENT>(),
+                                                                         KotlinApplicableTool<ELEMENT> {
     /**
      * @see com.intellij.codeInspection.CommonProblemDescriptor.getDescriptionTemplate
      */
@@ -32,48 +26,19 @@ abstract class AbstractKotlinApplicableInspection<ELEMENT : KtElement> : Abstrac
      */
     open fun getProblemHighlightType(element: ELEMENT): ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 
-    override fun getActionName(element: ELEMENT): @IntentionName String = getActionFamilyName()
-
-    abstract fun apply(
-        element: ELEMENT,
-        project: Project,
-        updater: ModPsiUpdater
-    )
-
-    final override fun apply(element: ELEMENT, project: Project, editor: Editor?) {
-        throw UnsupportedOperationException("apply(ELEMENT, Project, Editor?) should not be invoked")
-    }
-
     final override fun shouldApplyInWriteAction(): Boolean {
         return false
     }
 
+    protected abstract fun createQuickFix(element: ELEMENT): KotlinModCommandQuickFix<ELEMENT>
+
     final override fun buildProblemInfo(element: ELEMENT): ProblemInfo? {
-        val isApplicable = isApplicableWithAnalyze(element)
-        if (!isApplicable) return null
+        if (!isApplicableWithAnalyze(element)) return null
 
-        val elementPointer = element.createSmartPointer()
-
-        val quickFix = object : KotlinModCommandQuickFix<ELEMENT>(),
-                                ReportingClassSubstitutor {
-
-            override fun getFamilyName(): String = this@AbstractKotlinApplicableInspection.getActionFamilyName()
-
-            override fun applyFix(
-                project: Project,
-                element: ELEMENT,
-                updater: ModPsiUpdater,
-            ) {
-                apply(element, project, updater)
-            }
-
-            override fun getName(): String = runReadAction { elementPointer.element?.let { getActionName(it) } } ?: familyName
-
-            override fun getSubstitutedClass(): Class<*> = this@AbstractKotlinApplicableInspection.javaClass
-        }
-
-        val description = getProblemDescription(element)
-        val highlightType = getProblemHighlightType(element)
-        return ProblemInfo(description, highlightType, quickFix)
+        return ProblemInfo(
+            description = getProblemDescription(element),
+            highlightType = getProblemHighlightType(element),
+            quickFix = createQuickFix(element),
+        )
     }
 }

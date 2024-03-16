@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
@@ -59,7 +60,7 @@ internal class WhenWithOnlyElseInspection
         val isInitializerPure: Boolean
     )
 
-    class Context(
+    data class Context(
         val isWhenUsedAsExpression: Boolean,
         val elseExpression: SmartPsiElementPointer<KtExpression>,
         val subjectVariableInfo: WhenSubjectVariableInfo?
@@ -67,8 +68,6 @@ internal class WhenWithOnlyElseInspection
 
     override fun getProblemDescription(element: KtWhenExpression, context: Context): String =
         KotlinBundle.message("inspection.when.with.only.else.display.name")
-
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.when.with.only.else.action.name")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
 
@@ -104,15 +103,28 @@ internal class WhenWithOnlyElseInspection
         return Context(isWhenUsedAsExpression, elseExpression.createSmartPointer(), subjectVariableInfo)
     }
 
-    override fun apply(element: KtWhenExpression, context: Context, project: Project, updater: ModPsiUpdater) {
-        val factory = KtPsiFactory(project)
-        val newCaretPosition = element.startOffset
-        val elseExpression: KtExpression = context.elseExpression.dereference()?.let(updater::getWritable) ?: return
+    override fun createQuickFix(
+        element: KtWhenExpression,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtWhenExpression>() {
 
-        val (rewrittenBranch, insertedCallToKotlinDotRun) = rewriteElseBranch(context, elseExpression, factory, updater) ?: return
-        element.replaceWithRewrittenBranch(rewrittenBranch, insertedCallToKotlinDotRun, context, factory)
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.when.with.only.else.action.name")
 
-        updater.moveCaretTo(newCaretPosition)
+        override fun applyFix(
+            project: Project,
+            element: KtWhenExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val factory = KtPsiFactory(project)
+            val newCaretPosition = element.startOffset
+            val elseExpression: KtExpression = context.elseExpression.dereference()?.let(updater::getWritable) ?: return
+
+            val (rewrittenBranch, insertedCallToKotlinDotRun) = rewriteElseBranch(context, elseExpression, factory, updater) ?: return
+            element.replaceWithRewrittenBranch(rewrittenBranch, insertedCallToKotlinDotRun, context, factory)
+
+            updater.moveCaretTo(newCaretPosition)
+        }
     }
 
     /**

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.adjustLineIndent
@@ -19,35 +20,44 @@ import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class RedundantElseInIfInspection : AbstractKotlinApplicableInspection<KtIfExpression>() {
-    override fun apply(element: KtIfExpression, project: Project, updater: ModPsiUpdater) {
-        val elseKeyword = element.lastSingleElseKeyword() ?: return
-        val elseExpression = elseKeyword.getStrictParentOfType<KtIfExpression>()?.`else` ?: return
+internal class RedundantElseInIfInspection : AbstractKotlinApplicableInspection<KtIfExpression>() {
 
-        val copy = elseExpression.copy()
-        if (copy is KtBlockExpression) {
-            copy.lBrace?.delete()
-            copy.rBrace?.delete()
+    override fun createQuickFix(element: KtIfExpression) = object : KotlinModCommandQuickFix<KtIfExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("remove.redundant.else.fix.text")
+
+        override fun applyFix(
+            project: Project,
+            element: KtIfExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val elseKeyword = element.lastSingleElseKeyword() ?: return
+            val elseExpression = elseKeyword.getStrictParentOfType<KtIfExpression>()?.`else` ?: return
+
+            val copy = elseExpression.copy()
+            if (copy is KtBlockExpression) {
+                copy.lBrace?.delete()
+                copy.rBrace?.delete()
+            }
+            val parent = element.parent
+            val added = parent.addAfter(copy, element)
+
+            if (added.getLineNumber() == elseKeyword.getLineNumber()) {
+                parent.addAfter(KtPsiFactory(project).createNewLine(), element)
+            }
+
+            elseExpression.parent.delete()
+            elseKeyword.delete()
+
+            element.containingFile.adjustLineIndent(
+                element.endOffset,
+                (added.getNextSiblingIgnoringWhitespace() ?: added.parent).endOffset,
+            )
         }
-        val parent = element.parent
-        val added = parent.addAfter(copy, element)
-
-        if (added.getLineNumber() == elseKeyword.getLineNumber()) {
-            parent.addAfter(KtPsiFactory(project).createNewLine(), element)
-        }
-
-        elseExpression.parent.delete()
-        elseKeyword.delete()
-
-        element.containingFile.adjustLineIndent(
-            element.endOffset,
-            (added.getNextSiblingIgnoringWhitespace() ?: added.parent).endOffset,
-        )
     }
 
     override fun getProblemDescription(element: KtIfExpression): String = KotlinBundle.message("redundant.else")
-
-    override fun getActionFamilyName(): String = KotlinBundle.message("remove.redundant.else.fix.text")
 
     override fun buildVisitor(
         holder: ProblemsHolder,

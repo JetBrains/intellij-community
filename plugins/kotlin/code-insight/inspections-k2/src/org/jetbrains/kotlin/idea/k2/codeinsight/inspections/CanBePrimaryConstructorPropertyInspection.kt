@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorInfo
@@ -17,8 +18,8 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
-internal class CanBePrimaryConstructorPropertyInspection
-    : AbstractKotlinApplicableInspectionWithContext<KtProperty, MovePropertyToConstructorInfo>() {
+internal class CanBePrimaryConstructorPropertyInspection :
+    AbstractKotlinApplicableInspectionWithContext<KtProperty, MovePropertyToConstructorInfo>() {
 
     override fun buildVisitor(
         holder: ProblemsHolder,
@@ -33,8 +34,6 @@ internal class CanBePrimaryConstructorPropertyInspection
     override fun getProblemDescription(element: KtProperty, context: MovePropertyToConstructorInfo): String = KotlinBundle.message(
         "property.is.explicitly.assigned.to.parameter.0.can", element.name ?: "???"
     )
-
-    override fun getActionFamilyName() = KotlinBundle.message("inspection.can.be.primary.constructor.property.display.name")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtProperty> = ApplicabilityRanges.DECLARATION_NAME
 
@@ -55,7 +54,20 @@ internal class CanBePrimaryConstructorPropertyInspection
         return MovePropertyToConstructorInfo.create(element)
     }
 
-    override fun apply(element: KtProperty, context: MovePropertyToConstructorInfo, project: Project, updater: ModPsiUpdater) {
-        element.moveToConstructor(context.toWritable(updater))
+    override fun createQuickFix(
+        element: KtProperty,
+        context: MovePropertyToConstructorInfo,
+    ) = object : KotlinModCommandQuickFix<KtProperty>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.can.be.primary.constructor.property.display.name")
+
+        override fun applyFix(
+            project: Project,
+            element: KtProperty,
+            updater: ModPsiUpdater,
+        ) {
+            element.moveToConstructor(context.toWritable(updater))
+        }
     }
 }

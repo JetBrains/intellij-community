@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -38,11 +39,7 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection :
     override fun getProblemDescription(element: KtCallExpression): String =
         KotlinBundle.message("inspection.filter.is.instance.call.with.class.literal.argument.display.name")
 
-    override fun getActionFamilyName(): String =
-        KotlinBundle.message("inspection.filter.is.instance.call.with.class.literal.argument.quick.fix.text")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> =
-        ApplicabilityRanges.SELF
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean =
         element.calleeExpression?.text == "filterIsInstance" && element.valueArguments.singleOrNull()?.isClassLiteral() == true
@@ -57,16 +54,26 @@ internal class FilterIsInstanceCallWithClassLiteralArgumentInspection :
         return classSymbol.typeParameters.isEmpty()
     }
 
-    override fun apply(element: KtCallExpression, project: Project, updater: ModPsiUpdater) {
-        val callee = element.calleeExpression ?: return
-        val argument = element.valueArguments.singleOrNull() ?: return
-        val typeName = argument.classLiteral()?.receiverExpression?.text ?: return
+    override fun createQuickFix(element: KtCallExpression) = object : KotlinModCommandQuickFix<KtCallExpression>() {
 
-        element.typeArgumentList?.delete()
-        val typeArguments = KtPsiFactory(project).createTypeArguments("<$typeName>")
-        val newTypeArguments = element.addAfter(typeArguments, callee) as? KtElement ?: return
-        ShortenReferencesFacility.getInstance().shorten(newTypeArguments)
-        element.valueArgumentList?.removeArgument(argument)
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.filter.is.instance.call.with.class.literal.argument.quick.fix.text")
+
+        override fun applyFix(
+            project: Project,
+            element: KtCallExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val callee = element.calleeExpression ?: return
+            val argument = element.valueArguments.singleOrNull() ?: return
+            val typeName = argument.classLiteral()?.receiverExpression?.text ?: return
+
+            element.typeArgumentList?.delete()
+            val typeArguments = KtPsiFactory(project).createTypeArguments("<$typeName>")
+            val newTypeArguments = element.addAfter(typeArguments, callee) as? KtElement ?: return
+            ShortenReferencesFacility.getInstance().shorten(newTypeArguments)
+            element.valueArgumentList?.removeArgument(argument)
+        }
     }
 }
 
