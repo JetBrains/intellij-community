@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableTool
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableWithAnalyze
 import org.jetbrains.kotlin.psi.KtElement
@@ -11,17 +10,14 @@ import kotlin.reflect.KClass
 
 abstract class AbstractKotlinApplicableModCommandIntention<ELEMENT : KtElement>(
     elementType: KClass<ELEMENT>
-) : AbstractKotlinApplicableModCommandIntentionBase<ELEMENT>(elementType), KotlinApplicableTool<ELEMENT> {
+) : AbstractKotlinApplicableModCommandIntentionBase<ELEMENT>(elementType),
+    KotlinApplicableTool<ELEMENT> {
 
-    override fun isElementApplicable(element: ELEMENT, context: ActionContext): Boolean {
-        if (!super.isElementApplicable(element, context)) return false
-
-        val applicableByAnalyze = analyze(element) { isApplicableByAnalyze(element) }
-        return applicableByAnalyze
-    }
-
-    final override fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean =
-        super.isApplicableTo(element, caretOffset) && isApplicableWithAnalyze(element)
+    override fun isElementApplicable(
+        element: ELEMENT,
+        context: ActionContext,
+    ): Boolean = super.isElementApplicable(element, context)
+            && isApplicableWithAnalyze(element)
 
     abstract fun apply(element: ELEMENT, context: ActionContext, updater: ModPsiUpdater)
 

@@ -8,10 +8,8 @@ import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableToElement
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
@@ -26,24 +24,10 @@ abstract class AbstractKotlinApplicableModCommandIntentionBase<ELEMENT : KtEleme
      */
     protected abstract fun getActionName(element: ELEMENT): @IntentionName String
 
-    override fun isElementApplicable(element: ELEMENT, context: ActionContext): Boolean {
-        if (!isApplicableByPsi(element)) return false
-
-        val applicabilityRanges = getApplicabilityRange().getApplicabilityRanges(element)
-        if (applicabilityRanges.isEmpty()) return false
-        // A KotlinApplicabilityRange should be relative to the element, while `caretOffset` is absolute.
-        val relativeCaretOffset = context.offset - element.startOffset
-        return applicabilityRanges.any { it.containsOffset(relativeCaretOffset) }
-    }
-
-    /**
-     * Checks the intention's applicability based on [isApplicableByPsi] and [KotlinApplicabilityRange].
-     *
-     * To be invoked on a background thread only.
-     *
-     * @param element is a non-physical [PsiElement]
-     */
-    open fun isApplicableTo(element: ELEMENT, caretOffset: Int): Boolean = isApplicableToElement(element, caretOffset)
+    override fun isElementApplicable(
+        element: ELEMENT,
+        context: ActionContext,
+    ): Boolean = isApplicableToElement(element, context.offset)
 
     protected open val isKotlinOnlyIntention: Boolean = true
 

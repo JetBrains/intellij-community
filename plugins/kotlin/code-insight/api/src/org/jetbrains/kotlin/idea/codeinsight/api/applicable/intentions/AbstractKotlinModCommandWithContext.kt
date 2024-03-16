@@ -11,9 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.isApplicableToElement
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.prepareContextWithAnalyze
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.*
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
@@ -21,7 +19,8 @@ import kotlin.reflect.KClass
 abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>(
     clazz: KClass<ELEMENT>
 ) : PsiUpdateModCommandAction<ELEMENT>(clazz.java),
-    KotlinApplicableToolWithContext<ELEMENT, CONTEXT> {
+    KotlinApplicableToolWithContext<ELEMENT, CONTEXT>,
+    KotlinApplicableTool<ELEMENT> {
 
     /**
      * @see com.intellij.codeInsight.intention.IntentionAction.getText
@@ -37,19 +36,11 @@ abstract class AbstractKotlinModCommandWithContext<ELEMENT : KtElement, CONTEXT>
      *
      * @param element is a non-physical [PsiElement]
     */
-    override fun isElementApplicable(element: ELEMENT, context: ActionContext): Boolean {
-        return isApplicableToElement(element, context.offset) && analyze(element) { isApplicableByAnalyze(element) }
-    }
-
-    /*
-     * Checks if the element is applicable performing analysis.
-     *
-     * To be invoked on a background thread only.
-     *
-     * @param element is a non-physical [PsiElement]
-     */
-    context(KtAnalysisSession)
-    protected open fun isApplicableByAnalyze(element: ELEMENT): Boolean = true
+    override fun isElementApplicable(
+        element: ELEMENT,
+        context: ActionContext,
+    ): Boolean = isApplicableToElement(element, context.offset)
+            && isApplicableWithAnalyze(element)
 
     protected open val isKotlinOnlyIntention: Boolean = true
 
