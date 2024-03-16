@@ -13,7 +13,7 @@ import java.io.IOException;
  * @deprecated use `TextMateService#readBundle` or `TextMateBundleReader`
  */
 @Deprecated
-public class BundleFactory {
+public final class BundleFactory {
   private final PlistReader myPlistReader;
 
   public BundleFactory(PlistReader plistReader) {
@@ -21,17 +21,16 @@ public class BundleFactory {
   }
 
   /**
-   * Create bundle object from directory.
-   * Return {code}null{code} if bundle type can't be defined or
-   * if IO exception occurred while reading directory.
+   * Create a bundle object from directory.
+   * Return {code}null{code} if a bundle type can't be defined or
+   * if IO exception occurred while reading the directory.
    *
    * @return Bundle object or null
    * @deprecated use `TextMateService#readBundle#readGrammars` or `TextMateBundleReader`
    */
   @Deprecated
-  @Nullable
-  public Bundle fromDirectory(@NotNull File directory) throws IOException {
-    final BundleType type = BundleType.detectBundleType(directory.toPath());
+  public @Nullable Bundle fromDirectory(@NotNull File directory) throws IOException {
+    final BundleType type = BundleType.Companion.detectBundleType(directory.toPath());
     return switch (type) {
       case TEXTMATE -> fromTextMateBundle(directory);
       case SUBLIME -> new Bundle(directory.getName(), directory.getPath(), type);

@@ -60,7 +60,7 @@ public final class TestUtil {
 
   public static TextMateBundleReader readBundle(String bundleName) {
     Path bundleDirectory = getBundleDirectory(bundleName);
-    BundleType bundleType = BundleType.detectBundleType(bundleDirectory);
+    BundleType bundleType = BundleType.Companion.detectBundleType(bundleDirectory);
     return switch (bundleType) {
       case TEXTMATE -> readTextMateBundle(bundleDirectory);
       case SUBLIME -> readSublimeBundle(bundleDirectory);
