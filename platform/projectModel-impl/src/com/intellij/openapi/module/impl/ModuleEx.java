@@ -2,7 +2,6 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,4 @@ public interface ModuleEx extends Module {
   default boolean canStoreSettings() {
     return true;
   }
-
-  @ApiStatus.Internal
-  @NotNull MessageBus getDeprecatedModuleLevelMessageBus();
 }

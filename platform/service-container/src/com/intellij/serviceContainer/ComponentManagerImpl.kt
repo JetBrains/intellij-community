@@ -295,14 +295,6 @@ abstract class ComponentManagerImpl(
     return messageBus
   }
 
-  fun getDeprecatedModuleLevelMessageBus(): MessageBus {
-    if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
-      ProgressManager.checkCanceled()
-      throw AlreadyDisposedException("Already disposed: $this")
-    }
-    return messageBus ?: getOrCreateMessageBusUnderLock()
-  }
-
   final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
 
   fun registerComponents() {
@@ -1332,18 +1324,14 @@ abstract class ComponentManagerImpl(
     return null
   }
 
-  fun <T : Any> processInitializedComponents(aClass: Class<T>, processor: (T) -> Unit) {
+  fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> {
+    val result = ArrayList<T>()
     for (instance in componentContainer.initializedInstances()) {
       if (aClass.isAssignableFrom(instance.javaClass)) {
         @Suppress("UNCHECKED_CAST")
-        processor(instance as T)
+        (result.add(instance as T))
       }
     }
-  }
-
-  fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> {
-    val result = ArrayList<T>()
-    processInitializedComponents(aClass, result::add)
     return result
   }
 
