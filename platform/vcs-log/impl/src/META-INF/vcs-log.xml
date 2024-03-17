@@ -157,7 +157,7 @@
       <action class="com.intellij.vcs.log.ui.actions.InvalidateVcsLogCaches" id="Vcs.Log.InvalidateCaches" internal="true"/>
       <action class="com.intellij.vcs.log.ui.actions.CheckSelectedCommits" id="Vcs.Log.CheckSelectedCommitsIndexData" internal="true"/>
       <action class="com.intellij.vcs.log.ui.actions.CheckOldCommits" id="Vcs.Log.CheckFirstCommitsIndexData" internal="true"/>
-      <action class="com.intellij.vcs.log.ui.actions.ShowCommitInLogAction" id="Vcs.Log.SelectInLog">
+      <action class="com.intellij.vcs.log.ui.actions.ShowCommitInLogAction" id="Vcs.Log.SelectInLog" icon="AllIcons.Toolwindows.ToolWindowChanges">
         <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="after" relative-to-action="Vcs.CopyRevisionNumberAction"/>
       </action>
     </group>
