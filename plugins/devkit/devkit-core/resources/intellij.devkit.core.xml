@@ -60,9 +60,9 @@
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex"/>
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex"/>
     <fileBasedIndex implementation="org.jetbrains.idea.devkit.dom.index.ExtensionPointClassIndex"/>
-    
+
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesDomFileDescription"
-                      rootTagName="product-modules" />
+                      rootTagName="product-modules"/>
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.liveTemplates.TemplateSetDescription" rootTagName="templateSet"/>
 
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorEditorTabTitleProvider"/>
@@ -85,6 +85,13 @@
 
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor"
                             language="XML"/>
+
+    <useScopeEnlarger implementation="org.jetbrains.idea.devkit.driver.RemoteUseScopeEnlarger"/>
+    <methodReferencesSearch implementation="org.jetbrains.idea.devkit.driver.RemoteMethodReferenceSearcher"/>
+    <overridingMethodsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteMethodImplementationSearcher"/>
+    <allOverridingMethodsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteMethodAllImplementationSearcher"/>
+    <directClassInheritorsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteInterfaceDirectImplementationSearcher"/>
+    <classInheritorsSearch implementation="org.jetbrains.idea.devkit.driver.RemoteInterfaceImplementationSearcher"/>
 
     <localInspection language="XML" shortName="PluginXmlValidity" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
