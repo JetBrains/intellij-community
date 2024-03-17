@@ -4,11 +4,12 @@ package com.intellij.testFramework;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector;
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher;
+import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
@@ -311,8 +313,9 @@ public class PerformanceTestInfo {
    * @see PerformanceTestInfo#start()
    */
   public void start(String fullQualifiedTestMethodName) {
-    start(IterationMode.WARMUP, fullQualifiedTestMethodName);
-    start(IterationMode.MEASURE, fullQualifiedTestMethodName);
+    String sanitizedFullQualifiedTestMethodName = sanitizeFullTestNameForArtifactPublishing(fullQualifiedTestMethodName);
+    start(IterationMode.WARMUP, sanitizedFullQualifiedTestMethodName);
+    start(IterationMode.MEASURE, sanitizedFullQualifiedTestMethodName);
   }
 
   /**
@@ -410,6 +413,17 @@ public class PerformanceTestInfo {
 
       return null;
     };
+  }
+
+  private static @NotNull String sanitizeFullTestNameForArtifactPublishing(@NotNull String fullTestName) {
+    try {
+      //noinspection ResultOfMethodCallIgnored
+      Path.of("./" + fullTestName); // prefix with "./" to make sure "C:/Users" is sanitized
+      return fullTestName;
+    }
+    catch (InvalidPathException e) {
+      return FileUtil.sanitizeFileName(fullTestName, false);
+    }
   }
 
   private static final class Profiler {
