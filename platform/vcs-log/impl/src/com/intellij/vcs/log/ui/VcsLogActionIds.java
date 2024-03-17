@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import org.jetbrains.annotations.NonNls;
@@ -11,6 +11,7 @@ public final @NonNls class VcsLogActionIds {
   public static final String PRESENTATION_SETTINGS_ACTION_GROUP = "Vcs.Log.PresentationSettings";
   public static final String TEXT_FILTER_SETTINGS_ACTION_GROUP = "Vcs.Log.TextFilterSettings";
   public static final String FILE_HISTORY_TOOLBAR_ACTION_GROUP = "Vcs.FileHistory.Toolbar";
+  public static final String FILE_HISTORY_TOOLBAR_RIGHT_CORNER_ACTION_GROUP = "Vcs.FileHistory.Toolbar.RightCorner";
   public static final String HISTORY_POPUP_ACTION_GROUP = "Vcs.FileHistory.ContextMenu";
   public static final String CHANGES_BROWSER_POPUP_ACTION_GROUP = "Vcs.Log.ChangesBrowser.Popup";
   public static final String CHANGES_BROWSER_TOOLBAR_ACTION_GROUP = "Vcs.Log.ChangesBrowser.Toolbar";

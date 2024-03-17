@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.PopupHandler;
@@ -23,6 +24,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -202,7 +204,17 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_HISTORY_TOOLBAR_PLACE,
                                                                             toolbarGroup, true);
     toolbar.setTargetComponent(myGraphTable);
-    return toolbar.getComponent();
+
+    ActionGroup rightToolbarGroup = new DefaultActionGroup(ActionManager.getInstance().getAction(VcsLogActionIds.FILE_HISTORY_TOOLBAR_RIGHT_CORNER_ACTION_GROUP));
+    ActionToolbar rightCornerToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.VCS_HISTORY_TOOLBAR_PLACE,
+                                                                                       rightToolbarGroup, true);
+    rightCornerToolbar.setTargetComponent(myGraphTable);
+
+    BorderLayoutPanel panel = new BorderLayoutPanel();
+    GuiUtils.installVisibilityReferent(panel, toolbar.getComponent());
+    panel.addToCenter(toolbar.getComponent());
+    panel.addToRight(rightCornerToolbar.getComponent());
+    return panel;
   }
 
   public @NotNull VcsLogGraphTable getGraphTable() {

@@ -265,6 +265,9 @@
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
       <reference id="Vcs.Log.ResumeIndexing"/>
     </group>
+    <group id="Vcs.FileHistory.Toolbar.RightCorner">
+      <reference id="Vcs.Log.SelectInLog"/>
+    </group>
 
     <group id="Vcs.Log.Internal" internal="true" popup="true">
       <reference id="Vcs.Log.InvalidateCaches"/>
