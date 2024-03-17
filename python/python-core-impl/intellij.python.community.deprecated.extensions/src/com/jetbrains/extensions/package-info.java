@@ -2,8 +2,5 @@
 /**
  * @deprecated moved to {@link com.jetbrains.python.extensions}
  */
-@ApiStatus.ScheduledForRemoval
-@Deprecated
-package com.jetbrains.extensions.python;
-
-import org.jetbrains.annotations.ApiStatus;
+@Deprecated(forRemoval = true)
+package com.jetbrains.extensions;
