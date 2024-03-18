@@ -86,7 +86,8 @@ public final class ProductModulesSerialization {
                                          @NotNull RuntimeModuleRepository repository,
                                          @NotNull Set<RawIncludedRuntimeModule> mainGroupModules,
                                          @NotNull Set<RuntimeModuleId> bundledPluginMainModules) throws IOException, XMLStreamException {
-    for (RuntimeModuleId includedId : rawProductModules.getIncludedFrom()) {
+    for (RawIncludedFromData includedFromData : rawProductModules.getIncludedFrom()) {
+      RuntimeModuleId includedId = includedFromData.getFromModule();
       InputStream inputStream = repository.getModule(includedId).readFile("META-INF/" + includedId.getStringId() + "/product-modules.xml");
       if (inputStream == null) {
         throw new MalformedRepositoryException("'" + includedId.getStringId() + "' included in " +
@@ -94,8 +95,16 @@ public final class ProductModulesSerialization {
       }
       RawProductModules includedModules = ProductModulesXmlSerializer.parseModuleXml(inputStream);
       mergeIncludedFiles(includedModules, debugName, repository, mainGroupModules, bundledPluginMainModules);
-      mainGroupModules.addAll(includedModules.getMainGroupModules());
-      bundledPluginMainModules.addAll(includedModules.getBundledPluginMainModules());
+      for (RawIncludedRuntimeModule mainGroupModule : includedModules.getMainGroupModules()) {
+        if (!includedFromData.getWithoutModules().contains(mainGroupModule.getModuleId())) {
+          mainGroupModules.add(mainGroupModule);
+        }
+      }
+      for (RuntimeModuleId pluginMainModule : includedModules.getBundledPluginMainModules()) {
+        if (!includedFromData.getWithoutModules().contains(pluginMainModule)) {
+          bundledPluginMainModules.add(pluginMainModule);
+        }
+      }
     }
   }
 }

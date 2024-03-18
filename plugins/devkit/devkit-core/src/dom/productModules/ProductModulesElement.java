@@ -25,6 +25,9 @@ public interface ProductModulesElement extends DomElement {
     @Required
     @Convert(IntellijModuleConverter.class)
     @NotNull GenericDomValue<IntellijModuleSymbol> getIncludedModule();
+    
+    @Convert(IntellijModuleConverter.class)
+    @NotNull List<GenericDomValue<IntellijModuleSymbol>> getWithoutModules();
   }
 
   interface MainRootModuleElements extends DomElement {
