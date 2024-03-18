@@ -16,8 +16,8 @@ abstract class KotlinGradleExecutionTestCase : GradleExecutionTestCase() {
 
     override fun tearDown() {
         runAll(
-          { super.tearDown() },
-          { KotlinSdkType.removeKotlinSdkInTests() }
+            { super.tearDown() },
+            { KotlinSdkType.removeKotlinSdkInTests() }
         )
     }
 
@@ -36,12 +36,52 @@ abstract class KotlinGradleExecutionTestCase : GradleExecutionTestCase() {
         test(gradleVersion, KOTLIN_JUNIT4_FIXTURE, action)
     }
 
+    fun testKotlinMultiplatformProject(gradleVersion: GradleVersion, action: () -> Unit) {
+        assumeThatKotlinIsSupported(gradleVersion)
+        test(gradleVersion, KOTLIN_JS_MULTIPLATFORM_FIXTURE, action)
+    }
+
     fun testKotlinTestNGProject(gradleVersion: GradleVersion, action: () -> Unit) {
         assumeThatKotlinIsSupported(gradleVersion)
         test(gradleVersion, KOTLIN_TESTNG_FIXTURE, action)
     }
 
     companion object {
+
+        private val KOTLIN_JS_MULTIPLATFORM_FIXTURE = GradleTestFixtureBuilder.create("kotlin-plugin-multiplatform-project") { gradleVersion ->
+            withSettingsFile {
+                pluginManagement {
+                    call("repositories") {
+                        code("mavenCentral()")
+                    }
+                }
+                setProjectName("kotlin-plugin-multiplatform-project")
+            }
+
+            withBuildFile(gradleVersion, useKotlinDsl = true) {
+                withKotlinMultiplatformPlugin()
+                withMavenCentral()
+                addPostfix(
+                    """
+                    |kotlin {
+                    |    js() {
+                    |        nodejs {}
+                    |    }
+                    |    sourceSets {
+                    |        val commonTest by getting {
+                    |            dependencies {
+                    |                implementation(kotlin("test"))
+                    |            }
+                    |        }
+                    |    }
+                    |}
+                    """.trimMargin())
+            }
+            withDirectory("src/jsTest/kotlin")
+
+            // This file generates during :kotlinStoreYarnLock task execution
+            excludeFiles("kotlin-js-store/yarn.lock")
+        }
 
         private val KOTLIN_JUNIT4_FIXTURE = GradleTestFixtureBuilder.create("kotlin-plugin-junit4-project") { gradleVersion ->
             withSettingsFile {

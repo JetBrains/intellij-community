@@ -182,6 +182,27 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
 
     @ParameterizedTest
     @AllGradleVersionsSource
+    fun `test display name and navigation with Kotlin Multiplatform and Kotlin Test`(gradleVersion: GradleVersion) {
+        assumeThatGradleIsAtLeast(gradleVersion, "6.8.3") {
+            "Kotlin multiplatform isn't supported by Gradle older than 6.8.3"
+        }
+        testKotlinMultiplatformProject(gradleVersion) {
+            writeText("src/jsTest/kotlin/Foo.kt", KOTLIN_TEST)
+
+            executeTasks(":jsNodeTest --tests \"Foo\"", isRunAsTest = true)
+
+            assertTestViewTree {
+                assertNode("jsNodeTest") {
+                    assertNode("Foo") {
+                        assertNode("foo[js, node]")
+                    }
+                }
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
     fun `test display name and navigation with Kotlin and Test NG`(gradleVersion: GradleVersion) {
         testKotlinTestNGProject(gradleVersion) {
             writeText("src/test/kotlin/org/example/TestCase.kt", KOTLIN_TESTNG_TEST)
@@ -298,6 +319,18 @@ class KotlinGradleTestNavigationTest : KotlinGradleExecutionTestCase() {
             |
             |    @Test
             |    fun `successful test`() = Unit
+            |}
+        """.trimMargin()
+
+        private val KOTLIN_TEST = """
+            |import kotlin.test.Test
+            |import kotlin.test.assertEquals
+            |
+            |class Foo {
+            |    @Test
+            |    fun foo() {
+            |        assertEquals(6, 6)
+            |    }
             |}
         """.trimMargin()
 
