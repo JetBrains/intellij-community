@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.application
-import kotlin.random.Random
 import kotlin.system.measureNanoTime
 
 /**
@@ -25,11 +24,11 @@ import kotlin.system.measureNanoTime
 internal class InlineCompletionInvocationTracker(
   private val invocationTime: Long,
   private val request: InlineCompletionRequest,
-  private val provider: Class<out InlineCompletionProvider>
+  private val provider: Class<out InlineCompletionProvider>,
+  private val requestId: Long,
 ) {
-  constructor(event: InlineCompletionEventType.Request) : this(event.lastInvocation, event.request, event.provider)
+  constructor(event: InlineCompletionEventType.Request) : this(event.lastInvocation, event.request, event.provider, event.requestId)
 
-  val requestId = Random.nextLong()
   private var finished = false
   private val data = mutableListOf<EventPair<*>>()
   private val contextFeatures = mutableListOf<EventPair<*>>()

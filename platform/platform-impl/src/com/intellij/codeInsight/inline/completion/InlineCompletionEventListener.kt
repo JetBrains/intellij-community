@@ -25,7 +25,8 @@ sealed class InlineCompletionEventType {
   class Request @ApiStatus.Internal constructor(
     val lastInvocation: Long,
     val request: InlineCompletionRequest,
-    val provider: Class<out InlineCompletionProvider>
+    val provider: Class<out InlineCompletionProvider>,
+    val requestId: Long,
   ) : InlineCompletionEventType()
 
   /**

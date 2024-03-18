@@ -44,6 +44,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
+import kotlin.random.Random
 
 /**
  * Use [InlineCompletion] for acquiring, installing and uninstalling [InlineCompletionHandler].
@@ -285,8 +286,9 @@ class InlineCompletionHandler(
     provider: InlineCompletionProvider,
     request: InlineCompletionRequest
   ): InlineCompletionSuggestion {
+    val requestId = Random.nextLong()
     withContext(Dispatchers.EDT) {
-      trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
+      trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java, requestId))
     }
     return provider.getSuggestion(request)
   }

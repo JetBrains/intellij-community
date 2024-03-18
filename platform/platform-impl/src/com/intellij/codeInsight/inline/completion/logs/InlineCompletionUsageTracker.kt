@@ -164,7 +164,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
     override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
       invocationTracker = InlineCompletionInvocationTracker(event).also {
-        requestIds[event.request] = it.requestId
+        requestIds[event.request] = event.requestId
         application.runReadAction { it.captureContext(event.request.editor, event.request.endOffset) }
       }
       showTracker = null // Just in case
