@@ -10,6 +10,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -71,8 +72,7 @@ final class AnnotatorRunner {
     HighlightersRecycler invalidElementsRecycler = highlightInfoUpdater.removeOrRecycleInvalidPsiElements(myPsiFile, "AnnotationRunner", false, true, myHighlightingSession);
     try {
       PairProcessor<Annotator, JobLauncher.QueueController<? super Annotator>> processor = (annotator, __) ->
-        ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages,
-                                                                                    highlightInfoUpdater));
+        ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages, highlightInfoUpdater));
       boolean result = JobLauncher.getInstance().procInOrderAsync(indicator, supportedLanguages.size(), processor, addToQueue -> {
         for (Annotator annotator : supportedLanguages.keySet()) {
           addToQueue.enqueue(annotator);
@@ -127,6 +127,25 @@ final class AnnotatorRunner {
     }
   }
 
+  static final class AnnotatorSpecificHolder extends AnnotationHolderImpl {
+    private final @NotNull Annotator myAnnotator;
+    private final @NotNull AtomicReference<? extends PsiElement> myCurrentElement;
+
+    AnnotatorSpecificHolder(@NotNull Annotator annotator,
+                            @NotNull AtomicReference<? extends PsiElement> currentElement,
+                            @NotNull AnnotationSession annotationSession,
+                            boolean batchMode) {
+      super(annotationSession, batchMode);
+      myAnnotator = annotator;
+      myCurrentElement = currentElement;
+    }
+
+    @Override
+    protected @NotNull B createBuilder(@NotNull HighlightSeverity severity, @Nls String message, PsiElement __, Object ___) {
+      return super.createBuilder(severity, message, myCurrentElement.get(), myAnnotator);
+    }
+  }
+
   private void runAnnotator(@NotNull Annotator annotator,
                             @NotNull List<? extends PsiElement> insideThenOutside,
                             @NotNull Map<Annotator, Set<Language>> supportedLanguages, @NotNull HighlightInfoUpdater highlightInfoUpdater) {
@@ -136,19 +155,9 @@ final class AnnotatorRunner {
     }
     AtomicReference<PsiElement> currentElement = new AtomicReference<>();
     // create AnnotationHolderImpl for each Annotator to make it immutable thread-safe converter to the corresponding HighlightInfo
-    AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(myHighlightInfoHolder.getAnnotationSession(), myBatchMode) {
-      @Override
-      public boolean add(Annotation annotation) {
-        myAnnotatorStatisticsCollector.reportAnnotationProduced(annotator, annotation);
-        super.add(annotation);
-        return true;
-      }
-
-      @Override
-      protected @NotNull B createBuilder(@NotNull HighlightSeverity severity, @Nls String message, PsiElement __, Object ___) {
-        return super.createBuilder(severity, message, currentElement.get(), annotator);
-      }
-    };
+    AnnotationHolderImpl annotationHolder = new AnnotatorSpecificHolder(annotator, currentElement,
+                                                                        AnnotatorRunner.this.myHighlightInfoHolder.getAnnotationSession(),
+                                                                        AnnotatorRunner.this.myBatchMode);
     HighlightersRecycler emptyElementRecycler = new HighlightersRecycler(); // no need to call incinerate/release because it's always empty
     for (PsiElement element : insideThenOutside) {
       if (!supported.contains(element.getLanguage())) {
@@ -177,6 +186,7 @@ final class AnnotatorRunner {
           if (LOG.isDebugEnabled()) {
             LOG.debug("runAnnotator annotation="+annotation+" -> "+newInfos);
           }
+          myAnnotatorStatisticsCollector.reportAnnotationProduced(annotator, annotation);
         }
         results.addAll(newInfos);
       }
@@ -210,8 +220,7 @@ final class AnnotatorRunner {
         }
       }
 
-      HighlightInfo patched =
-        new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
+      HighlightInfo patched = new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
                           false, 0, info.getProblemGroup(), info.toolId, info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);

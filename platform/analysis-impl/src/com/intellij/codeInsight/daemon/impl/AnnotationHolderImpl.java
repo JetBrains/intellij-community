@@ -27,12 +27,13 @@ import java.util.List;
  */
 @ApiStatus.Internal
 @ApiStatus.NonExtendable
-public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
+sealed public class AnnotationHolderImpl extends SmartList<@NotNull Annotation> implements AnnotationHolder
+  permits AnnotatorRunner.AnnotatorSpecificHolder {
   private static final Logger LOG = Logger.getInstance(AnnotationHolderImpl.class);
   private final AnnotationSession myAnnotationSession;
 
   private final boolean myBatchMode;
-  Annotator myCurrentAnnotator;
+  private Annotator myCurrentAnnotator;
   private ExternalAnnotator<?, ?> myExternalAnnotator;
 
   /**
@@ -160,11 +161,11 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
    */
   @Deprecated
   private @NotNull Annotation doCreateAnnotation(@NotNull HighlightSeverity severity,
-                                        @NotNull TextRange range,
-                                        @NlsContexts.DetailedDescription @Nullable String message,
-                                        @NlsContexts.Tooltip @Nullable String tooltip,
-                                        @Nullable Class<?> callerClass,
-                                        @NotNull String methodName) {
+                                                 @NotNull TextRange range,
+                                                 @NlsContexts.DetailedDescription @Nullable String message,
+                                                 @NlsContexts.Tooltip @Nullable String tooltip,
+                                                 @Nullable Class<?> callerClass,
+                                                 @NotNull String methodName) {
     Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
     add(annotation);
     String callerInfo = callerClass == null ? "" : " (the call to which was found in "+callerClass+")";
@@ -208,7 +209,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     return new B(this, severity, message, currentElement, currentAnnotator);
   }
 
-  PsiElement myCurrentElement;
+  private PsiElement myCurrentElement;
   @ApiStatus.Internal
   public void runAnnotatorWithContext(@NotNull PsiElement element, @NotNull Annotator annotator) {
     myCurrentAnnotator = annotator;
