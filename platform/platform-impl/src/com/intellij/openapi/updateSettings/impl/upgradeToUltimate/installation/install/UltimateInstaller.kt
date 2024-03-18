@@ -141,5 +141,9 @@ internal data class DownloadResult(
 
 internal data class InstallationResult(
   val appPath: Path,
+  val installationInfo: UltimateInstallationInfo
+)
+
+open class UltimateInstallationInfo(
   val suggestedIde: SuggestedIde,
 )

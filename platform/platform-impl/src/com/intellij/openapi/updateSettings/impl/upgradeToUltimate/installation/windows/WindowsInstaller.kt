@@ -27,7 +27,7 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
     val suggestedIde = downloadResult.suggestedIde
     val pathInfo = providePath(installationPath, suggestedIde) ?: return null
     if (pathInfo.alreadyInstalled) {
-      return InstallationResult(pathInfo.path, suggestedIde)
+      return InstallationResult(pathInfo.path, UltimateInstallationInfo(suggestedIde))
     }
     
     return installSilently(downloadPath, installationPath, downloadResult)
@@ -67,7 +67,7 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
       return null
     }
 
-    return InstallationResult(installationPath, downloadResult.suggestedIde)
+    return InstallationResult(installationPath, UltimateInstallationInfo(downloadResult.suggestedIde))
   }
 
   private fun provideInstallationPath(downloadResult: DownloadResult): Path? {
@@ -80,7 +80,7 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
 
   override fun startUltimate(installationResult: InstallationResult): Boolean {
     val appPath = installationResult.appPath
-    val exePath = findExePath(appPath, installationResult.suggestedIde) ?: return false
+    val exePath = findExePath(appPath, installationResult.installationInfo.suggestedIde) ?: return false
 
     val basePath = project.basePath
     val parameters = mutableListOf("", exePath).applyIf(basePath != null) {
