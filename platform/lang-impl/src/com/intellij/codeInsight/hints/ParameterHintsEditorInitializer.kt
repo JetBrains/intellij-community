@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer
@@ -45,10 +45,8 @@ internal class ParameterHintsEditorInitializer : TextEditorInitializer {
 }
 
 @Service(Level.PROJECT)
-internal class ParamHintsGrave(project: Project, private val scope: CoroutineScope)
-  : TextEditorCache<ParameterHintsState>(project, scope),
-    Disposable
-{
+private class ParamHintsGrave(project: Project, private val scope: CoroutineScope)
+  : TextEditorCache<ParameterHintsState>(project, scope), Disposable {
   override fun namePrefix() = "persistent-parameter-hints"
   override fun valueExternalizer() = ParameterHintsState.Externalizer
   override fun useHeapCache() = true
@@ -87,10 +85,11 @@ internal class ParamHintsGrave(project: Project, private val scope: CoroutineSco
   private fun Inlay<*>.toHintData(): Pair<Int, HintData>? {
     val renderer = this.renderer as? HintRenderer
     val text = renderer?.text
-    return if (renderer != null && text != null) {
-      Pair(offset, HintData(text, isRelatedToPrecedingText, renderer.widthAdjustment))
-    } else {
-      null
+    if (renderer != null && text != null) {
+      return Pair(offset, HintData(text, isRelatedToPrecedingText, renderer.widthAdjustment))
+    }
+    else {
+      return null
     }
   }
 
@@ -110,7 +109,8 @@ internal class ParamHintsGrave(project: Project, private val scope: CoroutineSco
       val list: MutableList<HintData> = hintMap.getOrPut(offset) { ArrayList() }
       if (isDebug()) {
         list.add(debugHintData(hint))
-      } else {
+      }
+      else {
         list.add(hint)
       }
     }
@@ -122,7 +122,8 @@ internal class ParamHintsGrave(project: Project, private val scope: CoroutineSco
     val colonIndex = text.lastIndexOf(':')
     val debugText = if (colonIndex == -1) {
       "$text?"
-    } else {
+    }
+    else {
       text.substring(0, colonIndex) + "?:"
     }
     return HintData(debugText, hintData.relatesToPrecedingText, hintData.widthAdjustment)
