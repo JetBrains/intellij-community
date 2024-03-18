@@ -713,7 +713,7 @@ public final class XFramesView extends XDebugView {
       if (toSelect instanceof XStackFrame) {
         if (myFramesList.selectFrame((XStackFrame)toSelect)) return true;
         if (myAllFramesLoaded && myFramesList.getSelectedValue() == null) {
-          LOG.error("Frame was not found, " + myToSelect.getClass() + " must correctly override equals");
+          LOG.warn("Frame was not found, it was either hidden without placeholder (" + HiddenStackFramesItem.class + ") or " + myToSelect.getClass() + " must correctly override equals");
         }
       }
       else if (toSelect instanceof Integer) {
