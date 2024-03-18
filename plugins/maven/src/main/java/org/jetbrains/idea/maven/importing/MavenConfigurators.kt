@@ -16,6 +16,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.stream.Stream
 
 @ApiStatus.Experimental
@@ -133,6 +136,13 @@ interface MavenWorkspaceConfigurator {
 
   enum class FolderType {
     SOURCE, RESOURCE, TEST_SOURCE, TEST_RESOURCE
+  }
+  fun JpsModuleSourceRootType<*>.toFolderType(): FolderType {
+    return when (this) {
+      is JavaSourceRootType -> if(isForTests) FolderType.TEST_SOURCE else FolderType.SOURCE
+      is JavaResourceRootType -> if(isForTests) FolderType.TEST_RESOURCE else FolderType.RESOURCE
+      else -> throw IllegalArgumentException("Bad Module source root type")
+    }
   }
 
   data class AdditionalFolder(val path: String, val type: FolderType)

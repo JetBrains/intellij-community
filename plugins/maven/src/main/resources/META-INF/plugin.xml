@@ -575,6 +575,7 @@
 
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadePluginConfigurator"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.plugins.buildHelper.MavenBuildHelperPluginConfigurator"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridge"/>
     <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetPostTaskConfigurator"/>
 
     <projectResolutionContributor implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorContributor"/>
