@@ -9,7 +9,10 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.execution.vmModules.VmModulesExecutor
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessRunner
+import com.intellij.execution.process.OSProcessHandler
+import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.java.JavaBundle
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
@@ -17,6 +20,8 @@ import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.Presentation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -27,8 +32,15 @@ import com.intellij.psi.JavaModuleSystem.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
+import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.regex.Pattern
 
 private const val MAIN = "main"
@@ -46,21 +58,26 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName(): String = JavaBundle.message("java.platform.module.system.name")
 
   override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean {
-    return getProblem(targetPackageName, targetFile, place, true, this::isExported) == null
+    return getProblem(targetPackageName, targetFile, place, true) { (current, target) -> isExported(current, target) } == null
   }
 
   override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): ErrorWithFixes? {
-    return getProblem(targetPackageName, targetFile, place, false) { use, _, target, _, _ -> JavaModuleGraphUtil.reads(use, target) }
+    return getProblem(targetPackageName, targetFile, place, false) { (current, target) ->
+      val currentModule = current.module ?: return@getProblem false
+      val targetModule = target.module ?: return@getProblem false
+      JavaModuleGraphUtil.reads(currentModule, targetModule)
+    }
   }
 
-  private fun isExported(useModule: PsiJavaModule, packageName: String, targetModule: PsiJavaModule, useModuleName: String, module: Module?): Boolean {
-    if (!targetModule.isPhysical || JavaModuleGraphUtil.exports(targetModule, packageName, useModule)) return true
-    if (module == null) return false
-    return inAddedExports(module, targetModule.name, packageName, useModuleName)
+  private fun isExported(current: CurrentModuleInfo, target: TargetModuleInfo): Boolean {
+    val targetModule = target.module ?: return false
+    if (!targetModule.isPhysical || JavaModuleGraphUtil.exports(targetModule, target.packageName, current.module)) return true
+    val currentJpaModule = current.jpaModule ?: return false
+    return inAddedExports(currentJpaModule, targetModule.name, target.packageName, current.name)
   }
 
   private fun getProblem(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean,
-                         isAccessible: (useModule: PsiJavaModule, packageName: String, targetModule: PsiJavaModule, useModuleName: String, module: Module?) -> Boolean): ErrorWithFixes? {
+                         isAccessible: (ModuleAccessInfo) -> Boolean): ErrorWithFixes? {
     val originalTargetFile = targetFile?.originalFile
     val useFile = place.containingFile?.originalFile ?: return null
     if (!PsiUtil.isAvailable(JavaFeature.MODULES, useFile)) return null
@@ -69,7 +86,8 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     val index = ProjectFileIndex.getInstance(useFile.project)
     if (useVFile != null && index.isInLibrarySource(useVFile)) return null
     if (originalTargetFile != null && originalTargetFile.isPhysical) {
-      return checkAccess(originalTargetFile, useFile, targetPackageName, quick, isAccessible)
+      val target = TargetModuleInfo.of(originalTargetFile, targetPackageName)
+      return checkAccess(target, useFile, quick, isAccessible)
     }
     if (useVFile == null) return null
 
@@ -87,115 +105,111 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
       }
     }
 
-    val error = checkAccess(dirs[0], useFile, target.qualifiedName, quick, isAccessible) ?: return null
+    val error = checkAccess(TargetModuleInfo.of(dirs[0], target.qualifiedName), useFile, quick, isAccessible) ?: return null
     return when {
       dirs.size == 1 -> error
-      dirs.asSequence().drop(1).any { checkAccess(it, useFile, target.qualifiedName, true, isAccessible) == null } -> null
+      dirs.asSequence().drop(1).any { checkAccess(TargetModuleInfo.of(it, target.qualifiedName), useFile, true, isAccessible) == null } -> null
       else -> error
     }
   }
 
   private val ERR = ErrorWithFixes("-")
 
-  private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean,
-                          isAccessible: (useModule: PsiJavaModule, packageName: String, targetModule: PsiJavaModule, useModuleName: String, module: Module?) -> Boolean): ErrorWithFixes? {
-    val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
+  private fun checkAccess(target: TargetModuleInfo, place: PsiFileSystemItem, quick: Boolean,
+                          isAccessible: (ModuleAccessInfo) -> Boolean): ErrorWithFixes? {
     val useModule = JavaModuleGraphUtil.findDescriptorByElement(place).let { if (it is LightJavaModule) null else it }
-    val module = place.virtualFile?.let { ProjectFileIndex.getInstance(place.project).getModuleForFile(it) }
+    val current = CurrentModuleInfo(useModule, place)
 
-    if (targetModule != null) {
-      if (targetModule == useModule) {
+    if (target.module != null) {
+      if (target.module == current.module) {
         return null
       }
 
-      val targetName = targetModule.name
-      val useName = useModule?.name ?: ALL_UNNAMED
-
-      if (useModule == null) {
-        val origin = targetModule.containingFile?.virtualFile
-        if (origin == null || module == null ||
-            ModuleRootManager.getInstance(module).fileIndex.getOrderEntryForFile(origin) !is JdkOrderEntry) {
+      if (current.module == null) {
+        val origin = target.module.containingFile?.virtualFile
+        if (origin == null || current.jpaModule == null ||
+            ModuleRootManager.getInstance(current.jpaModule).fileIndex.getOrderEntryForFile(origin) !is JdkOrderEntry) {
           return null  // a target is not on the mandatory module path
         }
 
-        if (targetName.startsWith("java.") &&
-            targetName != PsiJavaModule.JAVA_BASE &&
-            !inAddedModules(module, targetName) &&
-            !hasUpgrade(module, targetName, packageName, place) &&
-            !accessibleFromLoadedModules(module, targetName, place, isAccessible, packageName, targetModule, useName)) {
+        if (target.module.name.startsWith("java.") &&
+            target.module.name != PsiJavaModule.JAVA_BASE &&
+            !inAddedModules(current.jpaModule, target.module.name) &&
+            !hasUpgrade(current.jpaModule, target.module.name, target.packageName, place) &&
+            !accessibleFromLoadedModules(current, target, isAccessible)) {
           return if (quick) ERR
           else ErrorWithFixes(
-            JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
-            listOf(AddModulesOptionFix(module, targetName).asIntention()))
+            JavaErrorBundle.message("module.access.not.in.graph", target.packageName, target.module.name),
+            listOf(AddModulesOptionFix(current.jpaModule, target.module.name).asIntention()))
         }
       }
 
-      if (targetModule !is LightJavaModule &&
-          !JavaModuleGraphUtil.exports(targetModule, packageName, useModule) &&
-          (module == null || !inAddedExports(module, targetName, packageName, useName)) &&
-          (module == null || !isPatchedModule(targetName, module, place))) {
+      if (target.module !is LightJavaModule &&
+          !JavaModuleGraphUtil.exports(target.module, target.packageName, current.module) &&
+          (current.jpaModule == null || !inAddedExports(current.jpaModule, target.module.name, target.packageName, current.name)) &&
+          (current.jpaModule == null || !isPatchedModule(target.module.name, current.jpaModule, place))) {
         if (quick) return ERR
         val fixes = when {
-          packageName.isEmpty() -> emptyList()
-          targetModule is PsiCompiledElement && module != null ->
-            listOf(AddExportsOptionFix(module, targetName, packageName, useName).asIntention())
-          targetModule !is PsiCompiledElement && useModule != null ->
-            listOf(AddExportsDirectiveFix(targetModule, packageName, useName).asIntention())
+          target.packageName.isEmpty() -> emptyList()
+          target.module is PsiCompiledElement && current.jpaModule != null ->
+            listOf(AddExportsOptionFix(current.jpaModule, target.module.name, target.packageName, current.name).asIntention())
+          target.module !is PsiCompiledElement && current.module != null ->
+            listOf(AddExportsDirectiveFix(target.module, target.packageName, current.name).asIntention())
           else -> emptyList()
         }
-        return when (useModule) {
-          null -> ErrorWithFixes(JavaErrorBundle.message("module.access.from.unnamed", packageName, targetName), fixes)
-          else -> ErrorWithFixes(JavaErrorBundle.message("module.access.from.named", packageName, targetName, useName), fixes)
+        return when (current.module) {
+          null -> ErrorWithFixes(JavaErrorBundle.message("module.access.from.unnamed", target.packageName, target.module.name), fixes)
+          else -> ErrorWithFixes(JavaErrorBundle.message("module.access.from.named", target.packageName, target.module.name, current.name), fixes)
         }
       }
 
-      if (useModule != null &&
-          targetName != PsiJavaModule.JAVA_BASE &&
-          !isAccessible(useModule, packageName, targetModule, useName, module) &&
-          !inAddedReads(useModule, targetModule)) {
+      if (current.module != null &&
+          target.module.name != PsiJavaModule.JAVA_BASE &&
+          !isAccessible(ModuleAccessInfo(current, target)) &&
+          !inAddedReads(current.module, target.module)) {
         return when {
           quick -> ERR
-          PsiNameHelper.isValidModuleName(targetName, useModule) -> ErrorWithFixes(
-            JavaErrorBundle.message("module.access.does.not.read", packageName, targetName, useName),
-            listOf(AddRequiresDirectiveFix(useModule, targetName).asIntention()))
-          else -> ErrorWithFixes(JavaErrorBundle.message("module.access.bad.name", packageName, targetName))
+          PsiNameHelper.isValidModuleName(target.module.name, current.module) -> ErrorWithFixes(
+            JavaErrorBundle.message("module.access.does.not.read", target.packageName, target.module.name, current.name),
+            listOf(AddRequiresDirectiveFix(current.module, target.module.name).asIntention()))
+          else -> ErrorWithFixes(JavaErrorBundle.message("module.access.bad.name", target.packageName, target.module.name))
         }
       }
     }
-    else if (useModule != null) {
-      val autoModule = detectAutomaticModule(target)
-      if ((autoModule == null) || ((!isAccessible(useModule, packageName, autoModule, useModule.name, module) && !inAddedReads(useModule, null)) &&
-                                   !inSameMultiReleaseModule(place, target))
-      ) {
-        return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
+    else if (current.module != null) {
+      val autoModule = TargetModuleInfo(detectAutomaticModule(target), target.packageName)
+      if (autoModule.module == null) {
+        return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", target.packageName, current.name))
+      } else if (!isAccessible(ModuleAccessInfo(current, autoModule)) &&
+                 !inAddedReads(current.module, null) &&
+                 !inSameMultiReleaseModule(current, target)) {
+        return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", target.packageName, current.name))
       }
     }
 
     return null
   }
 
-  private fun accessibleFromLoadedModules(module: Module,
-                                          targetName: String,
-                                          place: PsiFileSystemItem,
-                                          isAccessible: (useModule: PsiJavaModule, packageName: String, targetModule: PsiJavaModule, useModuleName: String, module: Module?) -> Boolean,
-                                          packageName: String,
-                                          targetModule: PsiJavaModule,
-                                          useName: String): Boolean {
-    val modules = vmModulesExecutor.getOrComputeModulesForJdk(module)
+  private fun accessibleFromLoadedModules(current: CurrentModuleInfo,
+                                          target: TargetModuleInfo,
+                                          isAccessible: (ModuleAccessInfo) -> Boolean): Boolean {
+    val jpaModule = current.jpaModule ?: return false
+    val targetModule = target.module ?: return false
+    val modules = vmModulesExecutor.getOrComputeModulesForJdk(jpaModule)
     if (!modules.isEmpty()) {
-      return modules.contains(targetName)
+      return modules.contains(targetModule.name)
     }
     else {
       val root = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<PsiJavaModule, Throwable> {
-        JavaPsiFacade.getInstance(place.project).findModule("java.se", module.moduleWithLibrariesScope)
+        JavaPsiFacade.getInstance(jpaModule.project).findModule("java.se", jpaModule.moduleWithLibrariesScope)
       }
-      return root == null || isAccessible(root, packageName, targetModule, useName, module)
+      return root == null || isAccessible(ModuleAccessInfo(CurrentModuleInfo(root, current.name, jpaModule), target))
     }
   }
 
-  private fun inSameMultiReleaseModule(place: PsiElement, target: PsiElement): Boolean {
-    val placeModule = ModuleUtilCore.findModuleForPsiElement(place) ?: return false
-    val targetModule = ModuleUtilCore.findModuleForPsiElement(target) ?: return false
+  private fun inSameMultiReleaseModule(current: ModuleInfo, target: ModuleInfo): Boolean {
+    val placeModule = current.jpaModule ?: return false
+    val targetModule = target.jpaModule ?: return false
     if (targetModule.name.endsWith(".$MAIN")) {
       val baseModuleName = targetModule.name.substringBeforeLast(MAIN)
       return javaVersionPattern.matcher(placeModule.name.substringAfter(baseModuleName)).matches()
@@ -203,10 +217,11 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return false
   }
 
-  private fun detectAutomaticModule(target: PsiFileSystemItem): PsiJavaModule? {
-    val project = target.project
-    val m = ProjectFileIndex.getInstance(project).getModuleForFile(target.virtualFile) ?: return null
-    return JavaPsiFacade.getInstance(project).findModule(LightJavaModule.moduleName(m.name), GlobalSearchScope.moduleScope(m))
+  private fun detectAutomaticModule(current: ModuleInfo): PsiJavaModule? {
+    val module = current.jpaModule ?: return null
+    return JavaPsiFacade.getInstance(module.project)
+      .findModule(LightJavaModule.moduleName(module.name),
+                  GlobalSearchScope.moduleScope(module))
   }
 
   private fun hasUpgrade(module: Module, targetName: String, packageName: String, place: PsiFileSystemItem): Boolean {
@@ -335,6 +350,115 @@ internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
           val value = options[idx]
           options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + moduleName else "${value},${moduleName}"
         }
+      }
+    }
+
+  }
+
+  /**
+   * Represents the access details between the current module and the target module.
+   *
+   * @property current The current module.
+   * @property target The target module.
+   */
+  private data class ModuleAccessInfo(val current: CurrentModuleInfo, val target: TargetModuleInfo)
+
+  private interface ModuleInfo {
+    val module: PsiJavaModule?
+    val jpaModule: Module?
+  }
+
+  /**
+   * Represents the details of a current module.
+   *
+   * Note: "name" is not always possible to get from "module".
+   *       For example, "module" can be "java.se", but the name is from the original module.
+   *
+   * @property module The PsiJavaModule instance representing the module.
+   * @property name original module name
+   * @property jpaModule JPA module.
+   */
+  private data class CurrentModuleInfo(override val module: PsiJavaModule?, val name: String, override val jpaModule: Module? = null): ModuleInfo {
+    constructor(use: PsiJavaModule?, element: PsiElement) : this(use, use?.name ?: ALL_UNNAMED,
+                                                                 ModuleUtilCore.findModuleForPsiElement(element))
+  }
+
+  private data class TargetModuleInfo(override val module: PsiJavaModule?, val packageName: String, override val jpaModule: Module? = null): ModuleInfo {
+    companion object {
+      fun of(element: PsiElement, packageName: String): TargetModuleInfo =
+        TargetModuleInfo(JavaModuleGraphUtil.findDescriptorByElement(element), packageName, ModuleUtilCore.findModuleForPsiElement(element))
+    }
+  }
+
+  private class VmModulesExecutor {
+    companion object {
+      private val ourData: MutableMap<String, CompletableFuture<List<String>>> = CollectionFactory.createConcurrentSoftValueMap()
+    }
+
+    /**
+     * Retrieves or computes the list of jigsaw modules available for the specified JDK.
+     *
+     * @param module the intellij module for which to retrieve or compute the list of available jigsaw modules
+     * @return the list of jigsaw modules available for the specified intellij module or
+     *         empty if:
+     *         - the IntelliJ module does not contain a JDK
+     *         - an error has occurred
+     *         - isn't ready yet.
+     */
+    fun getOrComputeModulesForJdk(module: Module): List<String> {
+      val sdk = ModuleRootManager.getInstance(module).sdk ?: return listOf()
+      val homePath = sdk.homePath ?: return listOf()
+      if (sdk.sdkType !is JavaSdk) return listOf()
+      try {
+        return getOrCreate(sdk)
+      }
+      catch (_: InterruptedException) {
+      }
+      catch (_: TimeoutException) {
+      }
+      catch (_: ExecutionException) {
+        ourData[homePath] = CompletableFuture.completedFuture(listOf())
+      }
+      return listOf()
+    }
+
+    private fun getOrCreate(sdk: Sdk): List<String> {
+      val sdkHome = sdk.homePath ?: return listOf()
+      val future = ourData.computeIfAbsent(sdkHome) { CompletableFuture.supplyAsync({ computeModules(sdk) }, AppExecutorUtil.getAppExecutorService()) }
+      if (future.isDone) {
+        // sometimes the timeout may appear, and in order not to block the possibility to get the completion afterwards, it is better to retry
+        val result = future.get(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        if (result != null) {
+          return result
+        } else {
+          ourData.computeIfPresent(sdkHome) { _, value ->
+            if (future != value) return@computeIfPresent value // another thread has already changed the value
+            return@computeIfPresent CompletableFuture.supplyAsync({ computeModules(sdk) }, AppExecutorUtil.getAppExecutorService())
+          }
+        }
+      }
+      return listOf()
+    }
+
+    // when null is returned, it was a timeout
+    private fun computeModules(sdk: Sdk): List<String>? {
+      val vmPath = JavaSdk.getInstance().getVMExecutablePath(sdk)
+      val generalCommandLine = GeneralCommandLine(vmPath).apply {
+        addParameters("--list-modules")
+      }
+      try {
+        val handler = OSProcessHandler(generalCommandLine)
+        val runner = CapturingProcessRunner(handler)
+        val output = runner.runProcess(1_000)
+        if (output.isTimeout) {
+          return null
+        }
+        else {
+          return output.stdout.lineSequence().map { line -> line.substringBefore('@') }.toList()
+        }
+      }
+      catch (e: ProcessNotCreatedException) {
+        return null
       }
     }
   }
