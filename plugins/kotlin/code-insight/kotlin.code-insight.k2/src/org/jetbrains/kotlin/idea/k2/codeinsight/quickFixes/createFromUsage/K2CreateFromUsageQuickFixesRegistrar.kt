@@ -8,10 +8,11 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
 class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
 
-    private val createFunctionFromArgumentTypeMismatch =
+    private val createFunctionFromArgumentTypeMismatch: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ArgumentTypeMismatch> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
             val psi = diagnostic.psi
             val callExpression = PsiTreeUtil.getParentOfType(psi, KtCallExpression::class.java)
@@ -21,8 +22,31 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
                 buildRequestsAndActions(callExpression)
             }
         }
+    private val createFunctionFromTooManyArguments: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.TooManyArguments> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.TooManyArguments ->
+            val psi = diagnostic.psi
+            val callExpression = PsiTreeUtil.getParentOfType(psi, KtCallExpression::class.java)
+            if (callExpression == null) {
+                listOf()
+            } else {
+                buildRequestsAndActions(callExpression)
+            }
+        }
+    private val createFunctionFromMissingArguments: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.NoValueForParameter> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NoValueForParameter ->
+            val psi = diagnostic.psi
+            val expression = if (psi is KtQualifiedExpression) psi.selectorExpression else psi
+            val callExpression = PsiTreeUtil.getParentOfType(expression, KtCallExpression::class.java, false)
+            if (callExpression == null) {
+                listOf()
+            } else {
+                buildRequestsAndActions(callExpression)
+            }
+        }
 
     override val list: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(createFunctionFromArgumentTypeMismatch)
+        registerFactory(createFunctionFromTooManyArguments)
+        registerFactory(createFunctionFromMissingArguments)
     }
 }

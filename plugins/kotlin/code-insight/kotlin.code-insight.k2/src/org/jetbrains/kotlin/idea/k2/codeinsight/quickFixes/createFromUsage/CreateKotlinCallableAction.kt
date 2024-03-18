@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.lang.java.request.CreateExecutableFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -13,6 +14,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -23,8 +26,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
 
 /**
- * This class is an IntentionAction that creates Kotlin callables based on the given [request]. In order to create Kotlin
- * callables from Java/Groovy/... (i.e., cross language support), we can create a request from the usage in each language
+ * This class is an IntentionAction that creates Kotlin callables based on the given [request]. To create Kotlin
+ * callables from Java/Groovy/... (i.e., cross-language support), we can create a request from the usage in each language
  * like Java and Groovy. See [CreateMethodFromKotlinUsageRequest] for the request from the usage in Kotlin.
  */
 internal class CreateKotlinCallableAction(
@@ -33,7 +36,7 @@ internal class CreateKotlinCallableAction(
     private val abstract: Boolean,
     private val needFunctionBody: Boolean,
     private val myText: String,
-    private val pointerToContainer: SmartPsiElementPointer<*>,
+    pointerToContainer: SmartPsiElementPointer<*>,
 ) : CreateKotlinElementAction(request, pointerToContainer), JvmGroupIntentionAction {
     private val candidatesOfParameterNames: List<Collection<String>> = request.expectedParameters.map { it.semanticNames }
 
@@ -60,8 +63,9 @@ internal class CreateKotlinCallableAction(
     override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-        return super.isAvailable(project, editor, file) && PsiNameHelper.getInstance(project)
-            .isIdentifier(request.methodName) && callableDefinitionAsString != null
+        return super.isAvailable(project, editor, file)
+                && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
+                && callableDefinitionAsString != null
     }
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
@@ -105,8 +109,8 @@ internal class CreateKotlinCallableAction(
             request.expectedParameters.map { expectedParameter ->
                 expectedParameter.expectedTypes.map {
                     val parameterType =
-                    if (it is ExpectedKotlinType) {
-                        it.theType.toKtType(container)?.withNullability(it.nullability)
+                    if (it is ExpectedTypeWithNullability) {
+                        toKtTypeWithNullability(it, container)
                     }
                     else{
                         it.theType.toKtType(container)
@@ -121,24 +125,17 @@ internal class CreateKotlinCallableAction(
         val container = getContainer() ?: return emptyList()
         return analyze(container) {
             request.returnType.mapNotNull { returnType ->
-                val returnKtType = returnType.theType.toKtType(container) ?: return@mapNotNull null
-                returnKtType.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
+                val returnKtType = if (returnType is ExpectedTypeWithNullability) toKtTypeWithNullability(returnType, container) else returnType.theType.toKtType(container)
+                if (returnKtType == null || returnKtType == builtinTypes.UNIT) null
+                else returnKtType.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
             }
         }
     }
 
     private fun buildCallableAsString(): String? {
-        if (call == null) return null
-        val container = getContainer() ?: return null
-        val modifierListAsString = if (request.modifiers.isEmpty() && (request as? CreateMethodFromKotlinUsageRequest)?.isForCompanion != true)
-            CreateFromUsageUtil.computeDefaultVisibilityAsString(container,
-                                                                 isAbstract == true,
-                                                                 isExtension = false,
-                                                                 isConstructor = false,
-                                                                 originalElement = call
-            )
-        else
-            request.modifiers.joinToString(
+        if (call == null || getContainer() == null) return null
+        val modifierListAsString =
+            request.modifiers.filter{it != JvmModifier.PUBLIC}.joinToString(
                 separator = " ",
                 transform = { modifier -> CreateFromUsageUtil.modifierToString(modifier) })
         return buildString {
@@ -150,6 +147,9 @@ internal class CreateKotlinCallableAction(
             if (isNotEmpty()) append(" ")
             append(KtTokens.FUN_KEYWORD)
             append(" ")
+
+            val (receiver, receiverTypeText) = if (request is CreateMethodFromKotlinUsageRequest) CreateKotlinCallableActionTextBuilder.renderReceiver(request) else "" to ""
+            append(renderTypeParameterDeclarations(request, receiver, receiverTypeText));
             append(request.methodName)
             append("(")
             append(renderParameterList())
@@ -157,6 +157,20 @@ internal class CreateKotlinCallableAction(
             candidatesOfRenderedReturnType.firstOrNull()?.let { append(": $it") }
             if (needFunctionBody) append(" {}")
         }
+    }
+
+    private fun renderTypeParameterDeclarations(request: CreateMethodRequest, receiver:String, receiverTypeText: String): String {
+        if (request is CreateMethodFromKotlinUsageRequest && request.receiverExpression != null && request.isExtension) {
+            val t = if (receiver.isNotEmpty()) "$receiver " else receiver
+            analyze (request.receiverExpression) {
+                val receiverSymbol = request.receiverExpression.resolveExpression()
+                if (receiverSymbol is KtCallableSymbol && receiverSymbol.returnType is KtTypeParameterType) {
+                    return ("<$receiverTypeText> $t")
+                }
+            }
+            return t
+        }
+        return ""
     }
 
     private fun renderParameterList(): String {

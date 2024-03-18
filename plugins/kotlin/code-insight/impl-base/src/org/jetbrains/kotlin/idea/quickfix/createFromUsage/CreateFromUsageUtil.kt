@@ -168,7 +168,7 @@ object CreateFromUsageUtil {
         return declarationInPlace
     }
 
-    fun computeVisibilityModifier(expression: KtCallExpression): KtModifierKeywordToken? {
+    fun patchVisibilityForInlineFunction(expression: KtCallExpression): KtModifierKeywordToken? {
         val parentFunction = expression.getStrictParentOfType<KtNamedFunction>()
         return if (parentFunction?.hasModifier(KtTokens.INLINE_KEYWORD) == true) {
             when {
@@ -181,23 +181,22 @@ object CreateFromUsageUtil {
         }
     }
 
-    fun computeDefaultVisibilityAsString(
+    fun computeDefaultVisibilityAsJvmModifier(
       containingElement: PsiElement,
       isAbstract: Boolean,
       isExtension: Boolean,
       isConstructor: Boolean,
       originalElement: PsiElement
-    ): String {
-        val modifier = if (isAbstract) null
-        else if (containingElement is KtClassOrObject
-            && !(containingElement is KtClass && containingElement.isInterface())
-            && containingElement.isAncestor(originalElement)
+    ): JvmModifier? {
+        return if (isAbstract) null
+        else if ((containingElement is KtClassOrObject || containingElement is PsiClass)
+            && (isExtension || !(containingElement is KtClass && containingElement.isInterface() || containingElement is PsiClass && containingElement.isInterface))
+            && (containingElement.isAncestor(originalElement) || isExtension && containingElement.containingFile == originalElement.containingFile)
             && !isConstructor
         ) JvmModifier.PRIVATE
         else if (isExtension) {
             if (containingElement is KtFile && containingElement.isScript()) null else JvmModifier.PRIVATE
         } else null
-        return modifierToString(modifier)
     }
 
     private val modifierToKotlinToken: Map<JvmModifier, KtModifierKeywordToken> = mapOf(

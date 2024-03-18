@@ -1,4 +1,4 @@
-// "Create member function 'J.foo'" "true"
+// "/(Create member function 'J.foo')|(Create method 'foo' in 'J')/" "true"
 // ERROR: Unresolved reference: foo
 
 fun test() {

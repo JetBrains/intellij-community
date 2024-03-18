@@ -45,7 +45,7 @@ internal class JavaFieldRenderer(
 
   private val helper = JavaCreateFieldFromUsageHelper() // TODO get rid of it
   private val javaUsage = request as? CreateFieldFromJavaUsageRequest
-  private val expectedTypes = extractExpectedTypes(project, request.fieldType).toTypedArray()
+  private val expectedTypes = extractExpectedTypes(project, request.fieldType, targetClass).toTypedArray()
 
   private val modifiersToRender: Collection<JvmModifier>
     get() {

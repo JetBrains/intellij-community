@@ -8,6 +8,7 @@ import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -19,6 +20,7 @@ internal class CreateMethodFromKotlinUsageRequest (
     private val functionCall: KtCallExpression,
     modifiers: Collection<JvmModifier>,
     val receiverExpression: KtExpression?,
+    val receiverType: KtType?, // (in case receiverExpression is null) it can be notnull when there's implicit receiver: `blah { unknownFunc() }`
     val isExtension: Boolean,
     val isAbstractClassOrInterface: Boolean,
     val isForCompanion: Boolean

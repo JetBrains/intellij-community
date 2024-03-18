@@ -36,17 +36,12 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         return when (request) {
             is CreateMethodFromKotlinUsageRequest -> {
-                val isExtension = request.isExtension
-                if (isExtension) {
+                if (request.isExtension) {
                     container = container.containingKtFile
                 }
-                val actionText = CreateKotlinCallableActionTextBuilder(
-                    KotlinBundle.message("text.function"),
-                    request.methodName,
-                    request.receiverExpression,
-                    request.isAbstractClassOrInterface,
-                    isExtension = isExtension,
-                ).build()
+                val actionText = CreateKotlinCallableActionTextBuilder.build(
+                    KotlinBundle.message("text.function"), request
+                )
                 listOf(
                     CreateKotlinCallableAction(
                         request = request,

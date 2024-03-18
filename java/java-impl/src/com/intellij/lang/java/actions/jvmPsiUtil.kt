@@ -1,14 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
-import com.intellij.codeInsight.ExpectedTypeInfo
+import com.intellij.codeInsight.*
 import com.intellij.codeInsight.ExpectedTypesProvider.createInfo
-import com.intellij.codeInsight.TailTypes
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.request.ExpectedJavaType
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.lang.jvm.actions.ExpectedTypeWithNullability
 import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
@@ -57,17 +57,34 @@ internal val visibilityModifiers: Set<JvmModifier> = setOf(
   JvmModifier.PRIVATE
 )
 
-internal fun extractExpectedTypes(project: Project, expectedTypes: ExpectedTypes): List<ExpectedTypeInfo> {
-  return expectedTypes.mapNotNull {
-    toExpectedTypeInfo(project, it)
+internal fun extractExpectedTypes(project: Project, expectedTypes: ExpectedTypes, context:PsiElement): List<ExpectedTypeInfo> {
+  return expectedTypes.map {
+    toExpectedTypeInfo(project, it, context)
   }
 }
 
-private fun toExpectedTypeInfo(project: Project, expectedType: ExpectedType): ExpectedTypeInfo? {
+private fun toExpectedTypeInfo(project: Project, expectedType: ExpectedType, context: PsiElement): ExpectedTypeInfo {
   if (expectedType is ExpectedJavaType) return expectedType.info
   val helper = JvmPsiConversionHelper.getInstance(project)
-  val psiType = helper.convertType(expectedType.theType) ?: return null
+  var psiType = helper.convertType(expectedType.theType)
+  if (expectedType is ExpectedTypeWithNullability) {
+    psiType =
+    when (expectedType.nullability) {
+      Nullability.NOT_NULL -> annotate(psiType, NullableNotNullManager.getInstance(project).defaultNotNull, project, context)
+      Nullability.NULLABLE -> annotate(psiType, NullableNotNullManager.getInstance(project).defaultNullable, project, context)
+      Nullability.UNKNOWN -> psiType
+    }
+  }
   return createInfo(psiType, expectedType.theKind.infoKind(), psiType, TailTypes.noneType())
+}
+
+private fun annotate(psiType: PsiType,
+                     annoFqn: String,
+                     project: Project,
+                     context: PsiElement): PsiType {
+  return if (AnnotationUtil.isAnnotatingApplicable(context, annoFqn) && psiType !is PsiPrimitiveType)
+    psiType.annotate(TypeAnnotationProvider.Static.create(arrayOf(JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@"+annoFqn, context))))
+  else psiType
 }
 
 @ExpectedTypeInfo.Type

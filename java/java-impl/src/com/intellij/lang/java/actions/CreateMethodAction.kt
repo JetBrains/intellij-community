@@ -111,8 +111,8 @@ private class JavaMethodRenderer(
       method.modifierList.addAnnotation(annotation.qualifiedName)
     }
 
-    val withoutBody = abstract || targetClass.isInterface && JvmModifier.STATIC !in requestedModifiers
-    if (withoutBody) method.body?.delete()
+    val shouldHaveBody = !abstract && (!targetClass.isInterface || JvmModifier.STATIC in requestedModifiers)
+    if (!shouldHaveBody) method.body?.delete()
 
     return method
   }

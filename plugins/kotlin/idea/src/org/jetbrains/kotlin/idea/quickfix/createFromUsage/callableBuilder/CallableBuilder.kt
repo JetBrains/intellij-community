@@ -169,8 +169,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
         _currentFileModule = config.currentFile.analyzeWithAllCompilerChecks().moduleDescriptor
     }
 
-    fun computeTypeCandidates(typeInfo: TypeInfo): List<TypeCandidate> =
-        typeCandidates.getOrPut(typeInfo) { typeInfo.getPossibleTypes(this).map { TypeCandidate(it) } }
+    fun computeTypeCandidates(typeInfo: TypeInfo): List<TypeCandidate> {
+        return typeCandidates.getOrPut(typeInfo) { typeInfo.getPossibleTypes(this).map { TypeCandidate(it) } }
+    }
 
     private fun computeTypeCandidates(
         typeInfo: TypeInfo,
@@ -494,13 +495,13 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     val visibilityKeyword = modifierList.visibilityModifierType()
                     if (visibilityKeyword == null) {
                         val defaultVisibility =
-                            CreateFromUsageUtil.computeDefaultVisibilityAsString(
+                            CreateFromUsageUtil.modifierToString(CreateFromUsageUtil.computeDefaultVisibilityAsJvmModifier(
                                 containingElement,
                                 callableInfo.isAbstract,
                                 isExtension,
                                 (callableInfo.kind == CallableKind.CONSTRUCTOR),
                                 originalElement
-                            )
+                            ))
                         append(defaultVisibility)
                         if (isNotEmpty()) append(" ")
                     }

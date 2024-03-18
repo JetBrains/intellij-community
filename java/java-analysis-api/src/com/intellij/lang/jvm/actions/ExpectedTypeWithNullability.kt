@@ -1,26 +1,25 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.lang.jvm.actions
 
-import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.codeInsight.Nullability
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 
-internal class ExpectedKotlinType(val type: JvmType, val nullability: KtTypeNullability) : ExpectedType {
+class ExpectedTypeWithNullability(val type: JvmType, val nullability: Nullability) : ExpectedType {
     override fun getTheType(): JvmType = type
 
     override fun getTheKind(): ExpectedType.Kind = ExpectedType.Kind.EXACT
 
     companion object {
-        fun createExpectedKotlinType(type: JvmType, nullability: KtTypeNullability): ExpectedKotlinType = ExpectedKotlinType(type, nullability)
+        fun createExpectedKotlinType(type: JvmType, nullability: Nullability): ExpectedTypeWithNullability = ExpectedTypeWithNullability(type, nullability)
 
         /**
          * A placeholder to denote "This type is invalid". Only thing this type does is returning `false` for `isValid()` function.
          */
-        val INVALID_TYPE: ExpectedKotlinType = createExpectedKotlinType(object : PsiType(emptyArray()) {
+        val INVALID_TYPE: ExpectedTypeWithNullability = createExpectedKotlinType(object : PsiType(emptyArray()) {
             override fun <A : Any?> accept(visitor: PsiTypeVisitor<A>): A {
                 return visitor.visitType(PsiTypes.nullType())
             }
@@ -36,6 +35,6 @@ internal class ExpectedKotlinType(val type: JvmType, val nullability: KtTypeNull
             override fun getResolveScope(): GlobalSearchScope? = null
 
             override fun getSuperTypes(): Array<PsiType> = emptyArray()
-        }, KtTypeNullability.UNKNOWN)
+        }, Nullability.UNKNOWN)
     }
 }

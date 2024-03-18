@@ -417,8 +417,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     private fun findActionWithText(text: String): IntentionAction? {
-        val intentions = myFixture.availableIntentions.filter { it.text == text }
-        if (intentions.isNotEmpty()) return intentions.first()
+        val pattern = IntentionActionNamePattern(text)
+        val intention = pattern.findActionByPattern(myFixture.availableIntentions, false)
+        if (intention != null) return intention
 
         // Support warning suppression
         val caretOffset = myFixture.caretOffset
