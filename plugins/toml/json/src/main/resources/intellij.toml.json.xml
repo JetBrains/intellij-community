@@ -3,6 +3,13 @@
         <plugin id="com.intellij.modules.json"/>
     </dependencies>
 
+    <extensionPoints>
+        <extensionPoint
+            qualifiedName="org.toml.ide.json.tomlJsonSchemaCompletionFileFilter"
+            interface="org.toml.ide.json.TomlJsonSchemaCompletionFileFilter"
+            dynamic="true"/>
+    </extensionPoints>
+
     <extensions defaultExtensionNs="com.intellij">
         <completion.contributor order="last" language="TOML" id="TomlJsonSchema"
                                 implementationClass="org.toml.ide.json.TomlJsonSchemaCompletionContributor"/>
