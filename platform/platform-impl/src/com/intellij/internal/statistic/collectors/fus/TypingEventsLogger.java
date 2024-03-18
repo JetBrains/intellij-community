@@ -24,12 +24,13 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 public final class TypingEventsLogger extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 8);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.typing", 9);
 
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
   private static final StringEventField TOOL_WINDOW =
@@ -39,13 +40,33 @@ public final class TypingEventsLogger extends CounterUsagesCollector {
   private static final IntEventField LATENCY_MAX = EventFields.Int("latency_max_ms");
   private static final IntEventField LATENCY_90 = EventFields.Int("latency_90_ms");
   private static final EventId3<Integer, Integer, FileType> LATENCY = GROUP.registerEvent("latency", LATENCY_MAX, LATENCY_90, EventFields.FileType);
+  private static final EventId2<Language, Language> TYPED_IN_INJECTED =
+    GROUP.registerEvent("typed.in.injected.language", EventFields.Language, EventFields.Language,
+                        "Logs typing when the first language is the original language and the second language is injected language. " +
+                        "In case of multiple carets, logged for each caret individually"
+    );
+  private static final EventId TOO_MANY_INJECTED_EVENTS = GROUP.registerEvent("too.many.injected.events");
 
   private static final EventsRateWindowThrottle ourThrottle =
     new EventsRateWindowThrottle(8000, 60 * 60 * 1000, System.currentTimeMillis());
+  private static final EventsRateWindowThrottle ourInjectedThrottle =
+    new EventsRateWindowThrottle(500, 60 * 60 * 1000, System.currentTimeMillis());
 
   @Override
   public EventLogGroup getGroup() {
     return GROUP;
+  }
+
+  public static void logTypedInInjected(Project project, PsiFile originalFile, PsiFile injectedFile) {
+    if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return;
+
+    EventRateThrottleResult result = ourInjectedThrottle.tryPass(System.currentTimeMillis());
+    if (result == EventRateThrottleResult.ACCEPT) {
+      TYPED_IN_INJECTED.log(project, originalFile.getLanguage(), injectedFile.getLanguage());
+    }
+    else if (result == EventRateThrottleResult.DENY_AND_REPORT) {
+      TOO_MANY_INJECTED_EVENTS.log(project);
+    }
   }
 
   public static final class TypingEventsListener implements AnActionListener {

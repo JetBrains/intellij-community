@@ -12,6 +12,7 @@ import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.internal.statistic.collectors.fus.TypingEventsLogger;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -194,6 +195,9 @@ public final class TypedHandler extends TypedActionHandlerBase {
         FileType fileType = getFileType(file, editor);
 
         setTypedEvent(editor, charTyped, TypedEvent.TypedHandlerPhase.BEFORE_CHAR_TYPED);
+        if (editor != originalEditor) {
+          TypingEventsLogger.logTypedInInjected(project, originalFile, file);
+        }
         TypedDelegateFunc func = (delegate, c1, p1, e1, f1) -> delegate.beforeCharTyped(c1, p1, e1, f1, fileType);
         if (callDelegates(func, charTyped, project, editor, file)) {
           return;
