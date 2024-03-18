@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.VcsLogProvider
@@ -12,23 +13,20 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, heads: Set<Int>,
-                private val storage: VcsLogStorage, providers: Map<VirtualFile, VcsLogProvider>) : VcsLogRefs {
+class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val storage: VcsLogStorage,
+                private val providers: Map<VirtualFile, VcsLogProvider>) : VcsLogRefs {
   private val bestRefForHead: Int2ObjectMap<VcsRef> = Int2ObjectOpenHashMap()
   private val rootForHead: Int2ObjectMap<VirtualFile> = Int2ObjectOpenHashMap()
 
-  init {
-    storage.getCommitIds(heads).forEach { (head, commitId) ->
-      val root = commitId.root
-      rootForHead.put(head, root)
+  private fun updateCacheForHead(head: Int, root: VirtualFile) {
+    rootForHead.put(head, root)
 
-      val bestRef = allRefsByRoot[root]!!.refsToCommit(head).minWithOrNull(providers[root]!!.referenceManager.branchLayoutComparator)
-      if (bestRef != null) {
-        bestRefForHead.put(head, bestRef)
-      }
-      else {
-        LOG.debug("No references at head $commitId")
-      }
+    val bestRef = allRefsByRoot[root]!!.refsToCommit(head).minWithOrNull(providers[root]!!.referenceManager.branchLayoutComparator)
+    if (bestRef != null) {
+      bestRefForHead.put(head, bestRef)
+    }
+    else {
+      LOG.debug { "No references at head ${storage.getCommitId(head)}" }
     }
   }
 
@@ -59,7 +57,17 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, heads: Set<
 
     @JvmStatic
     fun createEmptyInstance(storage: VcsLogStorage): RefsModel {
-      return RefsModel(emptyMap(), emptySet(), storage, emptyMap())
+      return create(emptyMap(), emptySet(), storage, emptyMap())
+    }
+
+    @JvmStatic
+    fun create(refs: Map<VirtualFile, CompressedRefs>, heads: Set<Int>, storage: VcsLogStorage,
+               providers: Map<VirtualFile, VcsLogProvider>): RefsModel {
+      val refsModel = RefsModel(refs, storage, providers)
+
+      storage.getCommitIds(heads).forEach { (head, commitId) -> refsModel.updateCacheForHead(head, commitId.root) }
+
+      return refsModel
     }
   }
 }

@@ -34,7 +34,7 @@ open class DataPack internal constructor(refsModel: RefsModel, val permanentGrap
     @JvmStatic
     fun build(commits: List<GraphCommit<Int>>, refs: Map<VirtualFile, CompressedRefs>, providers: Map<VirtualFile, VcsLogProvider>,
               storage: VcsLogStorage, full: Boolean): DataPack {
-      val refsModel = RefsModel(refs, getHeads(commits), storage, providers)
+      val refsModel = RefsModel.create(refs, getHeads(commits), storage, providers)
       val permanentGraph = buildPermanentGraph(commits, refsModel, providers, storage)
 
       return DataPack(refsModel, permanentGraph, providers, full)
@@ -52,7 +52,7 @@ class SmallDataPack private constructor(refsModel: RefsModel, permanentGraph: Pe
               refs: Map<VirtualFile, CompressedRefs>,
               providers: Map<VirtualFile, VcsLogProvider>,
               storage: VcsLogStorage): DataPack {
-      val refsModel = RefsModel(refs, getHeads(commits), storage, providers)
+      val refsModel = RefsModel.create(refs, getHeads(commits), storage, providers)
       val permanentGraph = buildPermanentGraph(commits, refsModel, providers, storage)
 
       return SmallDataPack(refsModel, permanentGraph, providers)
