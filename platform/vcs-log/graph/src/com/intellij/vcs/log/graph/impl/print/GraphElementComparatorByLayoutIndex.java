@@ -43,11 +43,11 @@ public class GraphElementComparatorByLayoutIndex implements Comparator<GraphElem
       if (normalEdge2 == null) return compare2(edge1, new GraphNode(getNotNullNodeIndex(edge2)));
 
       if (normalEdge1.up == normalEdge2.up) {
-        if (getLayoutIndex(normalEdge1.down) != getLayoutIndex(normalEdge2.down)) {
-          return getLayoutIndex(normalEdge1.down) - getLayoutIndex(normalEdge2.down);
+        if (normalEdge1.down < normalEdge2.down) {
+          return -compare2(edge2, new GraphNode(normalEdge1.down));
         }
         else {
-          return normalEdge1.down - normalEdge2.down;
+          return compare2(edge1, new GraphNode(normalEdge2.down));
         }
       }
 
