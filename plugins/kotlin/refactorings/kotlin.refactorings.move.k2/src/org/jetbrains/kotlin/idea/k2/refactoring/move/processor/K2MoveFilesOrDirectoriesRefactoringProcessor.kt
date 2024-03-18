@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
 /**
  * K2 move refactoring processor that moves whole files or sets of files. The main difference between this processor and
@@ -31,8 +31,8 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveDescriptor.
     descriptor.searchReferences,
     descriptor.searchInComments,
     descriptor.searchForText,
-    MoveCallback {  },
-    Runnable {  }
+    MoveCallback { },
+    Runnable { }
 )
 
 class K2MoveFilesHandler : MoveFileHandler() {
@@ -42,10 +42,10 @@ class K2MoveFilesHandler : MoveFileHandler() {
     }
 
     override fun findUsages(
-      psiFile: PsiFile,
-      newParent: PsiDirectory,
-      searchInComments: Boolean,
-      searchInNonJavaFiles: Boolean
+        psiFile: PsiFile,
+        newParent: PsiDirectory,
+        searchInComments: Boolean,
+        searchInNonJavaFiles: Boolean
     ): List<UsageInfo> {
         require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
         return if (psiFile.requiresPackageUpdate) {
@@ -63,26 +63,18 @@ class K2MoveFilesHandler : MoveFileHandler() {
         declarations.forEach { oldToNewMap[it] = it } // to pass files that are moved through MoveFileHandler API
     }
 
-    private val KtFile.requiresPackageUpdate: Boolean get() {
-        val containingDirectory = containingDirectory ?: return true
-        val directoryPkg = JavaDirectoryService.getInstance().getPackage(containingDirectory)
-        return directoryPkg?.kotlinFqName == packageFqName
-    }
-
-    private fun KtFile.updatePackageDirective(destination: PsiDirectory) {
-        val newPackageName = JavaDirectoryService.getInstance().getPackage(destination)?.kotlinFqName ?: return
-        if (newPackageName.isRoot) {
-            packageDirective?.delete()
-        } else {
-            val newPackageDirective = KtPsiFactory(project).createPackageDirective(newPackageName)
-            packageDirective?.replace(newPackageDirective)
+    private val KtFile.requiresPackageUpdate: Boolean
+        get() {
+            val containingDirectory = containingDirectory ?: return true
+            val directoryPkg = JavaDirectoryService.getInstance().getPackage(containingDirectory)
+            return directoryPkg?.kotlinFqName == packageFqName
         }
-    }
 
-    override fun updateMovedFile(file: PsiFile) { }
+    override fun updateMovedFile(file: PsiFile) {}
 
     @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>): Unit = allowAnalysisOnEdt {
-      retargetUsagesAfterMove(usageInfos, oldToNewMap)
+    override fun retargetUsages(usageInfos: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>): Unit = allowAnalysisOnEdt {
+        @Suppress("UNCHECKED_CAST")
+        retargetUsagesAfterMove(usageInfos, oldToNewMap as Map<KtNamedDeclaration, KtNamedDeclaration>)
     }
 }

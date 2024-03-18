@@ -34,8 +34,8 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
  */
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal fun findAllMoveConflicts(
-  descriptor: K2MoveDescriptor.Declarations,
-  usages: List<MoveRenameUsageInfo>
+    descriptor: K2MoveDescriptor.Declarations,
+    usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> = allowAnalysisOnEdt {
     val (fakeTarget, oldToNewMap) = descriptor.createCopyTarget()
     MultiMap<PsiElement, String>().apply {
@@ -48,9 +48,9 @@ internal fun findAllMoveConflicts(
  * Creates a non-physical file that contains the moved elements with all references retargeted.
  * This non-physical file can be used to analyze for conflicts without modifying the file on the disk.
  */
-private fun K2MoveDescriptor.Declarations.createCopyTarget(): Pair<KtFile, Map<PsiElement, PsiElement>> {
+private fun K2MoveDescriptor.Declarations.createCopyTarget(): Pair<KtFile, Map<KtNamedDeclaration, KtNamedDeclaration>> {
     /** Collects physical to non-physical usage-infos. */
-    fun KtFile.collectOldToNewUsageInfos(oldToNewMap: Map<PsiElement, PsiElement>): List<Pair<K2MoveRenameUsageInfo, K2MoveRenameUsageInfo>> {
+    fun KtFile.collectOldToNewUsageInfos(oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>): List<Pair<K2MoveRenameUsageInfo, K2MoveRenameUsageInfo>> {
         return collectDescendantsOfType<KtSimpleNameExpression>().mapNotNull { refExpr ->
             val usageInfo = refExpr.internalUsageInfo
             val referencedElement = (usageInfo as? K2MoveRenameUsageInfo.Source)?.referencedElement ?: return@mapNotNull null
@@ -60,7 +60,8 @@ private fun K2MoveDescriptor.Declarations.createCopyTarget(): Pair<KtFile, Map<P
         }
     }
 
-    val fakeTargetFile = KtPsiFactory.contextual(target.baseDirectory).createFile(target.fileName, "package ${target.pkgName.quoteIfNeeded()}\n")
+    val fakeTargetFile = KtPsiFactory.contextual(target.baseDirectory)
+        .createFile(target.fileName, "package ${target.pkgName.quoteIfNeeded()}\n")
     val oldToNewMap = source.moveInto(fakeTargetFile)
     val usageInfos = fakeTargetFile.collectOldToNewUsageInfos(oldToNewMap)
     usageInfos.forEach { (originalUsageInfo, copyUsageInfo) ->
@@ -69,7 +70,7 @@ private fun K2MoveDescriptor.Declarations.createCopyTarget(): Pair<KtFile, Map<P
         val retargetReference = retargetResult.getCalleeExpressionIfAny() as? KtSimpleNameExpression ?: return@forEach
         // Attach physical usage info to the copied reference.
         // This will make it possible for the conflict checker to check whether a conflict exists before even calling the refactoring.
-        retargetReference.internalUsageInfo  = originalUsageInfo
+        retargetReference.internalUsageInfo = originalUsageInfo
     }
     fakeTargetFile.originalFile = source.elements.firstOrNull()?.containingKtFile ?: error("Moved element is not in a Kotlin file")
     return fakeTargetFile to oldToNewMap
@@ -132,7 +133,7 @@ private fun KtNamedDeclaration.lightIsVisibleTo(usage: PsiElement): Boolean {
  */
 private fun checkVisibilityConflictForNonMovedUsages(
     descriptor: K2MoveDescriptor,
-    oldToNewMap: Map<PsiElement, PsiElement>,
+    oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
     return usages
@@ -140,7 +141,7 @@ private fun checkVisibilityConflictForNonMovedUsages(
         .mapNotNull { usage ->
             val usageElement = usage.element ?: return@mapNotNull null
             val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@mapNotNull null
-            val declarationCopy = oldToNewMap[referencedDeclaration] as? KtNamedDeclaration ?: return@mapNotNull null
+            val declarationCopy = oldToNewMap[referencedDeclaration] ?: return@mapNotNull null
             val isVisible = declarationCopy.kotlinIsVisibleTo(usageElement)
             if (!isVisible) usageElement.createVisibilityConflict(referencedDeclaration) else null
         }.toMultiMap()
