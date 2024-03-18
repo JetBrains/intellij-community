@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.BundleBase
 import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -144,6 +145,11 @@ internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
   }
 
   label.labelFor = component
+}
+
+internal fun createLabel(@NlsContexts.Label text: String): JLabel {
+  // Old version supported \n, but it looks nobody needs that
+  return JLabel(BundleBase.replaceMnemonicAmpersand(text))
 }
 
 private fun getLabelComponentFor(component: JComponent): JComponent? {

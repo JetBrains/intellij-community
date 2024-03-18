@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
@@ -172,7 +171,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun label(label: String, position: LabelPosition): CellImpl<T> {
-    return label(Label(label), position)
+    return label(createLabel(label), position)
   }
 
   override fun label(label: JLabel, position: LabelPosition): CellImpl<T> {

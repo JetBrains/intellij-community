@@ -21,7 +21,6 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
-import com.intellij.ui.dsl.builder.components.TabbedPaneHeader
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
@@ -232,14 +231,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     result.items = items
     cells.add(result)
     return result
-  }
-
-  override fun tabbedPaneHeader(items: Collection<String>): Cell<JBTabbedPane> {
-    val tabbedPaneHeader = TabbedPaneHeader()
-    for (item in items) {
-      tabbedPaneHeader.add(item, JPanel())
-    }
-    return cell(tabbedPaneHeader)
   }
 
   override fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider> {
