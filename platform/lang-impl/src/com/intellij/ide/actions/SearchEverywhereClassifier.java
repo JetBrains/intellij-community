@@ -2,9 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,30 +33,16 @@ public interface SearchEverywhereClassifier {
 
     @Nullable
     public static VirtualFile getVirtualFile(@NotNull Object o) {
-      return SearchEverywhereClassifier.EP_NAME.getExtensionList().stream()
+      return EP_NAME.getExtensionList().stream()
         .map(classifier -> classifier.getVirtualFile(o))
         .filter(Objects::nonNull).findFirst().orElse(null);
     }
 
     @Nullable
     public static Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      return SearchEverywhereClassifier.EP_NAME.getExtensionList().stream()
+      return EP_NAME.getExtensionList().stream()
         .map(classifier -> classifier.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)).filter(Objects::nonNull)
         .findFirst().orElse(null);
-    }
-
-    @Nullable
-    public static GlobalSearchScope getEverywhereScope(@NotNull Project project) {
-      return SearchEverywhereClassifier.EP_NAME.getExtensionList().stream()
-        .map(classifier -> classifier.getEverywhereScope(project))
-        .filter(Objects::nonNull).findFirst().orElse(null);
-    }
-
-    @Nullable
-    public static GlobalSearchScope getProjectScope(@NotNull Project project) {
-      return SearchEverywhereClassifier.EP_NAME.getExtensionList().stream()
-        .map(classifier -> classifier.getProjectScope(project))
-        .filter(Objects::nonNull).findFirst().orElse(null);
     }
   }
 
@@ -73,10 +57,4 @@ public interface SearchEverywhereClassifier {
 
   @Nullable
   Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus);
-
-  @Nullable
-  default GlobalSearchScope getEverywhereScope(@NotNull Project project) { return null; }
-
-  @Nullable
-  default GlobalSearchScope getProjectScope(@NotNull Project project) { return null; }
 }
