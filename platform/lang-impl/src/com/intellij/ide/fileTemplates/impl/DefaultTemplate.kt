@@ -78,9 +78,10 @@ class DefaultTemplate(val name: String,
       return text
     }
 
+    val fullPath = descriptionPath?.let { Path.of(FileTemplatesLoader.TEMPLATES_DIR).resolve(it) }
     try {
-      if (LocalizationUtil.getLocaleFromPlugin() != null && descriptionPath != null) {
-          val localizedPaths = LocalizationUtil.getLocalizedPaths(Path.of(FileTemplatesLoader.TEMPLATES_DIR).resolve(descriptionPath))
+      if (LocalizationUtil.getLocaleFromPlugin() != null && fullPath != null) {
+        val localizedPaths = LocalizationUtil.getLocalizedPaths(fullPath)
           val localizedPathStrings = localizedPaths.map { it.invariantSeparatorsPathString }
           for (path in localizedPathStrings) {
             text = descriptionLoader.apply(path)?.let { Strings.convertLineSeparators(it) }
@@ -90,14 +91,17 @@ class DefaultTemplate(val name: String,
 
       if (text == null) {
         // descriptionPath is null if deprecated constructor is used - in this case descriptionPath doesn't matter
-        text = descriptionLoader.apply(descriptionPath ?: "")?.let { Strings.convertLineSeparators(it) }
+        text = descriptionLoader.apply(fullPath?.invariantSeparatorsPathString ?: "")?.let { Strings.convertLineSeparators(it) }
       }
     }
     catch (e: IOException) {
       logger<DefaultTemplate>().info(e)
     }
-
     descriptionText = java.lang.ref.SoftReference(text)
+
+    if (text == null) {
+      logger<DefaultTemplate>().error("Cannot find file by path: $fullPath")
+    }
     return text ?: ""
   }
 
