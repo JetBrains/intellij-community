@@ -77,6 +77,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     val progressStripe = ProgressStripe(scrollPane, this)
 
     val toolbarComponent = BorderLayoutPanel()
+    frameDiffPreview?.setToolbarVerticalSizeReferent(toolbarComponent)
 
     val filterProgress = searchField?.let { field ->
       object : ProgressBarLoadingDecorator(field, this@ActivityView, 500) {
