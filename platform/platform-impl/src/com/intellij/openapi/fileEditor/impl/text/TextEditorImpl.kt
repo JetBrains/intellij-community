@@ -34,9 +34,10 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
@@ -47,22 +48,30 @@ import kotlin.coroutines.EmptyCoroutineContext
 private val TRANSIENT_EDITOR_STATE_KEY = Key.create<TransientEditorState>("transientState")
 
 open class TextEditorImpl
-@Internal @JvmOverloads constructor(
+@Internal constructor(
   @JvmField protected val project: Project,
   @JvmField protected val file: VirtualFile,
-  provider: TextEditorProvider,
   editor: EditorImpl,
-  @JvmField internal val asyncLoader: AsyncEditorLoader = createAsyncEditorLoader(provider, project, editor, file),
+  @JvmField internal val asyncLoader: AsyncEditorLoader,
 ) : UserDataHolderBase(), TextEditor {
   @Suppress("LeakingThis")
   private val changeSupport = PropertyChangeSupport(this)
   private val component: TextEditorComponent
 
+  constructor(project: Project, file: VirtualFile, provider: TextEditorProvider, editor: EditorImpl)
+    : this(project = project, file = file, editor = editor, asyncLoader = createAsyncEditorLoader(provider, project)) {
+    @Suppress("LeakingThis")
+    asyncLoader.start(
+      textEditor = this,
+      task = asyncLoader.coroutineScope.async(CoroutineName("HighlighterTextEditorInitializer")) {
+        setHighlighterToEditor(project = project, file = file, document = editor.document, editor = editor)
+      },
+    )
+  }
+
   init {
     @Suppress("LeakingThis")
     component = createEditorComponent(project = project, file = file, editor = editor)
-    @Suppress("LeakingThis")
-    asyncLoader.start(this)
     for (customizer in TextEditorCustomizer.EP.extensionList) {
       @Suppress("LeakingThis")
       customizer.customize(this)
@@ -185,25 +194,11 @@ private class TransientEditorState {
 }
 
 @Internal
-fun createAsyncEditorLoader(
-  provider: TextEditorProvider,
-  project: Project,
-  editor: EditorImpl,
-  virtualFile: VirtualFile,
-  task: Deferred<Unit>? = null,
-): AsyncEditorLoader {
-  return AsyncEditorLoader(
-    project = project,
-    provider = provider,
-    coroutineScope = editorLoaderScope(project),
-    editor = editor,
-    virtualFile = virtualFile,
-    task = task
-  )
+fun createAsyncEditorLoader(provider: TextEditorProvider, project: Project): AsyncEditorLoader {
+  return AsyncEditorLoader(project = project, provider = provider, coroutineScope = editorLoaderScope(project))
 }
 
-@Internal
-fun editorLoaderScope(project: Project): CoroutineScope {
+private fun editorLoaderScope(project: Project): CoroutineScope {
   // `openEditorImpl` uses runWithModalProgressBlocking,
   // but an async editor load is performed in the background, out of the `openEditorImpl` call
   val modality = ModalityState.any().asContextElement()

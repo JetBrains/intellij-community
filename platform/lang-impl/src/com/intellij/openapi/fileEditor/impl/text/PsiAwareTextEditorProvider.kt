@@ -44,6 +44,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
+    val asyncLoader = createAsyncEditorLoader(provider = this, project = project)
+
     val effectiveDocument = if (document == null) {
       val fileDocumentManager = serviceAsync<FileDocumentManager>()
       fileDocumentManager.getCachedDocument(file) ?: readActionBlocking {
@@ -73,7 +75,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       val editorDeferred = CompletableDeferred<EditorEx>()
 
-      val task = editorLoaderScope(project).async(CoroutineName("call TextEditorInitializers")) {
+      val task = asyncLoader.coroutineScope.async(CoroutineName("call TextEditorInitializers")) {
         val editorSupplier = suspend { editorDeferred.await() }
         val highlighterReady = suspend { highlighterDeferred.join() }
 
@@ -107,13 +109,16 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
           }
         }
 
-        val psiManager = project.serviceAsync<PsiManager>()
-        val daemonCodeAnalyzer = project.serviceAsync<DaemonCodeAnalyzer>()
-        span("DaemonCodeAnalyzer.restart") {
-          readActionBlocking {
-            daemonCodeAnalyzer.restart(psiManager.findFile(file) ?: return@readActionBlocking)
+        asyncLoader.coroutineScope.launch {
+          val psiManager = project.serviceAsync<PsiManager>()
+          val daemonCodeAnalyzer = project.serviceAsync<DaemonCodeAnalyzer>()
+          span("DaemonCodeAnalyzer.restart") {
+            readActionBlocking {
+              daemonCodeAnalyzer.restart(psiManager.findFile(file) ?: return@readActionBlocking)
+            }
           }
         }
+
         val editor = editorSupplier()
         span("editor languageSupplier set", Dispatchers.EDT) {
           editor.settings.setLanguageSupplier { TextEditorImpl.getDocumentLanguage(editor) }
@@ -128,7 +133,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
           val editor = factory.createMainEditor(effectiveDocument, project, file, highlighter)
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
           editorDeferred.complete(editor)
-          val textEditor = PsiAwareTextEditorImpl(project = project, file = file, provider = this@PsiAwareTextEditorProvider, editor = editor, task = task)
+          val textEditor = PsiAwareTextEditorImpl(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
+          asyncLoader.start(textEditor = textEditor, task = task)
           return textEditor
         }
       }

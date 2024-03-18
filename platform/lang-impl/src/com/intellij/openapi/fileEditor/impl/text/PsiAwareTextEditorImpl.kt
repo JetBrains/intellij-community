@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.Deferred
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.concurrent.CancellationException
@@ -28,34 +27,26 @@ private val LOG = logger<PsiAwareTextEditorImpl>()
 open class PsiAwareTextEditorImpl : TextEditorImpl {
   private var backgroundHighlighter: TextEditorBackgroundHighlighter? = null
 
-  constructor(project: Project, file: VirtualFile, provider: TextEditorProvider) : super(project = project,
-                                                                                         file = file,
-                                                                                         provider = provider,
-                                                                                         editor = createTextEditorImpl(project, file))
+  constructor(project: Project, file: VirtualFile, provider: TextEditorProvider)
+    : super(project = project, file = file, provider = provider, editor = createTextEditorImpl(project, file))
 
-  protected constructor(project: Project,
-                        file: VirtualFile,
-                        provider: TextEditorProvider,
-                        editor: EditorImpl) : super(project = project, file = file, provider = provider, editor = editor)
+  constructor(project: Project, file: VirtualFile, editor: EditorImpl, asyncLoader: AsyncEditorLoader) :
+    super(project = project, file = file, editor = editor, asyncLoader = asyncLoader)
 
-  internal constructor(project: Project,
-                       file: VirtualFile,
-                       provider: TextEditorProvider,
-                       editor: EditorImpl,
-                       task: Deferred<Unit>) : super(project = project, file = file, editor = editor, provider = provider, asyncLoader = createAsyncEditorLoader(provider, project, editor, file, task))
+  protected constructor(project: Project, file: VirtualFile, provider: TextEditorProvider, editor: EditorImpl)
+    : super(project = project, file = file, editor = editor, asyncLoader = createAsyncEditorLoader(provider, project))
 
   override fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {
     val component = PsiAwareTextEditorComponent(project = project, file = file, textEditor = this, editor = editor)
-
-    component.addComponentListener(object: ComponentAdapter() {
+    component.addComponentListener(object : ComponentAdapter() {
       override fun componentShown(e: ComponentEvent?) {
         editor.component.isVisible = true
       }
+
       override fun componentHidden(e: ComponentEvent?) {
         editor.component.isVisible = false
       }
     })
-
     return component
   }
 

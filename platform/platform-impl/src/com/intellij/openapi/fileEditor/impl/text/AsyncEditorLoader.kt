@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
@@ -32,20 +31,11 @@ import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-class AsyncEditorLoader internal constructor(private val project: Project,
-                                             private val provider: TextEditorProvider,
-                                             @JvmField val coroutineScope: CoroutineScope,
-                                             editor: EditorImpl,
-                                             virtualFile: VirtualFile, task: Deferred<Unit>?) {
-  private val tasks: List<Deferred<Unit>>
-
-  init {
-    val textEditorInit = coroutineScope.async(CoroutineName("HighlighterTextEditorInitializer")) {
-      setHighlighterToEditor(project = project, file = virtualFile, document = editor.document, editor = editor)
-    }
-    tasks = if (task == null) java.util.List.of(textEditorInit) else java.util.List.of(textEditorInit, task)
-  }
-
+class AsyncEditorLoader internal constructor(
+  private val project: Project,
+  private val provider: TextEditorProvider,
+  @JvmField val coroutineScope: CoroutineScope
+) {
   /**
    * [delayedActions] contains either:
    * - empty list: the editor was not loaded
@@ -135,11 +125,11 @@ class AsyncEditorLoader internal constructor(private val project: Project,
   // executed in the same EDT task where TextEditorImpl is created
   @Internal
   @RequiresEdt
-  fun start(textEditor: TextEditorImpl) {
+  fun start(textEditor: TextEditorImpl, task: Deferred<*>) {
     val editor = textEditor.editor
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      startInTests(tasks = tasks)
+      startInTests(task = task)
       return
     }
 
@@ -150,7 +140,7 @@ class AsyncEditorLoader internal constructor(private val project: Project,
         addUi = textEditor.component::addLoadingDecoratorUi
       )
       // await instead of join to get errors here
-      tasks.awaitAll()
+      task.await()
 
       indicatorJob.cancel()
 
@@ -174,9 +164,9 @@ class AsyncEditorLoader internal constructor(private val project: Project,
     }
   }
 
-  private fun startInTests(tasks: List<Deferred<*>>) {
+  private fun startInTests(task: Deferred<*>) {
     runWithModalProgressBlocking(project, "") {
-      tasks.awaitAll()
+      task.await()
     }
     markLoadedAndExecuteDelayedActions()
   }
