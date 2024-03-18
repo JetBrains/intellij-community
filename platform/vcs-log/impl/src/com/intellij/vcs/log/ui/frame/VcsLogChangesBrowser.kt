@@ -136,6 +136,10 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     )
   }
 
+  override fun createLastToolbarActions(): List<AnAction> {
+    return emptyList() // do not duplicate 'ChangesView.GroupBy' group
+  }
+
   override fun createPopupMenuActions(): List<AnAction> {
     return ContainerUtil.append(
       super.createPopupMenuActions(),
