@@ -7,16 +7,19 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.containers.Interner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -34,8 +37,10 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
+import java.util.function.Consumer
 import kotlin.concurrent.Volatile
 
 class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService() {
@@ -63,7 +68,6 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
     registerBundles(fireEvents = true)
   }
 
-  @OptIn(IntellijInternalApi::class)
   private fun registerBundles(fireEvents: Boolean) {
     registrationLock.lock()
     try {
@@ -391,3 +395,46 @@ internal fun discoverBuiltinBundles(builtinBundlesSettings: TextMateBuiltinBundl
     return emptyList()
   }
 }
+
+private fun registerBundlesInParallel(
+  scope: CoroutineScope,
+  bundlesToLoad: List<TextMateBundleToLoad>,
+  registrar: suspend (TextMateBundleToLoad) -> Boolean,
+  registrationFailed: Consumer<TextMateBundleToLoad>? = null,
+) {
+  fun handleError(bundleToLoad: TextMateBundleToLoad, t: Throwable? = null) {
+    if (registrationFailed == null || ApplicationManager.getApplication().isHeadlessEnvironment) {
+      LOG.error("Cannot load builtin textmate bundle", t, bundleToLoad.toString())
+    }
+    else {
+      scope.launch(Dispatchers.EDT) {
+        registrationFailed.accept(bundleToLoad)
+      }
+    }
+  }
+
+  val initializationJob = scope.launch {
+    for (bundleToLoad in bundlesToLoad) {
+      launch {
+        val registered = try {
+          registrar(bundleToLoad)
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          handleError(bundleToLoad, e)
+          null
+        }
+
+        if (registered != null && !registered) {
+          handleError(bundleToLoad)
+        }
+      }
+    }
+  }
+
+  ProgressIndicatorUtils.awaitWithCheckCanceled(initializationJob.asCompletableFuture())
+}
+
+internal data class TextMateBundleToLoad(@JvmField val name: String, @JvmField val path: String)
