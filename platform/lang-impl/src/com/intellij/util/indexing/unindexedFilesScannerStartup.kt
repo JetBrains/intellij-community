@@ -10,7 +10,6 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.util.indexing.IndexDataInitializer.Companion.submitGenesisTask
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.removeCurrentFile
 import com.intellij.util.indexing.UnindexedFilesScanner.LOG
@@ -20,6 +19,9 @@ import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.events.FileIndexingRequest.Companion.updateRequest
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder
 import com.intellij.util.indexing.projectFilter.usePersistentFilesFilter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 
 @JvmField
@@ -31,7 +33,10 @@ internal enum class FirstScanningState {
   REQUESTED, PERFORMED
 }
 
-internal fun scanAndIndexProjectAfterOpen(project: Project, startSuspended: Boolean, indexingReason: String?) {
+internal fun scanAndIndexProjectAfterOpen(project: Project,
+                                          startSuspended: Boolean,
+                                          coroutineScope: CoroutineScope,
+                                          indexingReason: String?) {
   FileBasedIndex.getInstance().loadIndexes()
   (project as UserDataHolderEx).putUserDataIfAbsent(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED)
 
@@ -40,15 +45,19 @@ internal fun scanAndIndexProjectAfterOpen(project: Project, startSuspended: Bool
   val isFilterUpToDate = isIndexableFilesFilterUpToDate(project, filterHolder, dependenciesService)
 
   if (Registry.`is`("full.scanning.on.startup.can.be.skipped") && isFilterUpToDate) {
-    scheduleDirtyFilesScanning(project, startSuspended, indexingReason)
+    scheduleDirtyFilesScanning(project, startSuspended, coroutineScope, indexingReason)
   }
   else {
-    scheduleFullScanning(project, startSuspended, isFilterUpToDate, indexingReason)
+    scheduleFullScanning(project, startSuspended, isFilterUpToDate, coroutineScope, indexingReason)
   }
 }
 
-private fun scheduleFullScanning(project: Project, startSuspended: Boolean, isFilterUpToDate: Boolean, indexingReason: String?) {
-  val someDirtyFilesScheduledForIndexingFuture = submitGenesisTask {
+private fun scheduleFullScanning(project: Project,
+                                 startSuspended: Boolean,
+                                 isFilterUpToDate: Boolean,
+                                 coroutineScope: CoroutineScope,
+                                 indexingReason: String?) {
+  val someDirtyFilesScheduledForIndexingFuture = coroutineScope.async(Dispatchers.IO) {
     clearIndexesForDirtyFiles(project, false)
   }.asCompletableFuture()
 
@@ -62,9 +71,10 @@ private fun isShutdownPerformedForFileBasedIndex(fileBasedIndex: FileBasedIndexI
 
 private fun scheduleDirtyFilesScanning(project: Project,
                                        startSuspended: Boolean,
+                                       coroutineScope: CoroutineScope,
                                        indexingReason: String?) {
   LOG.info("Skipping full scanning on startup because indexable files filter is up-to-date and 'full.scanning.on.startup.can.be.skipped' is set to true")
-  val projectDirtyFilesFuture = submitGenesisTask {
+  val projectDirtyFilesFuture = coroutineScope.async(Dispatchers.IO) {
     clearIndexesForDirtyFiles(project, true)
   }
   UnindexedFilesScanner(project, startSuspended, true, true, listOf(DirtyFilesIndexableFilesIterator(projectDirtyFilesFuture)), null,

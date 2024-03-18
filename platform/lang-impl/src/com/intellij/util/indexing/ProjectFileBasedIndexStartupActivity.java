@@ -12,14 +12,17 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.scanAndIndexProjectAfterOpen;
 
 final class ProjectFileBasedIndexStartupActivity implements StartupActivity.RequiredForSmartMode {
   private final ConcurrentList<Project> myOpenProjects = ContainerUtil.createConcurrentList();
+  private final CoroutineScope myCoroutineScope;
 
-  ProjectFileBasedIndexStartupActivity() {
+  ProjectFileBasedIndexStartupActivity(@NotNull CoroutineScope coroutineScope) {
+    myCoroutineScope = coroutineScope;
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
@@ -58,7 +61,7 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
 
     // schedule dumb mode start after the read action we're currently in
     boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
-    scanAndIndexProjectAfterOpen(project, suspended, "On project open");
+    scanAndIndexProjectAfterOpen(project, suspended, myCoroutineScope, "On project open");
   }
 
   private void onProjectClosing(@NotNull Project project) {
