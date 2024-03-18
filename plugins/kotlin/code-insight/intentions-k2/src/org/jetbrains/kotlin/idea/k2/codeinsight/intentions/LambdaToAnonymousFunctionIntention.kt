@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousFunctionSymbol
@@ -13,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.psi.shouldLambdaParameterBeNamed
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
@@ -25,21 +24,21 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
-internal class LambdaToAnonymousFunctionIntention: KotlinPsiUpdateModCommandIntentionWithContext<KtLambdaExpression, LambdaToAnonymousFunctionIntention.LambdaToFunctionContext>(
-    KtLambdaExpression::class
-) {
+internal class LambdaToAnonymousFunctionIntention :
+    KotlinApplicableModCommandAction<KtLambdaExpression, LambdaToAnonymousFunctionIntention.LambdaToFunctionContext>(KtLambdaExpression::class) {
 
-    class LambdaToFunctionContext(val signature: String, val lambdaArgumentName: Name?)
+    data class LambdaToFunctionContext(
+        val signature: String,
+        val lambdaArgumentName: Name?,
+    )
 
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.lambda.expression.to.anonymous.function")
 
-    override fun getPresentation(
+    override fun getActionName(
         context: ActionContext,
         element: KtLambdaExpression,
-        analyzeContext: LambdaToFunctionContext
-    ): Presentation {
-        return Presentation.of(KotlinBundle.message("convert.to.anonymous.function"))
-    }
+        elementContext: LambdaToFunctionContext,
+    ): String = KotlinBundle.message("convert.to.anonymous.function")
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtLambdaExpression): LambdaToFunctionContext? {
@@ -72,12 +71,12 @@ internal class LambdaToAnonymousFunctionIntention: KotlinPsiUpdateModCommandInte
     }
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtLambdaExpression,
-        preparedContext: LambdaToFunctionContext,
-        updater: ModPsiUpdater
+        elementContext: LambdaToFunctionContext,
+        updater: ModPsiUpdater,
     ) {
-        val resultingFunction = LambdaToAnonymousFunctionUtil.convertLambdaToFunction(element, preparedContext.signature) ?: return
+        val resultingFunction = LambdaToAnonymousFunctionUtil.convertLambdaToFunction(element, elementContext.signature) ?: return
 
         var parent = resultingFunction.parent
         if (parent is KtLabeledExpression) {
@@ -90,6 +89,6 @@ internal class LambdaToAnonymousFunctionIntention: KotlinPsiUpdateModCommandInte
             ?: errorWithAttachment("no argument expression for $argument") {
                 withPsiEntry("lambdaExpression", argument)
             }
-        argument.moveInsideParenthesesAndReplaceWith(replacement, preparedContext.lambdaArgumentName)
+        argument.moveInsideParenthesesAndReplaceWith(replacement, elementContext.lambdaArgumentName)
     }
 }

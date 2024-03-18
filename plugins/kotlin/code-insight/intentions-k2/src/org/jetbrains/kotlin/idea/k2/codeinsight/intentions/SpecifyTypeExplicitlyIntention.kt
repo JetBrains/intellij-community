@@ -4,12 +4,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
@@ -18,8 +17,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.psi.*
 
 internal class SpecifyTypeExplicitlyIntention:
-    KotlinPsiUpdateModCommandIntentionWithContext<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class) {
-
+    KotlinApplicableModCommandAction<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class) {
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableDeclaration> =
         ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
@@ -31,30 +29,36 @@ internal class SpecifyTypeExplicitlyIntention:
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtCallableDeclaration): Boolean {
-        val diagnostics = element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-        return !diagnostics.any { diagnostic ->
-            diagnostic is KtFirDiagnostic.AmbiguousAnonymousTypeInferred
-                    || diagnostic is KtFirDiagnostic.PropertyWithNoTypeNoInitializer
-                    || diagnostic is KtFirDiagnostic.MustBeInitialized
-        }
-    }
+    private fun skip(element: KtCallableDeclaration): Boolean =
+        element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            .any { diagnostic ->
+                diagnostic is KtFirDiagnostic.AmbiguousAnonymousTypeInferred
+                        || diagnostic is KtFirDiagnostic.PropertyWithNoTypeNoInitializer
+                        || diagnostic is KtFirDiagnostic.MustBeInitialized
+            }
 
     override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
 
-    override fun getPresentation(context: ActionContext, element: KtCallableDeclaration, analyzeContext: TypeInfo): Presentation {
-        return Presentation.of(when (element) {
-            is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
-            else -> KotlinBundle.message("specify.type.explicitly")
-        })
+    override fun getActionName(
+        context: ActionContext,
+        element: KtCallableDeclaration,
+        elementContext: TypeInfo,
+    ): String = when (element) {
+        is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
+        else -> KotlinBundle.message("specify.type.explicitly")
     }
 
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtCallableDeclaration): TypeInfo? {
-        return getTypeInfo(element).takeUnless { it.defaultType.isError }
-    }
+    override fun prepareContext(element: KtCallableDeclaration): TypeInfo? =
+        if (skip(element)) null
+        else getTypeInfo(element).takeUnless { it.defaultType.isError }
 
-    override fun invoke(actionContext: ActionContext, element: KtCallableDeclaration, preparedContext: TypeInfo, updater: ModPsiUpdater) {
-        updateType(element, preparedContext, element.project, updater = updater)
+    override fun invoke(
+        context: ActionContext,
+        element: KtCallableDeclaration,
+        elementContext: TypeInfo,
+        updater: ModPsiUpdater,
+    ) {
+        updateType(element, elementContext, element.project, updater = updater)
     }
 }

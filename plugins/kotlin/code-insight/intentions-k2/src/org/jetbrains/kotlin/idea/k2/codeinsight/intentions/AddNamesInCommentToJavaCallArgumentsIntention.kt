@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidKeys
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.NameCommentsByArgument
@@ -18,9 +18,11 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 
 internal class AddNamesInCommentToJavaCallArgumentsIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtCallElement, AddNamesInCommentToJavaCallArgumentsIntention.Context>(KtCallElement::class) {
+    KotlinApplicableModCommandAction<KtCallElement, AddNamesInCommentToJavaCallArgumentsIntention.Context>(KtCallElement::class) {
 
-    class Context(val nameCommentsByArgument: NameCommentsByArgument)
+    data class Context(
+        val nameCommentsByArgument: NameCommentsByArgument,
+    )
 
     override fun getFamilyName(): String = KotlinBundle.message("add.names.in.comment.to.call.arguments")
 
@@ -31,8 +33,13 @@ internal class AddNamesInCommentToJavaCallArgumentsIntention :
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallElement): Context? = getArgumentNameComments(element)?.let { Context(it) }
 
-    override fun invoke(actionContext: ActionContext, element: KtCallElement, preparedContext: Context, updater: ModPsiUpdater) {
-        val nameCommentsMap = preparedContext.nameCommentsByArgument.dereferenceValidKeys()
+    override fun invoke(
+        context: ActionContext,
+        element: KtCallElement,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        val nameCommentsMap = elementContext.nameCommentsByArgument.dereferenceValidKeys()
         val psiFactory = KtPsiFactory(element)
         element.valueArguments.filterIsInstance<KtValueArgument>().forEach { argument ->
             // If the argument already has a name comment (regardless of whether it has the correct argument name), don't add another

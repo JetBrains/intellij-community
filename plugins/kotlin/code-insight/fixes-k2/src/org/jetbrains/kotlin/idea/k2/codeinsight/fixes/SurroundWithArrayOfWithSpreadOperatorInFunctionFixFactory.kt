@@ -19,15 +19,15 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
 
+    private data class ElementContext(
+        val fullyQualifiedArrayOfCall: String,
+        val shortArrayOfCall: String,
+    )
+
     private class SurroundWithArrayModCommandAction(
         element: KtExpression,
         elementContext: ElementContext,
-    ) : KotlinModCommandAction<KtExpression, SurroundWithArrayModCommandAction.ElementContext>(element, elementContext) {
-
-        data class ElementContext(
-            val fullyQualifiedArrayOfCall: String,
-            val shortArrayOfCall: String,
-        ) : KotlinModCommandAction.ElementContext
+    ) : KotlinModCommandAction.ElementBased<KtExpression, ElementContext>(element, elementContext) {
 
         override fun getFamilyName(): String = KotlinBundle.message("surround.with.array.of")
 
@@ -81,7 +81,7 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
         val primitiveType = arrayClassFqNameToPrimitiveType[arrayClassId?.asSingleFqName()?.toUnsafe()]
         val arrayOfCallName = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[primitiveType] ?: ArrayFqNames.ARRAY_OF_FUNCTION
 
-        val elementContext = SurroundWithArrayModCommandAction.ElementContext(
+        val elementContext = ElementContext(
             fullyQualifiedArrayOfCall = "kotlin." + arrayOfCallName.identifier,
             shortArrayOfCall = arrayOfCallName.identifier,
         )

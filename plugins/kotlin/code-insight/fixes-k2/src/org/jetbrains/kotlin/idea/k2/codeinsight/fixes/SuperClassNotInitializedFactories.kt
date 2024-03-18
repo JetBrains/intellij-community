@@ -54,10 +54,14 @@ internal object SuperClassNotInitializedFactories {
         }
     }
 
+    private data class ElementContext(
+        val moveCaretIntoParenthesis: Boolean,
+    )
+
     private class AddParenthesisFix(
         element: KtSuperTypeEntry,
         elementContext: ElementContext,
-    ) : KotlinModCommandAction<KtSuperTypeEntry, AddParenthesisFix.ElementContext>(element, elementContext),
+    ) : KotlinModCommandAction.ElementBased<KtSuperTypeEntry, ElementContext>(element, elementContext),
         HighPriorityAction {
 
         constructor(
@@ -67,10 +71,6 @@ internal object SuperClassNotInitializedFactories {
             element,
             ElementContext(moveCaretIntoParenthesis),
         )
-
-        data class ElementContext(
-            val moveCaretIntoParenthesis: Boolean,
-        ) : KotlinModCommandAction.ElementContext
 
         override fun invoke(
             context: ActionContext,

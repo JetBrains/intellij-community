@@ -21,16 +21,16 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 object ChangeVisibilityFixFactories {
 
+    private data class ElementContext(
+        val elementName: String,
+    )
+
     private class ChangeVisibilityModCommandAction(
         element: KtDeclaration,
         elementContext: ElementContext,
         private val forceUsingExplicitModifier: Boolean,
         private val visibilityModifier: KtModifierKeywordToken,
-    ) : KotlinModCommandAction<KtDeclaration, ChangeVisibilityModCommandAction.ElementContext>(element, elementContext) {
-
-        data class ElementContext(
-            val elementName: String,
-        ) : KotlinModCommandAction.ElementContext
+    ) : KotlinModCommandAction.ElementBased<KtDeclaration, ElementContext>(element, elementContext) {
 
         override fun getFamilyName(): String = KotlinBundle.message(
             if (forceUsingExplicitModifier) "make.0.explicitly" else "make.0",
@@ -92,7 +92,7 @@ object ChangeVisibilityFixFactories {
         return listOf(
             ChangeVisibilityModCommandAction(
                 element = element,
-                elementContext = ChangeVisibilityModCommandAction.ElementContext(elementName),
+                elementContext = ElementContext(elementName),
                 forceUsingExplicitModifier = true,
                 visibilityModifier = KtTokens.PUBLIC_KEYWORD,
             )

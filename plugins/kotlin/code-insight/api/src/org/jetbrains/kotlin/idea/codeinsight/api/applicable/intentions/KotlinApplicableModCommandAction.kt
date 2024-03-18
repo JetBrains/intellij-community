@@ -2,32 +2,40 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions
 
 import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.modcommand.ModCommand
+import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
 /**
  * A Kotlin intention base class for intentions that update some PSI using [ModCommand] APIs.
  */
-abstract class KotlinPsiUpdateModCommandIntention<ELEMENT : KtElement>(
-    elementType: KClass<ELEMENT>
-) : PsiUpdateModCommandAction<ELEMENT>(elementType.java) {
-    final override fun isElementApplicable(element: ELEMENT, context: ActionContext): Boolean {
+abstract class KotlinApplicableModCommandAction<E : KtElement, C : Any>(
+    elementClass: KClass<E>,
+) : KotlinModCommandAction.ClassBased<E, C>(elementClass) {
+
+    override fun stopSearchAt(
+        element: PsiElement,
+        context: ActionContext,
+    ): Boolean = element is KtBlockExpression
+
+    final override fun isElementApplicable(
+        element: E,
+        context: ActionContext,
+    ): Boolean {
         if (!isApplicableByPsi(element)) return false
 
-        val applicabilityRanges = getApplicabilityRange().getApplicabilityRanges(element)
-        if (applicabilityRanges.isEmpty()) return false
         // A KotlinApplicabilityRange should be relative to the element, while `caretOffset` is absolute.
         val relativeCaretOffset = context.offset - element.startOffset
-        if (!applicabilityRanges.any { it.containsOffset(relativeCaretOffset) }) return false
+        val ranges = getApplicabilityRange()
+            .getApplicabilityRanges(element)
+        if (!ranges.any { it.containsOffset(relativeCaretOffset) }) return false
 
-        val applicableByAnalyze = analyze(element) { isApplicableByAnalyze(element) }
-        return applicableByAnalyze
+        return getElementContext(context, element) != null
     }
 
     /**
@@ -35,17 +43,11 @@ abstract class KotlinPsiUpdateModCommandIntention<ELEMENT : KtElement>(
      *
      * Configuration of the applicability range might be as simple as choosing an existing one from `ApplicabilityRanges`.
      */
-    abstract fun getApplicabilityRange(): KotlinApplicabilityRange<ELEMENT>
+    // todo fun getApplicableRanges(element: E): List<E>
+    protected abstract fun getApplicabilityRange(): KotlinApplicabilityRange<E>
 
     /**
      * Whether this tool is applicable to [element] by PSI only. May not use the Analysis API due to performance concerns.
      */
-    open fun isApplicableByPsi(element: ELEMENT): Boolean = true
-
-    /**
-     * Whether this tool is applicable to [element] by performing some resolution with the Analysis API. Any checks which don't require the
-     * Analysis API should instead be implemented in [isApplicableByPsi].
-     */
-    context(KtAnalysisSession)
-    open fun isApplicableByAnalyze(element: ELEMENT): Boolean = true
+    protected open fun isApplicableByPsi(element: E): Boolean = true
 }

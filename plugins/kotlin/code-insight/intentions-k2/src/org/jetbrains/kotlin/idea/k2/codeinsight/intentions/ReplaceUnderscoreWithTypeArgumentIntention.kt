@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.isUnderscoreTypeArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.replaceTypeProjection
@@ -24,8 +24,11 @@ import org.jetbrains.kotlin.psi.KtTypeProjection
 import org.jetbrains.kotlin.types.Variance
 
 internal class ReplaceUnderscoreWithTypeArgumentIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtTypeProjection, ReplaceUnderscoreWithTypeArgumentIntention.Context>(KtTypeProjection::class) {
-    class Context(var updatedTypeProjection: SmartPsiElementPointer<KtTypeProjection>)
+    KotlinApplicableModCommandAction<KtTypeProjection, ReplaceUnderscoreWithTypeArgumentIntention.Context>(KtTypeProjection::class) {
+
+    data class Context(
+        var updatedTypeProjection: SmartPsiElementPointer<KtTypeProjection>,
+    )
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.explicit.type")
 
@@ -56,8 +59,13 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
         return argumentsTypes[resolvedElementIndex]
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtTypeProjection, preparedContext: Context, updater: ModPsiUpdater) {
-        val updatedTypeProjection = preparedContext.updatedTypeProjection.dereference() ?: return
+    override fun invoke(
+        context: ActionContext,
+        element: KtTypeProjection,
+        elementContext: Context,
+        updater: ModPsiUpdater
+    ) {
+        val updatedTypeProjection = elementContext.updatedTypeProjection.dereference() ?: return
         val replacedElement = element.replace(updatedTypeProjection) as? KtElement ?: return
         shortenReferences(replacedElement)
     }

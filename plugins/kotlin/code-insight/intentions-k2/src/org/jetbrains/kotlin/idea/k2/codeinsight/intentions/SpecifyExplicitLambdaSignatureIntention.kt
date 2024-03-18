@@ -6,16 +6,16 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.refactoring.util.getExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.k2.refactoring.util.specifyExplicitLambdaSignature
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 
-internal class SpecifyExplicitLambdaSignatureIntention: KotlinPsiUpdateModCommandIntentionWithContext<KtLambdaExpression, String>(
-    KtLambdaExpression::class
-) {
+internal class SpecifyExplicitLambdaSignatureIntention :
+    KotlinApplicableModCommandAction<KtLambdaExpression, String>(KtLambdaExpression::class) {
+
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("specify.explicit.lambda.signature")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtLambdaExpression> = ApplicabilityRanges.SELF
@@ -29,7 +29,12 @@ internal class SpecifyExplicitLambdaSignatureIntention: KotlinPsiUpdateModComman
         return getExplicitLambdaSignature(element)
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtLambdaExpression, preparedContext: String, updater: ModPsiUpdater) {
-        specifyExplicitLambdaSignature(element, preparedContext)
+    override fun invoke(
+        context: ActionContext,
+        element: KtLambdaExpression,
+        elementContext: String,
+        updater: ModPsiUpdater,
+    ) {
+        specifyExplicitLambdaSignature(element, elementContext)
     }
 }

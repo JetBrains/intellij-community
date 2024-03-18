@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 
 internal class ConvertToBlockBodyIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtDeclarationWithBody, ConvertToBlockBodyContext>(KtDeclarationWithBody::class) {
+    KotlinApplicableModCommandAction<KtDeclarationWithBody, ConvertToBlockBodyContext>(KtDeclarationWithBody::class) {
+
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.block.body")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclarationWithBody> = ApplicabilityRanges.SELF
@@ -29,12 +30,12 @@ internal class ConvertToBlockBodyIntention :
         ConvertToBlockBodyUtils.createContext(element, ShortenReferencesFacility.getInstance(), reformat = true)
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtDeclarationWithBody,
-        preparedContext: ConvertToBlockBodyContext,
-        updater: ModPsiUpdater
+        elementContext: ConvertToBlockBodyContext,
+        updater: ModPsiUpdater,
     ) {
-        ConvertToBlockBodyUtils.convert(element, preparedContext)
+        ConvertToBlockBodyUtils.convert(element, elementContext)
     }
 
     override fun stopSearchAt(element: PsiElement, context: ActionContext): Boolean {

@@ -8,7 +8,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
@@ -23,7 +23,8 @@ import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 internal abstract class AbstractAddAccessorIntention(
     private val addGetter: Boolean,
     private val addSetter: Boolean,
-) : KotlinPsiUpdateModCommandIntention<KtProperty>(KtProperty::class) {
+) : KotlinApplicableModCommandAction<KtProperty, Unit>(KtProperty::class) {
+
     override fun getFamilyName(): String = AddAccessorUtils.familyAndActionName(addGetter, addSetter)
 
     override fun getApplicabilityRange() = applicabilityTarget { ktProperty: KtProperty ->
@@ -50,13 +51,21 @@ internal abstract class AbstractAddAccessorIntention(
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtProperty): Boolean {
-        if (element.annotationEntries.isEmpty()) return true
-        val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return false
-        return symbol.backingFieldSymbol?.hasAnnotation(JVM_FIELD_CLASS_ID) != true
+    override fun prepareContext(element: KtProperty): Unit? {
+        if (element.annotationEntries.isEmpty()) return Unit
+        val symbol = element.getVariableSymbol() as? KtPropertySymbol ?: return null
+
+        val isApplicable = symbol.backingFieldSymbol
+            ?.hasAnnotation(JVM_FIELD_CLASS_ID) != true
+        return isApplicable.asUnit
     }
 
-    override fun invoke(context: ActionContext, element: KtProperty, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtProperty,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         addAccessors(element, addGetter, addSetter, updater::moveCaretTo)
     }
 }

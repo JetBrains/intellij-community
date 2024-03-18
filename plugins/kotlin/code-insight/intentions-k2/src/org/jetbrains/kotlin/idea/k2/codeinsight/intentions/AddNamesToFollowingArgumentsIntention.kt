@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentNames
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.associateArgumentNamesStartingAt
@@ -22,10 +22,12 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
 
 internal class AddNamesToFollowingArgumentsIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtValueArgument, AddNamesToFollowingArgumentsIntention.Context>(KtValueArgument::class),
+    KotlinApplicableModCommandAction<KtValueArgument, AddNamesToFollowingArgumentsIntention.Context>(KtValueArgument::class),
     LowPriorityAction {
 
-    class Context(val argumentNames: Map<SmartPsiElementPointer<KtValueArgument>, Name>)
+    data class Context(
+        val argumentNames: Map<SmartPsiElementPointer<KtValueArgument>, Name>,
+    )
 
     override fun getFamilyName(): String = KotlinBundle.message("add.names.to.this.argument.and.following.arguments")
 
@@ -54,7 +56,12 @@ internal class AddNamesToFollowingArgumentsIntention :
             ?.let { call -> associateArgumentNamesStartingAt(call, element) }
             ?.let(::Context)
 
-    override fun invoke(actionContext: ActionContext, element: KtValueArgument, preparedContext: Context, updater: ModPsiUpdater) {
-        addArgumentNames(preparedContext.argumentNames.dereferenceValidKeys())
+    override fun invoke(
+        context: ActionContext,
+        element: KtValueArgument,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        addArgumentNames(elementContext.argumentNames.dereferenceValidKeys())
     }
 }

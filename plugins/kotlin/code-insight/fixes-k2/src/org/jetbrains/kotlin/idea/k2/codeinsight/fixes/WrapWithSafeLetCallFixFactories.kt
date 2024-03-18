@@ -27,6 +27,12 @@ object WrapWithSafeLetCallFixFactories {
 
     private val LOG = Logger.getInstance(this::class.java)
 
+    private data class ElementContext(
+        val nullableExpressionPointer: SmartPsiElementPointer<KtExpression>,
+        val suggestedVariableName: String,
+        val isImplicitInvokeCallToMemberProperty: Boolean,
+    )
+
     /**
      *  Applicator that wraps a given target expression inside a `let` call on the input `nullableExpression`.
      *
@@ -57,13 +63,7 @@ object WrapWithSafeLetCallFixFactories {
     private class WrapWithSafeLetCallModCommandAction(
         element: KtExpression,
         elementContext: ElementContext,
-    ) : KotlinModCommandAction<KtExpression, WrapWithSafeLetCallModCommandAction.ElementContext>(element, elementContext) {
-
-        data class ElementContext(
-            val nullableExpressionPointer: SmartPsiElementPointer<KtExpression>,
-            val suggestedVariableName: String,
-            val isImplicitInvokeCallToMemberProperty: Boolean,
-        ) : KotlinModCommandAction.ElementContext
+    ) : KotlinModCommandAction.ElementBased<KtExpression, ElementContext>(element, elementContext) {
 
         override fun getFamilyName(): String = KotlinBundle.message("wrap.with.let.call")
 
@@ -239,7 +239,7 @@ object WrapWithSafeLetCallFixFactories {
         // variable explicitly.
         val candidateNames = listOfNotNull(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier, getDeclaredParameterNameForArgument(nullableExpression))
 
-        val elementContext = WrapWithSafeLetCallModCommandAction.ElementContext(
+        val elementContext = ElementContext(
             nullableExpressionPointer = nullableExpression.createSmartPointer(),
             suggestedVariableName = FirKotlinNameSuggester.suggestNameByMultipleNames(candidateNames) { it !in existingNames },
             isImplicitInvokeCallToMemberProperty = isImplicitInvokeCallToMemberProperty,

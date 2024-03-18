@@ -7,8 +7,9 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.descendants
 import com.intellij.psi.util.parents
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -18,7 +19,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.util.takeWhileIsInstance
 
 internal class PutExpressionsOnSeparateLinesIntention :
-  KotlinPsiUpdateModCommandIntention<KtOperationReferenceExpression>(KtOperationReferenceExpression::class) {
+    KotlinApplicableModCommandAction<KtOperationReferenceExpression, Unit>(KtOperationReferenceExpression::class) {
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtOperationReferenceExpression> =
         ApplicabilityRanges.SELF
@@ -34,7 +35,16 @@ internal class PutExpressionsOnSeparateLinesIntention :
 
     override fun getFamilyName(): String = KotlinBundle.message("put.expressions.on.separate.lines")
 
-    override fun invoke(context: ActionContext, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtOperationReferenceExpression) {
+    }
+
+    override fun invoke(
+        context: ActionContext,
+        element: KtOperationReferenceExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         val rootBinaryExpression = element.topmostBinaryExpression() ?: return
         val project = context.project
         val psiFactory = KtPsiFactory(project)

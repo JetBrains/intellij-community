@@ -9,7 +9,7 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.buildStringTemplateForBinaryExpression
@@ -20,13 +20,15 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 internal class ConvertToRawStringTemplateIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtBinaryExpression, ConvertToRawStringTemplateIntention.Context>(KtBinaryExpression::class) {
-    class Context(var replacement: SmartPsiElementPointer<KtStringTemplateExpression>)
+    KotlinApplicableModCommandAction<KtBinaryExpression, ConvertToRawStringTemplateIntention.Context>(KtBinaryExpression::class) {
+
+    data class Context(
+        var replacement: SmartPsiElementPointer<KtStringTemplateExpression>,
+    )
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.concatenation.to.raw.string")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
-
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtBinaryExpression): Context? {
@@ -37,8 +39,13 @@ internal class ConvertToRawStringTemplateIntention :
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
         element.descendantsOfType<KtStringTemplateExpression>().all { it.canBeConvertedToStringLiteral() }
 
-    override fun invoke(actionContext: ActionContext, element: KtBinaryExpression, preparedContext: Context, updater: ModPsiUpdater) {
-        val replaced = preparedContext.replacement.element?.let { element.replaced(it) } ?: return
-        convertToStringLiteral(replaced, actionContext, updater)
+    override fun invoke(
+        context: ActionContext,
+        element: KtBinaryExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        val replaced = elementContext.replacement.element?.let { element.replaced(it) } ?: return
+        convertToStringLiteral(replaced, context, updater)
     }
 }

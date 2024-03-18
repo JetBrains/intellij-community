@@ -7,7 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
@@ -33,8 +33,13 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
  *   else "More"
  */
 internal class WhenToIfIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtWhenExpression, WhenToIfIntention.Context>(KtWhenExpression::class), LowPriorityAction {
-    class Context(val hasNullableSubject: Boolean, val nameCandidatesForWhenSubject: List<String> = emptyList())
+    KotlinApplicableModCommandAction<KtWhenExpression, WhenToIfIntention.Context>(KtWhenExpression::class),
+    LowPriorityAction {
+
+    data class Context(
+        val hasNullableSubject: Boolean,
+        val nameCandidatesForWhenSubject: List<String> = emptyList(),
+    )
 
     context(KtAnalysisSession)
     private fun KtWhenExpression.hasNoElseButUsedAsExpression(): Boolean {
@@ -115,10 +120,15 @@ internal class WhenToIfIntention :
         return Context(isNullableSubject)
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtWhenExpression, preparedContext: Context, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtWhenExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
         val subject = element.subjectExpression
         val temporaryNameForWhenSubject =
-            preparedContext.nameCandidatesForWhenSubject.ifNotEmpty { preparedContext.nameCandidatesForWhenSubject.last() } ?: ""
+            elementContext.nameCandidatesForWhenSubject.ifNotEmpty { elementContext.nameCandidatesForWhenSubject.last() } ?: ""
         val propertyForWhenSubject = if (temporaryNameForWhenSubject.isNotEmpty() && subject != null) {
             buildPropertyForWhenSubject(subject, temporaryNameForWhenSubject)
         } else {
@@ -126,7 +136,7 @@ internal class WhenToIfIntention :
         }
 
         val ifExpressionToReplaceWhen = buildIfExpressionForWhen(
-            element, propertyForWhenSubject?.referenceToProperty ?: subject, preparedContext.hasNullableSubject
+            element, propertyForWhenSubject?.referenceToProperty ?: subject, elementContext.hasNullableSubject
         ) ?: return
 
         val commentSaver = CommentSaver(element)

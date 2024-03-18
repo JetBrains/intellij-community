@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.createArgumentWithoutName
@@ -23,12 +23,13 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class RemoveSingleArgumentNameIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtValueArgument, RemoveSingleArgumentNameIntention.SingleArgumentContext>(KtValueArgument::class) {
+    KotlinApplicableModCommandAction<KtValueArgument, RemoveSingleArgumentNameIntention.SingleArgumentContext>(KtValueArgument::class) {
+
     /**
      * @property anchorArgumentPointer an argument after which the unnamed argument should be placed once the argument name is removed;
      * when the argument should be placed in the beginning of argument list, [anchorArgumentPointer] is null
      */
-    class SingleArgumentContext(
+    data class SingleArgumentContext(
         val anchorArgumentPointer: SmartPsiElementPointer<KtValueArgument>?,
         val isVararg: Boolean,
         val isArrayOfCall: Boolean,
@@ -70,13 +71,18 @@ internal class RemoveSingleArgumentNameIntention :
         )
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtValueArgument, preparedContext: SingleArgumentContext, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtValueArgument,
+        elementContext: SingleArgumentContext,
+        updater: ModPsiUpdater,
+    ) {
         val argumentList = element.parent as? KtValueArgumentList ?: return
 
-        val newArguments = createArgumentWithoutName(element, preparedContext.isVararg, preparedContext.isArrayOfCall)
+        val newArguments = createArgumentWithoutName(element, elementContext.isVararg, elementContext.isArrayOfCall)
         argumentList.removeArgument(element)
         newArguments.asReversed().forEach {
-            argumentList.addArgumentAfter(it, preparedContext.anchorArgumentPointer?.element)
+            argumentList.addArgumentAfter(it, elementContext.anchorArgumentPointer?.element)
         }
     }
 }

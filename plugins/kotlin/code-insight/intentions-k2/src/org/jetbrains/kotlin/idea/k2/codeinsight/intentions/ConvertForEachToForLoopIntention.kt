@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.dereferenceValidPointers
@@ -43,11 +43,9 @@ private val FOR_EACH_INDEXED_CALLABLE_IDS: Set<CallableId> = setOf(
 private typealias ReturnsToReplace = List<SmartPsiElementPointer<KtReturnExpression>>
 
 internal class ConvertForEachToForLoopIntention
-    : KotlinPsiUpdateModCommandIntentionWithContext<KtCallExpression, ConvertForEachToForLoopIntention.Context>(
-    KtCallExpression::class
-) {
+    : KotlinApplicableModCommandAction<KtCallExpression, ConvertForEachToForLoopIntention.Context>(KtCallExpression::class) {
 
-    class Context(
+    data class Context(
         /** Caches the [KtReturnExpression]s which need to be replaced with `continue`. */
         val returnsToReplace: ReturnsToReplace,
         val implicitReceiverInfo: ImplicitReceiverInfo?,
@@ -111,7 +109,12 @@ internal class ConvertForEachToForLoopIntention
         }
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtCallExpression, preparedContext: Context, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtCallExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
         val qualifiedExpression = element.getQualifiedExpressionForSelector()
         val receiverExpression = qualifiedExpression?.receiverExpression
         val targetExpression = qualifiedExpression ?: element
@@ -120,7 +123,7 @@ internal class ConvertForEachToForLoopIntention
         val lambda = element.getSingleLambdaArgument()?.takeIf { it.bodyExpression != null } ?: return
         val isForEachIndexed = element.getCallNameExpression()?.getReferencedName() == FOR_EACH_INDEXED_NAME.asString()
         val loopLabelName = suggestLoopName(lambda)
-        val loop = generateLoop(receiverExpression, lambda, loopLabelName, isForEachIndexed, preparedContext) ?: return
+        val loop = generateLoop(receiverExpression, lambda, loopLabelName, isForEachIndexed, elementContext) ?: return
         val result = targetExpression.replace(loop)
         commentSaver.restore(result)
 

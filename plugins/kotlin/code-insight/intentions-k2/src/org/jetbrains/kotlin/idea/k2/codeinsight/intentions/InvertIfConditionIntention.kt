@@ -7,7 +7,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 internal class InvertIfConditionIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtIfExpression, InvertIfConditionIntention.Context>(KtIfExpression::class) {
+    KotlinApplicableModCommandAction<KtIfExpression, InvertIfConditionIntention.Context>(KtIfExpression::class) {
 
     data class Context(
         val newCondition: SmartPsiElementPointer<KtExpression>,
@@ -63,7 +63,7 @@ internal class InvertIfConditionIntention :
         val condition = element.condition!!
         val newCondition = (condition as? KtQualifiedExpression)?.invertSelectorFunction() ?: condition.negate()
 
-        val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)?.let { it.getReturnKtType().isUnit } == true
+        val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)?.getReturnKtType()?.isUnit == true
 
         val demorgansLawContext = if (condition is KtBinaryExpression && areAllOperandsBoolean(condition)) {
             getBinaryExpression(newCondition)?.let(::splitBooleanSequence)?.let { operands ->
@@ -84,22 +84,27 @@ internal class InvertIfConditionIntention :
         return null
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtIfExpression, preparedContext: Context, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtIfExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
         val rBrace = parentBlockRBrace(element)
         if (rBrace != null) element.nextEolCommentOnSameLine()?.delete()
 
-        val newIf = handleSpecialCases(element, preparedContext) ?: handleStandardCase(element, preparedContext.newCondition.element!!)
+        val newIf = handleSpecialCases(element, elementContext) ?: handleStandardCase(element, elementContext.newCondition.element!!)
 
         val commentRestoreRange = if (rBrace != null)
             PsiChildRange(newIf, rBrace)
         else
             PsiChildRange(newIf, parentBlockRBrace(newIf) ?: newIf)
 
-        preparedContext.commentSaver.restore(commentRestoreRange)
+        elementContext.commentSaver.restore(commentRestoreRange)
 
         val binaryExpr = newIf.condition?.let(::getBinaryExpression)
         if (binaryExpr != null) {
-            preparedContext.demorgansLawContext?.let { demorgansLawContext ->
+            elementContext.demorgansLawContext?.let { demorgansLawContext ->
                 applyDemorgansLaw(binaryExpr, demorgansLawContext)
             }
         }

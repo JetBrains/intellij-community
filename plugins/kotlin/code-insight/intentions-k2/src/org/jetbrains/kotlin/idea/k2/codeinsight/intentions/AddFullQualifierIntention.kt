@@ -6,7 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -14,10 +14,13 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
-internal class AddFullQualifierIntention : KotlinPsiUpdateModCommandIntentionWithContext<KtNameReferenceExpression, AddFullQualifierIntention.Context>(
-    KtNameReferenceExpression::class
-), LowPriorityAction {
-    class Context(val fqName: FqName)
+internal class AddFullQualifierIntention :
+    KotlinApplicableModCommandAction<KtNameReferenceExpression, AddFullQualifierIntention.Context>(KtNameReferenceExpression::class),
+    LowPriorityAction {
+
+    data class Context(
+        val fqName: FqName,
+    )
 
     override fun getFamilyName(): String = KotlinBundle.message("add.full.qualifier")
 
@@ -34,7 +37,12 @@ internal class AddFullQualifierIntention : KotlinPsiUpdateModCommandIntentionWit
         return null
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtNameReferenceExpression, preparedContext: Context, updater: ModPsiUpdater) {
-        AddQualifiersUtil.applyTo(element, preparedContext.fqName)
+    override fun invoke(
+        context: ActionContext,
+        element: KtNameReferenceExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        AddQualifiersUtil.applyTo(element, elementContext.fqName)
     }
 }

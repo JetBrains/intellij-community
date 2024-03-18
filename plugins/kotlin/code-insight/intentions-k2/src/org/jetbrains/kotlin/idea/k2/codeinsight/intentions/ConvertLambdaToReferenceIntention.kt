@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
@@ -15,7 +14,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getCallReferencedName
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getSafeReferencedName
@@ -32,17 +31,21 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertLambdaToReferenceIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtLambdaExpression, ConvertLambdaToReferenceIntention.Context>(KtLambdaExpression::class) {
+    KotlinApplicableModCommandAction<KtLambdaExpression, ConvertLambdaToReferenceIntention.Context>(KtLambdaExpression::class) {
 
     data class Context(
-        val newElement: SmartPsiElementPointer<KtElement>, val renderedPropertyType: String?, val renderedTypeArguments: String?
+        val newElement: SmartPsiElementPointer<KtElement>,
+        val renderedPropertyType: String?,
+        val renderedTypeArguments: String?,
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.lambda.to.reference.before.text")
 
-    override fun getPresentation(context: ActionContext, element: KtLambdaExpression, analyzeContext: Context): Presentation {
-        return Presentation.of(KotlinBundle.message("convert.lambda.to.reference"))
-    }
+    override fun getActionName(
+        context: ActionContext,
+        element: KtLambdaExpression,
+        elementContext: Context,
+    ): String = KotlinBundle.message("convert.lambda.to.reference")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtLambdaExpression> = ApplicabilityRanges.SELF
 
@@ -136,10 +139,15 @@ internal class ConvertLambdaToReferenceIntention :
         }
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtLambdaExpression, preparedContext: Context, updater: ModPsiUpdater) {
-        val newElement = preparedContext.newElement.element ?: return
+    override fun invoke(
+        context: ActionContext,
+        element: KtLambdaExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        val newElement = elementContext.newElement.element ?: return
         val parent = element.parent
-        val renderedPropertyType = preparedContext.renderedPropertyType
+        val renderedPropertyType = elementContext.renderedPropertyType
 
         if (parent is KtProperty && renderedPropertyType != null) {
             parent.typeReference = KtPsiFactory(element.project).createType(renderedPropertyType)
@@ -148,8 +156,8 @@ internal class ConvertLambdaToReferenceIntention :
 
         val outerCallExpression = parent.getStrictParentOfType<KtCallExpression>()
         if (outerCallExpression != null) {
-            preparedContext.renderedTypeArguments?.let {
-                addTypeArguments(outerCallExpression, it, actionContext.project)
+            elementContext.renderedTypeArguments?.let {
+                addTypeArguments(outerCallExpression, it, context.project)
                 outerCallExpression.typeArgumentList?.let(::shortenReferences)
             }
         }

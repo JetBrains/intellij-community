@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddDataModifierFixFactory.AddDataModifierFix.ElementContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
@@ -53,12 +52,21 @@ internal object AddDataModifierFixFactory {
         listOfNotNull(AddDataModifierFix(ktClass, ElementContext(fqName)))
     }
 
-    private class AddDataModifierFix(ktClass: KtClass, private val context: ElementContext) :
-        KotlinModCommandAction<KtClass, ElementContext>(ktClass, context) {
+    private data class ElementContext(
+        val fqName: String,
+    )
 
-        class ElementContext(val fqName: String) : KotlinModCommandAction.ElementContext
+    private class AddDataModifierFix(
+        ktClass: KtClass,
+        private val context: ElementContext,
+    ) : KotlinModCommandAction.ElementBased<KtClass, ElementContext>(ktClass, context) {
 
-        override fun invoke(context: ActionContext, element: KtClass, elementContext: ElementContext, updater: ModPsiUpdater) {
+        override fun invoke(
+            context: ActionContext,
+            element: KtClass,
+            elementContext: ElementContext,
+            updater: ModPsiUpdater,
+        ) {
             element.addModifier(KtTokens.DATA_KEYWORD)
         }
 

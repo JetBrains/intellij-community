@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -12,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -21,16 +20,21 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-internal class ConvertToForEachFunctionCallIntention : KotlinPsiUpdateModCommandIntention<KtForExpression>(KtForExpression::class) {
+internal class ConvertToForEachFunctionCallIntention :
+    KotlinApplicableModCommandAction<KtForExpression, Unit>(KtForExpression::class) {
+
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.foreach.function.call", "forEach")
 
-    override fun getPresentation(context: ActionContext, element: KtForExpression): Presentation {
+    override fun getActionName(
+        context: ActionContext,
+        element: KtForExpression,
+        elementContext: Unit,
+    ): String {
         val callExpression = element.loopRange?.getPossiblyQualifiedCallExpression()
-        val problemMessage = KotlinBundle.message(
+        return KotlinBundle.message(
             "replace.with.a.foreach.function.call",
             if (callExpression?.calleeExpression?.text == WITH_INDEX_NAME) "forEachIndexed" else "forEach"
         )
-        return Presentation.of(problemMessage)
     }
 
     override fun isApplicableByPsi(element: KtForExpression): Boolean {
@@ -43,21 +47,29 @@ internal class ConvertToForEachFunctionCallIntention : KotlinPsiUpdateModCommand
         TextRange(it.startOffset, rParen.endOffset).shiftLeft(it.startOffset)
     }
 
+
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtForExpression): Boolean {
-        val loopRange = element.loopRange ?: return false
+    override fun prepareContext(element: KtForExpression): Unit? {
+        val loopRange = element.loopRange ?: return null
 
         val calleeExpression = loopRange.getPossiblyQualifiedCallExpression()?.calleeExpression
         if (calleeExpression?.text == WITH_INDEX_NAME) {
-            if (element.loopParameter?.destructuringDeclaration?.entries?.size != 2) return false
-            val symbol = calleeExpression.mainReference?.resolveToSymbol() as? KtFunctionSymbol ?: return false
-            if (symbol.callableIdIfNonLocal?.asSingleFqName() !in withIndexedFunctionFqNames) return false
+            if (element.loopParameter?.destructuringDeclaration?.entries?.size != 2) return null
+            val symbol = calleeExpression.mainReference?.resolveToSymbol() as? KtFunctionSymbol ?: return null
+            if (symbol.callableIdIfNonLocal?.asSingleFqName() !in withIndexedFunctionFqNames) return null
         }
 
-        return loopRange.getKtType()?.isLoopRangeType() == true
+        return loopRange.getKtType()
+            ?.isLoopRangeType()
+            ?.asUnit
     }
 
-    override fun invoke(context: ActionContext, element: KtForExpression, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtForExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         val commentSaver = CommentSaver(element, saveLineBreaks = true)
 
         val labelName = element.getLabelName()

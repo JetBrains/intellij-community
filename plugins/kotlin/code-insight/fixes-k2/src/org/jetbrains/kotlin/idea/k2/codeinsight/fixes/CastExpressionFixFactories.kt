@@ -24,15 +24,15 @@ import org.jetbrains.kotlin.types.Variance
 
 object CastExpressionFixFactories {
 
+    private data class ElementContext(
+        val typePresentation: String,
+        val typeSourceCode: String,
+    )
+
     private class CastExpressionModCommandAction(
         element: PsiElement,
         elementContext: ElementContext,
-    ) : KotlinModCommandAction<PsiElement, CastExpressionModCommandAction.ElementContext>(element, elementContext) {
-
-        data class ElementContext(
-            val typePresentation: String,
-            val typeSourceCode: String,
-        ) : KotlinModCommandAction.ElementContext
+    ) : KotlinModCommandAction.ElementBased<PsiElement, ElementContext>(element, elementContext) {
 
         override fun getFamilyName(): String = KotlinBundle.message("fix.cast.expression.family")
 
@@ -126,7 +126,7 @@ object CastExpressionFixFactories {
             return emptyList()
         }
 
-        val elementContext = CastExpressionModCommandAction.ElementContext(
+        val elementContext = ElementContext(
             expectedType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),
             expectedType.render(KtTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),
         )

@@ -8,7 +8,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.createArgumentWithoutName
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 
 internal class RemoveAllArgumentNamesIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtCallElement, RemoveAllArgumentNamesIntention.ArgumentsDataContext>(KtCallElement::class) {
+    KotlinApplicableModCommandAction<KtCallElement, RemoveAllArgumentNamesIntention.ArgumentsDataContext>(KtCallElement::class) {
+
     data class ArgumentsDataContext(
         val sortedArguments: List<SmartPsiElementPointer<KtValueArgument>>,
         val vararg: SmartPsiElementPointer<KtValueArgument>?,
@@ -45,13 +46,18 @@ internal class RemoveAllArgumentNamesIntention :
         )
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtCallElement, preparedContext: ArgumentsDataContext, updater: ModPsiUpdater) {
-        val oldArguments = preparedContext.sortedArguments.map { it.element ?: return }
-        val varargElement = preparedContext.vararg?.let { it.element ?: return }
+    override fun invoke(
+        context: ActionContext,
+        element: KtCallElement,
+        elementContext: ArgumentsDataContext,
+        updater: ModPsiUpdater,
+    ) {
+        val oldArguments = elementContext.sortedArguments.map { it.element ?: return }
+        val varargElement = elementContext.vararg?.let { it.element ?: return }
 
         val newArguments = oldArguments.flatMap { argument ->
             when (argument) {
-                varargElement -> createArgumentWithoutName(argument, isVararg = true, preparedContext.varargIsArrayOfCall)
+                varargElement -> createArgumentWithoutName(argument, isVararg = true, elementContext.varargIsArrayOfCall)
                 else -> createArgumentWithoutName(argument)
             }
         }

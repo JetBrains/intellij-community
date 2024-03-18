@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.matches
@@ -14,10 +14,17 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-class FlattenWhenIntention : KotlinPsiUpdateModCommandIntention<KtWhenExpression>(KtWhenExpression::class) {
-    override fun getFamilyName(): String = KotlinBundle.message("flatten.when.expression")
+internal class FlattenWhenIntention : KotlinApplicableModCommandAction<KtWhenExpression, Unit>(KtWhenExpression::class) {
 
-    override fun invoke(context: ActionContext, element: KtWhenExpression, updater: ModPsiUpdater) {
+    override fun getFamilyName(): String =
+        KotlinBundle.message("flatten.when.expression")
+
+    override fun invoke(
+        context: ActionContext,
+        element: KtWhenExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         val commentSaver = CommentSaver(element)
         val nestedWhen = element.elseExpression as KtWhenExpression
 
@@ -41,12 +48,13 @@ class FlattenWhenIntention : KotlinPsiUpdateModCommandIntention<KtWhenExpression
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtWhenExpression): Boolean {
+    override fun prepareContext(element: KtWhenExpression): Unit? {
         val subject = element.subjectExpression
 
-        val elseEntry = element.entries.singleOrNull { it.isElse } ?: return false
-        val innerWhen = elseEntry.expression as? KtWhenExpression ?: return false
+        val elseEntry = element.entries.singleOrNull { it.isElse } ?: return null
+        val innerWhen = elseEntry.expression as? KtWhenExpression ?: return null
 
         return subject.matches(innerWhen.subjectExpression)
+            .asUnit
     }
 }

@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.psi.KtCallExpression
 
 internal class InsertExplicitTypeArgumentsIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtCallExpression, String>(KtCallExpression::class) {
+    KotlinApplicableModCommandAction<KtCallExpression, String>(KtCallExpression::class) {
+
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> =
         applicabilityTarget { it.calleeExpression }
 
@@ -24,7 +25,12 @@ internal class InsertExplicitTypeArgumentsIntention :
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallExpression): String? = getRenderedTypeArguments(element)
 
-    override fun invoke(actionContext: ActionContext, element: KtCallExpression, preparedContext: String, updater: ModPsiUpdater) {
-        addTypeArguments(element, preparedContext, actionContext.project)
+    override fun invoke(
+        context: ActionContext,
+        element: KtCallExpression,
+        elementContext: String,
+        updater: ModPsiUpdater,
+    ) {
+        addTypeArguments(element, elementContext, context.project)
     }
 }

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ import java.util.Objects;
 /**
  * A convenient abstract class to implement {@link ModCommandAction}
  * that starts on a given {@link PsiElement}, or a {@link PsiElement} of a given type under the caret.
- * 
+ *
  * @param <E> type of the element
  */
 public abstract class PsiBasedModCommandAction<E extends PsiElement> implements ModCommandAction {
@@ -26,22 +27,29 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
 
   /**
    * Constructs an instance, which is bound to a specified element
-   * 
+   *
    * @param element element to start the action at.
    */
   protected PsiBasedModCommandAction(@NotNull E element) {
-    myPointer = SmartPointerManager.createPointer(element);
-    myClass = null;
+    this(element, null);
   }
 
   /**
-   * Constructs an instance, which will look for an element 
+   * Constructs an instance, which will look for an element
    * of a specified class at the caret offset.
-   * 
+   *
    * @param elementClass element class
    */
   protected PsiBasedModCommandAction(@NotNull Class<E> elementClass) {
-    myPointer = null;
+    this(null, elementClass);
+  }
+
+  // todo to be decomposed into 2 base classes
+  @ApiStatus.Internal
+  protected PsiBasedModCommandAction(@Nullable E element,
+                                     @Nullable Class<E> elementClass) {
+    assert element != null || elementClass != null;
+    myPointer = element != null ? SmartPointerManager.createPointer(element) : null;
     myClass = elementClass;
   }
 
@@ -54,8 +62,9 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
   private @Nullable E getElement(@NotNull ActionContext context) {
     if (myPointer != null) {
       E element = myPointer.getElement();
-      if (element != null && !BaseIntentionAction.canModify(element)) return null;
-      return element;
+      return element != null && !BaseIntentionAction.canModify(element) ?
+             null :
+             element;
     }
     int offset = context.offset();
     PsiFile file = context.file();

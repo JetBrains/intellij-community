@@ -6,7 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorInfo
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyT
 import org.jetbrains.kotlin.psi.KtProperty
 
 internal class MovePropertyToConstructorIntention
-    : KotlinPsiUpdateModCommandIntentionWithContext<KtProperty, MovePropertyToConstructorInfo>(KtProperty::class) {
+    : KotlinApplicableModCommandAction<KtProperty, MovePropertyToConstructorInfo>(KtProperty::class) {
 
     override fun getFamilyName(): String = KotlinBundle.message("move.to.constructor")
 
@@ -27,11 +27,11 @@ internal class MovePropertyToConstructorIntention
     override fun prepareContext(element: KtProperty): MovePropertyToConstructorInfo? = MovePropertyToConstructorInfo.create(element)
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtProperty,
-        preparedContext: MovePropertyToConstructorInfo,
-        updater: ModPsiUpdater
+        elementContext: MovePropertyToConstructorInfo,
+        updater: ModPsiUpdater,
     ) {
-        element.moveToConstructor(preparedContext.toWritable(updater))
+        element.moveToConstructor(elementContext.toWritable(updater))
     }
 }

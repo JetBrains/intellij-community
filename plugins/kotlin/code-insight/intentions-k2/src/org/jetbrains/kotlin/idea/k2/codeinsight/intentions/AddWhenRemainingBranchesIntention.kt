@@ -6,15 +6,16 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-internal class AddWhenRemainingBranchesIntention
-    : KotlinPsiUpdateModCommandIntentionWithContext<KtWhenExpression, AddRemainingWhenBranchesUtils.Context>(KtWhenExpression::class) {
+internal class AddWhenRemainingBranchesIntention :
+    KotlinApplicableModCommandAction<KtWhenExpression, AddRemainingWhenBranchesUtils.Context>(KtWhenExpression::class) {
+
     override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(false)
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
@@ -30,11 +31,11 @@ internal class AddWhenRemainingBranchesIntention
     }
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtWhenExpression,
-        preparedContext: AddRemainingWhenBranchesUtils.Context,
-        updater: ModPsiUpdater
+        elementContext: AddRemainingWhenBranchesUtils.Context,
+        updater: ModPsiUpdater,
     ) {
-        addRemainingWhenBranches(element, preparedContext)
+        addRemainingWhenBranches(element, elementContext)
     }
 }

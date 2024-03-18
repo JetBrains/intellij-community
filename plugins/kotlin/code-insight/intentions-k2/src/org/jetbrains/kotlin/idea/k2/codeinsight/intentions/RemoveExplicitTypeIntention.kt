@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RemoveExplicitTypeIntention : KotlinPsiUpdateModCommandIntention<KtDeclaration>(KtDeclaration::class) {
+internal class RemoveExplicitTypeIntention :
+    KotlinApplicableModCommandAction<KtDeclaration, Unit>(KtDeclaration::class) {
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclaration> =
         applicabilityRanges { declaration ->
@@ -52,12 +53,12 @@ internal class RemoveExplicitTypeIntention : KotlinPsiUpdateModCommandIntention<
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtDeclaration): Boolean = when {
+    override fun prepareContext(element: KtDeclaration): Unit? = when {
         element is KtParameter -> true
         element is KtNamedFunction && element.hasBlockBody() -> element.getReturnKtType().isUnit
         element is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(element) -> false
         else -> !element.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze()
-    }
+    }.asUnit
 
     private val KtDeclaration.typeReference: KtTypeReference?
         get() = when (this) {
@@ -162,7 +163,12 @@ internal class RemoveExplicitTypeIntention : KotlinPsiUpdateModCommandIntention<
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.explicit.type.specification")
 
-    override fun invoke(context: ActionContext, element: KtDeclaration, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtDeclaration,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         element.removeTypeReference()
     }
 

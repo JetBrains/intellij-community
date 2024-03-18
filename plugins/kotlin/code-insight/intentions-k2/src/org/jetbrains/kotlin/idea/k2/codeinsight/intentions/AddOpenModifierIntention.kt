@@ -4,11 +4,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -18,9 +19,16 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 internal class AddOpenModifierIntention :
-  KotlinPsiUpdateModCommandIntention<KtCallableDeclaration>(KtCallableDeclaration::class),
-  LowPriorityAction {
-    override fun getFamilyName(): String = KotlinBundle.message("make.open")
+    KotlinApplicableModCommandAction<KtCallableDeclaration, Unit>(KtCallableDeclaration::class),
+    LowPriorityAction {
+
+    override fun stopSearchAt(
+        element: PsiElement,
+        context: ActionContext,
+    ): Boolean = false
+
+    override fun getFamilyName(): String =
+        KotlinBundle.message("make.open")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallableDeclaration> = ApplicabilityRanges.SELF
 
@@ -31,23 +39,29 @@ internal class AddOpenModifierIntention :
                 && !element.hasModifier(KtTokens.PRIVATE_KEYWORD)
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtCallableDeclaration): Boolean {
+    override fun prepareContext(element: KtCallableDeclaration): Unit? {
         // The intention's applicability cannot solely depend on the PSI because compiler plugins may introduce modality different from
         // explicit syntax and language defaults.
-        val elementSymbol = element.getSymbol() as? KtSymbolWithModality ?: return false
+        val elementSymbol = element.getSymbol() as? KtSymbolWithModality ?: return null
         if (elementSymbol.modality == Modality.OPEN || elementSymbol.modality == Modality.ABSTRACT) {
-            return false
+            return null
         }
 
-        val owner = element.containingClassOrObject ?: return false
-        val ownerSymbol = owner.getSymbol() as? KtSymbolWithModality ?: return false
-        return owner.hasModifier(KtTokens.ENUM_KEYWORD)
+        val owner = element.containingClassOrObject ?: return null
+        val ownerSymbol = owner.getSymbol() as? KtSymbolWithModality ?: return null
+        val isApplicable = (owner.hasModifier(KtTokens.ENUM_KEYWORD)
                 || ownerSymbol.modality == Modality.OPEN
                 || ownerSymbol.modality == Modality.ABSTRACT
-                || ownerSymbol.modality == Modality.SEALED
+                || ownerSymbol.modality == Modality.SEALED)
+        return isApplicable.asUnit
     }
 
-    override fun invoke(context: ActionContext, element: KtCallableDeclaration, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtCallableDeclaration,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         element.addModifier(KtTokens.OPEN_KEYWORD)
     }
 }

@@ -6,8 +6,9 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExitStatement
@@ -17,8 +18,19 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
 
-class SplitIfIntention : KotlinPsiUpdateModCommandIntention<KtExpression>(KtExpression::class) {
-    override fun invoke(context: ActionContext, element: KtExpression, updater: ModPsiUpdater) {
+internal class SplitIfIntention :
+    KotlinApplicableModCommandAction<KtExpression, Unit>(KtExpression::class) {
+
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtExpression) {
+    }
+
+    override fun invoke(
+        context: ActionContext,
+        element: KtExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         val operator = when (element) {
             is KtIfExpression -> getFirstValidOperator(element)!!
             else -> element as KtOperationReferenceExpression

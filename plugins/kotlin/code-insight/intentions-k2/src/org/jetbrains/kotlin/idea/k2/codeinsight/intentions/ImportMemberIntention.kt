@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
@@ -14,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -24,19 +23,21 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
 internal class ImportMemberIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
+    KotlinApplicableModCommandAction<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
     HighPriorityAction {
 
-    class Context(
+    data class Context(
         val fqName: FqName,
         val shortenCommand: ShortenCommand,
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("add.import.for.member")
 
-    override fun getPresentation(context: ActionContext, element: KtNameReferenceExpression, analyzeContext: Context): Presentation {
-        return Presentation.of(KotlinBundle.message("add.import.for.0", analyzeContext.fqName.asString()))
-    }
+    override fun getActionName(
+        context: ActionContext,
+        element: KtNameReferenceExpression,
+        elementContext: Context,
+    ): String = KotlinBundle.message("add.import.for.0", elementContext.fqName.asString())
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtNameReferenceExpression> = ApplicabilityRanges.SELF
 
@@ -50,8 +51,13 @@ internal class ImportMemberIntention :
         return computeContext(element, symbol)
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtNameReferenceExpression, preparedContext: Context, updater: ModPsiUpdater) {
-        preparedContext.shortenCommand.invokeShortening()
+    override fun invoke(
+        context: ActionContext,
+        element: KtNameReferenceExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        elementContext.shortenCommand.invokeShortening()
     }
 }
 

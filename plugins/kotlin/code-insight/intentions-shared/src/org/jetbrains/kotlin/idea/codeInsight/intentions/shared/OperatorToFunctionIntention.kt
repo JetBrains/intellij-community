@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTargets
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 
-internal class OperatorToFunctionIntention : KotlinPsiUpdateModCommandIntention<KtExpression>(
-    KtExpression::class
-) {
+internal class OperatorToFunctionIntention :
+    KotlinApplicableModCommandAction<KtExpression, Unit>(KtExpression::class) {
+
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = applicabilityTargets { element ->
         when (element) {
             is KtUnaryExpression -> listOf(element.operationReference)
@@ -51,13 +51,13 @@ internal class OperatorToFunctionIntention : KotlinPsiUpdateModCommandIntention<
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtExpression) = when (element) {
+    override fun prepareContext(element: KtExpression): Unit? = (when (element) {
         is KtUnaryExpression -> isApplicableUnary(element)
         is KtBinaryExpression -> isApplicableBinary(element)
         is KtArrayAccessExpression -> isApplicableArrayAccess(element)
         is KtCallExpression -> isApplicableCall(element)
         else -> false
-    }
+    }).asUnit
 
     context(KtAnalysisSession)
     private fun isApplicableUnary(element: KtUnaryExpression): Boolean {
@@ -121,7 +121,12 @@ internal class OperatorToFunctionIntention : KotlinPsiUpdateModCommandIntention<
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.overloaded.operator.with.function.call")
 
-    override fun invoke(context: ActionContext, element: KtExpression, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         OperatorToFunctionConverter.convert(element)
     }
 }

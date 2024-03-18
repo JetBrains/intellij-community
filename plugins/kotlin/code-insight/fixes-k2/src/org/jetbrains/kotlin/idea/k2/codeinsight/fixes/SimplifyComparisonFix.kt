@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.areThereExpressionsToBeSimplified
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.performSimplification
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.removeRedundantAssertion
-import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SimplifyComparisonFixFactory.SimplifyComparisonFix.ElementContext
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtExpression
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 object SimplifyComparisonFixFactory {
+
     val simplifyComparisonFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: SenselessComparison ->
         val expression = diagnostic.psi.takeIf { it.getStrictParentOfType<KtDeclarationWithBody>() != null }
             ?: return@ModCommandBased emptyList()
@@ -28,23 +28,28 @@ object SimplifyComparisonFixFactory {
         listOf(SimplifyComparisonFix(expression, ElementContext(compareResult)))
     }
 
-    private class SimplifyComparisonFix(psiElement: KtExpression, context: ElementContext) :
-        KotlinModCommandAction<KtExpression, ElementContext>(psiElement, context) {
+    private data class ElementContext(
+        val compareResult: Boolean,
+    )
 
-        class ElementContext(val compareResult: Boolean) : KotlinModCommandAction.ElementContext
+    private class SimplifyComparisonFix(
+        psiElement: KtExpression,
+        context: ElementContext,
+    ) : KotlinModCommandAction.ElementBased<KtExpression, ElementContext>(psiElement, context) {
 
-        override fun invoke(context: ActionContext,
-                            element: KtExpression,
-                            elementContext: ElementContext,
-                            updater: ModPsiUpdater) {
+        override fun invoke(
+            context: ActionContext,
+            element: KtExpression,
+            elementContext: ElementContext,
+            updater: ModPsiUpdater,
+        ) {
             val replacement = KtPsiFactory(element.project).createExpression("${elementContext.compareResult}")
             val result = element.replaced(replacement)
 
             val booleanExpression = result.getNonStrictParentOfType<KtBinaryExpression>()
             if (booleanExpression != null && areThereExpressionsToBeSimplified(booleanExpression)) {
                 performSimplification(booleanExpression)
-            }
-            else {
+            } else {
                 removeRedundantAssertion(result)
             }
 

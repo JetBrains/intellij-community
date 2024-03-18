@@ -5,7 +5,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.FoldIfOrWhenToFunctionCallUtils.Context
@@ -16,7 +16,8 @@ import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class FoldWhenToFunctionCallIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtWhenExpression, Context>(KtWhenExpression::class) {
+    KotlinApplicableModCommandAction<KtWhenExpression, Context>(KtWhenExpression::class) {
+
     override fun getFamilyName(): String = KotlinBundle.message("lift.function.call.out.of.when")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = applicabilityRange {
@@ -28,7 +29,12 @@ internal class FoldWhenToFunctionCallIntention :
     context(KtAnalysisSession)
     override fun prepareContext(element: KtWhenExpression): Context? = getFoldingContext(element)
 
-    override fun invoke(actionContext: ActionContext, element: KtWhenExpression, preparedContext: Context, updater: ModPsiUpdater) {
-        fold(element, preparedContext)
+    override fun invoke(
+        context: ActionContext,
+        element: KtWhenExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        fold(element, elementContext)
     }
 }

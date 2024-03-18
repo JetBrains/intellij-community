@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.unwrapBlockOrParenthesis
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformat
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
@@ -23,7 +23,9 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-class IfToWhenIntention : KotlinPsiUpdateModCommandIntentionWithContext<KtIfExpression, IfToWhenIntention.Context>(KtIfExpression::class) {
+internal class IfToWhenIntention :
+    KotlinApplicableModCommandAction<KtIfExpression, IfToWhenIntention.Context>(KtIfExpression::class) {
+
     data class Context(
         val subjectedWhenExpression: KtWhenExpression,
         val toDelete: List<PsiElement>,
@@ -106,18 +108,23 @@ class IfToWhenIntention : KotlinPsiUpdateModCommandIntentionWithContext<KtIfExpr
         return Context(subjectedWhenExpression, toDelete, commentSaver)
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtIfExpression, preparedContext: Context, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtIfExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
         val ifExpression = element.topmostIfExpression()
 
         val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
         val loopJumpVisitor = LabelLoopJumpVisitor(loop)
 
         val parent = ifExpression.parent
-        val result = ifExpression.replaced(preparedContext.subjectedWhenExpression)
+        val result = ifExpression.replaced(elementContext.subjectedWhenExpression)
         updater.moveCaretTo(result.startOffset)
-        preparedContext.commentSaver.restore(result)
+        elementContext.commentSaver.restore(result)
 
-        val toDelete = preparedContext.toDelete
+        val toDelete = elementContext.toDelete
         if (toDelete.isNotEmpty()) {
             parent.deleteChildRange(
                 toDelete.first().let { it.prevSibling as? PsiWhiteSpace ?: it },

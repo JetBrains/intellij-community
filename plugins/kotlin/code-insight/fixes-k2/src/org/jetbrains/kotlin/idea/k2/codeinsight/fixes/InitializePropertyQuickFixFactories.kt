@@ -18,14 +18,14 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 object InitializePropertyQuickFixFactories {
 
+    private data class ElementContext(
+        val initializerText: String,
+    )
+
     private class InitializePropertyModCommandAction(
         element: KtProperty,
         elementContext: ElementContext,
-    ) : KotlinModCommandAction<KtProperty, InitializePropertyModCommandAction.ElementContext>(element, elementContext) {
-
-        data class ElementContext(
-            val initializerText: String,
-        ) : KotlinModCommandAction.ElementContext
+    ) : KotlinModCommandAction.ElementBased<KtProperty, ElementContext>(element, elementContext) {
 
         override fun getFamilyName(): String = KotlinBundle.message("add.initializer")
 
@@ -83,12 +83,12 @@ object InitializePropertyQuickFixFactories {
     context(KtAnalysisSession)
     private fun createFixes(
         element: KtProperty,
-    ): List<KotlinModCommandAction<KtProperty, out KotlinModCommandAction.ElementContext>> {
+    ): List<KotlinModCommandAction<KtProperty, *>> {
         // An extension property cannot be initialized because it has no backing field
         if (element.receiverTypeReference != null) return emptyList()
 
         return buildList {
-            val elementContext = InitializePropertyModCommandAction.ElementContext(
+            val elementContext = ElementContext(
                 initializerText = element.getReturnKtType().defaultInitializer ?: "TODO()",
             )
             add(InitializePropertyModCommandAction(element, elementContext))

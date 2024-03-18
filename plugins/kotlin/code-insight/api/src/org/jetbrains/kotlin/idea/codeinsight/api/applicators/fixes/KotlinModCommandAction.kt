@@ -7,16 +7,15 @@ import com.intellij.modcommand.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.psi.KtElement
+import kotlin.reflect.KClass
 
-abstract class KotlinModCommandAction<E : PsiElement, C : KotlinModCommandAction.ElementContext>(
-    element: E,
-    @FileModifier.SafeFieldForPreview private val elementContext: C,
-) : PsiBasedModCommandAction<E>(element) {
-
-    interface ElementContext {
-
-        fun isValid(context: ActionContext): Boolean = true
-    }
+sealed class KotlinModCommandAction<E : PsiElement, C : Any> private constructor(
+    element: E?,
+    elementClass: KClass<E>?,
+) : PsiBasedModCommandAction<E>(element, elementClass?.java) {
 
     /**
      * @see [PsiUpdateModCommandAction.perform]
@@ -26,20 +25,21 @@ abstract class KotlinModCommandAction<E : PsiElement, C : KotlinModCommandAction
         context: ActionContext,
         element: E,
     ): ModCommand = try {
-        val input = getElementContext(context)
-
-        if (input != null) {
-            ModCommand.psiUpdate(element) { e, updater ->
-                invoke(context, e, input, updater)
-            }
-        } else {
-            ModNothing.NOTHING
+        ModCommand.psiUpdate(element) { e, updater ->
+            val elementContext = getElementContext(context, e)
+                                 ?: throw NoContextException()
+            invoke(context, e, elementContext, updater)
         }
+    }
+    catch (e: NoContextException) {
+        ModNothing.NOTHING
     } catch (e: ProcessCanceledException) {
         throw e
     } catch (e: RuntimeException) {
         throw RuntimeException("When launching $familyName (${javaClass.name})", e)
     }
+
+    private class NoContextException : RuntimeException()
 
     /**
      * @see [PsiUpdateModCommandAction.invoke]
@@ -52,19 +52,53 @@ abstract class KotlinModCommandAction<E : PsiElement, C : KotlinModCommandAction
         updater: ModPsiUpdater,
     )
 
+    protected abstract fun getElementContext(
+        context: ActionContext,
+        element: E,
+    ): C?
+
     protected open fun getActionName(
         context: ActionContext,
         element: E,
         elementContext: C,
     ): @IntentionName String = familyName
 
-    override fun getPresentation(
+    final override fun getPresentation(
         context: ActionContext,
         element: E,
-    ): Presentation? = getElementContext(context)
+    ): Presentation? = getElementContext(context, element)
         ?.let { getActionName(context, element, it) }
         ?.let { Presentation.of(it) }
 
-    private fun getElementContext(context: ActionContext): C? = elementContext
-        .takeIf { it.isValid(context) }
+    abstract class ElementBased<E : PsiElement, C : Any>(
+        element: E,
+        @FileModifier.SafeFieldForPreview private val elementContext: C,
+    ) : KotlinModCommandAction<E, C>(element, null) {
+
+        final override fun getElementContext(
+            context: ActionContext,
+            element: E,
+        ): C = elementContext
+    }
+
+    abstract class ClassBased<E : KtElement, C : Any>(
+        elementClass: KClass<E>,
+    ) : KotlinModCommandAction<E, C>(null, elementClass) {
+
+        final override fun getElementContext(
+            context: ActionContext,
+            element: E,
+        ): C? = analyze(element) {
+            prepareContext(element)
+        }
+
+        /**
+         * @return The context of the intention, null if the intention is unavailable, only called when [isElementApplicable] returns true.
+         */
+        context(KtAnalysisSession)
+        abstract fun prepareContext(element: E): C?
+
+        protected inline val Boolean.asUnit: Unit?
+            get() = if (this) Unit else null
+    }
 }

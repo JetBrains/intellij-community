@@ -3,10 +3,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.applyDemorgansLaw
@@ -18,25 +17,21 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 
 internal class ConvertBinaryExpressionWithDemorgansLawIntention :
-    KotlinPsiUpdateModCommandIntentionWithContext<KtBinaryExpression, DemorgansLawUtils.Context>(KtBinaryExpression::class) {
+    KotlinApplicableModCommandAction<KtBinaryExpression, DemorgansLawUtils.Context>(KtBinaryExpression::class) {
+
     @Suppress("DialogTitleCapitalization")
     override fun getFamilyName(): String = KotlinBundle.message("demorgan.law")
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtBinaryExpression> = ApplicabilityRanges.SELF
 
-    override fun getPresentation(
+    override fun getActionName(
         context: ActionContext,
         element: KtBinaryExpression,
-        analyzeContext: DemorgansLawUtils.Context
-    ): Presentation {
-        val topmostBinaryExpression = element.topmostBinaryExpression()
-        return Presentation.of(
-            when (topmostBinaryExpression.operationToken) {
-                KtTokens.ANDAND -> KotlinBundle.message("replace.&&.with.||")
-                KtTokens.OROR -> KotlinBundle.message("replace.||.with.&&")
-                else -> throw IllegalArgumentException()
-            }
-        )
+        elementContext: DemorgansLawUtils.Context,
+    ): String = when (element.topmostBinaryExpression().operationToken) {
+        KtTokens.ANDAND -> KotlinBundle.message("replace.&&.with.||")
+        KtTokens.OROR -> KotlinBundle.message("replace.||.with.&&")
+        else -> throw IllegalArgumentException()
     }
 
     context(KtAnalysisSession)
@@ -53,13 +48,13 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
     }
 
     override fun invoke(
-        actionContext: ActionContext,
+        context: ActionContext,
         element: KtBinaryExpression,
-        preparedContext: DemorgansLawUtils.Context,
-        updater: ModPsiUpdater
+        elementContext: DemorgansLawUtils.Context,
+        updater: ModPsiUpdater,
     ) {
         val topmostBinaryExpression = element.topmostBinaryExpression()
         if (splitBooleanSequence(topmostBinaryExpression) == null) return
-        applyDemorgansLaw(topmostBinaryExpression, preparedContext)
+        applyDemorgansLaw(topmostBinaryExpression, elementContext)
     }
 }

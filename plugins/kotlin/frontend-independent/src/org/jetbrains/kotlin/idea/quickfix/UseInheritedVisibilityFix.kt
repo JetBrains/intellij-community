@@ -12,12 +12,20 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 class UseInheritedVisibilityFix(
     element: KtModifierListOwner,
     elementContext: ElementContext
-) : KotlinModCommandAction<KtModifierListOwner, UseInheritedVisibilityFix.ElementContext>(element, elementContext) {
+) : KotlinModCommandAction.ElementBased<KtModifierListOwner, UseInheritedVisibilityFix.ElementContext>(element, elementContext) {
+
     override fun getFamilyName() = KotlinBundle.message("use.inherited.visibility")
 
-    class ElementContext(val modifierType: KtModifierKeywordToken) : KotlinModCommandAction.ElementContext
+    data class ElementContext(
+        val modifierType: KtModifierKeywordToken,
+    )
 
-    override fun invoke(context: ActionContext, element: KtModifierListOwner, elementContext: ElementContext, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtModifierListOwner,
+        elementContext: ElementContext,
+        updater: ModPsiUpdater,
+    ) {
         element.removeModifier(elementContext.modifierType)
     }
 

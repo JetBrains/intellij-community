@@ -16,12 +16,12 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 class AddToStringFix(
     element: KtExpression,
     elementContext: ElementContext,
-) : KotlinModCommandAction<KtExpression, AddToStringFix.ElementContext>(element, elementContext),
+) : KotlinModCommandAction.ElementBased<KtExpression, AddToStringFix.ElementContext>(element, elementContext),
     LowPriorityAction {
 
     data class ElementContext(
         val useSafeCallOperator: Boolean,
-    ) : KotlinModCommandAction.ElementContext
+    )
 
     constructor(
         element: KtExpression,

@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -15,7 +14,7 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
@@ -27,13 +26,18 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
-abstract class ChangeVisibilityModifierIntention protected constructor(
-    val modifier: KtModifierKeywordToken
-) : KotlinPsiUpdateModCommandIntention<KtDeclaration>(KtDeclaration::class) {
-    override fun getPresentation(context: ActionContext, element: KtDeclaration): Presentation {
+sealed class ChangeVisibilityModifierIntention(
+    private val modifier: KtModifierKeywordToken,
+) : KotlinApplicableModCommandAction<KtDeclaration, Unit>(KtDeclaration::class) {
+
+    override fun getActionName(
+        context: ActionContext,
+        element: KtDeclaration,
+        elementContext: Unit,
+    ): String {
         val targetVisibility = modifier.toVisibility()
         val explicitVisibility = element.modifierList?.visibilityModifierType()?.value
-        val problemMessage = when {
+        return when {
             element is KtPropertyAccessor
                     && targetVisibility == Visibilities.Public
                     && element.isSetter
@@ -47,7 +51,6 @@ abstract class ChangeVisibilityModifierIntention protected constructor(
 
             else -> KotlinBundle.message("make.0", modifier.value)
         }
-        return Presentation.of(problemMessage)
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("make.0", modifier.value)
@@ -84,36 +87,42 @@ abstract class ChangeVisibilityModifierIntention protected constructor(
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtDeclaration): Boolean {
+    override fun prepareContext(element: KtDeclaration): Unit? {
         val symbol = element.getSymbolOfTypeSafe<KtSymbolWithVisibility>()
         val targetVisibility = modifier.toVisibility()
-        if (symbol?.visibility == targetVisibility) return false
+        if (symbol?.visibility == targetVisibility) return null
         val modifierList = element.modifierList
 
         if (modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
-            val callableDescriptor = symbol as? KtCallableSymbol ?: return false
+            val callableDescriptor = symbol as? KtCallableSymbol ?: return null
             // cannot make visibility less than (or non-comparable with) any of the supers
             if (callableDescriptor.getAllOverriddenSymbols()
                     .map { (it as? KtSymbolWithVisibility)?.visibility?.compareTo(targetVisibility) }
                     .any { it == null || it > 0 }
-            ) return false
+            ) return null
         }
 
         if (element is KtPropertyAccessor) {
-            if (element.isGetter) return false
+            if (element.isGetter) return null
             if (targetVisibility == Visibilities.Public) {
-                if (element.modifierList?.visibilityModifierType()?.value == null) return false
+                if (element.modifierList?.visibilityModifierType()?.value == null) return null
             } else {
                 val propVisibility = element.property.getSymbolOfType<KtSymbolWithVisibility>().visibility
-                if (propVisibility == targetVisibility) return false
+                if (propVisibility == targetVisibility) return null
                 val compare = targetVisibility.compareTo(propVisibility)
-                if (compare == null || compare > 0) return false
+                if (compare == null || compare > 0) return null
             }
         }
-        return true
+
+        return Unit
     }
 
-    override fun invoke(context: ActionContext, element: KtDeclaration, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtDeclaration,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         (element.actualsForExpected() + element.expectedDeclarationIfAny() + element).filterNotNull().forEach { declaration ->
             val psiFactory = KtPsiFactory(declaration.project)
             declaration.setVisibility(modifier)
@@ -123,25 +132,31 @@ abstract class ChangeVisibilityModifierIntention protected constructor(
         }
     }
 
-    class Public : ChangeVisibilityModifierIntention(KtTokens.PUBLIC_KEYWORD), HighPriorityAction {
+    internal class Public : ChangeVisibilityModifierIntention(KtTokens.PUBLIC_KEYWORD),
+                            HighPriorityAction {
+
         override fun isApplicableByPsi(element: KtDeclaration): Boolean {
             return element.canBePublic() && super.isApplicableByPsi(element)
         }
     }
 
-    class Private : ChangeVisibilityModifierIntention(KtTokens.PRIVATE_KEYWORD), HighPriorityAction {
+    internal class Private : ChangeVisibilityModifierIntention(KtTokens.PRIVATE_KEYWORD),
+                             HighPriorityAction {
+
         override fun isApplicableByPsi(element: KtDeclaration): Boolean {
             return element.canBePrivate() && super.isApplicableByPsi(element)
         }
     }
 
-    class Protected : ChangeVisibilityModifierIntention(KtTokens.PROTECTED_KEYWORD) {
+    internal class Protected : ChangeVisibilityModifierIntention(KtTokens.PROTECTED_KEYWORD) {
+
         override fun isApplicableByPsi(element: KtDeclaration): Boolean {
             return element.canBeProtected() && super.isApplicableByPsi(element)
         }
     }
 
-    class Internal : ChangeVisibilityModifierIntention(KtTokens.INTERNAL_KEYWORD) {
+    internal class Internal : ChangeVisibilityModifierIntention(KtTokens.INTERNAL_KEYWORD) {
+
         override fun isApplicableByPsi(element: KtDeclaration): Boolean {
             return element.canBeInternal() && super.isApplicableByPsi(element)
         }
