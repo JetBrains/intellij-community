@@ -11,6 +11,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   private final LocalPtyOptions.Builder myOptionsBuilder = getDefaultPtyOptions().builder();
   private boolean myWindowsAnsiColorEnabled = !Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode");
-  private boolean myUnixOpenTtyToPreserveOutputAfterTermination = true;
+  private boolean myUnixOpenTtyToPreserveOutputAfterTermination = SystemProperties.getBooleanProperty("pty4j.open.child.tty", SystemInfo.isMac);
 
   public PtyCommandLine() { }
 
