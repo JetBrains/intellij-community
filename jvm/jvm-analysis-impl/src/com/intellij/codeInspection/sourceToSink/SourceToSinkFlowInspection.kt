@@ -4,11 +4,11 @@ package com.intellij.codeInspection.sourceToSink
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.options.JavaClassValidator
 import com.intellij.codeInspection.*
-import com.intellij.codeInspection.options.*
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.RegexValidator
+import com.intellij.codeInspection.options.StringValidator
 import com.intellij.codeInspection.restriction.AnnotationContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -125,12 +125,12 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       OptPane.stringList("taintedAnnotations",
                          JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.annotations"),
                          JavaClassValidator().annotationsOnly()
-      ).comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.annotations.comment")),
+      ).description(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.annotations.comment")),
 
       OptPane.stringList("untaintedAnnotations",
                          JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.annotations"),
                          JavaClassValidator().annotationsOnly()
-      ).comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.annotations.comment")),
+      ).description(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.annotations.comment")),
 
       OptPane.table(
         JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.parameters"),
@@ -143,7 +143,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
         OptPane.column("taintedParameterIndex",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.index.parameter"),
                        IntValidator),
-      ).comment(
+      ).description(
         JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.parameters.comment")),
 
       OptPane.table(
@@ -157,7 +157,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
         OptPane.column("untaintedParameterIndex",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.index.parameter"),
                        IntValidator),
-      ).comment(
+      ).description(
         JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.parameters.comment")),
 
       OptPane.table(
@@ -177,23 +177,23 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
         OptPane.column("untaintedParameterWithPlacePlaceMethod",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.place.method.column.title"),
                        RegexValidator()),
-      ).comment(
+      ).description(
         JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.parameters.comment")),
 
       OptPane.checkbox("processOuterMethodAsQualifierAndArguments",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.process.as.qualifier.arguments"))
-        .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.process.as.qualifier.arguments.comment")),
+        .description(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.process.as.qualifier.arguments.comment")),
 
       myTaintedMethodMatcher.getTable(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.methods")).prefix(
         "myTaintedMethodMatcher")
-        .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.methods.comment")),
+        .description(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.tainted.methods.comment")),
 
       myUntaintedMethodMatcher.getTable(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.methods")).prefix(
         "myUntaintedMethodMatcher")
-        .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.methods.comment")),
+        .description(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.methods.comment")),
 
       OptPane.stringList("skipClasses", JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.safe.class"))
-        .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.safe.class.comment")),
+        .description(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.safe.class.comment")),
 
       OptPane.table(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.fields"),
                     OptPane.column("myUntaintedFieldClasses",
@@ -201,15 +201,15 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                                    JavaClassValidator()),
                     OptPane.column("myUntaintedFieldNames",
                                    JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.fields.name"))
-      ).comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.fields.comment")),
+      ).description(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.fields.comment")),
 
       OptPane.checkbox("parameterOfPrivateMethodIsUntainted",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.private.methods"))
-        .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.private.methods.comment")),
+        .description(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.private.methods.comment")),
 
       OptPane.checkbox("warnIfComplex",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex"))
-        .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex.comment")),
+        .description(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex.comment")),
 
       OptPane.stringList("checkedTypes", JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.checked.types")),
 
@@ -223,7 +223,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                        RegexValidator()),
         OptPane.column("qualifierCleanerParams",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.qualifier.cleaner.arguments")),
-      ).comment(
+      ).description(
         JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.qualifier.cleaner.comment")),
 
 
@@ -492,14 +492,6 @@ private fun recursiveMatchPlace(element: UElement?, allMatcher: MethodMatcher): 
     return recursiveMatchPlace(uastInitializer, allMatcher)
   }
   return false
-}
-
-private fun OptRegularComponent.comment(@NlsContexts.Tooltip @NlsSafe comment: String): OptRegularComponent {
-  if (this is OptDescribedComponent) {
-    val component = this.description(comment)
-    return component ?: this
-  }
-  return this
 }
 
 private val IntValidator = object : StringValidator {

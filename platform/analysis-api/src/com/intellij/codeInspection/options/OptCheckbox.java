@@ -29,7 +29,7 @@ public record OptCheckbox(@Language("jvm-field-name") @NotNull String bindId,
    * @throws IllegalStateException if description was already set
    */
   @Override
-  public OptCheckbox description(@NotNull @NlsContexts.Tooltip String description) {
+  public @NotNull OptCheckbox description(@NotNull @NlsContexts.Tooltip String description) {
     return description(HtmlChunk.text(description));
   }
 
@@ -39,7 +39,7 @@ public record OptCheckbox(@Language("jvm-field-name") @NotNull String bindId,
    * @throws IllegalStateException if description was already set
    */
   @Override
-  public OptCheckbox description(@NotNull HtmlChunk description) {
+  public @NotNull OptCheckbox description(@NotNull HtmlChunk description) {
     if (this.description != null) {
       throw new IllegalStateException("Description is already set");
     }

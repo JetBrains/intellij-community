@@ -8,16 +8,12 @@ import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.logging.LoggingUtil.LimitLevelType
-import com.intellij.codeInspection.options.OptDescribedComponent
 import com.intellij.codeInspection.options.OptPane
-import com.intellij.codeInspection.options.OptRegularComponent
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
@@ -72,15 +68,15 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
                        JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.trace.level.option")),
       ),
       OptPane.checkbox("flagUnguardedConstant", JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.unguarded.constant.option"))
-        .comment(JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.unguarded.constant.option.comment")),
+        .description(JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.unguarded.constant.option.comment")),
 
       OptPane.string("customLoggerClassName", JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.logger.name.option"),
                      JavaClassValidator())
-        .comment(JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.logger.name.option.comment")),
+        .description(JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.logger.name.option.comment")),
       OptPane.table("",
                     OptPane.column("customLogMethodNameList", JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.method.name"), JavaIdentifierValidator()),
                     OptPane.column("customLogConditionMethodNameList", JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.log.condition.text")))
-        .comment(JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.custom.table")),
+        .description(JvmAnalysisBundle.message("jvm.inspection.log.statement.not.guarded.custom.table")),
     )
   }
 
@@ -387,12 +383,4 @@ class LoggingStatementNotGuardedByLogConditionInspection : AbstractBaseUastLocal
       return qualifierText != null && qualifierText == targetReference.qualifierExpression?.text
     }
   }
-}
-
-private fun OptRegularComponent.comment(@NlsContexts.Tooltip @NlsSafe comment: String): OptRegularComponent {
-  if (this is OptDescribedComponent) {
-    val component = this.description(comment)
-    return component ?: this
-  }
-  return this
 }
