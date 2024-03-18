@@ -14,7 +14,6 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByHeadFactory
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
-import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.NonNls
 
 open class DataPack internal constructor(refsModel: RefsModel, val permanentGraph: PermanentGraph<Int>,
