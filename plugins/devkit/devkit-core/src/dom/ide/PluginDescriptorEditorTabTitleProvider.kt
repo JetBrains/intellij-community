@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.dom.ide
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -13,7 +14,7 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil
 
 private class PluginDescriptorEditorTabTitleProvider : EditorTabTitleProvider {
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
-    if (PluginManagerCore.PLUGIN_XML != file.name) {
+    if (PluginManagerCore.PLUGIN_XML != file.name || DumbService.isDumb(project)) {
       return null
     }
 

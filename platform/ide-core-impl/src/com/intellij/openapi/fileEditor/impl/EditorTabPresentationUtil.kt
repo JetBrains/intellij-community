@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.lazyDumbAwareExtensions
 import com.intellij.openapi.util.NlsContexts
@@ -19,7 +20,13 @@ object EditorTabPresentationUtil {
   @JvmStatic
   fun getCustomEditorTabTitle(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? {
     for (provider in EditorTabTitleProvider.EP_NAME.lazySequence()) {
-      val result = provider.getEditorTabTitle(project, file)
+      val result = try {
+        provider.getEditorTabTitle(project, file)
+      }
+      catch (_: IndexNotReadyException) {
+        continue
+      }
+
       if (!result.isNullOrEmpty()) {
         return result
       }
