@@ -64,7 +64,7 @@ class UltimateInstallationService(
     coroutineScope.launch {
       try {
         installerLock.withLock {
-          withBackgroundProgress(project, IdeBundle.message("plugins.advertiser.try.ultimate.upgrade"), true) {
+          withBackgroundProgress(project, IdeBundle.message("plugins.advertiser.try.ultimate.upgrade", suggestedIde.name), true) {
             if (!suggestedIde.canBeAutoInstalled()) {
               useFallback(pluginId, suggestedIde.defaultDownloadUrl)
               return@withBackgroundProgress
