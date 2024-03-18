@@ -13,7 +13,6 @@ import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.FileCollectionFactory
-import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -34,7 +33,9 @@ internal class WorkspaceFolderImporter(
   private val builder: MutableEntityStorage,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val importingSettings: MavenImportingSettings,
-  private val importingContext: FolderImportingContext) {
+  private val importingContext: FolderImportingContext,
+  private val workspaceConfigurators: List<MavenWorkspaceConfigurator>
+) {
 
   fun createContentRoots(mavenProject: MavenProject, moduleType: StandardMavenModuleType, module: ModuleEntity,
                          stats: WorkspaceImportStats): CachedProjectFolders {
@@ -157,10 +158,10 @@ internal class WorkspaceFolderImporter(
   }
 
   private fun collectExcludedFoldersFromConfigurators(stats: WorkspaceImportStats,
-                        configuratorContext: MavenWorkspaceConfigurator.FoldersContext,
-                        folders: MutableList<ContentRootCollector.ImportedFolder>,
-                        mavenProject: MavenProject) {
-    for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
+                                                      configuratorContext: MavenWorkspaceConfigurator.FoldersContext,
+                                                      folders: MutableList<ContentRootCollector.ImportedFolder>,
+                                                      mavenProject: MavenProject) {
+    for (each in workspaceConfigurators) {
       stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
         try {
           each.getFoldersToExclude(configuratorContext)
@@ -206,7 +207,7 @@ internal class WorkspaceFolderImporter(
     mavenProject.testResources.forEach { result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.TEST_RESOURCE)) }
 
 
-    for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
+    for (each in workspaceConfigurators) {
       stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
         try {
           each.getAdditionalFolders(configuratorContext)
@@ -216,7 +217,7 @@ internal class WorkspaceFolderImporter(
           Stream.empty()
         }
       }.forEach {
-        val rootType = when(it.type) {
+        val rootType = when (it.type) {
           MavenWorkspaceConfigurator.FolderType.SOURCE -> JavaSourceRootType.SOURCE
           MavenWorkspaceConfigurator.FolderType.TEST_SOURCE -> JavaSourceRootType.TEST_SOURCE
           MavenWorkspaceConfigurator.FolderType.RESOURCE -> JavaResourceRootType.RESOURCE
