@@ -36,6 +36,7 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ModalityUiUtil
+import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -48,6 +49,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.awt.event.InvocationEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.minutes
 
@@ -175,14 +177,10 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       }
       else {
         val activities = runPostStartupActivities(async = true)
-        if (coroutineContext.contextModality() == null || coroutineContext.contextModality() == ModalityState.nonModal()) {
-          withTimeout(2.minutes) {
-            activities.joinAll()
-          }
+        withTimeout(2.minutes) {
+          activities.joinAll()
         }
 
-        // don't wait, because waiting under modal progress may result in a deadlock
-        // (for example, if activities are waiting for smart mode which will only start in non-modal context)
         CompletableDeferred(activities)
       }
     }
@@ -258,7 +256,9 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
         if (activity is ProjectActivity) {
           if (async) {
-            val job = launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
+            val job = blockingContext {
+              launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
+            }
             launchedActivities.add(job)
           }
           else {
@@ -466,8 +466,13 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
 }
 
 private fun launchActivity(activity: ProjectActivity, project: Project, pluginId: PluginId): Job {
+  // we propagate modality only in unit tests, because in unit tests activities are often started in modal context (see TestProjectManager),
+  // so any "invokeAndWait" will hang without modality propagation. In the future we want to avoid .joinAll in runPostStartupActivities at all.
+  val launchTaskModality = if (application.isUnitTestMode) currentThreadContextModality() else null
+  val launchTaskModalityContext = launchTaskModality?.asContextElement() ?: EmptyCoroutineContext
+
   return (project as ComponentManagerImpl).pluginCoroutineScope(activity.javaClass.classLoader).launch(
-    tracer.rootSpan(name = "run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString))
+    launchTaskModalityContext + tracer.rootSpan(name = "run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString)),
   ) {
     activity.execute(project)
   }

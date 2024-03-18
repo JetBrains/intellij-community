@@ -27,16 +27,12 @@ import com.intellij.openapi.project.impl.runInitProjectActivities
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager.Companion.publishHeapDump
 import com.intellij.testFramework.common.LEAKED_PROJECTS
 import com.intellij.util.ModalityUiUtil
-import com.intellij.util.application
 import com.intellij.util.containers.UnsafeWeakList
 import com.intellij.util.ref.GCUtil
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -118,7 +114,7 @@ open class TestProjectManager : ProjectManagerImpl() {
 
     val app = ApplicationManager.getApplication()
     try {
-      val launchedActivities: List<Job> = runUnderModalProgressIfIsEdt {
+      runUnderModalProgressIfIsEdt {
         coroutineScope {
           runInitProjectActivities(project = project)
         }
@@ -127,17 +123,6 @@ open class TestProjectManager : ProjectManagerImpl() {
         }
         else {
           emptyList()
-        }
-      }
-
-      // wait outside the modal progress, because some activities will be waiting for smart mode
-      // which on start will only start in non-modal context
-      launchedActivities.forEach {
-        if (application.isDispatchThread) {
-          PlatformTestUtil.waitForFuture(it.asCompletableFuture())
-        }
-        else {
-          it.asCompletableFuture().get(2, TimeUnit.MINUTES)
         }
       }
     }
