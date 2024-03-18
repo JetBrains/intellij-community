@@ -132,9 +132,9 @@ internal class WorkspaceFolderImporter(
     val configuratorContext = object : MavenWorkspaceConfigurator.FoldersContext {
       override val mavenProject = mavenProject
     }
-    val legacyImporters = MavenImporter.getSuitableImporters(mavenProject, true)
 
-    collectSourceFolders(mavenProject, folders, configuratorContext, legacyImporters, stats)
+
+    collectSourceFolders(mavenProject, folders, configuratorContext, stats)
     collectGeneratedFolders(folders, mavenProject)
 
     val outputPath = mavenProject.toAbsolutePath(mavenProject.outputDirectory)
@@ -151,16 +151,6 @@ internal class WorkspaceFolderImporter(
       folders.add(ContentRootCollector.ExcludedFolder(testOutputPath))
     }
 
-    for (each in legacyImporters) {
-      val excludes = mutableListOf<String>()
-      try {
-        each.collectExcludedFolders(mavenProject, excludes)
-      }
-      catch (e: Exception) {
-        MavenLog.LOG.error("Exception in MavenImporter.collectExcludedFolders, skipping it.", e)
-      }
-      excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it))) }
-    }
     collectExcludedFoldersFromConfigurators(stats, configuratorContext, folders, mavenProject)
 
     return CachedProjectFolders(mavenProject.directory, outputPath, testOutputPath, folders)
@@ -206,7 +196,6 @@ internal class WorkspaceFolderImporter(
   private fun collectSourceFolders(mavenProject: MavenProject,
                                    result: MutableList<ContentRootCollector.ImportedFolder>,
                                    configuratorContext: MavenWorkspaceConfigurator.FoldersContext,
-                                   legacyImporters: List<MavenImporter>,
                                    stats: WorkspaceImportStats) {
     fun toAbsolutePath(path: String) = MavenUtil.toPath(mavenProject, path).path
 
@@ -234,17 +223,6 @@ internal class WorkspaceFolderImporter(
           MavenWorkspaceConfigurator.FolderType.TEST_RESOURCE -> JavaResourceRootType.TEST_RESOURCE
         }
         result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it.path), rootType))
-      }
-    }
-
-    for (each in legacyImporters) {
-      try {
-        each.collectSourceRoots(mavenProject) { path: String, type: JpsModuleSourceRootType<*> ->
-          result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), type))
-        }
-      }
-      catch (e: Exception) {
-        MavenLog.LOG.error("Exception in MavenImporter.collectSourceRoots, skipping it.", e)
       }
     }
   }
