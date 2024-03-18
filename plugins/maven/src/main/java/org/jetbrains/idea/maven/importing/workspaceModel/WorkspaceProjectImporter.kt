@@ -65,7 +65,7 @@ internal val ARTIFACT_MODEL_KEY = Key.create<ImporterModifiableArtifactModel>("A
 @Internal
 val NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY = Key.create<Boolean>("NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY")
 
-internal class WorkspaceProjectImporter(
+internal open class WorkspaceProjectImporter(
   private val myProjectsTree: MavenProjectsTree,
   private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
   private val myImportingSettings: MavenImportingSettings,
@@ -74,6 +74,10 @@ internal class WorkspaceProjectImporter(
 ) : MavenProjectImporter {
   private val virtualFileUrlManager = WorkspaceModel.getInstance(myProject).getVirtualFileUrlManager()
   private val createdModulesList = java.util.ArrayList<Module>()
+
+  protected open fun workspaceConfigurators(): List<MavenWorkspaceConfigurator> {
+    return WORKSPACE_CONFIGURATOR_EP.extensionList
+  }
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
     MavenLog.LOG.info("Importing Maven project using Workspace API")
@@ -122,10 +126,16 @@ internal class WorkspaceProjectImporter(
 
     notifyUserAboutWorkspaceImport(storageBeforeImport, postTasks)
 
-    postTasks.add(AfterImportConfiguratorsTask(contextData, appliedProjectsWithModules))
+    addAfterImportTask(postTasks, contextData, appliedProjectsWithModules)
 
     return postTasks
 
+  }
+
+  protected open fun addAfterImportTask(postTasks: ArrayList<MavenProjectsProcessorTask>,
+                        contextData: UserDataHolderBase,
+                        appliedProjectsWithModules: List<MavenProjectWithModulesData<Module>>) {
+    postTasks.add(AfterImportConfiguratorsTask(contextData, appliedProjectsWithModules))
   }
 
   private fun notifyUserAboutWorkspaceImport(storageBeforeImport: ImmutableEntityStorage,
@@ -731,11 +741,11 @@ private fun logErrorIfNotControlFlow(methodName: String, e: Exception) {
   MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.$methodName, skipping it.", e)
 }
 
-private class ModuleWithTypeData<M>(
+internal class ModuleWithTypeData<M>(
   override val module: M,
   override val type: StandardMavenModuleType) : MavenWorkspaceConfigurator.ModuleWithType<M>
 
-private class MavenProjectWithModulesData<M>(
+internal class MavenProjectWithModulesData<M>(
   override val mavenProject: MavenProject,
   override val changes: MavenProjectChanges,
   override val modules: List<ModuleWithTypeData<M>>) : MavenWorkspaceConfigurator.MavenProjectWithModules<M>
