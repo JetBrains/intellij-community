@@ -2,7 +2,6 @@
 package com.intellij.ide.navbar.impl
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
@@ -29,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationRequests
 import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.pom.Navigatable
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.*

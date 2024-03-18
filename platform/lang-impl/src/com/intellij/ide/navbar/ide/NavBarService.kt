@@ -2,10 +2,8 @@
 package com.intellij.ide.navbar.ide
 
 import com.intellij.codeInsight.navigation.actions.navigateRequest
-import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
-import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.showHint
 import com.intellij.ide.navbar.ui.staticNavBarPanel
@@ -23,6 +21,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarVmItem
+import com.intellij.platform.navbar.backend.NavBarItem
+import com.intellij.platform.navbar.backend.impl.pathToItem
 import com.intellij.platform.navbar.vm.impl.NavBarVmImpl
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.throttle

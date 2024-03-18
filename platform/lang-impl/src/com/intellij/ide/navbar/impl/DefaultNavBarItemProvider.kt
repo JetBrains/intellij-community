@@ -2,8 +2,6 @@
 package com.intellij.ide.navbar.impl
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -13,6 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.navbar.backend.NavBarItem
+import com.intellij.platform.navbar.backend.NavBarItemProvider
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore.ensureValid

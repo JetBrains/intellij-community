@@ -1,17 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.tests
 
-import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navbar.actions.getBgData
 import com.intellij.ide.navbar.impl.DefaultNavBarItem
-import com.intellij.ide.navbar.impl.children
 import com.intellij.ide.navbar.impl.compatibilityNavBarItem
-import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.backend.NavBarItem
+import com.intellij.platform.navbar.backend.NavBarItemProvider
+import com.intellij.platform.navbar.backend.impl.children
+import com.intellij.platform.navbar.backend.impl.pathToItem
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
