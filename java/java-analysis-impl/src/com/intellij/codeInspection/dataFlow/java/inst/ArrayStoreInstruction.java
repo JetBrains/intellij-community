@@ -56,7 +56,7 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
     DfaValue array = stateBefore.pop();
     List<DfaInstructionState> finalStates = new ArrayList<>();
     if (myOutOfBoundsTransfer != null) {
-      finalStates.addAll(IndexOutOfBoundsProblem.dispatchTransfer(interpreter, stateBefore, myOutOfBoundsTransfer));
+      finalStates.addAll(IndexOutOfBoundsProblem.dispatchTransfer(interpreter, stateBefore.createCopy(), myOutOfBoundsTransfer));
     }
     DfaInstructionState[] states =
       myIndexProblem.processOutOfBounds(interpreter, stateBefore, index, array, myOutOfBoundsTransfer);
