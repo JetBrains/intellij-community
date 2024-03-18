@@ -77,6 +77,8 @@
 
   <applicationListeners>
     <listener class="com.jetbrains.performancePlugin.ProjectLoaded$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.jetbrains.performancePlugin.commands.WaitForFinishedCodeAnalysisFileEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener" activeInHeadlessMode="false"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.jetbrains.performancePlugin.ProjectIndexingComponent"
