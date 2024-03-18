@@ -292,7 +292,7 @@ internal open class WorkspaceProjectImporter(
                                                  myImportingSettings,
                                                  folderImportingContext,
                                                  stats,
-                                                 WORKSPACE_CONFIGURATOR_EP.extensionList).importModule()
+                                                 workspaceConfigurators()).importModule()
 
       val partialData = projectToModulesData.computeIfAbsent(importData.mavenProject, Function {
         PartialModulesData(importData.changes, mutableListOf())
@@ -476,7 +476,7 @@ internal open class WorkspaceProjectImporter(
       override val mavenProjectsTree = myProjectsTree
       override lateinit var mavenProjectWithModules: MavenWorkspaceConfigurator.MavenProjectWithModules<ModuleEntity>
     }
-    WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
+    workspaceConfigurators().forEach { configurator ->
       stats.recordConfigurator(configurator, MavenImportCollector.CONFIG_MODULES_DURATION_MS) {
         projectsWithModules.forEach { projectWithModules ->
           try {
@@ -501,7 +501,7 @@ internal open class WorkspaceProjectImporter(
       override val mavenProjectsWithModules = projectsWithModules.asSequence()
       override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = importedEntities(builder, clazz)
     }
-    WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
+    workspaceConfigurators().forEach { configurator ->
       stats.recordConfigurator(configurator, MavenImportCollector.BEFORE_APPLY_DURATION_MS) {
         try {
           configurator.beforeModelApplied(context)
@@ -524,7 +524,7 @@ internal open class WorkspaceProjectImporter(
       override val mavenProjectsWithModules = projectsWithModules.asSequence()
       override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = importedEntities(builder, clazz)
     }
-    WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
+    workspaceConfigurators().forEach { configurator ->
       stats.recordConfigurator(configurator, MavenImportCollector.AFTER_APPLY_DURATION_MS) {
         try {
           configurator.afterModelApplied(context)
