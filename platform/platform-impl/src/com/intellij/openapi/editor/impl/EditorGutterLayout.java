@@ -63,9 +63,9 @@ public final class EditorGutterLayout {
       mouseEventAreaType = switch (ID) {
         case LINE_NUMBERS_AREA, ADDITIONAL_LINE_NUMBERS_AREA -> EditorMouseEventArea.LINE_NUMBERS_AREA;
         case ANNOTATIONS_AREA -> EditorMouseEventArea.ANNOTATIONS_AREA;
-        case EXTRA_LEFT_FREE_PAINTERS_AREA, LEFT_FREE_PAINTERS_AREA, RIGHT_FREE_PAINTERS_AREA, ICONS_AREA ->
+        case EXTRA_LEFT_FREE_PAINTERS_AREA, LEFT_FREE_PAINTERS_AREA, RIGHT_FREE_PAINTERS_AREA, GAP_AFTER_ICONS_AREA, ICONS_AREA ->
           EditorMouseEventArea.LINE_MARKERS_AREA;
-        case GAP_AFTER_ICONS_AREA, FOLDING_AREA, VERTICAL_LINE_AREA -> EditorMouseEventArea.FOLDING_OUTLINE_AREA;
+        case FOLDING_AREA, VERTICAL_LINE_AREA -> EditorMouseEventArea.FOLDING_OUTLINE_AREA;
         default -> null;
       };
     }
