@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
@@ -62,17 +64,19 @@ public class PyExecutionStack extends XExecutionStack {
       return;
     }
 
-    final List<PyStackFrameInfo> frames = myThreadInfo.getFrames();
-    if (frames != null && firstFrameIndex <= frames.size()) {
-      final List<PyStackFrame> xFrames = new LinkedList<>();
-      for (int i = firstFrameIndex; i < frames.size(); i++) {
-        xFrames.add(convert(myDebugProcess, frames.get(i)));
+    ApplicationManager.getApplication().invokeLater(() -> {
+      List<PyStackFrameInfo> frames = myThreadInfo.getFrames();
+      if (frames != null && firstFrameIndex <= frames.size() && !container.isObsolete()) {
+        List<PyStackFrame> xFrames = new LinkedList<>();
+        for (int i = firstFrameIndex; i < frames.size(); i++) {
+          xFrames.add(convert(myDebugProcess, frames.get(i)));
+        }
+        container.addStackFrames(xFrames, true);
       }
-      container.addStackFrames(xFrames, true);
-    }
-    else {
-      container.addStackFrames(Collections.emptyList(), true);
-    }
+      else {
+        container.addStackFrames(Collections.emptyList(), true);
+      }
+    });
   }
 
   @NotNull PyThreadInfo getThreadInfo() {
