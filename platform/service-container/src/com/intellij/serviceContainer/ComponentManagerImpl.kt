@@ -1202,11 +1202,11 @@ abstract class ComponentManagerImpl(
   fun instances(createIfNeeded: Boolean = false, filter: ((implClass: Class<*>) -> Boolean)? = null): Sequence<Any> {
     return (componentContainer.instanceHolders().asSequence() + serviceContainer.instanceHolders()).mapNotNull { holder ->
       try {
-        val instanceClass = holder.instanceClass()
         if (filter == null) {
-          holder.getInstanceBlocking(debugString = instanceClass.name, keyClass = null, createIfNeeded = createIfNeeded)
+          holder.getInstanceBlocking(debugString = holder.instanceClassName(), keyClass = null, createIfNeeded = createIfNeeded)
         }
         else {
+          val instanceClass = holder.instanceClass()
           if (filter(instanceClass)) {
             holder.getInstanceBlocking(debugString = instanceClass.name, keyClass = null, createIfNeeded = createIfNeeded)
           }
