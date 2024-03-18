@@ -23,18 +23,19 @@ import java.util.stream.Stream
 
 class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
 
+  private lateinit var myLegacyImporter: MyLegacyImporter
   private lateinit var myImporter: MyMavenPluginImporter
 
   override fun setUp() {
     super.setUp()
     myImporter = MyMavenPluginImporter()
+    myLegacyImporter = MyLegacyImporter()
     ExtensionTestUtil.addExtensions(WORKSPACE_CONFIGURATOR_EP, listOf(myImporter, MyAlwaysFailConfigurerDoNotImplementingStaticSyncAware()), testRootDisposable)
-    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(MyAlwaysFailLegacyImporter()), testRootDisposable)
+    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(MyAlwaysFailLegacyImporter(), myLegacyImporter), testRootDisposable)
   }
 
   @Test
   fun `test plugin configuration is properly interpolated`() = runBlocking {
-    myImporter.expect("myplugin", "myartifact")
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -63,6 +64,7 @@ class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
 
     assertModules("project")
     UsefulTestCase.assertEquals(1, myImporter.mavenProjects.size)
+    UsefulTestCase.assertEquals(1, myLegacyImporter.mavenProjects.size)
     val mavenProject = myImporter.mavenProjects[0]
     val plugin = mavenProject.findPlugin("myplugin", "myartifact")
     TestCase.assertNotNull(plugin)
@@ -72,7 +74,6 @@ class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
 
   @Test
   fun `test plugin execution configuration is properly interpolated`() = runBlocking {
-    myImporter.expect("myplugin", "myartifact")
     importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
@@ -111,6 +112,7 @@ class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
 
     assertModules("project")
     UsefulTestCase.assertEquals(1, myImporter.mavenProjects.size)
+    UsefulTestCase.assertEquals(1, myLegacyImporter.mavenProjects.size)
     val mavenProject = myImporter.mavenProjects[0]
     val plugin = mavenProject.findPlugin("myplugin", "myartifact")
     TestCase.assertNotNull(plugin)
@@ -125,16 +127,25 @@ class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
 }
 
 class MyMavenPluginImporter : MavenWorkspaceConfigurator, MavenStaticSyncAware {
-  var myGroupID: String? = null
-  var myArtifactID: String? = null
+
   val mavenProjects = ArrayList<MavenProject>()
-  fun expect(groupID: String, artifactId: String) {
-    myGroupID = groupID
-    myArtifactID = artifactId
-  }
+
 
   override fun configureMavenProject(context: MavenWorkspaceConfigurator.MutableMavenProjectContext) {
     mavenProjects.add(context.mavenProjectWithModules.mavenProject)
+  }
+}
+
+
+class MyLegacyImporter : MavenImporter("", ""), MavenStaticSyncAware {
+
+  val mavenProjects = ArrayList<MavenProject>()
+  override fun isApplicable(mavenProject: MavenProject?): Boolean {
+    return true
+  }
+
+  override fun process(modifiableModelsProvider: IdeModifiableModelsProvider, module: Module, rootModel: MavenRootModelAdapter, mavenModel: MavenProjectsTree, mavenProject: MavenProject, changes: MavenProjectChanges, mavenProjectToModuleName: MutableMap<MavenProject, String>, postTasks: MutableList<MavenProjectsProcessorTask>) {
+    mavenProjects.add(mavenProject)
   }
 }
 
@@ -188,7 +199,7 @@ private class MyAlwaysFailLegacyImporter : MavenImporter("", "") {
   }
 
   override fun isMigratedToConfigurator(): Boolean {
-    throw IllegalStateException("Should never be called in static import")
+    return true
   }
 
   override fun preProcess(module: Module?, mavenProject: MavenProject?, changes: MavenProjectChanges?, modifiableModelsProvider: IdeModifiableModelsProvider?) {

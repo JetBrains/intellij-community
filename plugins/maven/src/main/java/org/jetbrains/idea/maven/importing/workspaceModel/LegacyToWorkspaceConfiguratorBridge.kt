@@ -7,7 +7,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import java.util.stream.Stream
 import kotlin.streams.asStream
 
-class LegacyToWorkspaceConfiguratorBridge : MavenWorkspaceConfigurator {
+sealed class LegacyToWorkspaceConfiguratorBridge : MavenWorkspaceConfigurator {
 
   override fun getAdditionalFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<MavenWorkspaceConfigurator.AdditionalFolder> {
     val result = ArrayList<MavenWorkspaceConfigurator.AdditionalFolder>()
@@ -36,5 +36,5 @@ class LegacyToWorkspaceConfiguratorBridge : MavenWorkspaceConfigurator {
   override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
   }
 
-  private fun legacyImporters(mavenProject: MavenProject) = MavenImporter.getSuitableImporters(mavenProject, true)
+  abstract fun legacyImporters(mavenProject: MavenProject): List<MavenImporter>
 }

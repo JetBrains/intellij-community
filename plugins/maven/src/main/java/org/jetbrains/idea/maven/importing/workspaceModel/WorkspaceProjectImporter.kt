@@ -66,11 +66,11 @@ internal val ARTIFACT_MODEL_KEY = Key.create<ImporterModifiableArtifactModel>("A
 val NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY = Key.create<Boolean>("NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY")
 
 internal open class WorkspaceProjectImporter(
-  private val myProjectsTree: MavenProjectsTree,
-  private val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
-  private val myImportingSettings: MavenImportingSettings,
-  private val myModifiableModelsProvider: IdeModifiableModelsProvider,
-  private val myProject: Project
+  protected val myProjectsTree: MavenProjectsTree,
+  protected val projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+  protected val myImportingSettings: MavenImportingSettings,
+  protected val myModifiableModelsProvider: IdeModifiableModelsProvider,
+  protected val myProject: Project
 ) : MavenProjectImporter {
   private val virtualFileUrlManager = WorkspaceModel.getInstance(myProject).getVirtualFileUrlManager()
   private val createdModulesList = java.util.ArrayList<Module>()
@@ -133,8 +133,8 @@ internal open class WorkspaceProjectImporter(
   }
 
   protected open fun addAfterImportTask(postTasks: ArrayList<MavenProjectsProcessorTask>,
-                        contextData: UserDataHolderBase,
-                        appliedProjectsWithModules: List<MavenProjectWithModulesData<Module>>) {
+                                        contextData: UserDataHolderBase,
+                                        appliedProjectsWithModules: List<MavenProjectWithModulesData<Module>>) {
     postTasks.add(AfterImportConfiguratorsTask(contextData, appliedProjectsWithModules))
   }
 
@@ -537,18 +537,19 @@ internal open class WorkspaceProjectImporter(
   }
 
   protected open fun configLegacyFacets(mavenProjectsWithModules: List<MavenProjectWithModulesData<Module>>,
-                                 moduleNameByProject: Map<MavenProject, String>,
-                                 postTasks: List<MavenProjectsProcessorTask>,
-                                 activity: StructuredIdeActivity) {
+                                        moduleNameByProject: Map<MavenProject, String>,
+                                        postTasks: List<MavenProjectsProcessorTask>,
+                                        activity: StructuredIdeActivity) {
     val legacyFacetImporters = mavenProjectsWithModules.flatMap { projectWithModules ->
       projectWithModules.modules.asSequence().mapNotNull { moduleWithType ->
+        val importers = MavenImporter.getSuitableImporters(projectWithModules.mavenProject, true)
         MavenLegacyModuleImporter.ExtensionImporter.createIfApplicable(projectWithModules.mavenProject,
                                                                        moduleWithType.module,
                                                                        moduleWithType.type,
                                                                        myProjectsTree,
                                                                        projectWithModules.changes,
                                                                        moduleNameByProject,
-                                                                       /* isWorkspaceImport = */true)
+                                                                       importers)
       }
     }
     MavenProjectImporterBase.importExtensions(myProject, myModifiableModelsProvider, legacyFacetImporters, postTasks, activity)
