@@ -16,11 +16,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.Interner
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.textmate.TextMateService.LOG
@@ -34,6 +31,7 @@ import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter
 import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils
+import java.lang.Runnable
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -81,25 +79,31 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
       if (!builtinBundlesDisabled) {
         val builtinBundlesSettings = TextMateBuiltinBundlesSettings.getInstance()
         if (builtinBundlesSettings != null) {
-          val turnedOffBundleNames = builtinBundlesSettings.getTurnedOffBundleNames()
-          val builtInBundles = discoverBuiltinBundles(builtinBundlesSettings)
-          val bundlesToEnable = if (turnedOffBundleNames.isEmpty()) {
-            builtInBundles
-          }
-          else {
-            builtInBundles.filter { !turnedOffBundleNames.contains(it.name) }
-          }
-          registerBundlesInParallel(
-            scope = scope,
-            bundlesToLoad = bundlesToEnable,
-            registrar = {
-              registerBundle(
-                directory = Path.of(it.path),
-                extensionMapping = newExtensionsMapping,
-                customHighlightingColors = customHighlightingColors,
-              )
-            },
-          )
+          val job = scope.async {
+            val turnedOffBundleNames = builtinBundlesSettings.getTurnedOffBundleNames()
+            val builtInBundles = withContext(Dispatchers.IO) {
+              discoverBuiltinBundles(builtinBundlesSettings)
+            }
+            val bundlesToEnable = if (turnedOffBundleNames.isEmpty()) {
+              builtInBundles
+            }
+            else {
+              builtInBundles.filter { !turnedOffBundleNames.contains(it.name) }
+            }
+
+            registerBundlesInParallel(
+              bundlesToLoad = bundlesToEnable,
+              registrar = {
+                registerBundle(
+                  directory = Path.of(it.path),
+                  extensionMapping = newExtensionsMapping,
+                  customHighlightingColors = customHighlightingColors,
+                )
+              },
+            )
+          }.asCompletableFuture()
+          @Suppress("UsagesOfObsoleteApi")
+          ProgressIndicatorUtils.awaitWithCheckCanceled(job)
         }
       }
 
@@ -111,23 +115,26 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
         })
       }
       if (!bundlesToLoad.isEmpty()) {
-        registerBundlesInParallel(
-          scope = scope,
-          bundlesToLoad = bundlesToLoad,
-          registrar = {
-            registerBundle(Path.of(it.path), newExtensionsMapping, customHighlightingColors)
-          },
-          registrationFailed = { bundleToLoad ->
-            val bundleName = bundleToLoad.name
-            val errorMessage = TextMateBundle.message("textmate.cant.register.bundle", bundleName)
-            Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error", bundleName),
-                         errorMessage, NotificationType.ERROR)
-              .addAction(NotificationAction.createSimpleExpiring(
-                TextMateBundle.message("textmate.disable.bundle.notification.action",
-                                       bundleName)) { settings.disableBundle(bundleToLoad.path) })
-              .notify(null)
-          },
-        )
+        val job = scope.async {
+          registerBundlesInParallel(
+            bundlesToLoad = bundlesToLoad,
+            registrar = {
+              registerBundle(Path.of(it.path), newExtensionsMapping, customHighlightingColors)
+            },
+            registrationFailed = { bundleToLoad ->
+              val bundleName = bundleToLoad.name
+              val errorMessage = TextMateBundle.message("textmate.cant.register.bundle", bundleName)
+              Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error", bundleName),
+                           errorMessage, NotificationType.ERROR)
+                .addAction(NotificationAction.createSimpleExpiring(
+                  TextMateBundle.message("textmate.disable.bundle.notification.action",
+                                         bundleName)) { settings.disableBundle(bundleToLoad.path) })
+                .notify(null)
+            },
+          )
+        }.asCompletableFuture()
+        @Suppress("UsagesOfObsoleteApi")
+        ProgressIndicatorUtils.awaitWithCheckCanceled(job)
       }
 
       if (fireEvents && oldExtensionsMapping != newExtensionsMapping) {
@@ -396,8 +403,7 @@ internal fun discoverBuiltinBundles(builtinBundlesSettings: TextMateBuiltinBundl
   }
 }
 
-private fun registerBundlesInParallel(
-  scope: CoroutineScope,
+private fun CoroutineScope.registerBundlesInParallel(
   bundlesToLoad: List<TextMateBundleToLoad>,
   registrar: suspend (TextMateBundleToLoad) -> Boolean,
   registrationFailed: Consumer<TextMateBundleToLoad>? = null,
@@ -407,13 +413,13 @@ private fun registerBundlesInParallel(
       LOG.error("Cannot load builtin textmate bundle", t, bundleToLoad.toString())
     }
     else {
-      scope.launch(Dispatchers.EDT) {
+      launch(Dispatchers.EDT) {
         registrationFailed.accept(bundleToLoad)
       }
     }
   }
 
-  val initializationJob = scope.launch {
+  launch(Dispatchers.Default) {
     for (bundleToLoad in bundlesToLoad) {
       launch {
         val registered = try {
@@ -433,8 +439,6 @@ private fun registerBundlesInParallel(
       }
     }
   }
-
-  ProgressIndicatorUtils.awaitWithCheckCanceled(initializationJob.asCompletableFuture())
 }
 
 internal data class TextMateBundleToLoad(@JvmField val name: String, @JvmField val path: String)
