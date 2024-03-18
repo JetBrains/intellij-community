@@ -10,6 +10,9 @@ class TestCase{
     class T {
       T t;
       public T() {}
+      public T(int x) {}
     }
+    new T();
+    new T(1);
   }
 }
