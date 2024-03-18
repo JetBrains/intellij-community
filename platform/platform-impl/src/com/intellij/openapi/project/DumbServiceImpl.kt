@@ -123,7 +123,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     blockingContext {
       queueTask(task)
     }
-    if (isSynchronousTaskExecution) {
+    if (useSynchronousTaskQueue) {
       // This is the same side effects as produced by enterSmartModeIfDumb (except updating icons). We apply them synchronously because
       // invokeLaterWithDumbStartModality(this::enterSmartModeIfDumb) does not work well in synchronous environments (e.g., in unit tests):
       // code continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
@@ -295,7 +295,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     if (myProject.isDefault) {
       LOG.error("No indexing tasks should be created for default project: $task")
     }
-    if (isSynchronousTaskExecution) {
+    if (useSynchronousTaskQueue) {
       mySyncDumbTaskRunner.runTaskSynchronously(task)
       return
     }
@@ -528,7 +528,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       // and process them without switching to dumb mode. This behavior has to be fixed, but for now just ignore
       // it, because it has been working like this for years already.
       // Reproducing in test: com.jetbrains.cidr.lang.refactoring.OCRenameMoveFileTest
-      LOG.assertTrue(isSynchronousTaskExecution || myTaskQueue.isEmpty, "Task queue is not empty. Current state is " + myState.value)
+      LOG.assertTrue(useSynchronousTaskQueue || myTaskQueue.isEmpty, "Task queue is not empty. Current state is " + myState.value)
     }
   }
 
@@ -625,6 +625,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
         LOG.error(t)
       }
     }
+
+    private val useSynchronousTaskQueue: Boolean
+      get() = isSynchronousTaskExecution
 
     @JvmStatic
     val isSynchronousTaskExecution: Boolean
