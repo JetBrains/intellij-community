@@ -1,4 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
@@ -33,7 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-internal class DeclarativeHintsEditorInitializer : TextEditorInitializer {
+private class DeclarativeHintsEditorInitializer : TextEditorInitializer {
   override suspend fun initializeEditor(
     project: Project,
     file: VirtualFile,
@@ -56,9 +58,7 @@ internal class DeclarativeHintsEditorInitializer : TextEditorInitializer {
 
 @Service(Level.PROJECT)
 internal class DeclarativeHintsGrave(private val project: Project, private val scope: CoroutineScope)
-  : TextEditorCache<DeclarativeHintsState>(project, scope),
-    Disposable {
-
+  : TextEditorCache<DeclarativeHintsState>(project, scope), Disposable {
   override fun namePrefix(): String = "persistent-declarative-hints"
   override fun valueExternalizer(): DeclarativeHintsState.Externalizer = DeclarativeHintsState.Externalizer()
   override fun useHeapCache(): Boolean = true
@@ -71,7 +71,7 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
     if (!isEnabled() || file !is VirtualFileWithId) {
       return null
     }
-    val state: DeclarativeHintsState? = cache[file.id]
+    val state = cache.get(file.id)
     if (state == null || state.contentHash != document.contentHash()) {
       return null
     }
@@ -136,7 +136,7 @@ internal class DeclarativeHintsGrave(private val project: Project, private val s
   private fun isEnabled() = Registry.`is`("cache.inlay.hints.on.disk")
 }
 
-class ZombieInlayHintsProvider : InlayHintsProvider {
+internal class ZombieInlayHintsProvider : InlayHintsProvider {
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
     throw UnsupportedOperationException("Zombie provider does not support inlay collecting")
   }
