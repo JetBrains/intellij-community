@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -23,29 +24,67 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-internal class IfToWhenIntention :
-    KotlinApplicableModCommandAction<KtIfExpression, IfToWhenIntention.Context>(KtIfExpression::class) {
-
-    data class Context(
-        val subjectedWhenExpression: KtWhenExpression,
-        val toDelete: List<PsiElement>,
-        val commentSaver: CommentSaver,
-    )
-
+internal class IfToWhenIntention : KotlinApplicableModCommandAction<KtIfExpression, Unit>(KtIfExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.if.with.when")
 
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtIfExpression): Context {
+    override fun prepareContext(element: KtIfExpression) {
+    }
+
+    override fun invoke(context: ActionContext, element: KtIfExpression, elementContext: Unit, updater: ModPsiUpdater) {
         val ifExpression = element.topmostIfExpression()
+        val parent = ifExpression.parent
+
         val elementCommentSaver = CommentSaver(ifExpression, saveLineBreaks = true)
         val fullCommentSaver = CommentSaver(PsiChildRange(ifExpression, ifExpression.siblings().last()), saveLineBreaks = true)
 
+        val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
+        val loopJumpVisitor = LabelLoopJumpVisitor(loop)
+
         val toDelete = ArrayList<PsiElement>()
+
+        val (whenExpression, applyFullCommentSaver) = createWhenExpression(ifExpression, toDelete)
+
+        val commentSaver = if (applyFullCommentSaver) fullCommentSaver else elementCommentSaver
+
+        val subjectedWhenExpression = analyze(element) {
+            val analysableWhenExpression =
+                KtPsiFactory(element.project).createExpressionCodeFragment(whenExpression.text, ifExpression)
+                    .getContentElement() as KtWhenExpression
+
+            val subject = analysableWhenExpression.getSubjectToIntroduce(false)
+            whenExpression.introduceSubjectIfPossible(subject, ifExpression)
+        }
+
+        val result = ifExpression.replaced(subjectedWhenExpression)
+
+        updater.moveCaretTo(result.startOffset)
+        commentSaver.restore(result)
+
+        if (toDelete.isNotEmpty()) {
+            parent.deleteChildRange(
+                toDelete.first().let { it.prevSibling as? PsiWhiteSpace ?: it },
+                toDelete.last()
+            )
+        }
+
+        result.accept(loopJumpVisitor)
+        val labelName = loopJumpVisitor.labelName
+        if (loop != null && loopJumpVisitor.labelRequired && labelName != null && loop.parent !is KtLabeledExpression) {
+            val labeledLoopExpression = KtPsiFactory(result.project).createLabeledExpression(labelName)
+            labeledLoopExpression.baseExpression!!.replace(loop)
+
+            val replacedLabeledLoopExpression = loop.replace(labeledLoopExpression)
+            replacedLabeledLoopExpression.reformat()
+        }
+    }
+
+    private fun createWhenExpression(
+        ifExpression: KtIfExpression,
+        toDelete: ArrayList<PsiElement>
+    ): Pair<KtWhenExpression, Boolean> {
         var applyFullCommentSaver = true
-
-        val psiFactory = KtPsiFactory.contextual(context = element)
-
-        val whenExpression = psiFactory.buildExpression {
+        val whenExpression = KtPsiFactory(ifExpression.project).buildExpression {
             appendFixedText("when {\n")
 
             var currentIfExpression = ifExpression
@@ -97,50 +136,7 @@ internal class IfToWhenIntention :
             appendFixedText("}")
         } as KtWhenExpression
 
-        val codeFragmentWhenExpression =
-            psiFactory.createExpressionCodeFragment(whenExpression.text, ifExpression).getContentElement() as KtWhenExpression
-
-        val subject = codeFragmentWhenExpression.getSubjectToIntroduce(false)
-        val subjectedWhenExpression = whenExpression.introduceSubjectIfPossible(subject, ifExpression)
-
-        val commentSaver = if (applyFullCommentSaver) fullCommentSaver else elementCommentSaver
-
-        return Context(subjectedWhenExpression, toDelete, commentSaver)
-    }
-
-    override fun invoke(
-        context: ActionContext,
-        element: KtIfExpression,
-        elementContext: Context,
-        updater: ModPsiUpdater,
-    ) {
-        val ifExpression = element.topmostIfExpression()
-
-        val loop = ifExpression.getStrictParentOfType<KtLoopExpression>()
-        val loopJumpVisitor = LabelLoopJumpVisitor(loop)
-
-        val parent = ifExpression.parent
-        val result = ifExpression.replaced(elementContext.subjectedWhenExpression)
-        updater.moveCaretTo(result.startOffset)
-        elementContext.commentSaver.restore(result)
-
-        val toDelete = elementContext.toDelete
-        if (toDelete.isNotEmpty()) {
-            parent.deleteChildRange(
-                toDelete.first().let { it.prevSibling as? PsiWhiteSpace ?: it },
-                toDelete.last()
-            )
-        }
-
-        result.accept(loopJumpVisitor)
-        val labelName = loopJumpVisitor.labelName
-        if (loop != null && loopJumpVisitor.labelRequired && labelName != null && loop.parent !is KtLabeledExpression) {
-            val labeledLoopExpression = KtPsiFactory(result.project).createLabeledExpression(labelName)
-            labeledLoopExpression.baseExpression!!.replace(loop)
-
-            val replacedLabeledLoopExpression = loop.replace(labeledLoopExpression)
-            replacedLabeledLoopExpression.reformat()
-        }
+        return Pair(whenExpression, applyFullCommentSaver)
     }
 
     override fun getApplicableRanges(element: KtIfExpression): List<TextRange> =
