@@ -24,20 +24,20 @@ internal class LinuxInstaller(scope: CoroutineScope, project: Project) : Ultimat
   override val postfix = if (CpuArch.isArm64()) "-aarch64.tar.gz" else ".tar.gz"
 
   override fun installUltimate(downloadResult: DownloadResult): InstallationResult? {
-    val installationPath = getUltimateInstallationDirectory() ?: return null
+    val installPath = getUltimateInstallationDirectory() ?: return null
     val entries = mutableListOf<Path>()
 
     try {
       val decompressor = Decompressor.Tar(downloadResult.downloadPath)
-      decompressor.postProcessor(entries::add).extract(installationPath)
+      decompressor.postProcessor(entries::add).extract(installPath)
     }
     catch (e: Exception) {
-      deleteInBackground(installationPath)
+      deleteInBackground(installPath)
       throw e
     }
 
     val suggestedIde = downloadResult.suggestedIde
-    val installFolder = installationPath.resolve(entries.first().fileName)
+    val installFolder = installPath.resolve(entries.first().fileName)
     val installationInfo = getInstallationInfo(installFolder, suggestedIde) ?: return null
 
     createDesktopEntry(installationInfo)
@@ -73,10 +73,10 @@ internal class LinuxInstaller(scope: CoroutineScope, project: Project) : Ultimat
     desktopFile.write(content)
   }
 
-  private fun getInstallationInfo(installationPath: Path, suggestedIde: SuggestedIde): LinuxInstallationInfo? {
+  private fun getInstallationInfo(installPath: Path, suggestedIde: SuggestedIde): LinuxInstallationInfo? {
     val ide = if (suggestedIde.isPycharmProfessional()) "pycharm" else "idea"
 
-    val bin = installationPath.resolve("bin")
+    val bin = installPath.resolve("bin")
     val script = bin.resolve("$ide.sh")
     if (script.notExists()) return null
 
