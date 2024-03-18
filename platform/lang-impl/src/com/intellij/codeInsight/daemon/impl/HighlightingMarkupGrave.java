@@ -68,7 +68,7 @@ public class HighlightingMarkupGrave {
   protected void subscribeDaemonFinished() {
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
-    myProject.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+    myProject.getMessageBus().simpleConnect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
       @Override
       public void daemonFinished(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
         if (!DumbService.getInstance(myProject).isDumb()) {
