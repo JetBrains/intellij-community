@@ -34,6 +34,16 @@ class TomlCompletionFixture(
         doNotContainsCompletion(variants, render)
     }
 
+    fun checkNotContainsCompletions(
+        code: String,
+    ) = withNoAutoCompletion {
+        myFixture.configureByText(defaultFileName, code.trimIndent())
+        val lookups = myFixture.completeBasic()
+        if (lookups.isNotEmpty()) {
+            error("Expected completions to be empty")
+        }
+    }
+
     fun checkCompletionList(
         variants: List<String>,
         code: String,
