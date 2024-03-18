@@ -4,6 +4,7 @@ package com.intellij.platform.lvcs.impl.ui
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffRequestProcessorListener
+import com.intellij.find.EditorSearchSession
 import com.intellij.find.SearchTextArea
 import com.intellij.find.editorHeaderActions.Utils
 import com.intellij.history.integration.IdeaGateway
@@ -201,16 +202,19 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 
     val searchTextArea = SearchTextArea(textArea, true)
     searchTextArea.setBorder(JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.RIGHT), searchTextArea.border))
-    object : DumbAwareAction() {
-      override fun actionPerformed(e: AnActionEvent) {
-        IdeFocusManager.getInstance(project).requestFocus(searchTextArea.textArea, true)
-      }
+
+    dumbAwareAction { selectNextOccurence(true) }.registerCustomShortcutSet(Utils.shortcutSetOf(
+      Utils.shortcutsOf(IdeActions.ACTION_FIND_NEXT) + Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+    ), searchTextArea)
+    dumbAwareAction { selectNextOccurence(false) }.registerCustomShortcutSet(Utils.shortcutSetOf(
+      Utils.shortcutsOf(IdeActions.ACTION_FIND_PREVIOUS) + Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
+    ), searchTextArea)
+    dumbAwareAction {
+      IdeFocusManager.getInstance(project).requestFocus(searchTextArea.textArea, true)
     }.registerCustomShortcutSet(Utils.shortcutSetOf(Utils.shortcutsOf(IdeActions.ACTION_FIND)), activityList)
-    object : DumbAwareAction() {
-      override fun actionPerformed(e: AnActionEvent) {
-        searchTextArea.textArea.text = ""
-        IdeFocusManager.getInstance(project).requestFocus(activityList, true)
-      }
+    dumbAwareAction {
+      searchTextArea.textArea.text = ""
+      IdeFocusManager.getInstance(project).requestFocus(activityList, true)
     }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_ESCAPE), searchTextArea.textArea)
     searchTextArea.textArea.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -234,6 +238,18 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     val editor = FileHistoryDialog.findLeftEditor(diffComponent) ?: return
 
     FileHistoryDialog.updateEditorSearch(project, searchField, editor)
+  }
+
+  private fun selectNextOccurence(forward: Boolean) {
+    val diffComponent = getDiffComponent() ?: return
+    val editor = FileHistoryDialog.findLeftEditor(diffComponent) ?: return
+    val session = EditorSearchSession.get(editor) ?: return
+
+    if (session.hasMatches()) {
+      if (session.isLast(forward)) activityList.moveSelection(forward)
+      else if (forward) session.searchForward()
+      else session.searchBackward()
+    }
   }
 
   private fun ActivityList.updateEmptyText(isLoading: Boolean) = setEmptyText(getListEmptyText(isLoading))
@@ -345,3 +361,9 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 
 @Service(Service.Level.PROJECT)
 class ActivityService(val coroutineScope: CoroutineScope)
+
+private fun dumbAwareAction(runnable: () -> Unit): DumbAwareAction {
+  return object : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) = runnable()
+  }
+}
