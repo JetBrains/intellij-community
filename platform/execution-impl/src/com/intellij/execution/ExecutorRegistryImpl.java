@@ -123,7 +123,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     AnAction runContextAction;
     AnAction runNonExistingContextAction;
     if (executor instanceof ExecutorGroup<?> executorGroup) {
-      ActionGroup toolbarActionGroup = new SplitButtonAction(new ExecutorGroupActionGroup(executorGroup, ExecutorAction::new));
+      String delegateId = executor.getId() + "_delegate";
+      ExecutorGroupActionGroup actionGroup = new ExecutorGroupActionGroup(executorGroup, ExecutorAction::new);
+      registerAction(actionRegistrar, delegateId, actionGroup, idToAction);
+
+      ActionGroup toolbarActionGroup = new SplitButtonAction(actionGroup);
       Presentation presentation = toolbarActionGroup.getTemplatePresentation();
       presentation.setIconSupplier(executor::getIcon);
       presentation.setText(executor.getStartActionText());
@@ -138,9 +142,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       runNonExistingContextAction = new RunNewConfigurationContextAction(executor);
     }
 
-    Executor.ActionWrapper customizer = executor.runnerActionsGroupExecutorActionCustomizer();
-    registerActionInGroup(actionRegistrar, executor.getId(), customizer == null ? toolbarAction : customizer.wrap(toolbarAction), RUNNERS_GROUP,
-                          idToAction);
+    registerActionInGroup(actionRegistrar, executor.getId(), toolbarAction, RUNNERS_GROUP, idToAction);
 
     AnAction action = registerAction(actionRegistrar, executor.getContextActionId(), runContextAction, contextActionIdToAction);
     if (isExecutorInMainGroup(executor)) {
@@ -244,6 +246,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     ActionManager actionManager = ActionManager.getInstance();
     unregisterAction(executor.getId(), RUNNERS_GROUP, idToAction, actionManager);
+    if (executor instanceof ExecutorGroup<?>) {
+      unregisterAction(executor.getId() + "_delegate", RUNNERS_GROUP, idToAction, actionManager);
+    }
     if (isExecutorInMainGroup(executor)) {
       unregisterAction(executor.getContextActionId(), RUN_CONTEXT_EXECUTORS_GROUP, contextActionIdToAction, actionManager);
     }

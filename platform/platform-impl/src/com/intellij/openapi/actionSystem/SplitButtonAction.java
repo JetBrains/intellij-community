@@ -30,6 +30,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
+import java.util.List;
 import java.util.Objects;
 
 public class SplitButtonAction extends ActionGroupWrapper implements CustomComponentAction {
@@ -51,22 +52,28 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
 
     Presentation groupPresentation = e.getUpdateSession().presentation(getDelegate());
     e.getPresentation().copyFrom(groupPresentation, splitButton);
-
-    if (presentation.isVisible()) {
-      AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
-      if (action != null) {
-        Presentation actionPresentation = e.getUpdateSession().presentation(action);
-        presentation.copyFrom(actionPresentation, splitButton);
-        if (splitButton != null) {
-          boolean shouldRepaint = splitButton.actionEnabled != presentation.isEnabled();
-          splitButton.actionEnabled = presentation.isEnabled();
-          if (shouldRepaint) splitButton.repaint();
-        }
-        presentation.setEnabledAndVisible(true);
-      }
-
-      presentation.putClientProperty(FIRST_ACTION, splitButton != null ? null : action);
+    List<? extends AnAction> children = e.getUpdateSession().children(getDelegate());
+    if (children.isEmpty()) {
+      e.getPresentation().setEnabled(false);
     }
+    if (!presentation.isVisible()) {
+      return;
+    }
+    AnAction action = splitButton != null ? splitButton.selectedAction : getFirstEnabledAction(e);
+    if (action != null) {
+      Presentation actionPresentation = e.getUpdateSession().presentation(action);
+      presentation.copyFrom(actionPresentation, splitButton);
+      presentation.setEnabledAndVisible(true);
+    }
+    presentation.putClientProperty(FIRST_ACTION, splitButton != null ? null : action);
+  }
+
+  @Override
+  public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+    if (!(component instanceof SplitButton splitButton)) return;
+    boolean shouldRepaint = splitButton.actionEnabled != presentation.isEnabled();
+    splitButton.actionEnabled = presentation.isEnabled();
+    if (shouldRepaint) splitButton.repaint();
   }
 
   private @Nullable AnAction getFirstEnabledAction(@NotNull AnActionEvent e) {
