@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -22,6 +23,7 @@ import org.jetbrains.idea.maven.telemetry.scheduleExportTelemetryTrace
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
 import java.io.Serializable
 import java.nio.file.Path
@@ -183,6 +185,20 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   suspend fun readModel(file: File?): MavenModel? {
     return getOrCreateWrappee().readModel(file, ourToken)
+  }
+
+  @Deprecated("use suspend method")
+  @Throws(MavenProcessCanceledException::class)
+  fun executeGoal(requests: Collection<MavenGoalExecutionRequest>,
+                  goal: String,
+                  progressIndicator: MavenProgressIndicator?,
+                  console: MavenConsole): List<MavenGoalExecutionResult> {
+    val progressReporter = object : RawProgressReporter {
+      override fun text(text: @NlsContexts.ProgressText String?) {
+        progressIndicator?.indicator?.text = text
+      }
+    }
+    return runBlockingMaybeCancellable { executeGoal(requests, goal, progressReporter, console) }
   }
 
   @Throws(MavenProcessCanceledException::class)
