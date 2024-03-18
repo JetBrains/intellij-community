@@ -38,7 +38,7 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
 
   public static final class LargeTextFileEditor extends TextEditorImpl {
     LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
-      super(project, file, provider, Companion.createTextEditor(project, file));
+      super(project, file, provider, TextEditorImplKt.createTextEditorImpl(project, file));
 
       getEditor().setViewer(true);
     }

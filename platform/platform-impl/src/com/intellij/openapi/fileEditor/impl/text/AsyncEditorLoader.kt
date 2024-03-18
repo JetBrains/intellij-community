@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.concurrency.captureThreadContext
@@ -36,12 +38,14 @@ class AsyncEditorLoader internal constructor(private val project: Project,
                                              editor: EditorImpl,
                                              virtualFile: VirtualFile, task: Deferred<Unit>?) {
   private val tasks: List<Deferred<Unit>>
+
   init {
     val textEditorInit = coroutineScope.async(CoroutineName("HighlighterTextEditorInitializer")) {
-      TextEditorImpl.setHighlighterToEditor(project, virtualFile, editor.document, editor)
+      setHighlighterToEditor(project = project, file = virtualFile, document = editor.document, editor = editor)
     }
-    tasks = if (task == null) listOf(textEditorInit) else listOf(textEditorInit, task)
+    tasks = if (task == null) java.util.List.of(textEditorInit) else java.util.List.of(textEditorInit, task)
   }
+
   /**
    * [delayedActions] contains either:
    * - empty list: the editor was not loaded

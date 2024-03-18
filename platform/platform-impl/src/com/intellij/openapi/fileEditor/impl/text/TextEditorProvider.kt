@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
 import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.createTextEditor
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -89,7 +88,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
   final override fun acceptRequiresReadAction() = false
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return TextEditorImpl(project = project, file = file, provider = this, editor = createTextEditor(project, file))
+    return TextEditorImpl(project = project, file = file, provider = this, editor = createTextEditorImpl(project, file))
   }
 
   override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {

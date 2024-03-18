@@ -73,7 +73,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       val editorDeferred = CompletableDeferred<EditorEx>()
 
-      val task = TextEditorImpl.editorLoaderScope(project).async(CoroutineName("call TextEditorInitializers")) {
+      val task = editorLoaderScope(project).async(CoroutineName("call TextEditorInitializers")) {
         val editorSupplier = suspend { editorDeferred.await() }
         val highlighterReady = suspend { highlighterDeferred.join() }
 
