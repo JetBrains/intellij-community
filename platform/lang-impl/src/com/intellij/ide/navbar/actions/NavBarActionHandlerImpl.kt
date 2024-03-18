@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.actions
 
-import com.intellij.ide.navbar.vm.NavBarVm
+import com.intellij.platform.navbar.vm.NavBarVm
 
 internal abstract class NavBarActionHandlerImpl(private val vm: NavBarVm) : NavBarActionHandler {
 

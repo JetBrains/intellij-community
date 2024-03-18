@@ -3,7 +3,6 @@ package com.intellij.ide.navbar.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.icons.ExpUiIcons
-import com.intellij.ide.navbar.vm.NavBarItemVm
 import com.intellij.ide.navigationToolbar.ui.AbstractNavBarUI
 import com.intellij.ide.navigationToolbar.ui.AbstractNavBarUI.getDecorationOffset
 import com.intellij.ide.navigationToolbar.ui.AbstractNavBarUI.getFirstElementLeftOffset
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.vm.NavBarItemVm
 import com.intellij.ui.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext

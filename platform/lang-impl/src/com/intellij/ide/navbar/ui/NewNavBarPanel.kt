@@ -7,9 +7,6 @@ import com.intellij.ide.navbar.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLE
 import com.intellij.ide.navbar.actions.NavBarActionHandlerImpl
 import com.intellij.ide.navbar.ide.LOG
 import com.intellij.ide.navbar.ui.NavBarItemComponent.Companion.isItemComponentFocusable
-import com.intellij.ide.navbar.vm.NavBarItemVm
-import com.intellij.ide.navbar.vm.NavBarPopupVm
-import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.NavBarShowPopup
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
@@ -20,6 +17,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarVmItem.Companion.SELECTED_ITEMS
+import com.intellij.platform.navbar.vm.NavBarItemVm
+import com.intellij.platform.navbar.vm.NavBarPopupVm
+import com.intellij.platform.navbar.vm.NavBarVm
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.PopupOwner

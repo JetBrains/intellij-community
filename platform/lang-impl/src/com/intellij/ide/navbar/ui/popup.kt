@@ -2,12 +2,12 @@
 package com.intellij.ide.navbar.ui
 
 import com.intellij.ide.actions.OpenInRightSplitAction
-import com.intellij.ide.navbar.vm.NavBarPopupItem
-import com.intellij.ide.navbar.vm.NavBarPopupVm
 import com.intellij.ide.navigationToolbar.NavBarListWrapper
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.navbar.vm.NavBarPopupItem
+import com.intellij.platform.navbar.vm.NavBarPopupVm
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.PopupHandler
