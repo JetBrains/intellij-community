@@ -594,7 +594,7 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         )
     }
 
-    fun checkDefaultValueOfAnnotation(myFixture: JavaCodeInsightTestFixture) {
+    fun checkDefaultValueOfAnnotation_Kotlin(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
                 annotation class IntDef(
@@ -626,6 +626,51 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         )
 
         val flagValue = (lc.findAttributeValue("flag") as? PsiLiteralExpression)?.value
+        TestCase.assertEquals("false", flagValue?.toString())
+    }
+
+    fun checkDefaultValueOfAnnotation_Java(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                import java.lang.annotation.Annotation;
+                import java.lang.annotation.ElementType;
+                import java.lang.annotation.Target;
+
+                @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+                public @interface MyRestrictedApi {
+                  String explanation();
+                  Class<? extends Annotation>[] allowlistAnnotations() default {};
+                  boolean allowedInTestonlyTargets() default false;
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                @Target(AnnotationTarget.FUNCTION) annotation class KAllowlist
+
+                class Test {
+                  @MyRestrictedApi(
+                    explanation = "umbrella",
+                    allowlistAnnotations = [KAllowlist::class],
+                  )
+                  fun foo() {}
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val foo = uFile.findElementByTextFromPsi<UMethod>("fun foo", strict = false)
+            .orFail("can't convert to UMethod")
+        val lc = foo.uAnnotations.single().javaPsi!!
+        val annos = (lc.findAttributeValue("allowlistAnnotations") as? PsiArrayInitializerMemberValue)?.initializers
+        TestCase.assertEquals(
+            "[KAllowlist]",
+            annos?.joinToString(separator = ", ", prefix = "[", postfix = "]") { annoValue ->
+                (annoValue as? PsiClassObjectAccessExpression)?.type?.canonicalText ?: annoValue.text
+            }
+        )
+
+        val flagValue = (lc.findAttributeValue("allowedInTestonlyTargets") as? PsiLiteralExpression)?.value
         TestCase.assertEquals("false", flagValue?.toString())
     }
 
