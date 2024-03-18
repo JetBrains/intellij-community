@@ -2,8 +2,10 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.net.URL
 
+@Internal
 class OnboardingBackgroundImageProviderImpl : OnboardingBackgroundImageProviderBase() {
   override fun getImageUrl(): URL? =
     if (PlatformUtils.isIntelliJ()) javaClass.getResource("/images/gradientBackground.svg")
