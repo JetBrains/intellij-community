@@ -831,11 +831,11 @@ object Switcher : BaseSwitcherAction(null) {
 
       private fun findAppropriateWindow(window: EditorWindow?): EditorWindow? {
         if (window == null) return null
-        if (UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE) {
-          return window.owner.currentWindow
-        }
         val windows = window.owner.getWindows()
-        return if (ArrayUtil.contains(window, *windows)) window else if (windows.isNotEmpty()) windows[0] else null
+
+        return if (ArrayUtil.contains(window, *windows)) window
+        else if (UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE) window.owner.currentWindow
+        else if (windows.isNotEmpty()) windows[0] else null
       }
 
       @TestOnly
