@@ -2,12 +2,9 @@
 package com.intellij.ide.navbar.ui
 
 import com.intellij.accessibility.AccessibilityUtils
-import com.intellij.ide.CopyPasteDelegator
-import com.intellij.ide.CopyPasteSupport
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.navbar.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER
 import com.intellij.ide.navbar.actions.NavBarActionHandlerImpl
-import com.intellij.ide.navbar.actions.extensionData
 import com.intellij.ide.navbar.ide.LOG
 import com.intellij.ide.navbar.ide.NavBarVmItem.Companion.SELECTED_ITEMS
 import com.intellij.ide.navbar.ui.NavBarItemComponent.Companion.isItemComponentFocusable
@@ -19,7 +16,6 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.NavB
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
-import com.intellij.openapi.actionSystem.PlatformDataKeys.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -235,24 +231,8 @@ class NewNavBarPanel(
     }
     CONTEXT_COMPONENT.name -> this
     PROJECT.name -> project
-    CUT_PROVIDER.name -> extensionData(dataId) ?: getCopyPasteDelegator(this).cutProvider
-    COPY_PROVIDER.name -> extensionData(dataId) ?: getCopyPasteDelegator(this).copyProvider
-    PASTE_PROVIDER.name -> extensionData(dataId) ?: getCopyPasteDelegator(this).pasteProvider
     SELECTED_ITEMS.name -> vm.selection()
     else -> null
-  }
-
-  private fun getCopyPasteDelegator(source: JComponent): CopyPasteSupport {
-    val key = "NavBarPanel.copyPasteDelegator"
-    val result = source.getClientProperty(key)
-    if (result is CopyPasteSupport) {
-      return result
-    }
-    else {
-      return CopyPasteDelegator(project, source).also {
-        source.putClientProperty(key, it)
-      }
-    }
   }
 
   override fun getAccessibleContext(): AccessibleContext {
