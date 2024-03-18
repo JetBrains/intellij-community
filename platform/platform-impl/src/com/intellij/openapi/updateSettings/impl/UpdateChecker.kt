@@ -73,7 +73,7 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
   /**
    * For scheduled update checks.
    */
-  fun updateAndShowResult(showResults: Boolean = false): ActionCallback {
+  fun updateAndShowResult(showResults: Boolean = true): ActionCallback {
     val callback = ActionCallback()
     coroutineScope.launch(limitedDispatcher) {
       doUpdateAndShowResult(
