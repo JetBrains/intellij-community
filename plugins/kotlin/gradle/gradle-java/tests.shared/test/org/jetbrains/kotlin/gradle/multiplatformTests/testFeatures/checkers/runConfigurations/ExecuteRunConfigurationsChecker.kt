@@ -14,6 +14,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemProcessHandler
@@ -22,6 +23,7 @@ import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystem
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.*
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractTestChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
@@ -181,7 +183,12 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
 
     private fun KotlinMppTestsContext.findRunConfiguration(functionFqn: String): RunnerAndConfigurationSettings? {
         val psiElement = findFunctionIdentifyingElement(functionFqn)
-        return runReadAction { createEmptyContextForLocation(PsiLocation(psiElement)).configuration }
+        ThreadingAssertions.assertBackgroundThread()
+        return runBlocking {
+            smartReadAction(psiElement.project) {
+                createEmptyContextForLocation(PsiLocation(psiElement)).configuration
+            }
+        }
     }
 
     private fun KotlinMppTestsContext.findFunctionIdentifyingElement(fqn: String): PsiElement = runReadAction {
