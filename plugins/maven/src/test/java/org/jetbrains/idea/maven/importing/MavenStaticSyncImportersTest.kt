@@ -1,17 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.PairConsumer
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
-import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jdom.Element
+import org.jetbrains.idea.maven.importing.workspaceModel.WORKSPACE_CONFIGURATOR_EP
+import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.project.*
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.Test
+import java.util.*
+import java.util.stream.Stream
 
 class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
 
@@ -20,7 +28,8 @@ class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
   override fun setUp() {
     super.setUp()
     myImporter = MyMavenPluginImporter()
-    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(myImporter), testRootDisposable)
+    ExtensionTestUtil.addExtensions(WORKSPACE_CONFIGURATOR_EP, listOf(myImporter, MyAlwaysFailConfigurerDoNotImplementingStaticSyncAware()), testRootDisposable)
+    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(MyAlwaysFailLegacyImporter()), testRootDisposable)
   }
 
   @Test
@@ -115,7 +124,7 @@ class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
   }
 }
 
-class MyMavenPluginImporter : MavenImporter("", "") {
+class MyMavenPluginImporter : MavenWorkspaceConfigurator, MavenStaticSyncAware {
   var myGroupID: String? = null
   var myArtifactID: String? = null
   val mavenProjects = ArrayList<MavenProject>()
@@ -124,11 +133,113 @@ class MyMavenPluginImporter : MavenImporter("", "") {
     myArtifactID = artifactId
   }
 
-  override fun isApplicable(mavenProject: MavenProject): Boolean {
-    return mavenProject.findPlugin(myGroupID, myArtifactID) != null
+  override fun configureMavenProject(context: MavenWorkspaceConfigurator.MutableMavenProjectContext) {
+    mavenProjects.add(context.mavenProjectWithModules.mavenProject)
+  }
+}
+
+private class MyAlwaysFailConfigurerDoNotImplementingStaticSyncAware : MavenWorkspaceConfigurator {
+
+  override fun getAdditionalFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<MavenWorkspaceConfigurator.AdditionalFolder> {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun getFoldersToExclude(context: MavenWorkspaceConfigurator.FoldersContext): Stream<String> {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun configureMavenProject(context: MavenWorkspaceConfigurator.MutableMavenProjectContext) {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
+    throw IllegalStateException("Should never be called in static import")
+  }
+}
+
+
+private class MyAlwaysFailLegacyImporter : MavenImporter("", "") {
+  override fun isApplicable(mavenProject: MavenProject?): Boolean {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun getModuleType(): ModuleType<out ModuleBuilder> {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun getSupportedPackagings(result: MutableCollection<in String>?) {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun getSupportedDependencyTypes(result: MutableCollection<in String>?, type: SupportedRequestType?) {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun getSupportedDependencyScopes(result: MutableCollection<in String>?) {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun getExtraArtifactClassifierAndExtension(artifact: MavenArtifact?, type: MavenExtraArtifactType?): Pair<String, String>? {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun isMigratedToConfigurator(): Boolean {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun preProcess(module: Module?, mavenProject: MavenProject?, changes: MavenProjectChanges?, modifiableModelsProvider: IdeModifiableModelsProvider?) {
+    throw IllegalStateException("Should never be called in static import")
   }
 
   override fun process(modifiableModelsProvider: IdeModifiableModelsProvider, module: Module, rootModel: MavenRootModelAdapter, mavenModel: MavenProjectsTree, mavenProject: MavenProject, changes: MavenProjectChanges, mavenProjectToModuleName: MutableMap<MavenProject, String>, postTasks: MutableList<MavenProjectsProcessorTask>) {
-    mavenProjects.add(mavenProject)
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun postProcess(module: Module?, mavenProject: MavenProject?, changes: MavenProjectChanges?, modifiableModelsProvider: IdeModifiableModelsProvider?) {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun processChangedModulesOnly(): Boolean {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun collectSourceRoots(mavenProject: MavenProject?, result: PairConsumer<String, JpsModuleSourceRootType<*>>?) {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun collectExcludedFolders(mavenProject: MavenProject?, result: MutableList<String>?) {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun getConfig(p: MavenProject?): Element? {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun getConfig(p: MavenProject?, path: String?): Element? {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun findConfigValue(p: MavenProject?, path: String?): String? {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun findConfigValue(p: MavenProject?, path: String?, defaultValue: String?): String? {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun getGoalConfig(p: MavenProject?, goal: String?): Element? {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun findGoalConfigValue(p: MavenProject?, goal: String?, path: String?): String? {
+    throw IllegalStateException("Should never be called in static import")
+  }
+
+  override fun customizeUserProperties(project: Project, mavenProject: MavenProject, properties: Properties) {
+    throw IllegalStateException("Should never be called in static import")
   }
 }
