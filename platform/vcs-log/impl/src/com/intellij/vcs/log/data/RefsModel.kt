@@ -1,96 +1,68 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.data;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.data
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsLogRefs;
-import com.intellij.vcs.log.VcsRef;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.VcsLogRefs
+import com.intellij.vcs.log.VcsRef
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import java.util.stream.Collectors
+import java.util.stream.Stream
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, heads: Set<Int>,
+                private val storage: VcsLogStorage, providers: Map<VirtualFile, VcsLogProvider>) : VcsLogRefs {
+  private val bestRefForHead: Int2ObjectMap<VcsRef> = Int2ObjectOpenHashMap()
+  private val rootForHead: Int2ObjectMap<VirtualFile> = Int2ObjectOpenHashMap()
 
-public class RefsModel implements VcsLogRefs {
-  private static final Logger LOG = Logger.getInstance(RefsModel.class);
+  init {
+    val commitIds = storage.getCommitIds(heads)
+    for (head in heads) {
+      val commitId = commitIds[head] ?: continue
 
-  private final @NotNull VcsLogStorage myStorage;
-  private final @NotNull Map<VirtualFile, CompressedRefs> myRefs;
-  private final @NotNull Int2ObjectMap<VcsRef> myBestRefForHead;
-  private final @NotNull Int2ObjectMap<VirtualFile> myRootForHead;
+      val root = commitId.root
+      rootForHead.put(head, root)
 
-  public RefsModel(@NotNull Map<VirtualFile, CompressedRefs> refs,
-                   @NotNull Set<Integer> heads,
-                   @NotNull VcsLogStorage storage,
-                   @NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    myRefs = refs;
-    myStorage = storage;
-
-    myBestRefForHead = new Int2ObjectOpenHashMap<>();
-    myRootForHead = new Int2ObjectOpenHashMap<>();
-    Map<@NotNull Integer, @NotNull CommitId> commitIds = myStorage.getCommitIds(heads);
-    for (int head : heads) {
-      CommitId commitId = commitIds.get(head);
-      if (commitId != null) {
-        VirtualFile root = commitId.getRoot();
-        myRootForHead.put(head, root);
-        Optional<VcsRef> bestRef =
-          myRefs.get(root).refsToCommit(head).stream().min(providers.get(root).getReferenceManager().getBranchLayoutComparator());
-        if (bestRef.isPresent()) {
-          myBestRefForHead.put(head, bestRef.get());
-        }
-        else {
-          LOG.debug("No references at head " + commitId);
-        }
+      val bestRef = allRefsByRoot[root]!!.refsToCommit(head).minWithOrNull(providers[root]!!.referenceManager.branchLayoutComparator)
+      if (bestRef != null) {
+        bestRefForHead.put(head, bestRef)
+      }
+      else {
+        LOG.debug("No references at head $commitId")
       }
     }
   }
 
-  public @Nullable VcsRef bestRefToHead(int headIndex) {
-    return myBestRefForHead.get(headIndex);
-  }
+  fun bestRefToHead(headIndex: Int): VcsRef? = bestRefForHead[headIndex]
 
-  public @Nullable VirtualFile rootAtHead(int headIndex) {
-    return myRootForHead.get(headIndex);
-  }
+  fun rootAtHead(headIndex: Int): VirtualFile? = rootForHead[headIndex]
 
-  public @NotNull Map<VirtualFile, CompressedRefs> getAllRefsByRoot() {
-    return myRefs;
-  }
-
-  public @NotNull List<VcsRef> refsToCommit(int index) {
-    if (myRefs.size() <= 10) {
-      for (CompressedRefs refs : myRefs.values()) {
-        if (refs.contains(index)) {
-          return refs.refsToCommit(index);
-        }
-      }
-      return Collections.emptyList();
+  fun refsToCommit(index: Int): List<VcsRef> {
+    if (allRefsByRoot.size <= 10) {
+      val refs = allRefsByRoot.values.firstOrNull { it.contains(index) }
+      return refs?.refsToCommit(index) ?: emptyList()
     }
-    CommitId id = myStorage.getCommitId(index);
-    if (id == null) return Collections.emptyList();
-    VirtualFile root = id.getRoot();
-    return myRefs.get(root).refsToCommit(index);
+    val id = storage.getCommitId(index) ?: return emptyList()
+    return allRefsByRoot[id.root]!!.refsToCommit(index)
   }
 
-  @Override
-  public @NotNull Collection<VcsRef> getBranches() {
-    return myRefs.values().stream().flatMap(CompressedRefs::streamBranches).collect(Collectors.toList());
+  override fun getBranches(): Collection<VcsRef> {
+    return allRefsByRoot.values.stream().flatMap(CompressedRefs::streamBranches).collect(Collectors.toList())
   }
 
   @RequiresBackgroundThread
-  @Override
-  public @NotNull Stream<VcsRef> stream() {
-    return myRefs.values().stream().flatMap(CompressedRefs::stream);
+  override fun stream(): Stream<VcsRef> {
+    return allRefsByRoot.values.stream().flatMap(CompressedRefs::stream)
   }
 
-  public static @NotNull RefsModel createEmptyInstance(@NotNull VcsLogStorage storage) {
-    return new RefsModel(Collections.emptyMap(), Collections.emptySet(), storage, Collections.emptyMap());
+  companion object {
+    private val LOG = Logger.getInstance(RefsModel::class.java)
+
+    @JvmStatic
+    fun createEmptyInstance(storage: VcsLogStorage): RefsModel {
+      return RefsModel(emptyMap(), emptySet(), storage, emptyMap())
+    }
   }
 }
