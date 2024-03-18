@@ -647,4 +647,13 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     }
     return size;
   }
+
+  @Override
+  protected boolean computeBlit(int dx, int dy, Point blitFrom, Point blitTo, Dimension blitSize, Rectangle blitPaint) {
+    if (JBSwingUtilities.hasCGTransform(this)) {
+      return false; // disable blit scrolling
+    }
+
+    return super.computeBlit(dx, dy, blitFrom, blitTo, blitSize, blitPaint);
+  }
 }

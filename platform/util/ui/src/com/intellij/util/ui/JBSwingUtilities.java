@@ -2,11 +2,13 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.util.LazyInitializer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -55,4 +57,14 @@ public final class JBSwingUtilities {
     }
     return gg;
   }
+
+  public static boolean hasCGTransform(@NotNull JComponent c) {
+    Graphics2D dummyGraphics = DUMMY_GRAPHICS.get();
+    return runGlobalCGTransform(c, dummyGraphics) != dummyGraphics;
+  }
+
+  private static final LazyInitializer.LazyValue<Graphics2D> DUMMY_GRAPHICS = LazyInitializer.create(() -> {
+    var image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+    return image.createGraphics();
+  });
 }
