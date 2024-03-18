@@ -129,7 +129,7 @@ internal class WorkspaceProjectImporter(
   }
 
   private fun notifyUserAboutWorkspaceImport(storageBeforeImport: ImmutableEntityStorage,
-                        postTasks: ArrayList<MavenProjectsProcessorTask>) {
+                                             postTasks: ArrayList<MavenProjectsProcessorTask>) {
     var notifyUserAboutWorkspaceImport = false
     if (NOTIFY_USER_ABOUT_WORKSPACE_IMPORT_KEY[myProject] == true) {
       notifyUserAboutWorkspaceImport = true
@@ -190,12 +190,13 @@ internal class WorkspaceProjectImporter(
   }
 
   private data class ProjectChangesInfo(val hasChanges: Boolean, val allProjectsToChanges: Map<MavenProject, MavenProjectChanges>) {
-    val projectFilePaths : List<String> get() = allProjectsToChanges.keys.map { it.path }
-    val changedProjectsOnly : Iterable<MavenProject> get() = allProjectsToChanges
-      .asSequence()
-      .filter { (_, changes) -> changes.hasChanges() }
-      .map { (mavenProject, _) -> mavenProject }
-      .asIterable()
+    val projectFilePaths: List<String> get() = allProjectsToChanges.keys.map { it.path }
+    val changedProjectsOnly: Iterable<MavenProject>
+      get() = allProjectsToChanges
+        .asSequence()
+        .filter { (_, changes) -> changes.hasChanges() }
+        .map { (mavenProject, _) -> mavenProject }
+        .asIterable()
   }
 
   private fun collectProjectChanges(storageBeforeImport: EntityStorage,
@@ -231,7 +232,7 @@ internal class WorkspaceProjectImporter(
     if (!keepExistingModuleNames) return mapOf()
 
     // in case of compound modules, module, module.main and module.test are all mapped to the same file; module must be returned
-    fun selectModuleEntity(externalSystemModuleEntities: List<ExternalSystemModuleOptionsEntity>) : ExternalSystemModuleOptionsEntity {
+    fun selectModuleEntity(externalSystemModuleEntities: List<ExternalSystemModuleOptionsEntity>): ExternalSystemModuleOptionsEntity {
       for (entity in externalSystemModuleEntities) {
         if (entity.externalSystemModuleType == StandardMavenModuleType.COMPOUND_MODULE.toString()) return entity
       }
@@ -280,7 +281,8 @@ internal class WorkspaceProjectImporter(
                                                  entitySourceNamesBeforeImport,
                                                  myImportingSettings,
                                                  folderImportingContext,
-                                                 stats).importModule()
+                                                 stats,
+                                                 WORKSPACE_CONFIGURATOR_EP.extensionList).importModule()
 
       val partialData = projectToModulesData.computeIfAbsent(importData.mavenProject, Function {
         PartialModulesData(importData.changes, mutableListOf())
@@ -396,7 +398,7 @@ internal class WorkspaceProjectImporter(
       .mapNotNull { currentStorage.resolve(it) }
       .forEach { moduleEntity ->
         val urlMap = moduleEntity.contentRoots.groupBy { it.url }
-        urlMap.forEach internal@ { (url, entities) ->
+        urlMap.forEach internal@{ (url, entities) ->
           if (entities.size == 1) return@internal
           val to = entities.firstOrNull { isMavenEntity(it.entitySource) }
           val from = entities.firstOrNull { !isMavenEntity(it.entitySource) }
@@ -581,7 +583,8 @@ internal class WorkspaceProjectImporter(
       val importer = WorkspaceFolderImporter(builder,
                                              workspaceModel.getVirtualFileUrlManager(),
                                              mavenManager.importingSettings,
-                                             folderImportingContext)
+                                             folderImportingContext,
+                                             WORKSPACE_CONFIGURATOR_EP.extensionList)
 
       var numberOfModules = 0
       readMavenExternalSystemData(builder).forEach { data ->
