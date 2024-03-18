@@ -43,6 +43,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.EditorComposite.Companion.retrofit
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.isSingletonFileEditor
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.TEXT_EDITOR_PROVIDER_TYPE_ID
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
@@ -2516,7 +2517,14 @@ private fun reopenVirtualFileInEditor(editorManager: FileEditorManagerEx, window
   val active = window.selectedComposite == oldComposite
   val pinned = window.isFilePinned(oldFile)
   var newOptions = FileEditorOpenOptions(selectAsCurrent = active, requestFocus = active, pin = pinned)
-  if (oldFile == newFile) {
+
+  val isSingletonEditor = window.allComposites.any { it.allEditors.any { it.file == oldFile && isSingletonFileEditor(it) } }
+  val dockContainer = DockManager.getInstance(editorManager.project).getContainerFor(window.component) { it is DockableEditorTabbedContainer }
+  if (isSingletonEditor && dockContainer != null) {
+    window.closeFile(oldFile)
+    editorManager.openFile(newFile, window, newOptions.withOpenMode(FileEditorManagerImpl.OpenMode.NEW_WINDOW))
+  }
+  else if (oldFile == newFile) {
     val index = window.files.indexOf(oldFile)
     newOptions = newOptions.withIndex(index)
     window.closeFile(oldFile, disposeIfNeeded = false)
