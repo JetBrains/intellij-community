@@ -24,7 +24,8 @@ class KotlinDeclarationNameValidator(
           target == KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY ||
           target == KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE ||
           target == KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER ||
-          target == KotlinNameSuggestionProvider.ValidatorTarget.CLASS
+          target == KotlinNameSuggestionProvider.ValidatorTarget.CLASS ||
+          target == KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION
         ) {
             "Unsupported yet target $target"
         }
@@ -49,7 +50,7 @@ class KotlinDeclarationNameValidator(
     context(KtAnalysisSession)
     private fun hasConflict(identifier: Name): Boolean {
         return when(target) {
-            KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER -> {
+            KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER, KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION -> {
                 val scope =
                     visibleDeclarationsContext.containingKtFile.getScopeContextForPosition(visibleDeclarationsContext).getCompositeScope()
                 val containingClassSymbol = lazy(LazyThreadSafetyMode.NONE) { visibleDeclarationsContext.containingClass()?.getClassOrObjectSymbol() }
