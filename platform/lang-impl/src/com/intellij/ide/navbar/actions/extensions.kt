@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.DataProvider
  *
  * TODO consider a new extension for that OR new API for cut/copy/paste
  */
-internal fun extensionData(dataId: String): Any? {
+fun extensionData(dataId: String): Any? {
   return extensionData(dataId, emptyDataProvider)
 }
 

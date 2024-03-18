@@ -697,10 +697,6 @@
     <applicationService serviceInterface="com.intellij.modcommand.ModCommandExecutor"
                         serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandExecutorImpl" overrides="true"/>
 
-    <getDataRule key="cutProvider" type="fast" implementationClass="com.intellij.ide.navbar.ide.CutProviderDataRule"/>
-    <getDataRule key="copyProvider" type="fast" implementationClass="com.intellij.ide.navbar.ide.CopyProviderDataRule"/>
-    <getDataRule key="pasteProvider" type="fast" implementationClass="com.intellij.ide.navbar.ide.PasteProviderDataRule"/>
-
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.DefaultCompletionStatistician" order="last"/>
 
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.OpenedInEditorWeigher" id="openedInEditor"/>
@@ -752,7 +748,6 @@
     <gotoRelatedProvider implementation="com.intellij.ide.actions.RelatedItemLineMarkerGotoAdapter"/>
 
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInGroupTarget"/>
-    <selectInTarget implementation="com.intellij.ide.navigationToolbar.SelectInNavBarTarget"/>
     <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInExplorerTarget"/>
 

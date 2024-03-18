@@ -447,7 +447,6 @@
     <group id="GoToCodeGroup">
       <separator/>
       <action id="SelectIn" class="com.intellij.ide.actions.SelectInAction"/>
-      <action id="ShowNavBar" class="com.intellij.ide.navigationToolbar.ShowNavBarAction"/>
       <separator/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction">
         <override-text place="MainMenu"/>
@@ -999,7 +998,6 @@
     <group id="EditorPopupMenu1.FindRefactor" compact="true">
       <reference ref="FindUsages"/>
       <group id="EditorPopupMenu.GoTo" popup="true">
-        <reference ref="ShowNavBar"/>
         <reference ref="GotoDeclaration"/>
         <reference ref="GotoImplementation"/>
         <reference ref="GotoTypeDeclaration"/>

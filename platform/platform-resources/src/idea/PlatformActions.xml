@@ -1672,6 +1672,5 @@
               class="com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreview"
               icon="AllIcons.Actions.CloseDarkGrey"/>
     </group>
-    <group id="NavBarContextMenu" class="com.intellij.ide.navbar.ui.NavBarContextMenuActionGroup"/>
   </actions>
 </idea-plugin>

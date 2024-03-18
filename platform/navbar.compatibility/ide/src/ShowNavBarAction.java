@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navigationToolbar;
+package com.intellij.platform.navbar.compatibility.ide;
 
 import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
@@ -11,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.platform.navbar.ide.NavBarService;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.platform.navbar.ide.NavBarIdeBundle.messagePointer;
 import static com.intellij.platform.navbar.ide.NavBarServiceKt.isNavbarShown;
 
 /**
@@ -45,7 +45,7 @@ final class ShowNavBarAction extends AnAction implements DumbAware, PopupAction,
 
     // see RIDER-15982
     if (!ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
-      e.getPresentation().setText(ActionsBundle.messagePointer("action.ShowNavBar.ShortText"));
+      e.getPresentation().setText(messagePointer("action.ShowNavBar.ShortText"));
     }
   }
 
