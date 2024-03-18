@@ -14,8 +14,6 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.Interner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -175,7 +173,7 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
   }
 
   override fun getLanguageDescriptorByFileName(fileName: CharSequence): TextMateLanguageDescriptor? {
-    if (Strings.isEmpty(fileName)) {
+    if (fileName.isEmpty()) {
       return null
     }
 
@@ -196,12 +194,12 @@ class TextMateServiceImpl(private val scope: CoroutineScope) : TextMateService()
   }
 
   override fun getLanguageDescriptorByExtension(extension: CharSequence?): TextMateLanguageDescriptor? {
-    if (Strings.isEmpty(extension)) {
+    if (extension.isNullOrEmpty()) {
       return null
     }
 
     ensureInitialized()
-    val scopeName = extensionMapping.get(TextMateFileNameMatcher.Extension(StringUtil.toLowerCase(extension.toString())))
+    val scopeName = extensionMapping.get(TextMateFileNameMatcher.Extension(extension.toString().lowercase()))
     return if (scopeName.isNullOrBlank()) null else TextMateLanguageDescriptor(scopeName, syntaxTable.getSyntax(scopeName))
   }
 
