@@ -22,44 +22,44 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
 
   override fun installUltimate(downloadResult: DownloadResult): InstallationResult? {
     val downloadPath = downloadResult.downloadPath
-    val installationPath = provideInstallationPath(downloadResult) ?: return null
+    val installPath = provideInstallPath(downloadResult) ?: return null
 
     val suggestedIde = downloadResult.suggestedIde
-    val pathInfo = providePath(installationPath, suggestedIde) ?: return null
+    val pathInfo = providePath(installPath, suggestedIde) ?: return null
     if (pathInfo.alreadyInstalled) {
       return InstallationResult(pathInfo.path, UltimateInstallationInfo(suggestedIde))
     }
     
-    return installSilently(downloadPath, installationPath, downloadResult)
+    return installSilently(downloadPath, installPath, downloadResult)
   }
   
-  private fun providePath(installationPath: Path, suggestedIde: SuggestedIde) : PathInfo? {
-    var path = installationPath
+  private fun providePath(installPath: Path, suggestedIde: SuggestedIde) : PathInfo? {
+    var path = installPath
     var counter = 0
     
-    while (installationPath.exists() && counter++ <= 10) {
-      if (findExePath(path, suggestedIde) != null) return PathInfo(installationPath, true)
+    while (installPath.exists() && counter++ <= 10) {
+      if (findExePath(path, suggestedIde) != null) return PathInfo(installPath, true)
       
       val fileName = path.fileName
-      path = installationPath.parent.resolve("$fileName $counter")
+      path = installPath.parent.resolve("$fileName $counter")
     }
     
     return if (counter > 10) null else PathInfo(path, false)
   }
   
-  private fun findExePath(path: Path, suggestedIde: SuggestedIde) : String?  {
+  private fun findExePath(installPath: Path, suggestedIde: SuggestedIde) : String?  {
     val exeName = if (suggestedIde.isPycharmProfessional()) "pycharm64" else "idea64"
-    val exePath = path.resolve("bin").resolve("$exeName.exe")
+    val exePath = installPath.resolve("bin").resolve("$exeName.exe")
     
     return if (exePath.exists()) exePath.pathString else null
   }
 
   private fun installSilently(
     path: Path,
-    installationPath: Path,
+    installPath: Path,
     downloadResult: DownloadResult
   ): InstallationResult? {
-    val command = GeneralCommandLine("cmd.exe", "/c").withParameters("$path /S /D=$installationPath")
+    val command = GeneralCommandLine("cmd.exe", "/c").withParameters("$path /S /D=$installPath")
 
     val result = runCommand(command)
     if (!result) {
@@ -67,10 +67,10 @@ internal class WindowsInstaller(scope: CoroutineScope, project: Project) : Ultim
       return null
     }
 
-    return InstallationResult(installationPath, UltimateInstallationInfo(downloadResult.suggestedIde))
+    return InstallationResult(installPath, UltimateInstallationInfo(downloadResult.suggestedIde))
   }
 
-  private fun provideInstallationPath(downloadResult: DownloadResult): Path? {
+  private fun provideInstallPath(downloadResult: DownloadResult): Path? {
     val version = downloadResult.buildVersion
     val name = "${downloadResult.suggestedIde.name} $version"
     val path = getUltimateInstallationDirectory()
