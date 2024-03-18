@@ -366,13 +366,15 @@ final class SearchForUsagesRunnable implements Runnable {
 
     UsageSearcher usageSearcher = mySearcherFactory.create();
     long startSearchStamp = System.currentTimeMillis();
+    GlobalSearchScope everythingScope = GlobalSearchScope.everythingScope(myProject);
+
     usageSearcher.generate(usage -> {
       ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
       if (currentIndicator == null) throw new IllegalStateException("must run find usages under progress");
       ProgressIndicator originalIndicator = ProgressWrapper.unwrapAll(current);
       ProgressManager.checkCanceled();
 
-      if (!UsageViewManagerImpl.isInScope(usage, mySearchScopeToWarnOfFallingOutOf)) {
+      if (!UsageViewManagerImpl.isInScope(usage, mySearchScopeToWarnOfFallingOutOf, everythingScope)) {
         myOutOfScopeUsages.incrementAndGet();
         return true;
       }

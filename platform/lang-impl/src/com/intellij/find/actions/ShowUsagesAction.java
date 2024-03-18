@@ -661,8 +661,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
     AtomicLong firstUsageAddedTS = new AtomicLong();
     AtomicBoolean tooManyResults = new AtomicBoolean();
+    GlobalSearchScope everythingScope = GlobalSearchScope.everythingScope(project);
     Processor<Usage> collect = usage -> {
-      if (!UsageViewManagerImpl.isInScope(usage, searchScope)) {
+      if (!UsageViewManagerImpl.isInScope(usage, searchScope, everythingScope)) {
         if (outOfScopeUsages.getAndIncrement() == 0) {
           visibleUsages.add(USAGES_OUTSIDE_SCOPE_NODE.getUsage());
           usages.add(table.USAGES_OUTSIDE_SCOPE_SEPARATOR);
