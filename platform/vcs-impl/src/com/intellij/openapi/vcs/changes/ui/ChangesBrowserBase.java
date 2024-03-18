@@ -66,7 +66,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myViewer = createTreeList(project, showCheckboxes, highlightProblems);
 
     myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", myToolBarGroup, true);
-    myToolbar.setTargetComponent(this);
+    myToolbar.setTargetComponent(myViewer);
     myToolbarAnchor = getToolbarAnchor();
     myToolbar.setOrientation(isVerticalToolbar() ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
 
@@ -116,13 +116,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     }
 
     if (isVerticalToolbar()) {
-      List<AnAction> treeActions = TreeActionsToolbarPanel.createTreeActions(myViewer);
-      boolean hasTreeActions = ContainerUtil.exists(
-        treeActions, action -> NewActionGroup.anyActionFromGroupMatches(myToolBarGroup, true, Predicate.isEqual(action)));
-      if (!hasTreeActions) {
-        myToolBarGroup.addSeparator();
-        myToolBarGroup.addAll(treeActions);
-      }
+      myToolBarGroup.addSeparator();
+      myToolBarGroup.addAll(TreeActionsToolbarPanel.createTreeActions());
     }
 
     myShowDiffAction.registerCustomShortcutSet(this, null);
