@@ -3,6 +3,8 @@ package org.jetbrains.plugins.textmate.regex;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.openapi.diagnostic.LoggerRt;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.ExecutorsKt;
 import org.jcodings.specific.UTF8Encoding;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +99,11 @@ public final class RegexFacade {
     return new Searcher(stringBytes, myRegex.matcher(stringBytes, 0, stringBytes.length));
   }
 
-  private static final Cache<String, RegexFacade> REGEX_CACHE = Caffeine.newBuilder().maximumSize(100_000).expireAfterAccess(1, TimeUnit.MINUTES).build();
+  private static final Cache<String, RegexFacade> REGEX_CACHE = Caffeine.newBuilder()
+    .maximumSize(100_000)
+    .expireAfterAccess(1, TimeUnit.MINUTES)
+    .executor(ExecutorsKt.asExecutor(Dispatchers.getDefault()))
+    .build();
 
   @NotNull
   public static RegexFacade regex(@NotNull String regexString) {

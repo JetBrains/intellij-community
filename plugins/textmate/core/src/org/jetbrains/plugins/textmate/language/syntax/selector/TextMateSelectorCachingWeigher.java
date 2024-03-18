@@ -2,6 +2,8 @@ package org.jetbrains.plugins.textmate.language.syntax.selector;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import kotlinx.coroutines.Dispatchers;
+import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
@@ -14,7 +16,11 @@ public final class TextMateSelectorCachingWeigher implements TextMateSelectorWei
 
   public TextMateSelectorCachingWeigher(@NotNull TextMateSelectorWeigher originalWeigher) {
     myOriginalWeigher = originalWeigher;
-    myCache = Caffeine.newBuilder().maximumSize(100_000).expireAfterAccess(1, TimeUnit.MINUTES).build();
+    myCache = Caffeine.newBuilder()
+      .maximumSize(100_000)
+      .expireAfterAccess(1, TimeUnit.MINUTES)
+      .executor(ExecutorsKt.asExecutor(Dispatchers.getDefault()))
+      .build();
   }
 
   @Override
