@@ -28,7 +28,7 @@ internal class TestApplicationExtension : BeforeAllCallback, AfterEachCallback {
 }
 
 @TestOnly
-private fun ExtensionContext.testApplication(): Result<Unit> {
+fun ExtensionContext.testApplication(): Result<Unit> {
   val store = root.getStore(ExtensionContext.Namespace.GLOBAL)
   val resource = store.getOrComputeIfAbsent("application") {
     TestApplicationResource(initTestApplication())

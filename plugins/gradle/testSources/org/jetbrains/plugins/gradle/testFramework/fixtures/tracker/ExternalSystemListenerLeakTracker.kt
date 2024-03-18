@@ -5,7 +5,7 @@ import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgress
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 
-class ESListenerLeakTracker : IdeaTestFixture {
+class ExternalSystemListenerLeakTracker : IdeaTestFixture {
 
   override fun setUp() = Unit
 
