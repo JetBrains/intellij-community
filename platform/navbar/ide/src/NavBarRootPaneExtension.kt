@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navigationToolbar
+package com.intellij.platform.navbar.ide
 
-import com.intellij.ide.navbar.ide.NavBarService
-import com.intellij.ide.navbar.ide.isNavbarShown
-import com.intellij.ide.navigationToolbar.NavBarRootPaneExtension.NavBarWrapperPanel
 import com.intellij.ide.ui.NavBarLocation
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
@@ -20,6 +17,8 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.AutoscrollLimit
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.ScrollableToSelected
+import com.intellij.platform.navbar.ide.NavBarRootPaneExtension.NavBarWrapperPanel
+import com.intellij.platform.navbar.ide.ui.NavBarBorder
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
@@ -48,7 +47,7 @@ import javax.swing.ScrollPaneConstants
 /**
  * @author Konstantin Bulenkov
  */
-internal class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
+class NavBarRootPaneExtension : IdeRootPaneNorthExtension {
   companion object {
     const val PANEL_KEY: String = "NavBarPanel"
   }

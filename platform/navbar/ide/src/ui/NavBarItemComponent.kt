@@ -1,12 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.ui
+package com.intellij.platform.navbar.ide.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.icons.ExpUiIcons
-import com.intellij.ide.navigationToolbar.ui.AbstractNavBarUI
-import com.intellij.ide.navigationToolbar.ui.AbstractNavBarUI.getDecorationOffset
-import com.intellij.ide.navigationToolbar.ui.AbstractNavBarUI.getFirstElementLeftOffset
-import com.intellij.ide.navigationToolbar.ui.ImageType
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -15,6 +11,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.ide.actions.navBarContextMenuActionGroup
+import com.intellij.platform.navbar.ide.ui.AbstractNavBarUI.getDecorationOffset
+import com.intellij.platform.navbar.ide.ui.AbstractNavBarUI.getFirstElementLeftOffset
 import com.intellij.platform.navbar.vm.NavBarItemVm
 import com.intellij.ui.*
 import com.intellij.ui.scale.JBUIScale
@@ -95,7 +94,7 @@ internal class NavBarItemComponent(
       focusItem()
       vm.select()
       ActionManager.getInstance()
-        .createActionPopupMenu(ActionPlaces.NAVIGATION_BAR_POPUP, NavBarContextMenuActionGroup())
+        .createActionPopupMenu(ActionPlaces.NAVIGATION_BAR_POPUP, navBarContextMenuActionGroup())
         .also {
           it.setTargetComponent(panel)
         }

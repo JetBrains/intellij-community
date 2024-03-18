@@ -693,9 +693,10 @@
     <lang.elementManipulator forClass="com.intellij.psi.PsiComment"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PsiCommentManipulator"/>
 
-    <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.NavBarRootPaneExtension"/>
     <ideRootPaneNorth implementation="com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneExtension" order="first"/>
     <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension" id="defaultNavbar" order="last"/>
+    <projectService serviceInterface="com.intellij.platform.navbar.ide.NavBarServiceDelegate"
+                    serviceImplementation="com.intellij.ide.navbar.ide.MonolithNavbarServiceDelegate"/>
     <applicationService serviceInterface="com.intellij.modcommand.ModCommandExecutor"
                         serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandExecutorImpl" overrides="true"/>
 

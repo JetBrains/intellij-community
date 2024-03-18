@@ -12,11 +12,23 @@ import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.platform.navbar.backend.NavBarItemProvider
 import com.intellij.platform.navbar.backend.impl.children
 import com.intellij.platform.navbar.backend.impl.pathToItem
+import com.intellij.platform.navbar.ide.contextModel
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
 
 // a place for public test-only functions
+
+/**
+ * Use this API to dump current state of navigation bar in tests
+ * Currently used in Rider
+ */
+@TestOnly
+@Internal
+suspend fun dumpContextModel(ctx: DataContext, project: Project): List<String> {
+  return contextModel(ctx, project).map { it.presentation.text }
+}
 
 @TestOnly
 @RequiresReadLock

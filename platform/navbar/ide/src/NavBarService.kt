@@ -1,41 +1,36 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.ide
+package com.intellij.platform.navbar.ide
 
-import com.intellij.codeInsight.navigation.actions.navigateRequest
-import com.intellij.ide.navbar.impl.ProjectNavBarItem
-import com.intellij.ide.navbar.impl.PsiNavBarItem
-import com.intellij.ide.navbar.ui.NewNavBarPanel
-import com.intellij.ide.navbar.ui.showHint
-import com.intellij.ide.navbar.ui.staticNavBarPanel
 import com.intellij.ide.ui.UISettings
-import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarVmItem
-import com.intellij.platform.navbar.backend.NavBarItem
-import com.intellij.platform.navbar.backend.impl.pathToItem
+import com.intellij.platform.navbar.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
+import com.intellij.platform.navbar.ide.ui.NewNavBarPanel
+import com.intellij.platform.navbar.ide.ui.showHint
+import com.intellij.platform.navbar.ide.ui.staticNavBarPanel
 import com.intellij.platform.navbar.vm.impl.NavBarVmImpl
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.throttle
+import com.intellij.serviceContainer.instance
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.TestOnly
+import java.awt.Window
 import javax.swing.JComponent
 
 @Service(PROJECT)
-internal class NavBarService(private val project: Project, cs: CoroutineScope) {
+class NavBarService(private val project: Project, cs: CoroutineScope) {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): NavBarService = project.service()
@@ -51,13 +46,17 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
 
   init {
     cs.launch {
+      val service = instance<NavBarServiceDelegate>()
       visible.collectLatest { visible ->
         if (visible) {
           // If [visible] is `true`, then at least 1 nav bar is shown
           // => subscribe to activityFlow once and share events between all models.
-          activityFlow(project)
+          updateRequests.emit(Unit)
+          service.activityFlow()
             .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
-            .collect(updateRequests)
+            .collect {
+              updateRequests.emit(it)
+            }
         }
       }
     }
@@ -74,7 +73,21 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
 
   fun createNavBarPanel(): JComponent {
     EDT.assertIsEdt()
-    return staticNavBarPanel(project, cs, updateRequests, ::requestNavigation)
+    return staticNavBarPanel(
+      project, cs,
+      initialItems = ::defaultModel,
+      contextItems = ::contextItems,
+      requestNavigation = ::requestNavigation,
+    )
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun contextItems(window: Window, panel: JComponent): Flow<List<NavBarVmItem>> {
+    return updateRequests.transformLatest {
+      dataContext(window, panel)?.let {
+        emit(contextModel(it, project))
+      }
+    }
   }
 
   fun showFloatingNavbar(dataContext: DataContext) {
@@ -84,7 +97,7 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
 
     val job = cs.launch(ModalityState.current().asContextElement()) {
       val model = contextModel(dataContext, project).ifEmpty {
-        defaultModel(project)
+        defaultModel()
       }
       val barScope = this@launch
       val vm = NavBarVmImpl(cs = barScope, model, contextItems = emptyFlow())
@@ -110,35 +123,19 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
 
   private fun requestNavigation(item: NavBarVmItem) {
     cs.launch {
-      val navigationRequest = readAction {
-        (item as IdeNavBarVmItem).pointer.dereference()?.navigationRequest()
-      } ?: return@launch
-      withContext(Dispatchers.EDT) {
-        navigateRequest(project, navigationRequest)
-      }
+      instance<NavBarServiceDelegate>()
+        .navigate(item)
       updateRequests.emit(Unit)
     }
   }
 }
 
-/**
- * Use this API to dump current state of navigation bar in tests
- * Currently used in Rider
- */
-@TestOnly
-@Internal
-suspend fun dumpContextModel(ctx: DataContext, project: Project): List<String> {
-  return contextModel(ctx, project).map { it.presentation.text }
-}
-
-internal suspend fun contextModel(ctx: DataContext, project: Project): List<NavBarVmItem> {
+suspend fun contextModel(ctx: DataContext, project: Project): List<NavBarVmItem> {
   if (CommonDataKeys.PROJECT.getData(ctx) != project) {
     return emptyList()
   }
   return try {
-    readAction {
-      contextModelInner(ctx)
-    }
+    instance<NavBarServiceDelegate>().contextModel(ctx)
   }
   catch (ce: CancellationException) {
     throw ce
@@ -147,23 +144,17 @@ internal suspend fun contextModel(ctx: DataContext, project: Project): List<NavB
     throw pce
   }
   catch (t: Throwable) {
-    LOG.error(t)
+    fileLogger().error(t)
     emptyList()
   }
 }
 
-private fun contextModelInner(ctx: DataContext): List<NavBarVmItem> {
-  val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
-                    ?: return emptyList()
-  if (contextItem is PsiNavBarItem && !contextItem.data.isValid) {
-    LOG.warn("Data rule [${NavBarItem.NAVBAR_ITEM_KEY.name}] returned invalid context item of type [${(contextItem.data)::class.java}]")
-    return emptyList()
-  }
-  return contextItem.pathToItem().toVmItems()
+internal suspend fun defaultModel(): List<NavBarVmItem> {
+  return listOf(
+    instance<NavBarServiceDelegate>().defaultModel()
+  )
 }
 
-internal suspend fun defaultModel(project: Project): List<NavBarVmItem> {
-  return readAction {
-    listOf(IdeNavBarVmItem(ProjectNavBarItem(project)))
-  }
+fun UISettings.isNavbarShown(): Boolean {
+  return showNavigationBar && !presentationMode
 }

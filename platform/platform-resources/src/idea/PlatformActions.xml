@@ -129,17 +129,6 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="NavBarActions">
-      <action id="NavBar-selectHome" class="com.intellij.ide.navigationToolbar.NavBarActions$Home" use-shortcut-of="EditorLineStart"/>
-      <action id="NavBar-selectEnd" class="com.intellij.ide.navigationToolbar.NavBarActions$End" use-shortcut-of="EditorLineEnd"/>
-      <action id="NavBar-selectUp" class="com.intellij.ide.navigationToolbar.NavBarActions$Up" use-shortcut-of="EditorUp"/>
-      <action id="NavBar-selectDown" class="com.intellij.ide.navigationToolbar.NavBarActions$Down" use-shortcut-of="EditorDown"/>
-      <action id="NavBar-selectLeft" class="com.intellij.ide.navigationToolbar.NavBarActions$Left" use-shortcut-of="EditorLeft"/>
-      <action id="NavBar-selectRight" class="com.intellij.ide.navigationToolbar.NavBarActions$Right" use-shortcut-of="EditorRight"/>
-      <action id="NavBar-return" class="com.intellij.ide.navigationToolbar.NavBarActions$Enter" use-shortcut-of="EditorEnter"/>
-      <add-to-group group-id="Other.KeymapGroup"/>
-    </group>
-
     <group id="ScrollPaneActions">
       <action id="ScrollPane-scrollHome" class="com.intellij.ui.ScrollPaneActions$Home"/>
       <action id="ScrollPane-scrollEnd" class="com.intellij.ui.ScrollPaneActions$End"/>
@@ -1683,5 +1672,6 @@
               class="com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreview"
               icon="AllIcons.Actions.CloseDarkGrey"/>
     </group>
+    <group id="NavBarContextMenu" class="com.intellij.ide.navbar.ui.NavBarContextMenuActionGroup"/>
   </actions>
 </idea-plugin>

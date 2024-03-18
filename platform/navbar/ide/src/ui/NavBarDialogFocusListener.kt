@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.ui
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.navbar.ide.ui
 
-import com.intellij.ide.navbar.ui.NavBarItemComponent.Companion.isItemComponentFocusable
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.navbar.ide.ui.NavBarItemComponent.Companion.isItemComponentFocusable
 import com.intellij.util.ui.UIUtil
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener

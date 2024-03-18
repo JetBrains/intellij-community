@@ -1,12 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.ui
+package com.intellij.platform.navbar.ide.ui
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.navbar.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER
-import com.intellij.ide.navbar.actions.NavBarActionHandlerImpl
-import com.intellij.ide.navbar.ide.LOG
-import com.intellij.ide.navbar.ui.NavBarItemComponent.Companion.isItemComponentFocusable
 import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.NavBarShowPopup
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
@@ -15,8 +11,12 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarVmItem.Companion.SELECTED_ITEMS
+import com.intellij.platform.navbar.ide.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER
+import com.intellij.platform.navbar.ide.actions.NavBarActionHandlerImpl
+import com.intellij.platform.navbar.ide.ui.NavBarItemComponent.Companion.isItemComponentFocusable
 import com.intellij.platform.navbar.vm.NavBarItemVm
 import com.intellij.platform.navbar.vm.NavBarPopupVm
 import com.intellij.platform.navbar.vm.NavBarVm
@@ -172,7 +172,7 @@ class NewNavBarPanel(
       popupList = WeakReference(it)
     }
     if (!isShowing) {
-      LOG.warn("Navigation bar panel is now showing => cannot show child popup")
+      thisLogger().warn("Navigation bar panel is now showing => cannot show child popup")
       return
     }
     val popup = createNavBarPopup(list)

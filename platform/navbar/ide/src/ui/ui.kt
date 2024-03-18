@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.ui
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.navbar.ide.ui
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ui.ComponentUtil
@@ -17,6 +17,11 @@ import java.awt.Font
 import java.awt.Insets
 import java.awt.Window
 import javax.swing.JComponent
+
+/**
+ * @see com.intellij.find.actions.ShowUsagesAction.ourPopupDelayTimeout
+ */
+internal const val DEFAULT_UI_RESPONSE_TIMEOUT: Long = 300
 
 internal fun navBarItemBackground(selected: Boolean, focused: Boolean): Color {
   return if (selected && focused) {

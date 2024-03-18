@@ -1,20 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.navigationToolbar.NavBarBorder;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.toolWindow.InternalDecoratorImpl;
+import com.intellij.platform.navbar.ide.ui.NavBarBorder;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.util.containers.ContainerUtil;

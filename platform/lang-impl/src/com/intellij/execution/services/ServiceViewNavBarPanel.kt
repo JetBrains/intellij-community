@@ -4,12 +4,12 @@ package com.intellij.execution.services
 import com.intellij.execution.services.ServiceModel.ServiceViewItem
 import com.intellij.execution.services.ServiceViewNavBarService.ServiceViewNavBarSelector
 import com.intellij.icons.AllIcons
-import com.intellij.ide.navbar.ui.StaticNavBarPanel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.platform.navbar.NavBarVmItem
 import com.intellij.platform.navbar.backend.NavBarItem
+import com.intellij.platform.navbar.ide.ui.StaticNavBarPanel
 import com.intellij.platform.navbar.vm.NavBarVm
 import com.intellij.platform.navbar.vm.impl.NavBarVmImpl
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES

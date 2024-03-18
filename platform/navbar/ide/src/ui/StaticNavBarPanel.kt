@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.ui
+package com.intellij.platform.navbar.ide.ui
 
-import com.intellij.ide.navbar.ide.contextModel
-import com.intellij.ide.navbar.ide.dataContext
-import com.intellij.ide.navbar.ide.defaultModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarVmItem
@@ -30,7 +27,8 @@ import javax.swing.JComponent
 fun staticNavBarPanel(
   project: Project,
   cs: CoroutineScope,
-  updateRequests: Flow<Any>,
+  initialItems: suspend () -> List<NavBarVmItem>,
+  contextItems: (Window, JComponent) -> Flow<List<NavBarVmItem>>,
   requestNavigation: (NavBarVmItem) -> Unit,
 ): JComponent {
 
@@ -38,20 +36,11 @@ fun staticNavBarPanel(
   val panel: JComponent = StaticNavBarPanel(project, GlobalScope, staticNavBarVm)
   val window: StateFlow<Window?> = trackCurrentWindow(panel)
 
-  fun contextItems(window: Window): Flow<List<NavBarVmItem>> {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    return updateRequests.transformLatest {
-      dataContext(window, panel)?.let {
-        emit(contextModel(it, project))
-      }
-    }
-  }
-
   suspend fun handleWindow(window: Window): Nothing = supervisorScope {
     val vm = NavBarVmImpl(
       this@supervisorScope,
-      initialItems = defaultModel(project),
-      contextItems = contextItems(window),
+      initialItems = initialItems(),
+      contextItems = contextItems(window, panel),
     )
     vm.activationRequests.onEach(requestNavigation).launchIn(this)
     staticNavBarVm.value = vm
@@ -84,7 +73,7 @@ fun staticNavBarPanel(
 
 internal typealias StaticNavBarPanelVm = StateFlow<NavBarVm?>
 
-internal class StaticNavBarPanel(
+class StaticNavBarPanel(
   private val project: Project,
   cs: CoroutineScope,
   private val _vm: StaticNavBarPanelVm,

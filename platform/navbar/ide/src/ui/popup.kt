@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.ui
+package com.intellij.platform.navbar.ide.ui
 
 import com.intellij.ide.actions.OpenInRightSplitAction
-import com.intellij.ide.navigationToolbar.NavBarListWrapper
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.navbar.ide.actions.navBarContextMenuActionGroup
 import com.intellij.platform.navbar.vm.NavBarPopupItem
 import com.intellij.platform.navbar.vm.NavBarPopupVm
 import com.intellij.ui.CollectionListModel
@@ -47,7 +47,7 @@ internal fun <T : NavBarPopupItem> navBarPopupList(
   list.addListSelectionListener {
     vm.itemsSelected(list.selectedValuesList)
   }
-  PopupHandler.installPopupMenu(list, NavBarContextMenuActionGroup(), ActionPlaces.NAVIGATION_BAR_POPUP)
+  PopupHandler.installPopupMenu(list, navBarContextMenuActionGroup(), ActionPlaces.NAVIGATION_BAR_POPUP)
   list.addMouseListener(object : MouseAdapter() {
 
     override fun mousePressed(e: MouseEvent) {

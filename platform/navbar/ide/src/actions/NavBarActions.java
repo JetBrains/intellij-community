@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navigationToolbar;
+package com.intellij.platform.navbar.ide.actions;
 
-import com.intellij.ide.navbar.actions.NavBarActionHandler;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-import static com.intellij.ide.navbar.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER;
+import static com.intellij.platform.navbar.ide.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER;
 
 public sealed abstract class NavBarActions extends AnAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   NavBarActions() {
