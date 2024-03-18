@@ -88,12 +88,20 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
             val initializer = item.instance ?: continue
             launch(CoroutineName(item.implementationClassName)) {
-              catchingExceptionsAsync {
-                initializer.initializeEditor(project = project,
-                                             file = file,
-                                             document = effectiveDocument,
-                                             editorSupplier = editorSupplier,
-                                             highlighterReady = highlighterReady)
+              try {
+                initializer.initializeEditor(
+                  project = project,
+                  file = file,
+                  document = effectiveDocument,
+                  editorSupplier = editorSupplier,
+                  highlighterReady = highlighterReady,
+                )
+              }
+              catch (e: CancellationException) {
+                throw e
+              }
+              catch (e: Throwable) {
+                logger<AsyncFileEditorProvider>().warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
               }
             }
           }
@@ -222,15 +230,3 @@ private class PsiAwareTextEditorDelayedFoldingState(private val project: Project
   fun cloneSerializedState(): Element = state.clone()
 }
 
-private inline fun <T : Any> catchingExceptionsAsync(computable: () -> T?): T? {
-  try {
-    return computable()
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    logger<AsyncFileEditorProvider>().warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
-    return null
-  }
-}
