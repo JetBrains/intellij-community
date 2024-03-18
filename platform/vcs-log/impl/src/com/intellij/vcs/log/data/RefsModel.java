@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefs;
@@ -84,9 +84,9 @@ public class RefsModel implements VcsLogRefs {
     return myRefs.values().stream().flatMap(CompressedRefs::streamBranches).collect(Collectors.toList());
   }
 
+  @RequiresBackgroundThread
   @Override
   public @NotNull Stream<VcsRef> stream() {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
     return myRefs.values().stream().flatMap(CompressedRefs::stream);
   }
 
