@@ -34,6 +34,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     private val EXTRA_PLUGINS = listOf(
       // We bundle DevKit for ASwB development purposes (b/308477340).
       "intellij.devkit",
+      // Bundle the GitHub plugin, just like IdeaCommunityProperties does.
+      "intellij.vcs.github.community",
       // Android Studio: package CIDR plugins. This list is based on what we have been shipping in Android Studio
       // and the structure of CIDR plugins.
       "intellij.c.clangd.plugin",
@@ -143,6 +145,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     productLayout.pluginLayouts = inheritedPluginLayouts.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin(),
+      CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community"),
       plugin("intellij.cidr.debugger.plugin") { spec ->
         spec.withModule("intellij.cidr.debugger", spec.mainJarName)
         spec.withModule("intellij.cidr.debugger.backend", spec.mainJarName)
