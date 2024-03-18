@@ -34,7 +34,7 @@ interface MavenWorkspaceConfigurator {
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  fun getAdditionalFolders(context: MavenWorkspaceConfigurator.FoldersContext) : Stream<AdditionalFolder> {
+  fun getAdditionalFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<AdditionalFolder> {
     return Stream.empty()
   }
 
@@ -137,10 +137,11 @@ interface MavenWorkspaceConfigurator {
   enum class FolderType {
     SOURCE, RESOURCE, TEST_SOURCE, TEST_RESOURCE
   }
+
   fun JpsModuleSourceRootType<*>.toFolderType(): FolderType {
     return when (this) {
-      is JavaSourceRootType -> if(isForTests) FolderType.TEST_SOURCE else FolderType.SOURCE
-      is JavaResourceRootType -> if(isForTests) FolderType.TEST_RESOURCE else FolderType.RESOURCE
+      is JavaSourceRootType -> if (isForTests) FolderType.TEST_SOURCE else FolderType.SOURCE
+      is JavaResourceRootType -> if (isForTests) FolderType.TEST_RESOURCE else FolderType.RESOURCE
       else -> throw IllegalArgumentException("Bad Module source root type")
     }
   }
@@ -166,4 +167,10 @@ interface MavenAfterImportConfigurator {
 
 fun <M> MavenWorkspaceConfigurator.MavenProjectWithModules<M>.hasChanges(): Boolean {
   return this.changes.hasChanges()
+}
+
+
+@ApiStatus.Experimental
+interface MavenStaticSyncAware {
+  
 }

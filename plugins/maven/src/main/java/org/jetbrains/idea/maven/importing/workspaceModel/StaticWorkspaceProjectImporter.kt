@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.idea.maven.importing.MavenStaticSyncAware
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.project.*
 
@@ -20,7 +21,8 @@ internal class StaticWorkspaceProjectImporter(
     return super.workspaceConfigurators()
   }
 
-  override fun addAfterImportTask(postTasks: ArrayList<MavenProjectsProcessorTask>, contextData: UserDataHolderBase, appliedProjectsWithModules: List<MavenProjectWithModulesData<Module>>) {
-    super.addAfterImportTask(postTasks, contextData, appliedProjectsWithModules)
+  override fun addAfterImportTask(postTasks: ArrayList<MavenProjectsProcessorTask>,
+                                  contextData: UserDataHolderBase,
+                                  appliedProjectsWithModules: List<MavenProjectWithModulesData<Module>>) {
   }
 }
