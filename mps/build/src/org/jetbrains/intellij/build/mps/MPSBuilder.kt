@@ -1,5 +1,6 @@
 package org.jetbrains.intellij.build.mps
 
+import kotlin.io.path.exists
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
@@ -23,8 +24,7 @@ class MPSBuilder {
             options.incrementalCompilation = true
             options.useCompiledClassesFromProjectOutput = false
             options.targetOs = OsFamily.ALL
-            options.buildStepsToSkip.add(BuildOptions.MAC_SIGN_STEP)
-            options.buildStepsToSkip.add(BuildOptions.MAC_NOTARIZE_STEP)
+            options.buildStepsToSkip += listOf(BuildOptions.MAC_SIGN_STEP, BuildOptions.MAC_NOTARIZE_STEP)
 
             val fusp = FeatureUsageStatisticsProperties("FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/")
             val buildTools = ProprietaryBuildTools(ProprietaryBuildTools.DUMMY.signTool,
@@ -33,12 +33,14 @@ class MPSBuilder {
             )
 
             runBlocking(Dispatchers.Default) {
+
                 val buildContext = BuildContextImpl.createContext(
                     projectHome = Path.of(home),
                     productProperties = MPSProperties(),
                     proprietaryBuildTools = buildTools,
                     options = options
                 )
+                val binDir = buildContext.paths.distAllDir.resolve("bin");
 
                 val buildTasks = BuildTasks.create(buildContext)
                 buildTasks.compileProjectAndTests(
@@ -52,11 +54,11 @@ class MPSBuilder {
 
                 buildTasks.buildDistributions()
 
-                val binDir = buildContext.paths.distAllDir + "/bin";
-                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.LINUX, JvmArchitecture.x64), Path.of("$binDir/linux/amd64"))
-                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.LINUX, JvmArchitecture.aarch64), Path.of("$binDir/linux/aarch64"))
-                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.MACOS, JvmArchitecture.x64), Path.of("$binDir/mac/amd64"))
-                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.MACOS, JvmArchitecture.aarch64), Path.of("$binDir/mac/aarch64"))
+                print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.LINUX, JvmArchitecture.x64), binDir.resolve("linux/amd64"))
+                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.LINUX, JvmArchitecture.aarch64), binDir.resolve("linux/aarch64"))
+                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.MACOS, JvmArchitecture.x64), binDir.resolve("mac/amd64"))
+                copyFileToDir(NativeBinaryDownloader.downloadRestarter(buildContext, OsFamily.MACOS, JvmArchitecture.aarch64), binDir.resolve("mac/aarch64"))
 
                 val jpsArtifactDir = "${buildContext.paths.distAllDir}/lib/jps"
                 val jpsArtifactPath = Path.of(jpsArtifactDir)
@@ -71,6 +73,10 @@ fun copyFileToDir(file: Path, targetDir: Path) {
 }
 
 private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
-    Files.createDirectories(targetDir)
-    Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
+    var dir = Files.createDirectories(targetDir)
+    var fin = Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
+    println("TGT $target")
+    println("FIN $fin")
+    var ex = fin.exists()
+    println("Ex $ex")
 }
