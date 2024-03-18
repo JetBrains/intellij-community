@@ -693,6 +693,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       addSdkRootsToEnv(environmentController, runConfiguration);
       environmentController.appendTargetPathToPathsValue(PYTHONPATH_ENV_NAME, runConfiguration.getWorkingDirectorySafe());
     }
+
+    if (!RegistryManager.getInstance().is("python.debug.enable.cython.speedups")) {
+      environmentController.putFixedValue(PYDEVD_USE_CYTHON, "NO");
+    }
   }
 
   /**
