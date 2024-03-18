@@ -24,8 +24,7 @@ import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_
 
 public class BasicStatementParser {
   private static final TokenSet YIELD_STMT_INDICATOR_TOKENS = TokenSet.create(
-    JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.EXCL,
-
+    JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.EXCL, JavaTokenType.TILDE,
     JavaTokenType.SUPER_KEYWORD, JavaTokenType.THIS_KEYWORD,
 
     JavaTokenType.TRUE_KEYWORD, JavaTokenType.FALSE_KEYWORD, JavaTokenType.NULL_KEYWORD,

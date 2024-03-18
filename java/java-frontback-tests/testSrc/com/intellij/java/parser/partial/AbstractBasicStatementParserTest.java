@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.AbstractBasicJavaParsingTestCase;
@@ -41,6 +41,7 @@ public abstract class AbstractBasicStatementParserTest extends AbstractBasicJava
   public void testYieldAssignment() { doParserTest("yield = 10;"); }
   public void testYieldCompatibility() { setLanguageLevel(LanguageLevel.JDK_12); doParserTest("yield(2);"); }
   public void testYieldWithTextBlock() { doParserTest("yield \"\"\"foo\"\"\""); }
+  public void testYieldBitwiseComplement() { doParserTest("yield ~1;"); }
 
   public void testContinueNormal0() { doParserTest("continue;"); }
   public void testContinueNormal1() { doParserTest("continue LABEL;"); }
