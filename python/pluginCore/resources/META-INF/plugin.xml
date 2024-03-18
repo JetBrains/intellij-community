@@ -32,6 +32,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.community.plugin.minor"/> <!-- Python for Mini-IDEs-->
     <module name="intellij.python.community.plugin.minor.rider"/> <!-- Python special support for Rider -->
     <module name="intellij.python.community.impl.community_only"/> <!-- Community-specific code-->
+    <module name="intellij.python.community.deprecated.extensions"/><!-- backward comp -->
   </content>
 
 </idea-plugin>
