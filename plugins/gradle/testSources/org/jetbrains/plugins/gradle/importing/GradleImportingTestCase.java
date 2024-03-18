@@ -475,6 +475,20 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return createProjectSubFile("settings.gradle", content);
   }
 
+  /**
+   * Produces settings content and creates necessary directories.
+   * @param projects list of sub-project to create
+   * @return a block of `include 'project-name'` lines for settings.gradle
+   */
+  protected String including(@NonNls String... projects) {
+    return including(myProjectRoot, projects);
+  }
+
+  protected String including(VirtualFile root, @NonNls String... projects) {
+    return new TestGradleSettingsScriptHelper(root.toNioPath(), projects).build();
+  }
+
+
   private PathAssembler.LocalDistribution configureWrapper() {
 
     myProjectSettings.setDistributionType(DistributionType.DEFAULT_WRAPPED);

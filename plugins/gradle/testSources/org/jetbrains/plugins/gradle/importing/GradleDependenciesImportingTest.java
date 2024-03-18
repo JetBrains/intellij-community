@@ -159,7 +159,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testModuleDependencies() throws IOException {
-    createSettingsFile("include 'project1', 'project2'");
+    createSettingsFile(including("project1", "project2"));
     createProjectSubFile("project1/build.gradle", script(it -> it.withJavaPlugin()
       .addImplementationDependency(it.project(":"))));
     createProjectSubFile("project2/build.gradle", script(it -> it.withJavaPlugin()
@@ -180,7 +180,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testDependencyScopeMerge() throws Exception {
-    createSettingsFile("include 'api', 'impl' ");
+    createSettingsFile(including("api", "impl"));
 
     importProject(script(it -> {
       it.allprojects(p -> {
@@ -242,10 +242,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("<=6.9")
   public void testTransitiveNonTransitiveDependencyScopeMerge() throws Exception {
-    createSettingsFile("""
-                         include 'project1'
-                         include 'project2'
-                         """);
+    createSettingsFile(including("project1", "project2"));
 
     importProject(
       createBuildScriptBuilder()
@@ -291,8 +288,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProvidedDependencyScopeMerge() throws Exception {
-    createSettingsFile("include 'web'\n" +
-                       "include 'user'");
+    createSettingsFile(including("web", "user"));
 
     importProject(
       createBuildScriptBuilder()
@@ -331,7 +327,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testCustomSourceSetsDependencies() throws Exception {
-    createSettingsFile("include 'api', 'impl' ");
+    createSettingsFile(including("api", "impl"));
 
     importProject(script(it -> {
       it.allprojects( p -> {
@@ -430,8 +426,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testGlobalFileDepsImportedAsProjectLibraries() throws Exception {
     final VirtualFile depJar = createProjectJarSubFile("lib/dep.jar");
     final VirtualFile dep2Jar = createProjectJarSubFile("lib_other/dep.jar");
-    createSettingsFile("include 'p1'\n" +
-                       "include 'p2'");
+    createSettingsFile(including("p1", "p2"));
 
     importProjectUsingSingeModulePerGradleProject(
       createBuildScriptBuilder()
@@ -462,8 +457,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testLocalFileDepsImportedAsModuleLibraries() throws Exception {
     final VirtualFile depP1Jar = createProjectJarSubFile("p1/lib/dep.jar");
     final VirtualFile depP2Jar = createProjectJarSubFile("p2/lib/dep.jar");
-    createSettingsFile("include 'p1'\n" +
-                       "include 'p2'");
+    createSettingsFile(including("p1", "p2"));
 
     importProjectUsingSingeModulePerGradleProject(createBuildScriptBuilder()
                                                     .allprojects(p -> {
@@ -547,9 +541,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   public void testSourceSetOutputDirsAsArtifactDependencies() throws Exception {
     createSettingsFile("""
                          rootProject.name = 'server'
-                         include 'api'
-                         include 'modules:X'
-                         include 'modules:Y'""");
+                         """ + including("api", "modules:X", "modules:Y"));
     importProject(
       "configure(subprojects - project(':modules')) {\n" +
       "    group 'server'\n" +
@@ -645,7 +637,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourceSetOutputDirsAsRuntimeDependenciesOfDependantModules() throws Exception {
-    createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
+    createSettingsFile(including("projectA", "projectB", "projectC"));
     importProject(
       createBuildScriptBuilder()
         .project(":projectA", it -> {
@@ -688,7 +680,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourceSetOutputDirsAsDependenciesOfDependantModules() throws Exception {
-    createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
+    createSettingsFile(including("projectA", "projectB", "projectC"));
     importProject(
       """
         subprojects {\s
@@ -745,7 +737,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProjectArtifactDependencyInTestAndArchivesConfigurations() throws Exception {
-    createSettingsFile("include 'api', 'impl' ");
+    createSettingsFile(including("api", "impl"));
 
     importProject(
       createBuildScriptBuilder()
@@ -808,7 +800,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProjectDependencyOnCustomArtifacts() throws Exception {
-    createSettingsFile("include 'api', 'impl' ");
+    createSettingsFile(including("api", "impl"));
     String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
 
     importProject(
@@ -842,7 +834,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProjectDependencyOnCustomArtifacts2() throws Exception {
-    createSettingsFile("include 'api', 'impl' ");
+    createSettingsFile(including("api", "impl"));
     String archiveBaseName = (isGradleOlderThan("7.0") ? "baseName" : "archiveBaseName") + " = 'my-archive'\n";
 
     importProject(
@@ -897,7 +889,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProjectDependencyOnArtifactsContainingOnlySourceSetsOutputs() throws Exception {
-    createSettingsFile("include 'api', 'impl' ");
+    createSettingsFile(including("api", "impl"));
 
     importProject(
       createBuildScriptBuilder()
@@ -929,7 +921,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("5.0+")
   public void testProjectDependencyOnShadowedArtifacts() throws Exception {
     String shadowVersion = isGradleAtLeast("8.0") ? "8.1.1" : "5.2.0";
-    createSettingsFile("include 'moduleA', 'moduleB' ");
+    createSettingsFile(including("moduleA", "moduleB"));
     createProjectSubFile("moduleA/build.gradle",  script(it -> {
       it.withPlugin("com.github.johnrengelman.shadow", shadowVersion);
       it.withJavaLibraryPlugin();
@@ -960,10 +952,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testCompileAndRuntimeConfigurationsTransitiveDependencyMerge() throws Exception {
-    createSettingsFile("""
-                         include 'project1'
-                         include 'project2'
-                         include 'project-tests'""");
+    createSettingsFile(including("project1", "project2", "project-tests"));
 
     importProject(
       createBuildScriptBuilder()
@@ -1017,10 +1006,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testNonDefaultProjectConfigurationDependency() throws Exception {
-    createSettingsFile("""
-                         include 'project1'
-                         include 'project2'
-                         """);
+    createSettingsFile(including("project1", "project2"));
 
     importProject(
       createBuildScriptBuilder()
@@ -1058,10 +1044,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testNonDefaultProjectConfigurationDependencyWithMultipleArtifacts() throws Exception {
-    createSettingsFile("""
-                         include 'project1'
-                         include 'project2'
-                         """);
+    createSettingsFile(including("project1", "project2"));
 
     importProject(
       createBuildScriptBuilder()
@@ -1121,7 +1104,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("<=6.9")
   public void testDependencyOnDefaultConfigurationWithAdditionalArtifact() throws Exception {
-    createSettingsFile("include 'project1', 'project2'");
+    createSettingsFile(including("project1", "project2"));
     createProjectSubFile("project1/build.gradle",
                          createBuildScriptBuilder()
                            .withJavaPlugin()
@@ -1163,10 +1146,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput() throws Exception {
-    createSettingsFile("""
-                         include 'project1'
-                         include 'project2'
-                         """);
+    createSettingsFile(including("project1", "project2"));
 
     importProject(
       createBuildScriptBuilder()
@@ -1209,10 +1189,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput2() throws Exception {
-    createSettingsFile("""
-                         include 'project1'
-                         include 'project2'
-                         """);
+    createSettingsFile(including("project1", "project2"));
 
     importProject(
       createBuildScriptBuilder()
@@ -1256,10 +1233,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testTestModuleDependencyAsArtifactFromTestSourceSetOutput3() throws Exception {
-    createSettingsFile("""
-                         include 'project1'
-                         include 'project2'
-                         """);
+    createSettingsFile(including("project1", "project2"));
 
     importProject(
       createBuildScriptBuilder()
@@ -1320,11 +1294,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProjectSubstitutions() throws Exception {
-    createSettingsFile("""
-                         include 'core'
-                         include 'service'
-                         include 'util'
-                         """);
+    createSettingsFile(including("core", "service", "util"));
 
     importProject(
       createBuildScriptBuilder()
@@ -1378,11 +1348,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProjectSubstitutionsWithTransitiveDeps() throws Exception {
-    createSettingsFile("""
-                         include 'modA'
-                         include 'modB'
-                         include 'app'
-                         """);
+    createSettingsFile(including("modA", "modB", "app"));
     importProject(
       createBuildScriptBuilder()
         .subprojects(it -> {
@@ -1497,7 +1463,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testCompileOnlyAndCompileScope() throws Exception {
-    createSettingsFile("include 'app'\n");
+    createSettingsFile(including("app"));
     TestGradleBuildScriptBuilder builder = createBuildScriptBuilder();
     importProject(
       builder
@@ -1528,10 +1494,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testJavaLibraryPluginConfigurations() throws Exception {
-    createSettingsFile("""
-                         include 'project1'
-                         include 'project2'
-                         """);
+    createSettingsFile(including("project1", "project2"));
 
     importProject(
       createBuildScriptBuilder()
@@ -1602,7 +1565,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProvidedTransitiveDependencies() throws Exception {
-    createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
+    createSettingsFile(including("projectA", "projectB", "projectC"));
     importProject(
       createBuildScriptBuilder()
         .project(":projectA", it -> {
@@ -1642,10 +1605,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testProjectConfigurationDependencyWithDependencyOnTestOutput() throws Exception {
-    createSettingsFile("""
-                         include 'project1'
-                         include 'project2'
-                         """);
+    createSettingsFile(including("project1", "project2"));
 
     importProject(
       createBuildScriptBuilder()
@@ -1940,10 +1900,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test // https://youtrack.jetbrains.com/issue/IDEA-223152
   @TargetVersions("5.3+")
   public void testTransformedProjectDependency() throws Exception {
-    createSettingsFile("""
-                         include 'lib-1'
-                         include 'lib-2'
-                         """);
+    createSettingsFile(including("lib-1", "lib-2"));
     createProjectSubDirs("lib-1", "lib-2");
 
     importProject(
@@ -2126,7 +2083,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("6.1+")
   public void testSourcesJavadocAttachmentFromClassesFolder() throws Exception {
-    createSettingsFile("include 'aLib'");
+    createSettingsFile(including("aLib"));
     createProjectSubFile("aLib/build.gradle",
                          """
                            plugins {

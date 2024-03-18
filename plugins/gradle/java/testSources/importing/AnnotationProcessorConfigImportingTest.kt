@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.compiler.CompilerConfiguration
@@ -148,7 +148,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @TargetVersions("4.6+")
   fun `test annotation processor config imported correctly for multimodule project`() {
 
-    createProjectSubFile("settings.gradle", "include 'projectA', 'projectB'")
+    createProjectSubFile("settings.gradle", including("projectA", "projectB"))
 
     importProject(
       createBuildScriptBuilder()
@@ -238,7 +238,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @Test
   @TargetVersions("4.6+")
   fun `test two different annotation processors`() {
-    createProjectSubFile("settings.gradle", "include 'project1','project2'")
+    createProjectSubFile("settings.gradle", including("project1", "project2"))
     importProject(
       createBuildScriptBuilder()
         .withMavenCentral()
@@ -281,7 +281,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @Test
   @TargetVersions("4.6+")
    fun `test change modules included in processor profile`() {
-       createProjectSubFile("settings.gradle", "include 'project1','project2'")
+       createProjectSubFile("settings.gradle", including("project1","project2"))
        importProject(
          createBuildScriptBuilder()
            .withMavenCentral()
