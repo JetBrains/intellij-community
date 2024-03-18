@@ -8,9 +8,9 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
@@ -124,7 +124,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
     try {
-      DumbService.getInstance(myProject).runWithAlternativeResolveEnabled(() -> ProgressManager.getInstance().runProcess(() -> {
+      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> ProgressManager.getInstance().runProcess(() -> {
         while (true) {
           try {
             if (threadRequest.isStopRequested()) {
