@@ -51,10 +51,5 @@ interface BuildTasks {
     compileModules(moduleNames = moduleNames, includingTestsInModules = java.util.List.of())
   }
 
-  /**
-   * Builds updater-full.jar artifact which includes 'intellij.platform.updater' module with all its dependencies
-   */
-  suspend fun buildFullUpdaterJar()
-
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 }

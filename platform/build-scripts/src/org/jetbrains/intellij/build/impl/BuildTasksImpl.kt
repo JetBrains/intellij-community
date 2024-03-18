@@ -116,10 +116,6 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
     CompilationTasks.create(context).compileModules(moduleNames)
   }
 
-  override suspend fun buildFullUpdaterJar() {
-    buildUpdaterJar(context = context, artifactName = "updater-full.jar")
-  }
-
   override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
     val currentOs = OsFamily.currentOs
     context.paths.distAllDir = targetDirectory
@@ -986,24 +982,6 @@ private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
   if (context.options.printFreeSpace) {
     logFreeDiskSpace(context.paths.buildOutputDir, phase)
   }
-}
-
-suspend fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar") {
-  val updaterModule = context.findRequiredModule("intellij.platform.updater")
-  val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule), excludes = commonModuleExcludes)
-  val librarySources = JpsJavaExtensionService.dependencies(updaterModule)
-    .productionOnly()
-    .runtimeOnly()
-    .libraries
-    .asSequence()
-    .flatMap { it.getRootUrls(JpsOrderRootType.COMPILED) }
-    .filter { !JpsPathUtil.isJrtUrl(it) }
-    .map {
-      ZipSource(file = Path.of(JpsPathUtil.urlToPath(it)), excludes = listOf(Regex("^META-INF/.*")), distributionFileEntryProducer = null)
-    }
-  val updaterJar = context.paths.artifactDir.resolve(artifactName)
-  buildJar(targetFile = updaterJar, sources = (sequenceOf(updaterModuleSource) + librarySources).toList(), compress = true)
-  context.notifyArtifactBuilt(updaterJar)
 }
 
 private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>, context: BuildContext): Path {
