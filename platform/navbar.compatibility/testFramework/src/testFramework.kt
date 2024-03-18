@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.navbar.tests
+package com.intellij.platform.navbar.compatibility.testFramework
 
 import com.intellij.ide.navbar.actions.getBgData
 import com.intellij.ide.navbar.impl.DefaultNavBarItem
@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.platform.navbar.backend.NavBarItem
-import com.intellij.platform.navbar.backend.NavBarItemProvider
 import com.intellij.platform.navbar.backend.impl.children
 import com.intellij.platform.navbar.backend.impl.pathToItem
 import com.intellij.platform.navbar.ide.contextModel

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.toArray
+import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Fast extension data without selection (allows to override cut/copy/paste providers)
@@ -59,7 +60,8 @@ internal class BgtDataRule : GetDataRule {
   }
 }
 
-internal fun getBgData(project: Project, selection: List<Pointer<out NavBarItem>>, dataId: String): Any? {
+@VisibleForTesting
+fun getBgData(project: Project, selection: List<Pointer<out NavBarItem>>, dataId: String): Any? {
   val selectedItems = lazy(LazyThreadSafetyMode.NONE) {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     selection.mapNotNull {

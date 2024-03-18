@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtilCore.ensureValid
 import com.intellij.psi.util.PsiUtilCore.getVirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Delegates old implementations
@@ -177,7 +178,8 @@ internal fun ensurePsiFromExtensionIsValid(psi: PsiElement, message: String, cla
   }
 }
 
-internal fun compatibilityNavBarItem(o: Any, ext: NavBarModelExtension?): NavBarItem? {
+@VisibleForTesting
+fun compatibilityNavBarItem(o: Any, ext: NavBarModelExtension?): NavBarItem? {
   return when (o) {
     is Project -> {
       ProjectNavBarItem(o)
